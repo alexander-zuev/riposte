@@ -1,4 +1,5 @@
 {
+  "$schema": "../../node_modules/oxlint/configuration_schema.json",
   "extends": ["../../oxlint.json"],
   "plugins": [
     "unicorn",
@@ -56,7 +57,8 @@
     {
       "files": ["src/server/**/*", "src/server.ts", "src/start.ts", "src/routes/api/**/*"],
       "rules": {
-        "no-restricted-imports": "off"
+        "no-restricted-imports": "off",
+        "import/no-default-export": "off"
       }
     },
     {

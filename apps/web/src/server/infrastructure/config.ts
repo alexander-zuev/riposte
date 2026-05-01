@@ -14,22 +14,22 @@ export function getServerConfig() {
 
     google: {
       clientId: env.GOOGLE_CLIENT_ID as string,
-      clientSecret: env.GOOGLE_CLIENT_SECRET as string,
+      clientSecret: env.GOOGLE_CLIENT_SECRET!,
     },
     github: {
       clientId: env.GITHUB_CLIENT_ID as string,
-      clientSecret: env.GITHUB_CLIENT_SECRET as string,
+      clientSecret: env.GITHUB_CLIENT_SECRET!,
     },
 
-    turnstileSecretKey: env.TURNSTILE_SECRET_KEY as string,
+    turnstileSecretKey: env.TURNSTILE_SECRET_KEY!,
 
     stripe: {
-      secretKey: env.STRIPE_SECRET_KEY as string,
-      webhookSecret: env.STRIPE_WEBHOOK_SECRET as string,
+      secretKey: env.STRIPE_SECRET_KEY!,
+      webhookSecret: env.STRIPE_WEBHOOK_SECRET!,
     },
 
-    db: env.DB as D1Database,
-    kvStorage: env.AUTH_KV as KVNamespace,
+    db: env.DB!,
+    kvStorage: env.AUTH_KV!,
     rateLimiter: env.AUTH_RATE_LIMITER as DurableObjectNamespace,
     queue: env.BACKGROUND_QUEUE as Queue<DomainMessage>,
     waitUntil,

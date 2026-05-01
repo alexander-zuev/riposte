@@ -7,6 +7,7 @@
     "prepare": "husky",
     "dev": "turbo run dev",
     "build": "turbo run build",
+    "build:core": "pnpm --filter @riposte/core run build",
     "build:prod": "turbo run build:prod",
     "typecheck": "turbo run typecheck",
     "lint": "turbo run lint",

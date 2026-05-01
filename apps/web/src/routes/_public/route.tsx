@@ -1,9 +1,23 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createLogger } from '@riposte/core/client'
+import { createFileRoute, Outlet } from '@tanstack/react-router'
+import { getSession } from '@web/server/functions/auth.fn'
+
+const logger = createLogger('public-route')
 
 export const Route = createFileRoute('/_public')({
-  component: RouteComponent,
+  beforeLoad: async () => {
+    try {
+      const session = await getSession()
+      return { user: session?.user ?? null }
+    } catch (e) {
+      logger.error('Session check failed', { error: e })
+      return { user: null }
+    }
+  },
+  staleTime: 30_000,
+  component: PublicRouteComponent,
 })
 
-function RouteComponent() {
-  return <div>Hello "/_public"!</div>
+function PublicRouteComponent() {
+  return <Outlet />
 }

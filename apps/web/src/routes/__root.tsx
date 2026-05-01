@@ -2,9 +2,12 @@
 import * as Sentry from '@sentry/tanstackstart-react'
 import type { QueryClient } from '@tanstack/react-query'
 import { createRootRouteWithContext, HeadContent, Outlet, Scripts } from '@tanstack/react-router'
+import { ThemeProvider } from '@web/lib/hooks/use-theme'
 import { AnalyticsProvider } from '@web/lib/providers/posthog-provider'
-import { CANONICAL_ORIGIN, DEFAULT_DESCRIPTION, DEFAULT_TITLE, SITE_NAME } from '@web/lib/seo/seo'
-import { ThemeProvider } from 'next-themes'
+import { defaultHead } from '@web/lib/seo/seo'
+import { getThemeServerFn } from '@web/server/functions/theme.fn'
+import { Toaster } from '@web/ui/components/ui/sonner'
+import { TooltipProvider } from '@web/ui/components/ui/tooltip'
 import { useEffect } from 'react'
 
 import globalStyles from '@web/ui/stylesheets/globals.css?url'
@@ -12,20 +15,9 @@ import globalStyles from '@web/ui/stylesheets/globals.css?url'
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient
 }>()({
-  head: () => ({
-    meta: [
-      { charSet: 'utf-8' },
-      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { title: DEFAULT_TITLE },
-      { name: 'description', content: DEFAULT_DESCRIPTION },
-      { property: 'og:site_name', content: SITE_NAME },
-      { property: 'og:type', content: 'website' },
-      { property: 'og:url', content: `${CANONICAL_ORIGIN}/` },
-      { property: 'og:title', content: DEFAULT_TITLE },
-      { property: 'og:description', content: DEFAULT_DESCRIPTION },
-    ],
-    links: [{ rel: 'stylesheet', href: globalStyles }],
-  }),
+  head: () => defaultHead(globalStyles),
+  loader: async () => getThemeServerFn(),
+  staleTime: Infinity, // Cache theme forever - only refetch when explicitly invalidated
   errorComponent: ({ error, reset }) => {
     useEffect(() => {
       Sentry.captureException(error)
@@ -61,15 +53,18 @@ function RootComponent() {
 }
 
 function RootDocument({ children }: { children: React.ReactNode }) {
+  const theme = Route.useLoaderData()
+
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className={theme} suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>
       <body>
         <AnalyticsProvider>
-          <ThemeProvider attribute="class" defaultTheme="dark">
-            {children}
+          <ThemeProvider theme={theme}>
+            <Toaster />
+            <TooltipProvider>{children}</TooltipProvider>
           </ThemeProvider>
         </AnalyticsProvider>
         <Scripts />

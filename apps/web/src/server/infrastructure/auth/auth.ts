@@ -1,13 +1,13 @@
 import type { BetterAuthOptions } from 'better-auth'
-import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
+import { betterAuth } from 'better-auth/minimal'
 
 import { getServerConfig } from '../config'
 import { createDatabase } from '../db'
 import { createBetterAuthOptions } from './options'
 import type { AuthConfig } from './types'
 
-export function getAuthInstance(plugins: BetterAuthOptions['plugins']) {
+export function getAuthInstance(plugins?: BetterAuthOptions['plugins']) {
   const cfg = getServerConfig()
 
   const database = drizzleAdapter(createDatabase(cfg.db), { provider: 'sqlite' })

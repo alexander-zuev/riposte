@@ -21,7 +21,7 @@ function normalizeAuthMethod(method: string | undefined): SignupMethod {
   return 'google'
 }
 
-export function createDatabaseHooks(queue?: Queue<unknown>) {
+export function createDatabaseHooks(queue?: Queue) {
   if (!queue) return undefined
 
   return {
@@ -49,7 +49,7 @@ export function createDatabaseHooks(queue?: Queue<unknown>) {
   }
 }
 
-export function createStripeCustomerHooks(queue?: Queue<unknown>) {
+export function createStripeCustomerHooks(queue?: Queue) {
   return {
     onCustomerCreate: async ({
       stripeCustomer,
@@ -70,7 +70,7 @@ export function createStripeCustomerHooks(queue?: Queue<unknown>) {
 
       switch (event.type) {
         case 'checkout.session.completed': {
-          const session = event.data.object as Stripe.Checkout.Session
+          const session = event.data.object
           logger.info('checkout_session_completed', {
             sessionId: session.id,
             userId: session.metadata?.userId,

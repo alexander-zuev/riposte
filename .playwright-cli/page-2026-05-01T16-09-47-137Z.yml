@@ -1,0 +1,247 @@
+- generic [active] [ref=e1]:
+    - link "Skip to main content" [ref=e2] [cursor=pointer]:
+        - /url: '#main-content'
+        - generic [ref=e4]: Skip to main content
+    - generic [ref=e6]:
+        - generic:
+            - banner [ref=e9]:
+                - navigation [ref=e10]:
+                    - link "Home" [ref=e17] [cursor=pointer]:
+                        - /url: /
+                        - img [ref=e19]
+                    - generic [ref=e32]:
+                        - img [ref=e34]
+                        - generic [ref=e36]:
+                            - img [ref=e38]
+                            - generic [ref=e40]: r/stripe
+                            - img [ref=e42]
+                        - textbox "Search in r/stripe" [ref=e45]
+                    - generic [ref=e46]:
+                        - generic [ref=e47]:
+                            - link "Advertise on Reddit" [ref=e53] [cursor=pointer]:
+                                - /url: https://ads.reddit.com/register?utm_source=web3x_consumer&utm_name=nav_cta
+                                - img [ref=e56]
+                                - generic [ref=e58]:
+                                    - generic: Advertise on Reddit
+                            - link "Create post" [ref=e67] [cursor=pointer]:
+                                - /url: /r/stripe/submit/
+                                - generic [ref=e68]:
+                                    - img [ref=e70]
+                                    - generic [ref=e72]: Create
+                                - generic [ref=e73]:
+                                    - generic: Create post
+                        - button "Expand user menu" [ref=e82] [cursor=pointer]:
+                            - generic [ref=e89]:
+                                - generic: Expand user menu
+            - generic [ref=e100]:
+                - generic [ref=e103]:
+                    - main [ref=e104]:
+                        - 'generic "Stripe Dispute Prevention just refunded $1500 when customer only disputed $200 - now they won''t fix it : r/stripe"'
+                        - generic [ref=e105]:
+                            - generic [ref=e106]:
+                                - generic [ref=e107]:
+                                    - link "Go to stripe" [ref=e111] [cursor=pointer]:
+                                        - /url: /r/stripe/
+                                        - generic [ref=e115]:
+                                            - generic: Go to stripe
+                                    - group [ref=e116]:
+                                        - generic [ref=e117]:
+                                            - link "r/stripe" [ref=e121] [cursor=pointer]:
+                                                - /url: /r/stripe/
+                                            - generic [ref=e122]: •
+                                            - time [ref=e123]: 1y ago
+                                        - 'link "Author: Straight-Finance4489" [ref=e129] [cursor=pointer]':
+                                            - /url: /user/Straight-Finance4489/
+                                            - generic [ref=e130]: Straight-Finance4489
+                                - generic [ref=e131]:
+                                    - img "Archived post" [ref=e135]
+                                    - button "Open user actions" [ref=e138] [cursor=pointer]:
+                                        - img [ref=e141]
+                            - 'heading "Post Title: Stripe Dispute Prevention just refunded $1500 when customer only disputed $200 - now they won''t fix it" [level=1] [ref=e143]': Stripe Dispute Prevention just refunded $1500 when customer only disputed $200 - now they won't fix it
+                            - 'link "Flair: Question" [ref=e146] [cursor=pointer]':
+                                - /url: /r/stripe/?f=flair_name%3A%22Question%22
+                                - 'generic "Flair: Question" [ref=e148]': Question
+                            - generic [ref=e152]:
+                                - paragraph [ref=e153]: I'm absolutely livid right now and need advice on next steps.
+                                - paragraph [ref=e154]: Had a customer purchase a $1500 service package. They contacted me saying they wanted to dispute $200 of it (one component they weren't happy with). I told them to work with me directly but they filed the dispute anyway.
+                                - paragraph [ref=e155]: "Here's where it gets insane: I had Stripe's Dispute Prevention enabled with auto-refund rules. The system saw the dispute come in and automatically refunded the ENTIRE $1500 instead of just the $200 they actually disputed."
+                                - paragraph [ref=e156]: Contacted the customer who confirmed they only disputed the $200 portion. They even offered to pay back the difference since they know it was an error, but now Stripe is saying they can't reverse it because "the automated system processed it correctly according to the rules."
+                                - paragraph [ref=e157]: Their support is basically telling me tough luck - apparently their system doesn't handle partial disputes and just refunds the whole transaction amount. This was never explained when I set up the feature.
+                                - paragraph [ref=e158]: I'm out $1300 because of THEIR system malfunction. Has anyone dealt with this before? Considering legal representation at this point because this is absolutely unacceptable.
+                                - paragraph [ref=e159]: Anyone else here found a laywer that will take on payment processor disputes?
+                            - generic [ref=e161]:
+                                - img [ref=e162]
+                                - generic [ref=e165]: Archived post. New comments cannot be posted and votes cannot be cast.
+                        - img [ref=e170]
+                    - generic [ref=e183]:
+                        - complementary "Community information" [ref=e187]:
+                            - generic [ref=e188]:
+                                - generic [ref=e189]:
+                                    - generic [ref=e208]: 30K
+                                    - generic [ref=e209]: '452'
+                                - separator [ref=e210]
+                                - generic [ref=e211]:
+                                    - heading "User flair" [level=2] [ref=e213]:
+                                        - generic [ref=e214]: User flair
+                                    - generic [ref=e216]:
+                                        - img "u/merged_and_deployed avatar" [ref=e221]
+                                        - generic [ref=e223]: merged_and_deployed
+                                - separator [ref=e224]
+                                - generic [ref=e225]:
+                                    - heading "Community Bookmarks" [level=2] [ref=e227]:
+                                        - generic [ref=e228]: Community Bookmarks
+                                    - generic [ref=e229]:
+                                        - button "Website" [ref=e232] [cursor=pointer]:
+                                            - generic [ref=e235]: Website
+                                        - button "Social Media" [ref=e240] [cursor=pointer]:
+                                            - generic [ref=e243]: Social Media
+                                - separator [ref=e246]
+                                - generic [ref=e247]:
+                                    - heading "r/stripe Rules" [level=2] [ref=e249]:
+                                        - generic [ref=e250]: r/stripe Rules
+                                    - generic [ref=e251]:
+                                        - group [ref=e253]:
+                                            - generic "1 Read the FAQ" [ref=e254] [cursor=pointer]:
+                                                - generic [ref=e256]:
+                                                    - generic [ref=e257]:
+                                                        - generic [ref=e259]: '1'
+                                                        - heading "Read the FAQ" [level=2] [ref=e263]
+                                                    - img [ref=e266]
+                                        - group [ref=e269]:
+                                            - generic "2 This isn't Stripe Account Support" [ref=e270] [cursor=pointer]:
+                                                - generic [ref=e272]:
+                                                    - generic [ref=e273]:
+                                                        - generic [ref=e275]: '2'
+                                                        - heading "This isn't Stripe Account Support" [level=2] [ref=e279]
+                                                    - img [ref=e282]
+                                        - group [ref=e285]:
+                                            - generic "3 Posts about Account Rejections/Reserves/Closures should include relevant details." [ref=e286] [cursor=pointer]:
+                                                - generic [ref=e288]:
+                                                    - generic [ref=e289]:
+                                                        - generic [ref=e291]: '3'
+                                                        - heading "Posts about Account Rejections/Reserves/Closures should include relevant details." [level=2] [ref=e295]
+                                                    - img [ref=e298]
+                                        - group [ref=e301]:
+                                            - generic "4 Harassment, bigotry, hate speech, and racism will not be tolerated." [ref=e302] [cursor=pointer]:
+                                                - generic [ref=e304]:
+                                                    - generic [ref=e305]:
+                                                        - generic [ref=e307]: '4'
+                                                        - heading "Harassment, bigotry, hate speech, and racism will not be tolerated." [level=2] [ref=e311]
+                                                    - img [ref=e314]
+                                        - group [ref=e317]:
+                                            - generic "5 No Spam, Self-promotion, or Services that violate Stripe Services Agreement" [ref=e318] [cursor=pointer]:
+                                                - generic [ref=e320]:
+                                                    - generic [ref=e321]:
+                                                        - generic [ref=e323]: '5'
+                                                        - heading "No Spam, Self-promotion, or Services that violate Stripe Services Agreement" [level=2] [ref=e327]
+                                                    - img [ref=e330]
+                                        - group [ref=e333]:
+                                            - generic "6 No reporting other Stripe users" [ref=e334] [cursor=pointer]:
+                                                - generic [ref=e336]:
+                                                    - generic [ref=e337]:
+                                                        - generic [ref=e339]: '6'
+                                                        - heading "No reporting other Stripe users" [level=2] [ref=e343]
+                                                    - img [ref=e346]
+                                        - group [ref=e349]:
+                                            - generic "7 No Sharing of Private Account Info" [ref=e350] [cursor=pointer]:
+                                                - generic [ref=e352]:
+                                                    - generic [ref=e353]:
+                                                        - generic [ref=e355]: '7'
+                                                        - heading "No Sharing of Private Account Info" [level=2] [ref=e359]
+                                                    - img [ref=e362]
+                                        - group [ref=e365]:
+                                            - generic "8 AI is welcome, misinformation is not" [ref=e366] [cursor=pointer]:
+                                                - generic [ref=e368]:
+                                                    - generic [ref=e369]:
+                                                        - generic [ref=e371]: '8'
+                                                        - heading "AI is welcome, misinformation is not" [level=2] [ref=e375]
+                                                    - img [ref=e378]
+                                - separator [ref=e380]
+                                - generic [ref=e381]:
+                                    - heading "Stripe" [level=2] [ref=e383]:
+                                        - generic [ref=e384]: Stripe
+                                    - link [ref=e385] [cursor=pointer]:
+                                        - /url: https://stripe.com/about
+                                - separator [ref=e386]
+                                - generic [ref=e387]:
+                                    - heading "Social Media" [level=2] [ref=e389]:
+                                        - generic [ref=e390]: Social Media
+                                    - generic [ref=e391]:
+                                        - link "Stripe Website Stripe Website" [ref=e392] [cursor=pointer]:
+                                            - /url: https://stripe.com
+                                            - generic [ref=e395]: Stripe Website
+                                            - generic [ref=e396]:
+                                                - generic: Stripe Website
+                                        - link "Twitter Twitter" [ref=e397] [cursor=pointer]:
+                                            - /url: https://twitter.com/stripe
+                                            - generic [ref=e400]: Twitter
+                                            - generic [ref=e401]:
+                                                - generic: Twitter
+                                        - link "Facebook Facebook" [ref=e402] [cursor=pointer]:
+                                            - /url: https://www.facebook.com/StripeHQ
+                                            - generic [ref=e405]: Facebook
+                                            - generic [ref=e406]:
+                                                - generic: Facebook
+                                        - link "YouTube YouTube" [ref=e407] [cursor=pointer]:
+                                            - /url: https://www.youtube.com/channel/UCM1guA1E-RHLO2OyfQPOkEQ
+                                            - generic [ref=e410]: YouTube
+                                            - generic [ref=e411]:
+                                                - generic: YouTube
+                                        - link "Reddit Reddit" [ref=e412] [cursor=pointer]:
+                                            - /url: https://www.reddit.com/r/stripe/
+                                            - generic [ref=e415]: Reddit
+                                            - generic [ref=e416]:
+                                                - generic: Reddit
+                                - separator [ref=e417]
+                                - generic [ref=e418]:
+                                    - heading "Moderators" [level=2] [ref=e420]:
+                                        - generic [ref=e421]: Moderators
+                                    - link "Message Mods" [ref=e423] [cursor=pointer]:
+                                        - /url: https://www.reddit.com/message/compose?to=r/stripe
+                                        - generic [ref=e424]:
+                                            - img [ref=e426]
+                                            - generic [ref=e428]: Message Mods
+                                    - generic [ref=e430]:
+                                        - img "u/ccb621 avatar" [ref=e435]
+                                        - generic [ref=e438]:
+                                            - link "u/ccb621" [ref=e439] [cursor=pointer]:
+                                                - /url: /user/ccb621/
+                                            - 'generic "Flair: :United_States:" [ref=e441]'
+                                    - generic [ref=e446]:
+                                        - img "u/Realistic_Answer_449 avatar" [ref=e451]
+                                        - generic [ref=e452]:
+                                            - link "u/Realistic_Answer_449" [ref=e455] [cursor=pointer]:
+                                                - /url: /user/Realistic_Answer_449/
+                                            - generic [ref=e457]: Greg @ Stripe
+                                    - generic [ref=e459]:
+                                        - img "u/StripeTeam avatar" [ref=e464]
+                                        - generic [ref=e465]:
+                                            - link "u/StripeTeam" [ref=e468] [cursor=pointer]:
+                                                - /url: /user/StripeTeam/
+                                            - generic [ref=e470]: We Are Stripe
+                                    - generic [ref=e472]:
+                                        - img "u/Stripe_Help avatar" [ref=e477]
+                                        - generic [ref=e478]:
+                                            - generic [ref=e480]:
+                                                - link "u/Stripe_Help" [ref=e481] [cursor=pointer]:
+                                                    - /url: /user/Stripe_Help/
+                                                - 'generic "Flair: :Stripe:" [ref=e483]'
+                                            - generic [ref=e488]: Stripe Help
+                                    - link "View all moderators" [ref=e489] [cursor=pointer]:
+                                        - /url: /mod/stripe/moderators/
+                                        - generic [ref=e491]: View all moderators
+                        - generic [ref=e493]:
+                            - link "Reddit Rules" [ref=e496] [cursor=pointer]:
+                                - /url: https://www.redditinc.com/policies/content-policy
+                            - link "Privacy Policy" [ref=e499] [cursor=pointer]:
+                                - /url: https://www.reddit.com/policies/privacy-policy
+                            - link "User Agreement" [ref=e502] [cursor=pointer]:
+                                - /url: https://www.redditinc.com/policies/user-agreement
+                            - link "Accessibility" [ref=e505] [cursor=pointer]:
+                                - /url: https://support.reddithelp.com/hc/sections/38303584022676-Accessibility
+                            - link "Reddit, Inc. © 2026. All rights reserved." [ref=e507] [cursor=pointer]:
+                                - /url: https://redditinc.com
+                - button "Collapse Navigation" [ref=e512] [cursor=pointer]:
+                    - img [ref=e515]
+                    - generic [ref=e517]:
+                        - generic: Collapse Navigation

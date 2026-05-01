@@ -1,0 +1,238 @@
+- generic [active] [ref=e1]:
+    - link "Skip to main content" [ref=e2] [cursor=pointer]:
+        - /url: '#main-content'
+        - generic [ref=e4]: Skip to main content
+    - generic [ref=e6]:
+        - generic:
+            - banner [ref=e9]:
+                - navigation [ref=e10]:
+                    - link "Home" [ref=e14] [cursor=pointer]:
+                        - /url: /
+                        - img [ref=e16]
+                    - generic [ref=e29]:
+                        - img [ref=e31]
+                        - generic [ref=e33]:
+                            - img [ref=e35]
+                            - generic [ref=e37]: r/smallbusiness
+                            - img [ref=e39]
+                        - textbox "Search in r/smallbusiness" [ref=e42]: chargeback OR dispute stripe
+                    - generic [ref=e43]:
+                        - generic [ref=e44]:
+                            - link "Advertise on Reddit" [ref=e50] [cursor=pointer]:
+                                - /url: https://ads.reddit.com/register?utm_source=web3x_consumer&utm_name=nav_cta
+                                - img [ref=e53]
+                                - generic [ref=e55]:
+                                    - generic: Advertise on Reddit
+                            - button "Open chat" [ref=e63] [cursor=pointer]:
+                                - img [ref=e66]
+                                - generic [ref=e68]:
+                                    - generic: Open chat
+                            - link "Create post" [ref=e73] [cursor=pointer]:
+                                - /url: /r/smallbusiness/submit/
+                                - generic [ref=e74]:
+                                    - img [ref=e76]
+                                    - generic [ref=e78]: Create
+                                - generic [ref=e79]:
+                                    - generic: Create post
+                            - link "Open inbox" [ref=e85] [cursor=pointer]:
+                                - /url: /notifications
+                                - img [ref=e88]
+                                - generic [ref=e90]:
+                                    - generic: Open inbox
+                        - button "Expand user menu" [ref=e95] [cursor=pointer]:
+                            - generic [ref=e102]:
+                                - generic: Expand user menu
+            - generic "chargeback OR dispute stripe - Reddit Search!"
+            - generic [ref=e106]:
+                - generic [ref=e107]:
+                    - generic [ref=e111]:
+                        - button "Posts" [ref=e112] [cursor=pointer]:
+                            - generic [ref=e116]: Posts
+                        - link "Comments" [ref=e117] [cursor=pointer]:
+                            - /url: /r/smallbusiness/search/?q=chargeback+OR+dispute+stripe&type=comments&iId=36a859f5-baf6-4663-99bd-698a78e6ce3d
+                            - generic [ref=e122]: Comments
+                        - link "Media" [ref=e123] [cursor=pointer]:
+                            - /url: /r/smallbusiness/search/?q=chargeback+OR+dispute+stripe&type=media&iId=36a859f5-baf6-4663-99bd-698a78e6ce3d
+                            - generic [ref=e128]: Media
+                    - generic [ref=e132]:
+                        - main [ref=e133]:
+                            - generic [ref=e134]:
+                                - paragraph [ref=e137]:
+                                    - text: Show results from
+                                    - link "all of Reddit" [ref=e139] [cursor=pointer]:
+                                        - /url: /search/?q=chargeback+OR+dispute+stripe
+                                    - img [ref=e141]
+                                - generic [ref=e145]:
+                                    - generic:
+                                        - heading "Stripe charges you $15 for every chargeback — even if you win." [level=2]:
+                                            - link "Stripe charges you $15 for every chargeback — even if you win." [ref=e146] [cursor=pointer]:
+                                                - /url: /r/smallbusiness/comments/1sg9du7/stripe_charges_you_15_for_every_chargeback_even/
+                                                - generic [ref=e147]:
+                                                    - generic: Stripe charges you $15 for every chargeback — even if you win.
+                                    - generic [ref=e148]:
+                                        - generic [ref=e151]:
+                                            - link "r/smallbusiness" [ref=e154] [cursor=pointer]:
+                                                - /url: /r/smallbusiness/
+                                                - img [ref=e158]
+                                                - generic [ref=e160]: r/smallbusiness
+                                            - generic [ref=e161]: ·
+                                        - link "Stripe charges you $15 for every chargeback — even if you win." [ref=e162] [cursor=pointer]:
+                                            - /url: /r/smallbusiness/comments/1sg9du7/stripe_charges_you_15_for_every_chargeback_even/
+                                        - generic [ref=e163]:
+                                            - generic [ref=e164]: votes
+                                            - text: ·
+                                            - generic [ref=e165]: comments
+                                - separator [ref=e166]
+                                - generic [ref=e169]:
+                                    - generic:
+                                        - heading "Managing Stripe disputes" [level=2]:
+                                            - link "Managing Stripe disputes" [ref=e170] [cursor=pointer]:
+                                                - /url: /r/smallbusiness/comments/1qfejim/managing_stripe_disputes/
+                                                - generic [ref=e171]:
+                                                    - generic: Managing Stripe disputes
+                                    - generic [ref=e172]:
+                                        - generic [ref=e175]:
+                                            - link "r/smallbusiness" [ref=e178] [cursor=pointer]:
+                                                - /url: /r/smallbusiness/
+                                                - img [ref=e182]
+                                                - generic [ref=e184]: r/smallbusiness
+                                            - generic [ref=e185]: ·
+                                        - link "Managing Stripe disputes" [ref=e186] [cursor=pointer]:
+                                            - /url: /r/smallbusiness/comments/1qfejim/managing_stripe_disputes/
+                                        - generic [ref=e187]:
+                                            - generic [ref=e188]: vote
+                                            - text: ·
+                                            - generic [ref=e189]: comments
+                                - separator [ref=e190]
+                                - generic [ref=e193]:
+                                    - generic:
+                                        - heading "Card disputes through Stripe" [level=2]:
+                                            - link "Card disputes through Stripe" [ref=e194] [cursor=pointer]:
+                                                - /url: /r/smallbusiness/comments/1p2hh1i/card_disputes_through_stripe/
+                                                - generic [ref=e195]:
+                                                    - generic: Card disputes through Stripe
+                                    - generic [ref=e196]:
+                                        - generic [ref=e199]:
+                                            - link "r/smallbusiness" [ref=e202] [cursor=pointer]:
+                                                - /url: /r/smallbusiness/
+                                                - img [ref=e206]
+                                                - generic [ref=e208]: r/smallbusiness
+                                            - generic [ref=e209]: ·
+                                        - link "Card disputes through Stripe" [ref=e210] [cursor=pointer]:
+                                            - /url: /r/smallbusiness/comments/1p2hh1i/card_disputes_through_stripe/
+                                        - generic [ref=e211]:
+                                            - generic [ref=e212]: votes
+                                            - text: ·
+                                            - generic [ref=e213]: comments
+                                - separator [ref=e214]
+                                - generic [ref=e217]:
+                                    - generic:
+                                        - heading "STRIPE held my Funds - i got it released! after 2 years" [level=2]:
+                                            - link "STRIPE held my Funds - i got it released! after 2 years" [ref=e218] [cursor=pointer]:
+                                                - /url: /r/smallbusiness/comments/1sm2ala/stripe_held_my_funds_i_got_it_released_after_2/
+                                                - generic [ref=e219]:
+                                                    - generic: STRIPE held my Funds - i got it released! after 2 years
+                                    - generic [ref=e220]:
+                                        - generic [ref=e223]:
+                                            - link "r/smallbusiness" [ref=e226] [cursor=pointer]:
+                                                - /url: /r/smallbusiness/
+                                                - img [ref=e230]
+                                                - generic [ref=e232]: r/smallbusiness
+                                            - generic [ref=e233]: ·
+                                        - link "STRIPE held my Funds - i got it released! after 2 years" [ref=e234] [cursor=pointer]:
+                                            - /url: /r/smallbusiness/comments/1sm2ala/stripe_held_my_funds_i_got_it_released_after_2/
+                                        - generic [ref=e235]:
+                                            - generic [ref=e236]: votes
+                                            - text: ·
+                                            - generic [ref=e237]: comments
+                                - separator [ref=e238]
+                                - generic [ref=e241]:
+                                    - generic:
+                                        - heading "Stripe account closed after review, payouts held 120 days. What are my realistic options?" [level=2]:
+                                            - link "Stripe account closed after review, payouts held 120 days. What are my realistic options?" [ref=e242] [cursor=pointer]:
+                                                - /url: /r/smallbusiness/comments/1s4mgaq/stripe_account_closed_after_review_payouts_held/
+                                                - generic [ref=e243]:
+                                                    - generic: Stripe account closed after review, payouts held 120 days. What are my realistic options?
+                                    - generic [ref=e244]:
+                                        - generic [ref=e247]:
+                                            - link "r/smallbusiness" [ref=e250] [cursor=pointer]:
+                                                - /url: /r/smallbusiness/
+                                                - img [ref=e254]
+                                                - generic [ref=e256]: r/smallbusiness
+                                            - generic [ref=e257]: ·
+                                        - link "Stripe account closed after review, payouts held 120 days. What are my realistic options?" [ref=e258] [cursor=pointer]:
+                                            - /url: /r/smallbusiness/comments/1s4mgaq/stripe_account_closed_after_review_payouts_held/
+                                        - generic [ref=e259]:
+                                            - generic [ref=e260]: votes
+                                            - text: ·
+                                            - generic [ref=e261]: comments
+                                - separator [ref=e262]
+                                - generic [ref=e265]:
+                                    - generic:
+                                        - heading "Stripe is About to Sink Our Startup Over Credit Card Fraud We Didn’t Control, Anyone Fought Back & Won?" [level=2]:
+                                            - link "Stripe is About to Sink Our Startup Over Credit Card Fraud We Didn’t Control, Anyone Fought Back & Won?" [ref=e266] [cursor=pointer]:
+                                                - /url: /r/smallbusiness/comments/1m1jef3/stripe_is_about_to_sink_our_startup_over_credit/
+                                                - generic [ref=e267]:
+                                                    - generic: Stripe is About to Sink Our Startup Over Credit Card Fraud We Didn’t Control, Anyone Fought Back & Won?
+                                    - generic [ref=e268]:
+                                        - generic [ref=e271]:
+                                            - link "r/smallbusiness" [ref=e274] [cursor=pointer]:
+                                                - /url: /r/smallbusiness/
+                                                - img [ref=e278]
+                                                - generic [ref=e280]: r/smallbusiness
+                                            - generic [ref=e281]: ·
+                                        - link "Stripe is About to Sink Our Startup Over Credit Card Fraud We Didn’t Control, Anyone Fought Back & Won?" [ref=e282] [cursor=pointer]:
+                                            - /url: /r/smallbusiness/comments/1m1jef3/stripe_is_about_to_sink_our_startup_over_credit/
+                                        - generic [ref=e283]:
+                                            - generic [ref=e284]: votes
+                                            - text: ·
+                                            - generic [ref=e285]: comments
+                                - separator [ref=e286]
+                                - generic [ref=e289]:
+                                    - generic:
+                                        - heading "How do you handle chargebacks" [level=2]:
+                                            - link "How do you handle chargebacks" [ref=e290] [cursor=pointer]:
+                                                - /url: /r/smallbusiness/comments/1sx05w7/how_do_you_handle_chargebacks/
+                                                - generic [ref=e291]:
+                                                    - generic: How do you handle chargebacks
+                                    - generic [ref=e292]:
+                                        - generic [ref=e295]:
+                                            - link "r/smallbusiness" [ref=e298] [cursor=pointer]:
+                                                - /url: /r/smallbusiness/
+                                                - img [ref=e302]
+                                                - generic [ref=e304]: r/smallbusiness
+                                            - generic [ref=e305]: ·
+                                        - link "How do you handle chargebacks" [ref=e306] [cursor=pointer]:
+                                            - /url: /r/smallbusiness/comments/1sx05w7/how_do_you_handle_chargebacks/
+                                        - generic [ref=e307]:
+                                            - generic [ref=e308]: vote
+                                            - text: ·
+                                            - generic [ref=e309]: comments
+                                - separator [ref=e310]
+                                - generic [ref=e312]:
+                                    - generic:
+                                        - article [ref=e313]:
+                                            - separator [ref=e325]
+                                        - article [ref=e326]:
+                                            - separator [ref=e338]
+                                        - article [ref=e339]:
+                                            - separator [ref=e351]
+                        - generic [ref=e352]:
+                            - generic [ref=e356]:
+                                - generic [ref=e375]: 445K
+                                - generic [ref=e376]: 16K
+                            - generic [ref=e378]:
+                                - link "Reddit Rules" [ref=e381] [cursor=pointer]:
+                                    - /url: https://www.redditinc.com/policies/content-policy
+                                - link "Privacy Policy" [ref=e384] [cursor=pointer]:
+                                    - /url: https://www.reddit.com/policies/privacy-policy
+                                - link "User Agreement" [ref=e387] [cursor=pointer]:
+                                    - /url: https://www.redditinc.com/policies/user-agreement
+                                - link "Accessibility" [ref=e390] [cursor=pointer]:
+                                    - /url: https://support.reddithelp.com/hc/sections/38303584022676-Accessibility
+                                - link "Reddit, Inc. © 2026. All rights reserved." [ref=e392] [cursor=pointer]:
+                                    - /url: https://redditinc.com
+                - button "Collapse Navigation" [ref=e397] [cursor=pointer]:
+                    - img [ref=e400]
+                    - generic [ref=e402]:
+                        - generic: Collapse Navigation

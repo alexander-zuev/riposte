@@ -1,0 +1,356 @@
+- generic [active] [ref=e1]:
+    - link "Skip to main content" [ref=e2] [cursor=pointer]:
+        - /url: '#main-content'
+        - generic [ref=e4]: Skip to main content
+    - generic [ref=e6]:
+        - generic:
+            - banner [ref=e9]:
+                - navigation [ref=e10]:
+                    - link "Home" [ref=e14] [cursor=pointer]:
+                        - /url: /
+                        - img [ref=e16]
+                    - generic [ref=e29]:
+                        - img [ref=e31]
+                        - generic [ref=e33]:
+                            - img [ref=e35]
+                            - generic [ref=e37]: r/smallbusiness
+                            - img [ref=e39]
+                        - textbox "Search in r/smallbusiness" [ref=e42]
+                    - generic [ref=e43]:
+                        - generic [ref=e44]:
+                            - link "Advertise on Reddit" [ref=e50] [cursor=pointer]:
+                                - /url: https://ads.reddit.com/register?utm_source=web3x_consumer&utm_name=nav_cta
+                                - img [ref=e53]
+                                - generic [ref=e55]:
+                                    - generic: Advertise on Reddit
+                            - button "Open chat" [ref=e63] [cursor=pointer]:
+                                - img [ref=e66]
+                                - generic [ref=e68]:
+                                    - generic: Open chat
+                            - link "Create post" [ref=e73] [cursor=pointer]:
+                                - /url: /r/smallbusiness/submit/
+                                - generic [ref=e74]:
+                                    - img [ref=e76]
+                                    - generic [ref=e78]: Create
+                                - generic [ref=e79]:
+                                    - generic: Create post
+                            - link "Open inbox" [ref=e85] [cursor=pointer]:
+                                - /url: /notifications
+                                - img [ref=e88]
+                                - generic [ref=e90]:
+                                    - generic: Open inbox
+                        - button "Expand user menu" [ref=e95] [cursor=pointer]:
+                            - generic [ref=e102]:
+                                - generic: Expand user menu
+            - generic [ref=e103]:
+                - generic [ref=e106]:
+                    - main [ref=e107]:
+                        - 'generic "Stripe is About to Sink Our Startup Over Credit Card Fraud We Didn’t Control, Anyone Fought Back & Won? : r/smallbusiness"'
+                        - generic [ref=e108]:
+                            - generic [ref=e109]:
+                                - generic [ref=e110]:
+                                    - link "Go to smallbusiness" [ref=e114] [cursor=pointer]:
+                                        - /url: /r/smallbusiness/
+                                        - img [ref=e118]
+                                        - generic [ref=e120]:
+                                            - generic: Go to smallbusiness
+                                    - group [ref=e121]:
+                                        - generic [ref=e122]:
+                                            - link "r/smallbusiness" [ref=e126] [cursor=pointer]:
+                                                - /url: /r/smallbusiness/
+                                            - generic [ref=e127]: •
+                                            - time [ref=e128]: 10mo ago
+                                        - 'link "Author: carryingboats_logs" [ref=e134] [cursor=pointer]':
+                                            - /url: /user/carryingboats_logs/
+                                            - generic [ref=e135]: carryingboats_logs
+                                - button "Open user actions" [ref=e138] [cursor=pointer]:
+                                    - img [ref=e141]
+                            - 'heading "Post Title: Stripe is About to Sink Our Startup Over Credit Card Fraud We Didn’t Control, Anyone Fought Back & Won?" [level=1] [ref=e143]': Stripe is About to Sink Our Startup Over Credit Card Fraud We Didn’t Control, Anyone Fought Back & Won?
+                            - 'link "Flair: Question" [ref=e146] [cursor=pointer]':
+                                - /url: /r/smallbusiness/?f=flair_name%3A%22Question%22
+                                - 'generic "Flair: Question" [ref=e148]': Question
+                            - generic [ref=e152]:
+                                - paragraph [ref=e153]: Hey everyone!
+                                - paragraph [ref=e154]:
+                                    - text: We’re a small startup (C-Corp) and Stripe is on the verge of
+                                    - strong [ref=e155]: sinking us
+                                    - text: over a
+                                    - strong [ref=e156]: card testing scam
+                                    - text: that we couldn’t have fully controlled.
+                                - paragraph [ref=e157]:
+                                    - text: A few weeks ago, fraudsters
+                                    - strong [ref=e158]: flooded our platform with hundreds of card testing attempts
+                                    - text: . Even though we were using Stripe’s Radar and default security, a lot of these fraudulent charges still went through.
+                                - paragraph [ref=e159]: 'Now Stripe is:'
+                                - list [ref=e160]:
+                                    - listitem [ref=e161]:
+                                        - paragraph [ref=e162]:
+                                            - text: ❌
+                                            - strong [ref=e163]: Holding us liable for ALL chargebacks + dispute fees
+                                    - listitem [ref=e164]:
+                                        - paragraph [ref=e165]:
+                                            - text: ❌
+                                            - strong [ref=e166]: Pausing all our payouts, with zero transparency on how/when we can get our money
+                                    - listitem [ref=e167]:
+                                        - paragraph [ref=e168]:
+                                            - text: ❌
+                                            - strong [ref=e169]: Refusing to waive dispute fees, even though this was automated card testing fraud
+                                - paragraph [ref=e170]:
+                                    - strong [ref=e171]: We only earned ~10% commission per transaction.
+                                    - text: Stripe is still demanding we refund the
+                                    - emphasis [ref=e172]: entire
+                                    - text: charge amounts, which is not even cash we ever held.
+                                - paragraph [ref=e173]: 'What’s worse:'
+                                - list [ref=e174]:
+                                    - listitem [ref=e175]:
+                                        - paragraph [ref=e176]:
+                                            - text: Stripe support is
+                                            - strong [ref=e177]: extremely slow to respond,
+                                            - text: sometimes days between replies.
+                                    - listitem [ref=e178]:
+                                        - paragraph [ref=e179]:
+                                            - text: They keep
+                                            - strong [ref=e180]: passing us from person to person
+                                            - text: ', with no clear indication of who’s actually handling the case.'
+                                    - listitem [ref=e181]:
+                                        - paragraph [ref=e182]:
+                                            - text: Every reply feels passive, as if it’s
+                                            - emphasis [ref=e183]: our fault for not having more protections in place
+                                            - text: ', despite us using their tools.'
+                                - paragraph [ref=e184]: 'We’re actively implementing:'
+                                - list [ref=e185]:
+                                    - listitem [ref=e186]:
+                                        - paragraph [ref=e187]: ✅ CAPTCHA
+                                    - listitem [ref=e188]:
+                                        - paragraph [ref=e189]: ✅ Rate-limiting and session validation
+                                    - listitem [ref=e190]:
+                                        - paragraph [ref=e191]: ✅ Custom Radar rules
+                                - paragraph [ref=e192]: But if Stripe proceeds, we’re heading straight for insolvency, and it seems like they don’t care.
+                                - heading "I’d appreciate any help or experience if you’ve dealt with this:" [level=1] [ref=e193]
+                                - list [ref=e194]:
+                                    - listitem [ref=e195]:
+                                        - paragraph [ref=e196]:
+                                            - strong [ref=e197]: Has anyone successfully pushed back against Stripe or another processor?
+                                    - listitem [ref=e198]:
+                                        - paragraph [ref=e199]:
+                                            - strong [ref=e200]: As a C-Corp, are we personally liable if the company has no assets?
+                                    - listitem [ref=e201]:
+                                        - paragraph [ref=e202]:
+                                            - strong [ref=e203]: Would freezing our business bank account slow Stripe down?
+                                    - listitem [ref=e204]:
+                                        - paragraph [ref=e205]:
+                                            - strong [ref=e206]: Is there any Stripe escalation path that actually leads to real decision-makers?
+                                    - listitem [ref=e207]:
+                                        - paragraph [ref=e208]:
+                                            - strong [ref=e209]: Should we go public with this, or keep trying to negotiate privately?
+                                - paragraph [ref=e210]: If you’ve been through this, or have any insight, it could literally save our company. Appreciate any advice you all can offer.
+                        - img [ref=e215]
+                    - generic [ref=e228]:
+                        - complementary "Community information" [ref=e232]:
+                            - generic [ref=e233]:
+                                - generic [ref=e234]:
+                                    - generic [ref=e253]: 445K
+                                    - generic [ref=e254]: 16K
+                                - separator [ref=e255]
+                                - generic [ref=e256]:
+                                    - heading "r/smallbusiness Rules" [level=2] [ref=e258]:
+                                        - generic [ref=e259]: r/smallbusiness Rules
+                                    - generic [ref=e260]:
+                                        - group [ref=e262]:
+                                            - generic "1 Post only questions about small business." [ref=e263] [cursor=pointer]:
+                                                - generic [ref=e265]:
+                                                    - generic [ref=e266]:
+                                                        - generic [ref=e268]: '1'
+                                                        - heading "Post only questions about small business." [level=2] [ref=e272]
+                                                    - img [ref=e275]
+                                        - group [ref=e278]:
+                                            - generic "2 No blog links, blog content, or SEO shaping." [ref=e279] [cursor=pointer]:
+                                                - generic [ref=e281]:
+                                                    - generic [ref=e282]:
+                                                        - generic [ref=e284]: '2'
+                                                        - heading "No blog links, blog content, or SEO shaping." [level=2] [ref=e288]
+                                                    - img [ref=e291]
+                                        - group [ref=e294]:
+                                            - generic "3 No business promotion posts" [ref=e295] [cursor=pointer]:
+                                                - generic [ref=e297]:
+                                                    - generic [ref=e298]:
+                                                        - generic [ref=e300]: '3'
+                                                        - heading "No business promotion posts" [level=2] [ref=e304]
+                                                    - img [ref=e307]
+                                        - generic [ref=e310]:
+                                            - generic [ref=e312]: '4'
+                                            - heading "No personal attacks." [level=2] [ref=e316]
+                                        - group [ref=e318]:
+                                            - generic "5 No market research posts - not for developing apps, not for AI, not for business offerings" [ref=e319] [cursor=pointer]:
+                                                - generic [ref=e321]:
+                                                    - generic [ref=e322]:
+                                                        - generic [ref=e324]: '5'
+                                                        - heading "No market research posts - not for developing apps, not for AI, not for business offerings" [level=2] [ref=e328]
+                                                    - img [ref=e331]
+                                - separator [ref=e333]
+                                - generic [ref=e334]:
+                                    - heading "Related subreddits" [level=2] [ref=e336]:
+                                        - generic [ref=e337]: Related subreddits
+                                    - generic [ref=e339]:
+                                        - img [ref=e344]
+                                        - generic [ref=e346]:
+                                            - link "r/advancedentrepreneur" [ref=e349] [cursor=pointer]:
+                                                - /url: /r/advancedentrepreneur
+                                            - generic [ref=e350]: 73,000 members
+                                    - generic [ref=e352]:
+                                        - img [ref=e357]
+                                        - generic [ref=e359]:
+                                            - link "r/Bookkeeping" [ref=e362] [cursor=pointer]:
+                                                - /url: /r/Bookkeeping
+                                            - generic [ref=e363]: 77,762 members
+                                    - generic [ref=e365]:
+                                        - img [ref=e370]
+                                        - generic [ref=e372]:
+                                            - link "r/business" [ref=e375] [cursor=pointer]:
+                                                - /url: /r/business
+                                            - generic [ref=e376]: 2,560,735 members
+                                    - generic [ref=e383]:
+                                        - link "r/Entrepreneur" [ref=e386] [cursor=pointer]:
+                                            - /url: /r/Entrepreneur
+                                        - generic [ref=e387]: 5,160,377 members
+                                    - generic [ref=e394]:
+                                        - link "r/Entrepreneurship" [ref=e397] [cursor=pointer]:
+                                            - /url: /r/Entrepreneurship
+                                        - generic [ref=e398]: 130,653 members
+                                    - generic [ref=e405]:
+                                        - link "r/EntrepreneurRideAlong" [ref=e408] [cursor=pointer]:
+                                            - /url: /r/EntrepreneurRideAlong
+                                        - generic [ref=e409]: 684,617 members
+                                    - generic [ref=e416]:
+                                        - link "r/growmybusiness" [ref=e419] [cursor=pointer]:
+                                            - /url: /r/growmybusiness
+                                        - generic [ref=e420]: 100,104 members
+                                    - generic [ref=e422]:
+                                        - img [ref=e427]
+                                        - generic [ref=e429]:
+                                            - link "r/indiebiz" [ref=e432] [cursor=pointer]:
+                                                - /url: /r/indiebiz
+                                            - generic [ref=e433]: 36,600 members
+                                - separator [ref=e434]
+                                - generic [ref=e435]:
+                                    - heading "Small business network" [level=2] [ref=e437]:
+                                        - generic [ref=e438]: Small business network
+                                    - generic [ref=e445]:
+                                        - link "r/AdspaceMarket" [ref=e448] [cursor=pointer]:
+                                            - /url: /r/AdspaceMarket
+                                        - generic [ref=e449]: 4,683 members
+                                    - generic [ref=e456]:
+                                        - link "r/ArtisanGifts" [ref=e459] [cursor=pointer]:
+                                            - /url: /r/ArtisanGifts
+                                        - generic [ref=e460]: 196,126 members
+                                    - generic [ref=e467]:
+                                        - link "r/techsupport" [ref=e470] [cursor=pointer]:
+                                            - /url: /r/techsupport
+                                        - generic [ref=e471]: 3,365,493 members
+                                - separator [ref=e472]
+                                - generic [ref=e473]:
+                                    - heading "Location Specific Subs" [level=2] [ref=e475]:
+                                        - generic [ref=e476]: Location Specific Subs
+                                    - generic [ref=e483]:
+                                        - link "r/canadasmallbusiness" [ref=e486] [cursor=pointer]:
+                                            - /url: /r/canadasmallbusiness
+                                        - generic [ref=e487]: 20,671 members
+                                - separator [ref=e488]
+                                - generic [ref=e489]:
+                                    - heading "Moderators" [level=2] [ref=e491]:
+                                        - generic [ref=e492]: Moderators
+                                    - link "Message Mods" [ref=e494] [cursor=pointer]:
+                                        - /url: https://www.reddit.com/message/compose?to=r/smallbusiness
+                                        - generic [ref=e495]:
+                                            - img [ref=e497]
+                                            - generic [ref=e499]: Message Mods
+                                    - generic [ref=e501]:
+                                        - img "u/Charice avatar" [ref=e506]
+                                        - link "u/Charice" [ref=e510] [cursor=pointer]:
+                                            - /url: /user/Charice/
+                                    - generic [ref=e512]:
+                                        - img "u/BigSlowTarget avatar" [ref=e517]
+                                        - generic [ref=e520]:
+                                            - link "u/BigSlowTarget" [ref=e521] [cursor=pointer]:
+                                                - /url: /user/BigSlowTarget/
+                                            - 'generic "Flair: Moderator" [ref=e523]': Moderator
+                                    - generic [ref=e525]:
+                                        - img "u/purge-user avatar" [ref=e530]
+                                        - link "u/purge-user" [ref=e534] [cursor=pointer]:
+                                            - /url: /user/purge-user/
+                                    - generic [ref=e536]:
+                                        - img "u/floodassistant avatar" [ref=e541]
+                                        - link "u/floodassistant" [ref=e545] [cursor=pointer]:
+                                            - /url: /user/floodassistant/
+                                    - generic [ref=e547]:
+                                        - img "u/sub-stats-bot avatar" [ref=e552]
+                                        - link "u/sub-stats-bot" [ref=e556] [cursor=pointer]:
+                                            - /url: /user/sub-stats-bot/
+                                    - generic [ref=e558]:
+                                        - img "u/manipulation-pi avatar" [ref=e563]
+                                        - link "u/manipulation-pi" [ref=e567] [cursor=pointer]:
+                                            - /url: /user/manipulation-pi/
+                                    - generic [ref=e569]:
+                                        - img "u/admin-tattler avatar" [ref=e574]
+                                        - link "u/admin-tattler" [ref=e578] [cursor=pointer]:
+                                            - /url: /user/admin-tattler/
+                                    - generic [ref=e580]:
+                                        - img "u/spotlight-app avatar" [ref=e585]
+                                        - generic [ref=e588]:
+                                            - link "u/spotlight-app" [ref=e589] [cursor=pointer]:
+                                                - /url: /user/spotlight-app/
+                                            - 'generic "Flair: Mod Bot 🤖" [ref=e591]': Mod Bot 🤖
+                                    - generic [ref=e593]:
+                                        - img "u/bot-bouncer avatar" [ref=e598]
+                                        - link "u/bot-bouncer" [ref=e602] [cursor=pointer]:
+                                            - /url: /user/bot-bouncer/
+                                    - link "View all moderators" [ref=e603] [cursor=pointer]:
+                                        - /url: /mod/smallbusiness/moderators/
+                                        - generic [ref=e605]: View all moderators
+                                - separator [ref=e606]
+                                - generic [ref=e607]:
+                                    - heading "Installed Apps" [level=2] [ref=e609]:
+                                        - generic [ref=e610]: Installed Apps
+                                    - link "Subreddit Statistics" [ref=e611] [cursor=pointer]:
+                                        - /url: https://developers.reddit.com/apps/sub-stats-bot
+                                        - generic [ref=e614]: Subreddit Statistics
+                                        - img [ref=e617]
+                                    - link "Admin Tattler" [ref=e619] [cursor=pointer]:
+                                        - /url: https://developers.reddit.com/apps/admin-tattler
+                                        - generic [ref=e622]: Admin Tattler
+                                        - img [ref=e625]
+                                    - link "Flooding Assistant" [ref=e627] [cursor=pointer]:
+                                        - /url: https://developers.reddit.com/apps/floodassistant
+                                        - generic [ref=e630]: Flooding Assistant
+                                        - img [ref=e633]
+                                    - link "Manipulation Detector" [ref=e635] [cursor=pointer]:
+                                        - /url: https://developers.reddit.com/apps/manipulation-pi
+                                        - generic [ref=e638]: Manipulation Detector
+                                        - img [ref=e641]
+                                    - link "Spotlight" [ref=e643] [cursor=pointer]:
+                                        - /url: https://developers.reddit.com/apps/spotlight-app
+                                        - generic [ref=e646]: Spotlight
+                                        - img [ref=e649]
+                                    - link "Remove Macro" [ref=e651] [cursor=pointer]:
+                                        - /url: https://developers.reddit.com/apps/purge-user
+                                        - generic [ref=e654]: Remove Macro
+                                        - img [ref=e657]
+                                    - link "Bot Bouncer" [ref=e659] [cursor=pointer]:
+                                        - /url: https://developers.reddit.com/apps/bot-bouncer
+                                        - generic [ref=e662]: Bot Bouncer
+                                        - img [ref=e665]
+                        - generic [ref=e668]:
+                            - link "Reddit Rules" [ref=e671] [cursor=pointer]:
+                                - /url: https://www.redditinc.com/policies/content-policy
+                            - link "Privacy Policy" [ref=e674] [cursor=pointer]:
+                                - /url: https://www.reddit.com/policies/privacy-policy
+                            - link "User Agreement" [ref=e677] [cursor=pointer]:
+                                - /url: https://www.redditinc.com/policies/user-agreement
+                            - link "Accessibility" [ref=e680] [cursor=pointer]:
+                                - /url: https://support.reddithelp.com/hc/sections/38303584022676-Accessibility
+                            - link "Reddit, Inc. © 2026. All rights reserved." [ref=e682] [cursor=pointer]:
+                                - /url: https://redditinc.com
+                - button "Collapse Navigation" [ref=e687] [cursor=pointer]:
+                    - img [ref=e690]
+                    - generic [ref=e692]:
+                        - generic: Collapse Navigation

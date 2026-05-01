@@ -1,0 +1,231 @@
+- generic [active] [ref=e1]:
+    - link "Skip to main content" [ref=e2] [cursor=pointer]:
+        - /url: '#main-content'
+        - generic [ref=e4]: Skip to main content
+    - generic [ref=e6]:
+        - generic:
+            - banner [ref=e9]:
+                - navigation [ref=e10]:
+                    - link "Home" [ref=e14] [cursor=pointer]:
+                        - /url: /
+                        - img [ref=e16]
+                    - generic [ref=e29]:
+                        - img [ref=e31]
+                        - generic [ref=e33]:
+                            - img [ref=e35]
+                            - generic [ref=e37]: r/stripe
+                            - img [ref=e39]
+                        - textbox "Search in r/stripe" [ref=e42]: stripe dispute
+                    - generic [ref=e43]:
+                        - generic [ref=e44]:
+                            - link "Advertise on Reddit" [ref=e50] [cursor=pointer]:
+                                - /url: https://ads.reddit.com/register?utm_source=web3x_consumer&utm_name=nav_cta
+                                - img [ref=e53]
+                                - generic [ref=e55]:
+                                    - generic: Advertise on Reddit
+                            - button "Open chat" [ref=e63] [cursor=pointer]:
+                                - img [ref=e66]
+                                - generic [ref=e68]:
+                                    - generic: Open chat
+                            - link "Create post" [ref=e73] [cursor=pointer]:
+                                - /url: /r/stripe/submit/
+                                - generic [ref=e74]:
+                                    - img [ref=e76]
+                                    - generic [ref=e78]: Create
+                                - generic [ref=e79]:
+                                    - generic: Create post
+                            - link "Open inbox" [ref=e85] [cursor=pointer]:
+                                - /url: /notifications
+                                - img [ref=e88]
+                                - generic [ref=e90]:
+                                    - generic: Open inbox
+                        - button "Expand user menu" [ref=e95] [cursor=pointer]:
+                            - generic [ref=e102]:
+                                - generic: Expand user menu
+            - generic "stripe dispute - Reddit Search!"
+            - generic [ref=e106]:
+                - generic [ref=e107]:
+                    - generic [ref=e111]:
+                        - button "Posts" [ref=e112] [cursor=pointer]:
+                            - generic [ref=e116]: Posts
+                        - link "Comments" [ref=e117] [cursor=pointer]:
+                            - /url: /r/stripe/search/?q=stripe+dispute&type=comments&iId=f1ab13eb-b92f-4c73-a44b-070fa434c984
+                            - generic [ref=e122]: Comments
+                        - link "Media" [ref=e123] [cursor=pointer]:
+                            - /url: /r/stripe/search/?q=stripe+dispute&type=media&iId=f1ab13eb-b92f-4c73-a44b-070fa434c984
+                            - generic [ref=e128]: Media
+                    - generic [ref=e132]:
+                        - main [ref=e133]:
+                            - generic [ref=e134]:
+                                - paragraph [ref=e137]:
+                                    - text: Show results from
+                                    - link "all of Reddit" [ref=e139] [cursor=pointer]:
+                                        - /url: /search/?q=stripe+dispute
+                                    - img [ref=e141]
+                                - generic [ref=e145]:
+                                    - generic:
+                                        - heading "Disputes on Refunded Payments" [level=2]:
+                                            - link "Disputes on Refunded Payments" [ref=e146] [cursor=pointer]:
+                                                - /url: /r/stripe/comments/1srsfqy/disputes_on_refunded_payments/
+                                                - generic [ref=e147]:
+                                                    - generic: Disputes on Refunded Payments
+                                    - generic [ref=e148]:
+                                        - generic [ref=e151]:
+                                            - link "r/stripe" [ref=e154] [cursor=pointer]:
+                                                - /url: /r/stripe/
+                                                - generic [ref=e158]: r/stripe
+                                            - generic [ref=e159]: ·
+                                        - link "Disputes on Refunded Payments" [ref=e160] [cursor=pointer]:
+                                            - /url: /r/stripe/comments/1srsfqy/disputes_on_refunded_payments/
+                                        - generic [ref=e161]:
+                                            - generic [ref=e162]: votes
+                                            - text: ·
+                                            - generic [ref=e163]: comments
+                                - separator [ref=e164]
+                                - generic [ref=e167]:
+                                    - generic:
+                                        - heading "Stripe dispute team is useless" [level=2]:
+                                            - link "Stripe dispute team is useless" [ref=e168] [cursor=pointer]:
+                                                - /url: /r/stripe/comments/1skgiix/stripe_dispute_team_is_useless/
+                                                - generic [ref=e169]:
+                                                    - generic: Stripe dispute team is useless
+                                    - generic [ref=e170]:
+                                        - generic [ref=e173]:
+                                            - link "r/stripe" [ref=e176] [cursor=pointer]:
+                                                - /url: /r/stripe/
+                                                - generic [ref=e180]: r/stripe
+                                            - generic [ref=e181]: ·
+                                        - link "Stripe dispute team is useless" [ref=e182] [cursor=pointer]:
+                                            - /url: /r/stripe/comments/1skgiix/stripe_dispute_team_is_useless/
+                                        - generic [ref=e183]:
+                                            - generic [ref=e184]: vote
+                                            - text: ·
+                                            - generic [ref=e185]: comments
+                                - separator [ref=e186]
+                                - generic [ref=e189]:
+                                    - generic:
+                                        - heading "Unfair disputes are ruining businesses" [level=2]:
+                                            - link "Unfair disputes are ruining businesses" [ref=e190] [cursor=pointer]:
+                                                - /url: /r/stripe/comments/1rlyox0/unfair_disputes_are_ruining_businesses/
+                                                - generic [ref=e191]:
+                                                    - generic: Unfair disputes are ruining businesses
+                                    - generic [ref=e192]:
+                                        - generic [ref=e195]:
+                                            - link "r/stripe" [ref=e198] [cursor=pointer]:
+                                                - /url: /r/stripe/
+                                                - generic [ref=e202]: r/stripe
+                                            - generic [ref=e203]: ·
+                                        - link "Unfair disputes are ruining businesses" [ref=e204] [cursor=pointer]:
+                                            - /url: /r/stripe/comments/1rlyox0/unfair_disputes_are_ruining_businesses/
+                                        - generic [ref=e205]:
+                                            - generic [ref=e206]: votes
+                                            - text: ·
+                                            - generic [ref=e207]: comments
+                                - separator [ref=e208]
+                                - generic [ref=e211]:
+                                    - generic:
+                                        - 'heading "PSA: Accepting a Stripe dispute still costs you $15" [level=2]':
+                                            - 'link "PSA: Accepting a Stripe dispute still costs you $15" [ref=e212] [cursor=pointer]':
+                                                - /url: /r/stripe/comments/1so7dfa/psa_accepting_a_stripe_dispute_still_costs_you_15/
+                                                - generic [ref=e213]:
+                                                    - generic: 'PSA: Accepting a Stripe dispute still costs you $15'
+                                    - generic [ref=e214]:
+                                        - generic [ref=e217]:
+                                            - link "r/stripe" [ref=e220] [cursor=pointer]:
+                                                - /url: /r/stripe/
+                                                - generic [ref=e224]: r/stripe
+                                            - generic [ref=e225]: ·
+                                        - 'link "PSA: Accepting a Stripe dispute still costs you $15" [ref=e226] [cursor=pointer]':
+                                            - /url: /r/stripe/comments/1so7dfa/psa_accepting_a_stripe_dispute_still_costs_you_15/
+                                        - generic [ref=e227]:
+                                            - generic [ref=e228]: votes
+                                            - text: ·
+                                            - generic [ref=e229]: comments
+                                - separator [ref=e230]
+                                - generic [ref=e233]:
+                                    - generic:
+                                        - heading "Disputes" [level=2]:
+                                            - link "Disputes" [ref=e234] [cursor=pointer]:
+                                                - /url: /r/stripe/comments/1shbk78/disputes/
+                                                - generic [ref=e235]:
+                                                    - generic: Disputes
+                                    - generic [ref=e236]:
+                                        - generic [ref=e239]:
+                                            - link "r/stripe" [ref=e242] [cursor=pointer]:
+                                                - /url: /r/stripe/
+                                                - generic [ref=e246]: r/stripe
+                                            - generic [ref=e247]: ·
+                                        - link "Disputes" [ref=e248] [cursor=pointer]:
+                                            - /url: /r/stripe/comments/1shbk78/disputes/
+                                        - generic [ref=e249]:
+                                            - generic [ref=e250]: votes
+                                            - text: ·
+                                            - generic [ref=e251]: comments
+                                - separator [ref=e252]
+                                - generic [ref=e255]:
+                                    - generic:
+                                        - heading "Lost over €1,000 to disputes, Stripe banned my account — need urgent advice & alternatives" [level=2]:
+                                            - link "Lost over €1,000 to disputes, Stripe banned my account — need urgent advice & alternatives" [ref=e256] [cursor=pointer]:
+                                                - /url: /r/stripe/comments/1mmbjwb/lost_over_1000_to_disputes_stripe_banned_my/
+                                                - generic [ref=e257]:
+                                                    - generic: Lost over €1,000 to disputes, Stripe banned my account — need urgent advice & alternatives
+                                    - generic [ref=e258]:
+                                        - generic [ref=e261]:
+                                            - link "r/stripe" [ref=e264] [cursor=pointer]:
+                                                - /url: /r/stripe/
+                                                - generic [ref=e268]: r/stripe
+                                            - generic [ref=e269]: ·
+                                        - link "Lost over €1,000 to disputes, Stripe banned my account — need urgent advice & alternatives" [ref=e270] [cursor=pointer]:
+                                            - /url: /r/stripe/comments/1mmbjwb/lost_over_1000_to_disputes_stripe_banned_my/
+                                        - generic [ref=e271]:
+                                            - generic [ref=e272]: votes
+                                            - text: ·
+                                            - generic [ref=e273]: comments
+                                - separator [ref=e274]
+                                - generic [ref=e277]:
+                                    - generic:
+                                        - heading "false dispute lost" [level=2]:
+                                            - link "false dispute lost" [ref=e278] [cursor=pointer]:
+                                                - /url: /r/stripe/comments/1sit2ch/false_dispute_lost/
+                                                - generic [ref=e279]:
+                                                    - generic: false dispute lost
+                                    - generic [ref=e280]:
+                                        - generic [ref=e283]:
+                                            - link "r/stripe" [ref=e286] [cursor=pointer]:
+                                                - /url: /r/stripe/
+                                                - generic [ref=e290]: r/stripe
+                                            - generic [ref=e291]: ·
+                                        - link "false dispute lost" [ref=e292] [cursor=pointer]:
+                                            - /url: /r/stripe/comments/1sit2ch/false_dispute_lost/
+                                        - generic [ref=e293]:
+                                            - generic [ref=e294]: votes
+                                            - text: ·
+                                            - generic [ref=e295]: comments
+                                - separator [ref=e296]
+                                - generic [ref=e298]:
+                                    - generic:
+                                        - article [ref=e299]:
+                                            - separator [ref=e311]
+                                        - article [ref=e312]:
+                                            - separator [ref=e324]
+                                        - article [ref=e325]:
+                                            - separator [ref=e337]
+                        - generic [ref=e338]:
+                            - generic [ref=e342]:
+                                - generic [ref=e361]: 30K
+                                - generic [ref=e362]: '452'
+                            - generic [ref=e364]:
+                                - link "Reddit Rules" [ref=e367] [cursor=pointer]:
+                                    - /url: https://www.redditinc.com/policies/content-policy
+                                - link "Privacy Policy" [ref=e370] [cursor=pointer]:
+                                    - /url: https://www.reddit.com/policies/privacy-policy
+                                - link "User Agreement" [ref=e373] [cursor=pointer]:
+                                    - /url: https://www.redditinc.com/policies/user-agreement
+                                - link "Accessibility" [ref=e376] [cursor=pointer]:
+                                    - /url: https://support.reddithelp.com/hc/sections/38303584022676-Accessibility
+                                - link "Reddit, Inc. © 2026. All rights reserved." [ref=e378] [cursor=pointer]:
+                                    - /url: https://redditinc.com
+                - button "Collapse Navigation" [ref=e383] [cursor=pointer]:
+                    - img [ref=e386]
+                    - generic [ref=e388]:
+                        - generic: Collapse Navigation

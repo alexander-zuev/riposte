@@ -1,0 +1,1151 @@
+- generic [active] [ref=e1]:
+    - link "Skip to main content" [ref=e2] [cursor=pointer]:
+        - /url: '#main-content'
+        - generic [ref=e4]: Skip to main content
+    - generic [ref=e6]:
+        - generic:
+            - generic [ref=e7]:
+                - generic: 'Why does fighting a chargeback feel like arguing with someone who literally cannot lose? : r/ecommerce'
+            - banner [ref=e10]:
+                - navigation [ref=e11]:
+                    - link "Home" [ref=e15] [cursor=pointer]:
+                        - /url: /
+                        - img [ref=e17]
+                    - search [ref=e33]:
+                        - generic [ref=e35]:
+                            - img [ref=e38]
+                            - generic "Remove r/ecommerce filter and expand search to all of Reddit" [ref=e41] [cursor=pointer]:
+                                - button [pressed] [ref=e42]:
+                                    - generic [ref=e46]: r/ecommerce
+                                    - img [ref=e48]
+                            - textbox "Remove r/ecommerce filter and expand search to all of Reddit" [ref=e51]:
+                                - /placeholder: Search in r/ecommerce
+                    - generic [ref=e52]:
+                        - generic [ref=e53]:
+                            - link "Advertise on Reddit" [ref=e59] [cursor=pointer]:
+                                - /url: https://ads.reddit.com/register?utm_source=web3x_consumer&utm_name=nav_cta
+                                - img [ref=e62]
+                                - generic [ref=e64]:
+                                    - generic: Advertise on Reddit
+                            - button "Open chat" [ref=e70] [cursor=pointer]:
+                                - img [ref=e73]
+                                - generic [ref=e75]:
+                                    - generic: Open chat
+                            - link "Create post" [ref=e80] [cursor=pointer]:
+                                - /url: /r/ecommerce/submit/
+                                - generic [ref=e81]:
+                                    - img [ref=e83]
+                                    - generic [ref=e85]: Create
+                                - generic [ref=e86]:
+                                    - generic: Create post
+                            - link "Open inbox" [ref=e90] [cursor=pointer]:
+                                - /url: /notifications
+                                - img [ref=e93]
+                                - generic [ref=e95]:
+                                    - generic: Open inbox
+                        - button "User Avatar Expand user menu" [ref=e100] [cursor=pointer]:
+                            - img "User Avatar" [ref=e108]
+                            - generic [ref=e110]:
+                                - generic: Expand user menu
+            - generic [ref=e111]:
+                - generic [ref=e112]:
+                    - generic [ref=e113]:
+                        - generic:
+                            - generic:
+                                - link "Skip to Navigation" [ref=e114] [cursor=pointer]:
+                                    - /url: '#left-sidebar-container'
+                                - link "Skip to Right Sidebar" [ref=e115] [cursor=pointer]:
+                                    - /url: '#right-sidebar-container'
+                    - generic [ref=e116]:
+                        - main [ref=e117]:
+                            - 'generic "Why does fighting a chargeback feel like arguing with someone who literally cannot lose? : r/ecommerce"'
+                            - generic [ref=e118]:
+                                - generic [ref=e119]:
+                                    - generic [ref=e120]:
+                                        - button "Back" [ref=e122] [cursor=pointer]:
+                                            - img [ref=e125]
+                                            - generic [ref=e127]:
+                                                - generic: Back
+                                        - link "Go to ecommerce" [ref=e130] [cursor=pointer]:
+                                            - /url: /r/ecommerce/
+                                            - generic [ref=e134]:
+                                                - generic: Go to ecommerce
+                                        - group [ref=e135]:
+                                            - generic [ref=e136]:
+                                                - link "r/ecommerce" [ref=e140] [cursor=pointer]:
+                                                    - /url: /r/ecommerce/
+                                                - generic [ref=e141]: •
+                                                - time [ref=e142]: 1mo ago
+                                            - 'link "Author: Different-Layer-1338" [ref=e148] [cursor=pointer]':
+                                                - /url: /user/Different-Layer-1338/
+                                                - generic [ref=e149]: Different-Layer-1338
+                                    - button "Open user actions" [ref=e153] [cursor=pointer]:
+                                        - img [ref=e156]
+                                - generic [ref=e159]:
+                                    - 'heading "Post Title: Why does fighting a chargeback feel like arguing with someone who literally cannot lose?" [level=1] [ref=e160]': Why does fighting a chargeback feel like arguing with someone who literally cannot lose?
+                                    - 'link "Flair: 📊 Business" [ref=e163] [cursor=pointer]':
+                                        - /url: /r/ecommerce/?f=flair_name%3A%22%F0%9F%93%8A%20Business%22
+                                        - 'generic "Flair: 📊 Business" [ref=e165]': 📊 Business
+                                - generic [ref=e169]:
+                                    - paragraph [ref=e170]: Serious question and i need to know if this is just me or if everyone else dealing with online payments has accepted this as their permanent reality. got hit with a chargeback last week on a legitimate order that was delivered and signed for. customer dispute says item never arrived even though tracking shows otherwise. so i uploaded the tracking data, the signature, the invoice, photographs of the item being packed. everything. submitted it all through the payment processor as instructed.
+                                    - paragraph [ref=e171]: they came back two weeks later saying the chargeback was approved anyway. essentially told me nope, customer wins, you lose the money, too bad.
+                                    - paragraph [ref=e172]: when i asked what else they needed i got a canned response about how chargeback decisions are final and theres nothing more i could provide that would change it. literally nothing.
+                                    - paragraph [ref=e173]: so now im sitting here trying to understand the logic of a system where someone can make a claim, i can prove it wrong with actual documentation, and the outcome is still that i lose. wheres the part where evidence matters?
+                                    - paragraph [ref=e174]: i've gotten chargeback alerts set up to notify me faster now but honestly it feels like that only lets me panic sooner about something i apparently have zero control over anyway.
+                                    - paragraph [ref=e175]: do people actually win these things or is it just a tax on doing business online that everyone pretends is avoidable. because from where im sitting it looks like once someone files a dispute the decision is already made and i'm just going through a theater of providing evidence nobody will read.
+                                - generic "Actions available for this post" [ref=e176]:
+                                    - generic [ref=e179]:
+                                        - button "Upvote" [ref=e180] [cursor=pointer]:
+                                            - img [ref=e182]
+                                            - generic [ref=e184]:
+                                                - generic: Upvote
+                                        - generic [ref=e186]: '21'
+                                        - button "Downvote" [ref=e187] [cursor=pointer]:
+                                            - img [ref=e189]
+                                            - generic [ref=e191]:
+                                                - generic: Downvote
+                                    - button "43 Go to comments" [ref=e192] [cursor=pointer]:
+                                        - generic [ref=e193]:
+                                            - img [ref=e195]
+                                            - generic [ref=e198]: '43'
+                                        - generic [ref=e199]:
+                                            - generic: Go to comments
+                                    - button "Give award" [ref=e201] [cursor=pointer]:
+                                        - img [ref=e204]
+                                    - button "Share" [ref=e209] [cursor=pointer]:
+                                        - generic [ref=e210]:
+                                            - img [ref=e212]
+                                            - generic [ref=e215]: Share
+                            - generic "Estimate your total cost of ownership on WooCommerce." [ref=e216]:
+                                - generic [ref=e217]:
+                                    - 'generic "Advertisement: Estimate your total cost of ownership on WooCommerce." [ref=e218]':
+                                        - 'link "Advertisement: Estimate your total cost of ownership on WooCommerce." [ref=e219] [cursor=pointer]':
+                                            - /url: https://alb.reddit.com/cr?za=uq8QE_I4InWZo-DduIXl4DDEcgYRivyP_EVdTorDuduEg8YOhRfDLHZJXJuHQ6R3kBHy9T1YXtmTXaeC4mphka0A6sjcVNZAc02SbemH7oGgq88LYA1Qh8RDqtaISbrUIskwJd_nmaGZbETAYt48q4KfN9t-buw9oT4AqymJfE_IMQQQlficDGw6FD2YrDgYErAKJjWJCtVTB8O2WWtOrpe4DzTJfmoLiQwaC-ysr2PLwWnRsN5qn_41cB8A7XrJORSyx-ZOniN4AeISLqHVdcPDpptTy1Cou-g83F9emHYFJfagpUWoQDROEe8sgpw7zip7FJHO9cq3ZRIOIs-QNBgrzKXYX6folsJ0pDdAFqa_tREoqzcuRu3wisVRGNwoGOKHCTa9D47RgI-2DsvSa0c6_JVOPLh14ZYR8tFLF19gijNcfIIIRJW8bwciuJlr5HTp6Vk_cpkJ1xmwHSrzZxSL4PHMA80syqJ49gTPe1JIihkK6vJXWkNDewvP5jWwNXeRtiFyM4Y6XCU-elW1l8U6JHnu00bzdDT0YAb26QpgSQTV9Ig9xtxh6HPEY0rIvauFJkVEruWaM2K2xmzj1q3Ei0qltEVnpqfFFGi9XClNXkObkb6V4WI3a6-XVanYI6FXnIrotPsv632tI7MDt4R0pNJin0FrdPGSrJItuHUQHF_vzI-5995obzBoL9EkYHo_MBani8eNiUVws18Wl1om5ucwgJyp1Nu4R42uZ8IULHnogvHm3zVcYA114fGEnwOLmv6GiwUMn-ZtuyYLOvyYIuV_E51dVC-AaZ8ZBGIpr2esCWw2MeAE-HMSKJ3z6u4phE844QvOv5RMC-noOimt-ra-7qkXy8Kyf9HipwZIftjQt_D_g2OktKON8LwHVeD15cb1DTk1WMxgU_XV7dnwYjU3oNGTi2MENxni3nh_jKg-RY1W4OiiwDIc0BsE-Uszv_Gw5y4EGx2xOyEJ5kKUUpM-t-pkjNG5DDNSA70j68zLTBashmeRpOEc56KJZpv8Ih9JhZ95IfZ77_EcfgHveLvrksq3I-holVG3YHn7uWd8k2Nqur6j_eSTCvLCFcIoL3HzQjqtV-IsVQoFVH24PF0csvYV-mMyerpdMolYwDSRDFwHf44u8cLAM3L0mWrWdz1VxYJZjjCndbv5zuV4dwZP1GDJVEjX0fboo61TeIpux2tqqKDDQi8K764HodwDe3z2IyCTNqJNXd38ZqRCaSxQ0A_CSeDuThhIKOvAjJTkpQK7p-rcfnYjFkP7ZFWInHAA05tRcDpE3p9JA3a5dJa307eF6jmBIPoCWfvn2LkGdKgU1euPujNzmvhx3XHwXCk-5Fc34245WGRhffVfKqSniw0S8jP7G9cN_HWLxHFWlQU3Rl_zXKutkS6c6FKuzyF0lfmn1yQMFT3m7qmUigpDEt8&zp=Sedrq8vj-s8cpfxEOh9LN7OWltzKTEHfnh7DrxNWdg79TGK_i6tm-adLNRsUoBoYSD_g_uxPhjlgoiFurA7EwLS3KUZmiAgE7Is7CwHiWQd7lB_H0J-JkOJt3aNZcG5ILZTP19Q3PgK4hfWQR8qPcZDWSV2h4BqjjNl_lZLeQ0KxKrE9Y7oFb7JptOCVgtNB1hyIpHHGimP6aj9mK7Yi2rEbx4TsnzEkLP8OOtW8xMNQlpiuWjPSPro9zPSEMvddvdpSsCA6mRp9XTg9VmFFks2Q1yrWDTPCNjrWVJwICxiNi7bC0QMkPAoDLu427x43_ejJdVxJjz6gG3Oax7Lc2Z4t6MPugl8ZyvoGdz7J4KIjb28ZS9D64n6GyZqztTKdF2N0IpmCPp44mOLuUDm_VDaCiw2ZkY6kuco
+                                    - generic [ref=e220]:
+                                        - generic [ref=e221]:
+                                            - link "u/woocommerce-ads avatar woocommerce-ads" [ref=e224] [cursor=pointer]:
+                                                - /url: /user/woocommerce-ads/
+                                                - img "u/woocommerce-ads avatar" [ref=e227]
+                                                - generic [ref=e228]: woocommerce-ads
+                                            - generic [ref=e229]: •
+                                            - link "Promoted" [ref=e231] [cursor=pointer]:
+                                                - /url: /user/woocommerce-ads/
+                                                - generic [ref=e232]: Promoted
+                                            - link [ref=e234] [cursor=pointer]:
+                                                - /url: https://alb.reddit.com/cr?za=uq8QE_I4InWZo-DduIXl4DDEcgYRivyP_EVdTorDuduEg8YOhRfDLHZJXJuHQ6R3kBHy9T1YXtmTXaeC4mphka0A6sjcVNZAc02SbemH7oGgq88LYA1Qh8RDqtaISbrUIskwJd_nmaGZbETAYt48q4KfN9t-buw9oT4AqymJfE_IMQQQlficDGw6FD2YrDgYErAKJjWJCtVTB8O2WWtOrpe4DzTJfmoLiQwaC-ysr2PLwWnRsN5qn_41cB8A7XrJORSyx-ZOniN4AeISLqHVdcPDpptTy1Cou-g83F9emHYFJfagpUWoQDROEe8sgpw7zip7FJHO9cq3ZRIOIs-QNBgrzKXYX6folsJ0pDdAFqa_tREoqzcuRu3wisVRGNwoGOKHCTa9D47RgI-2DsvSa0c6_JVOPLh14ZYR8tFLF19gijNcfIIIRJW8bwciuJlr5HTp6Vk_cpkJ1xmwHSrzZxSL4PHMA80syqJ49gTPe1JIihkK6vJXWkNDewvP5jWwNXeRtiFyM4Y6XCU-elW1l8U6JHnu00bzdDT0YAb26QpgSQTV9Ig9xtxh6HPEY0rIvauFJkVEruWaM2K2xmzj1q3Ei0qltEVnpqfFFGi9XClNXkObkb6V4WI3a6-XVanYI6FXnIrotPsv632tI7MDt4R0pNJin0FrdPGSrJItuHUQHF_vzI-5995obzBoL9EkYHo_MBani8eNiUVws18Wl1om5ucwgJyp1Nu4R42uZ8IULHnogvHm3zVcYA114fGEnwOLmv6GiwUMn-ZtuyYLOvyYIuV_E51dVC-AaZ8ZBGIpr2esCWw2MeAE-HMSKJ3z6u4phE844QvOv5RMC-noOimt-ra-7qkXy8Kyf9HipwZIftjQt_D_g2OktKON8LwHVeD15cb1DTk1WMxgU_XV7dnwYjU3oNGTi2MENxni3nh_jKg-RY1W4OiiwDIc0BsE-Uszv_Gw5y4EGx2xOyEJ5kKUUpM-t-pkjNG5DDNSA70j68zLTBashmeRpOEc56KJZpv8Ih9JhZ95IfZ77_EcfgHveLvrksq3I-holVG3YHn7uWd8k2Nqur6j_eSTCvLCFcIoL3HzQjqtV-IsVQoFVH24PF0csvYV-mMyerpdMolYwDSRDFwHf44u8cLAM3L0mWrWdz1VxYJZjjCndbv5zuV4dwZP1GDJVEjX0fboo61TeIpux2tqqKDDQi8K764HodwDe3z2IyCTNqJNXd38ZqRCaSxQ0A_CSeDuThhIKOvAjJTkpQK7p-rcfnYjFkP7ZFWInHAA05tRcDpE3p9JA3a5dJa307eF6jmBIPoCWfvn2LkGdKgU1euPujNzmvhx3XHwXCk-5Fc34245WGRhffVfKqSniw0S8jP7G9cN_HWLxHFWlQU3Rl_zXKutkS6c6FKuzyF0lfmn1yQMFT3m7qmUigpDEt8&zp=Sedrq8vj-s8cpfxEOh9LN7OWltzKTEHfnh7DrxNWdg79TGK_i6tm-adLNRsUoBoYSD_g_uxPhjlgoiFurA7EwLS3KUZmiAgE7Is7CwHiWQd7lB_H0J-JkOJt3aNZcG5ILZTP19Q3PgK4hfWQR8qPcZDWSV2h4BqjjNl_lZLeQ0KxKrE9Y7oFb7JptOCVgtNB1hyIpHHGimP6aj9mK7Yi2rEbx4TsnzEkLP8OOtW8xMNQlpiuWjPSPro9zPSEMvddvdpSsCA6mRp9XTg9VmFFks2Q1yrWDTPCNjrWVJwICxiNi7bC0QMkPAoDLu427x43_ejJdVxJjz6gG3Oax7Lc2Z4t6MPugl8ZyvoGdz7J4KIjb28ZS9D64n6GyZqztTKdF2N0IpmCPp44mOLuUDm_VDaCiw2ZkY6kuco
+                                        - button "Open user actions" [ref=e239] [cursor=pointer]:
+                                            - img [ref=e242]
+                                    - generic [ref=e245]:
+                                        - generic [ref=e246]:
+                                            - link "Estimate your total cost of ownership on WooCommerce." [ref=e248] [cursor=pointer]:
+                                                - /url: https://alb.reddit.com/cr?za=uq8QE_I4InWZo-DduIXl4DDEcgYRivyP_EVdTorDuduEg8YOhRfDLHZJXJuHQ6R3kBHy9T1YXtmTXaeC4mphka0A6sjcVNZAc02SbemH7oGgq88LYA1Qh8RDqtaISbrUIskwJd_nmaGZbETAYt48q4KfN9t-buw9oT4AqymJfE_IMQQQlficDGw6FD2YrDgYErAKJjWJCtVTB8O2WWtOrpe4DzTJfmoLiQwaC-ysr2PLwWnRsN5qn_41cB8A7XrJORSyx-ZOniN4AeISLqHVdcPDpptTy1Cou-g83F9emHYFJfagpUWoQDROEe8sgpw7zip7FJHO9cq3ZRIOIs-QNBgrzKXYX6folsJ0pDdAFqa_tREoqzcuRu3wisVRGNwoGOKHCTa9D47RgI-2DsvSa0c6_JVOPLh14ZYR8tFLF19gijNcfIIIRJW8bwciuJlr5HTp6Vk_cpkJ1xmwHSrzZxSL4PHMA80syqJ49gTPe1JIihkK6vJXWkNDewvP5jWwNXeRtiFyM4Y6XCU-elW1l8U6JHnu00bzdDT0YAb26QpgSQTV9Ig9xtxh6HPEY0rIvauFJkVEruWaM2K2xmzj1q3Ei0qltEVnpqfFFGi9XClNXkObkb6V4WI3a6-XVanYI6FXnIrotPsv632tI7MDt4R0pNJin0FrdPGSrJItuHUQHF_vzI-5995obzBoL9EkYHo_MBani8eNiUVws18Wl1om5ucwgJyp1Nu4R42uZ8IULHnogvHm3zVcYA114fGEnwOLmv6GiwUMn-ZtuyYLOvyYIuV_E51dVC-AaZ8ZBGIpr2esCWw2MeAE-HMSKJ3z6u4phE844QvOv5RMC-noOimt-ra-7qkXy8Kyf9HipwZIftjQt_D_g2OktKON8LwHVeD15cb1DTk1WMxgU_XV7dnwYjU3oNGTi2MENxni3nh_jKg-RY1W4OiiwDIc0BsE-Uszv_Gw5y4EGx2xOyEJ5kKUUpM-t-pkjNG5DDNSA70j68zLTBashmeRpOEc56KJZpv8Ih9JhZ95IfZ77_EcfgHveLvrksq3I-holVG3YHn7uWd8k2Nqur6j_eSTCvLCFcIoL3HzQjqtV-IsVQoFVH24PF0csvYV-mMyerpdMolYwDSRDFwHf44u8cLAM3L0mWrWdz1VxYJZjjCndbv5zuV4dwZP1GDJVEjX0fboo61TeIpux2tqqKDDQi8K764HodwDe3z2IyCTNqJNXd38ZqRCaSxQ0A_CSeDuThhIKOvAjJTkpQK7p-rcfnYjFkP7ZFWInHAA05tRcDpE3p9JA3a5dJa307eF6jmBIPoCWfvn2LkGdKgU1euPujNzmvhx3XHwXCk-5Fc34245WGRhffVfKqSniw0S8jP7G9cN_HWLxHFWlQU3Rl_zXKutkS6c6FKuzyF0lfmn1yQMFT3m7qmUigpDEt8&zp=Sedrq8vj-s8cpfxEOh9LN7OWltzKTEHfnh7DrxNWdg79TGK_i6tm-adLNRsUoBoYSD_g_uxPhjlgoiFurA7EwLS3KUZmiAgE7Is7CwHiWQd7lB_H0J-JkOJt3aNZcG5ILZTP19Q3PgK4hfWQR8qPcZDWSV2h4BqjjNl_lZLeQ0KxKrE9Y7oFb7JptOCVgtNB1hyIpHHGimP6aj9mK7Yi2rEbx4TsnzEkLP8OOtW8xMNQlpiuWjPSPro9zPSEMvddvdpSsCA6mRp9XTg9VmFFks2Q1yrWDTPCNjrWVJwICxiNi7bC0QMkPAoDLu427x43_ejJdVxJjz6gG3Oax7Lc2Z4t6MPugl8ZyvoGdz7J4KIjb28ZS9D64n6GyZqztTKdF2N0IpmCPp44mOLuUDm_VDaCiw2ZkY6kuco
+                                                - generic: Estimate your total cost of ownership on WooCommerce.
+                                            - link "Popular with redditors" [ref=e250] [cursor=pointer]:
+                                                - /url: https://alb.reddit.com/cr?za=uq8QE_I4InWZo-DduIXl4DDEcgYRivyP_EVdTorDuduEg8YOhRfDLHZJXJuHQ6R3kBHy9T1YXtmTXaeC4mphka0A6sjcVNZAc02SbemH7oGgq88LYA1Qh8RDqtaISbrUIskwJd_nmaGZbETAYt48q4KfN9t-buw9oT4AqymJfE_IMQQQlficDGw6FD2YrDgYErAKJjWJCtVTB8O2WWtOrpe4DzTJfmoLiQwaC-ysr2PLwWnRsN5qn_41cB8A7XrJORSyx-ZOniN4AeISLqHVdcPDpptTy1Cou-g83F9emHYFJfagpUWoQDROEe8sgpw7zip7FJHO9cq3ZRIOIs-QNBgrzKXYX6folsJ0pDdAFqa_tREoqzcuRu3wisVRGNwoGOKHCTa9D47RgI-2DsvSa0c6_JVOPLh14ZYR8tFLF19gijNcfIIIRJW8bwciuJlr5HTp6Vk_cpkJ1xmwHSrzZxSL4PHMA80syqJ49gTPe1JIihkK6vJXWkNDewvP5jWwNXeRtiFyM4Y6XCU-elW1l8U6JHnu00bzdDT0YAb26QpgSQTV9Ig9xtxh6HPEY0rIvauFJkVEruWaM2K2xmzj1q3Ei0qltEVnpqfFFGi9XClNXkObkb6V4WI3a6-XVanYI6FXnIrotPsv632tI7MDt4R0pNJin0FrdPGSrJItuHUQHF_vzI-5995obzBoL9EkYHo_MBani8eNiUVws18Wl1om5ucwgJyp1Nu4R42uZ8IULHnogvHm3zVcYA114fGEnwOLmv6GiwUMn-ZtuyYLOvyYIuV_E51dVC-AaZ8ZBGIpr2esCWw2MeAE-HMSKJ3z6u4phE844QvOv5RMC-noOimt-ra-7qkXy8Kyf9HipwZIftjQt_D_g2OktKON8LwHVeD15cb1DTk1WMxgU_XV7dnwYjU3oNGTi2MENxni3nh_jKg-RY1W4OiiwDIc0BsE-Uszv_Gw5y4EGx2xOyEJ5kKUUpM-t-pkjNG5DDNSA70j68zLTBashmeRpOEc56KJZpv8Ih9JhZ95IfZ77_EcfgHveLvrksq3I-holVG3YHn7uWd8k2Nqur6j_eSTCvLCFcIoL3HzQjqtV-IsVQoFVH24PF0csvYV-mMyerpdMolYwDSRDFwHf44u8cLAM3L0mWrWdz1VxYJZjjCndbv5zuV4dwZP1GDJVEjX0fboo61TeIpux2tqqKDDQi8K764HodwDe3z2IyCTNqJNXd38ZqRCaSxQ0A_CSeDuThhIKOvAjJTkpQK7p-rcfnYjFkP7ZFWInHAA05tRcDpE3p9JA3a5dJa307eF6jmBIPoCWfvn2LkGdKgU1euPujNzmvhx3XHwXCk-5Fc34245WGRhffVfKqSniw0S8jP7G9cN_HWLxHFWlQU3Rl_zXKutkS6c6FKuzyF0lfmn1yQMFT3m7qmUigpDEt8&zp=Sedrq8vj-s8cpfxEOh9LN7OWltzKTEHfnh7DrxNWdg79TGK_i6tm-adLNRsUoBoYSD_g_uxPhjlgoiFurA7EwLS3KUZmiAgE7Is7CwHiWQd7lB_H0J-JkOJt3aNZcG5ILZTP19Q3PgK4hfWQR8qPcZDWSV2h4BqjjNl_lZLeQ0KxKrE9Y7oFb7JptOCVgtNB1hyIpHHGimP6aj9mK7Yi2rEbx4TsnzEkLP8OOtW8xMNQlpiuWjPSPro9zPSEMvddvdpSsCA6mRp9XTg9VmFFks2Q1yrWDTPCNjrWVJwICxiNi7bC0QMkPAoDLu427x43_ejJdVxJjz6gG3Oax7Lc2Z4t6MPugl8ZyvoGdz7J4KIjb28ZS9D64n6GyZqztTKdF2N0IpmCPp44mOLuUDm_VDaCiw2ZkY6kuco
+                                                - generic [ref=e251]: Popular with redditors
+                                            - generic [ref=e252]:
+                                                - link [ref=e254] [cursor=pointer]:
+                                                    - /url: https://alb.reddit.com/cr?za=uq8QE_I4InWZo-DduIXl4DDEcgYRivyP_EVdTorDuduEg8YOhRfDLHZJXJuHQ6R3kBHy9T1YXtmTXaeC4mphka0A6sjcVNZAc02SbemH7oGgq88LYA1Qh8RDqtaISbrUIskwJd_nmaGZbETAYt48q4KfN9t-buw9oT4AqymJfE_IMQQQlficDGw6FD2YrDgYErAKJjWJCtVTB8O2WWtOrpe4DzTJfmoLiQwaC-ysr2PLwWnRsN5qn_41cB8A7XrJORSyx-ZOniN4AeISLqHVdcPDpptTy1Cou-g83F9emHYFJfagpUWoQDROEe8sgpw7zip7FJHO9cq3ZRIOIs-QNBgrzKXYX6folsJ0pDdAFqa_tREoqzcuRu3wisVRGNwoGOKHCTa9D47RgI-2DsvSa0c6_JVOPLh14ZYR8tFLF19gijNcfIIIRJW8bwciuJlr5HTp6Vk_cpkJ1xmwHSrzZxSL4PHMA80syqJ49gTPe1JIihkK6vJXWkNDewvP5jWwNXeRtiFyM4Y6XCU-elW1l8U6JHnu00bzdDT0YAb26QpgSQTV9Ig9xtxh6HPEY0rIvauFJkVEruWaM2K2xmzj1q3Ei0qltEVnpqfFFGi9XClNXkObkb6V4WI3a6-XVanYI6FXnIrotPsv632tI7MDt4R0pNJin0FrdPGSrJItuHUQHF_vzI-5995obzBoL9EkYHo_MBani8eNiUVws18Wl1om5ucwgJyp1Nu4R42uZ8IULHnogvHm3zVcYA114fGEnwOLmv6GiwUMn-ZtuyYLOvyYIuV_E51dVC-AaZ8ZBGIpr2esCWw2MeAE-HMSKJ3z6u4phE844QvOv5RMC-noOimt-ra-7qkXy8Kyf9HipwZIftjQt_D_g2OktKON8LwHVeD15cb1DTk1WMxgU_XV7dnwYjU3oNGTi2MENxni3nh_jKg-RY1W4OiiwDIc0BsE-Uszv_Gw5y4EGx2xOyEJ5kKUUpM-t-pkjNG5DDNSA70j68zLTBashmeRpOEc56KJZpv8Ih9JhZ95IfZ77_EcfgHveLvrksq3I-holVG3YHn7uWd8k2Nqur6j_eSTCvLCFcIoL3HzQjqtV-IsVQoFVH24PF0csvYV-mMyerpdMolYwDSRDFwHf44u8cLAM3L0mWrWdz1VxYJZjjCndbv5zuV4dwZP1GDJVEjX0fboo61TeIpux2tqqKDDQi8K764HodwDe3z2IyCTNqJNXd38ZqRCaSxQ0A_CSeDuThhIKOvAjJTkpQK7p-rcfnYjFkP7ZFWInHAA05tRcDpE3p9JA3a5dJa307eF6jmBIPoCWfvn2LkGdKgU1euPujNzmvhx3XHwXCk-5Fc34245WGRhffVfKqSniw0S8jP7G9cN_HWLxHFWlQU3Rl_zXKutkS6c6FKuzyF0lfmn1yQMFT3m7qmUigpDEt8&zp=Sedrq8vj-s8cpfxEOh9LN7OWltzKTEHfnh7DrxNWdg79TGK_i6tm-adLNRsUoBoYSD_g_uxPhjlgoiFurA7EwLS3KUZmiAgE7Is7CwHiWQd7lB_H0J-JkOJt3aNZcG5ILZTP19Q3PgK4hfWQR8qPcZDWSV2h4BqjjNl_lZLeQ0KxKrE9Y7oFb7JptOCVgtNB1hyIpHHGimP6aj9mK7Yi2rEbx4TsnzEkLP8OOtW8xMNQlpiuWjPSPro9zPSEMvddvdpSsCA6mRp9XTg9VmFFks2Q1yrWDTPCNjrWVJwICxiNi7bC0QMkPAoDLu427x43_ejJdVxJjz6gG3Oax7Lc2Z4t6MPugl8ZyvoGdz7J4KIjb28ZS9D64n6GyZqztTKdF2N0IpmCPp44mOLuUDm_VDaCiw2ZkY6kuco
+                                                - generic [ref=e255]:
+                                                    - link "Learn More" [ref=e257] [cursor=pointer]:
+                                                        - /url: https://alb.reddit.com/cr?za=uq8QE_I4InWZo-DduIXl4DDEcgYRivyP_EVdTorDuduEg8YOhRfDLHZJXJuHQ6R3kBHy9T1YXtmTXaeC4mphka0A6sjcVNZAc02SbemH7oGgq88LYA1Qh8RDqtaISbrUIskwJd_nmaGZbETAYt48q4KfN9t-buw9oT4AqymJfE_IMQQQlficDGw6FD2YrDgYErAKJjWJCtVTB8O2WWtOrpe4DzTJfmoLiQwaC-ysr2PLwWnRsN5qn_41cB8A7XrJORSyx-ZOniN4AeISLqHVdcPDpptTy1Cou-g83F9emHYFJfagpUWoQDROEe8sgpw7zip7FJHO9cq3ZRIOIs-QNBgrzKXYX6folsJ0pDdAFqa_tREoqzcuRu3wisVRGNwoGOKHCTa9D47RgI-2DsvSa0c6_JVOPLh14ZYR8tFLF19gijNcfIIIRJW8bwciuJlr5HTp6Vk_cpkJ1xmwHSrzZxSL4PHMA80syqJ49gTPe1JIihkK6vJXWkNDewvP5jWwNXeRtiFyM4Y6XCU-elW1l8U6JHnu00bzdDT0YAb26QpgSQTV9Ig9xtxh6HPEY0rIvauFJkVEruWaM2K2xmzj1q3Ei0qltEVnpqfFFGi9XClNXkObkb6V4WI3a6-XVanYI6FXnIrotPsv632tI7MDt4R0pNJin0FrdPGSrJItuHUQHF_vzI-5995obzBoL9EkYHo_MBani8eNiUVws18Wl1om5ucwgJyp1Nu4R42uZ8IULHnogvHm3zVcYA114fGEnwOLmv6GiwUMn-ZtuyYLOvyYIuV_E51dVC-AaZ8ZBGIpr2esCWw2MeAE-HMSKJ3z6u4phE844QvOv5RMC-noOimt-ra-7qkXy8Kyf9HipwZIftjQt_D_g2OktKON8LwHVeD15cb1DTk1WMxgU_XV7dnwYjU3oNGTi2MENxni3nh_jKg-RY1W4OiiwDIc0BsE-Uszv_Gw5y4EGx2xOyEJ5kKUUpM-t-pkjNG5DDNSA70j68zLTBashmeRpOEc56KJZpv8Ih9JhZ95IfZ77_EcfgHveLvrksq3I-holVG3YHn7uWd8k2Nqur6j_eSTCvLCFcIoL3HzQjqtV-IsVQoFVH24PF0csvYV-mMyerpdMolYwDSRDFwHf44u8cLAM3L0mWrWdz1VxYJZjjCndbv5zuV4dwZP1GDJVEjX0fboo61TeIpux2tqqKDDQi8K764HodwDe3z2IyCTNqJNXd38ZqRCaSxQ0A_CSeDuThhIKOvAjJTkpQK7p-rcfnYjFkP7ZFWInHAA05tRcDpE3p9JA3a5dJa307eF6jmBIPoCWfvn2LkGdKgU1euPujNzmvhx3XHwXCk-5Fc34245WGRhffVfKqSniw0S8jP7G9cN_HWLxHFWlQU3Rl_zXKutkS6c6FKuzyF0lfmn1yQMFT3m7qmUigpDEt8&zp=Sedrq8vj-s8cpfxEOh9LN7OWltzKTEHfnh7DrxNWdg79TGK_i6tm-adLNRsUoBoYSD_g_uxPhjlgoiFurA7EwLS3KUZmiAgE7Is7CwHiWQd7lB_H0J-JkOJt3aNZcG5ILZTP19Q3PgK4hfWQR8qPcZDWSV2h4BqjjNl_lZLeQ0KxKrE9Y7oFb7JptOCVgtNB1hyIpHHGimP6aj9mK7Yi2rEbx4TsnzEkLP8OOtW8xMNQlpiuWjPSPro9zPSEMvddvdpSsCA6mRp9XTg9VmFFks2Q1yrWDTPCNjrWVJwICxiNi7bC0QMkPAoDLu427x43_ejJdVxJjz6gG3Oax7Lc2Z4t6MPugl8ZyvoGdz7J4KIjb28ZS9D64n6GyZqztTKdF2N0IpmCPp44mOLuUDm_VDaCiw2ZkY6kuco
+                                                        - generic [ref=e259]:
+                                                            - generic: Learn More
+                                                    - link "woocommerce.com" [ref=e262] [cursor=pointer]:
+                                                        - /url: https://alb.reddit.com/cr?za=uq8QE_I4InWZo-DduIXl4DDEcgYRivyP_EVdTorDuduEg8YOhRfDLHZJXJuHQ6R3kBHy9T1YXtmTXaeC4mphka0A6sjcVNZAc02SbemH7oGgq88LYA1Qh8RDqtaISbrUIskwJd_nmaGZbETAYt48q4KfN9t-buw9oT4AqymJfE_IMQQQlficDGw6FD2YrDgYErAKJjWJCtVTB8O2WWtOrpe4DzTJfmoLiQwaC-ysr2PLwWnRsN5qn_41cB8A7XrJORSyx-ZOniN4AeISLqHVdcPDpptTy1Cou-g83F9emHYFJfagpUWoQDROEe8sgpw7zip7FJHO9cq3ZRIOIs-QNBgrzKXYX6folsJ0pDdAFqa_tREoqzcuRu3wisVRGNwoGOKHCTa9D47RgI-2DsvSa0c6_JVOPLh14ZYR8tFLF19gijNcfIIIRJW8bwciuJlr5HTp6Vk_cpkJ1xmwHSrzZxSL4PHMA80syqJ49gTPe1JIihkK6vJXWkNDewvP5jWwNXeRtiFyM4Y6XCU-elW1l8U6JHnu00bzdDT0YAb26QpgSQTV9Ig9xtxh6HPEY0rIvauFJkVEruWaM2K2xmzj1q3Ei0qltEVnpqfFFGi9XClNXkObkb6V4WI3a6-XVanYI6FXnIrotPsv632tI7MDt4R0pNJin0FrdPGSrJItuHUQHF_vzI-5995obzBoL9EkYHo_MBani8eNiUVws18Wl1om5ucwgJyp1Nu4R42uZ8IULHnogvHm3zVcYA114fGEnwOLmv6GiwUMn-ZtuyYLOvyYIuV_E51dVC-AaZ8ZBGIpr2esCWw2MeAE-HMSKJ3z6u4phE844QvOv5RMC-noOimt-ra-7qkXy8Kyf9HipwZIftjQt_D_g2OktKON8LwHVeD15cb1DTk1WMxgU_XV7dnwYjU3oNGTi2MENxni3nh_jKg-RY1W4OiiwDIc0BsE-Uszv_Gw5y4EGx2xOyEJ5kKUUpM-t-pkjNG5DDNSA70j68zLTBashmeRpOEc56KJZpv8Ih9JhZ95IfZ77_EcfgHveLvrksq3I-holVG3YHn7uWd8k2Nqur6j_eSTCvLCFcIoL3HzQjqtV-IsVQoFVH24PF0csvYV-mMyerpdMolYwDSRDFwHf44u8cLAM3L0mWrWdz1VxYJZjjCndbv5zuV4dwZP1GDJVEjX0fboo61TeIpux2tqqKDDQi8K764HodwDe3z2IyCTNqJNXd38ZqRCaSxQ0A_CSeDuThhIKOvAjJTkpQK7p-rcfnYjFkP7ZFWInHAA05tRcDpE3p9JA3a5dJa307eF6jmBIPoCWfvn2LkGdKgU1euPujNzmvhx3XHwXCk-5Fc34245WGRhffVfKqSniw0S8jP7G9cN_HWLxHFWlQU3Rl_zXKutkS6c6FKuzyF0lfmn1yQMFT3m7qmUigpDEt8&zp=Sedrq8vj-s8cpfxEOh9LN7OWltzKTEHfnh7DrxNWdg79TGK_i6tm-adLNRsUoBoYSD_g_uxPhjlgoiFurA7EwLS3KUZmiAgE7Is7CwHiWQd7lB_H0J-JkOJt3aNZcG5ILZTP19Q3PgK4hfWQR8qPcZDWSV2h4BqjjNl_lZLeQ0KxKrE9Y7oFb7JptOCVgtNB1hyIpHHGimP6aj9mK7Yi2rEbx4TsnzEkLP8OOtW8xMNQlpiuWjPSPro9zPSEMvddvdpSsCA6mRp9XTg9VmFFks2Q1yrWDTPCNjrWVJwICxiNi7bC0QMkPAoDLu427x43_ejJdVxJjz6gG3Oax7Lc2Z4t6MPugl8ZyvoGdz7J4KIjb28ZS9D64n6GyZqztTKdF2N0IpmCPp44mOLuUDm_VDaCiw2ZkY6kuco
+                                                        - generic: woocommerce.com
+                                        - 'link "Thumbnail image: Estimate your total cost of ownership on WooCommerce." [ref=e265] [cursor=pointer]':
+                                            - /url: https://alb.reddit.com/cr?za=uq8QE_I4InWZo-DduIXl4DDEcgYRivyP_EVdTorDuduEg8YOhRfDLHZJXJuHQ6R3kBHy9T1YXtmTXaeC4mphka0A6sjcVNZAc02SbemH7oGgq88LYA1Qh8RDqtaISbrUIskwJd_nmaGZbETAYt48q4KfN9t-buw9oT4AqymJfE_IMQQQlficDGw6FD2YrDgYErAKJjWJCtVTB8O2WWtOrpe4DzTJfmoLiQwaC-ysr2PLwWnRsN5qn_41cB8A7XrJORSyx-ZOniN4AeISLqHVdcPDpptTy1Cou-g83F9emHYFJfagpUWoQDROEe8sgpw7zip7FJHO9cq3ZRIOIs-QNBgrzKXYX6folsJ0pDdAFqa_tREoqzcuRu3wisVRGNwoGOKHCTa9D47RgI-2DsvSa0c6_JVOPLh14ZYR8tFLF19gijNcfIIIRJW8bwciuJlr5HTp6Vk_cpkJ1xmwHSrzZxSL4PHMA80syqJ49gTPe1JIihkK6vJXWkNDewvP5jWwNXeRtiFyM4Y6XCU-elW1l8U6JHnu00bzdDT0YAb26QpgSQTV9Ig9xtxh6HPEY0rIvauFJkVEruWaM2K2xmzj1q3Ei0qltEVnpqfFFGi9XClNXkObkb6V4WI3a6-XVanYI6FXnIrotPsv632tI7MDt4R0pNJin0FrdPGSrJItuHUQHF_vzI-5995obzBoL9EkYHo_MBani8eNiUVws18Wl1om5ucwgJyp1Nu4R42uZ8IULHnogvHm3zVcYA114fGEnwOLmv6GiwUMn-ZtuyYLOvyYIuV_E51dVC-AaZ8ZBGIpr2esCWw2MeAE-HMSKJ3z6u4phE844QvOv5RMC-noOimt-ra-7qkXy8Kyf9HipwZIftjQt_D_g2OktKON8LwHVeD15cb1DTk1WMxgU_XV7dnwYjU3oNGTi2MENxni3nh_jKg-RY1W4OiiwDIc0BsE-Uszv_Gw5y4EGx2xOyEJ5kKUUpM-t-pkjNG5DDNSA70j68zLTBashmeRpOEc56KJZpv8Ih9JhZ95IfZ77_EcfgHveLvrksq3I-holVG3YHn7uWd8k2Nqur6j_eSTCvLCFcIoL3HzQjqtV-IsVQoFVH24PF0csvYV-mMyerpdMolYwDSRDFwHf44u8cLAM3L0mWrWdz1VxYJZjjCndbv5zuV4dwZP1GDJVEjX0fboo61TeIpux2tqqKDDQi8K764HodwDe3z2IyCTNqJNXd38ZqRCaSxQ0A_CSeDuThhIKOvAjJTkpQK7p-rcfnYjFkP7ZFWInHAA05tRcDpE3p9JA3a5dJa307eF6jmBIPoCWfvn2LkGdKgU1euPujNzmvhx3XHwXCk-5Fc34245WGRhffVfKqSniw0S8jP7G9cN_HWLxHFWlQU3Rl_zXKutkS6c6FKuzyF0lfmn1yQMFT3m7qmUigpDEt8&zp=Sedrq8vj-s8cpfxEOh9LN7OWltzKTEHfnh7DrxNWdg79TGK_i6tm-adLNRsUoBoYSD_g_uxPhjlgoiFurA7EwLS3KUZmiAgE7Is7CwHiWQd7lB_H0J-JkOJt3aNZcG5ILZTP19Q3PgK4hfWQR8qPcZDWSV2h4BqjjNl_lZLeQ0KxKrE9Y7oFb7JptOCVgtNB1hyIpHHGimP6aj9mK7Yi2rEbx4TsnzEkLP8OOtW8xMNQlpiuWjPSPro9zPSEMvddvdpSsCA6mRp9XTg9VmFFks2Q1yrWDTPCNjrWVJwICxiNi7bC0QMkPAoDLu427x43_ejJdVxJjz6gG3Oax7Lc2Z4t6MPugl8ZyvoGdz7J4KIjb28ZS9D64n6GyZqztTKdF2N0IpmCPp44mOLuUDm_VDaCiw2ZkY6kuco
+                                            - 'img "Thumbnail image: Estimate your total cost of ownership on WooCommerce." [ref=e266]'
+                            - generic [ref=e268]:
+                                - generic:
+                                    - textbox [ref=e278]:
+                                        - /placeholder: Join the conversation
+                                    - generic [ref=e284]:
+                                        - generic [ref=e286]:
+                                            - generic [ref=e287]: 'Sort by:'
+                                            - button "Sort by Best" [ref=e292] [cursor=pointer]:
+                                                - generic [ref=e294]: Best
+                                        - button "Search Comments Expand comment search" [ref=e301] [cursor=pointer]:
+                                            - generic [ref=e302]:
+                                                - img [ref=e305]
+                                                - generic [ref=e308]: Search Comments
+                                            - generic [ref=e309]:
+                                                - generic: Expand comment search
+                            - region "Comments" [ref=e313]:
+                                - heading "Comments Section" [level=1] [ref=e314]
+                                - generic:
+                                    - article "Comment from hovis_mavis 1 month ago" [ref=e316]:
+                                        - generic "Metadata for hovis_mavis's comment" [ref=e317]:
+                                            - link "hovis_mavis's profile --- avatar" [ref=e324] [cursor=pointer]:
+                                                - /url: /user/hovis_mavis/
+                                                - img "u/hovis_mavis avatar" [ref=e327]
+                                            - generic [ref=e332]:
+                                                - link "hovis_mavis's profile" [ref=e337] [cursor=pointer]:
+                                                    - /url: /user/hovis_mavis/
+                                                    - text: hovis_mavis
+                                                - generic [ref=e338]: •
+                                                - link "1mo ago" [ref=e339] [cursor=pointer]:
+                                                    - /url: /r/ecommerce/comments/1s40e5u/comment/ocjf3hd/
+                                                    - time [ref=e340]: 1mo ago
+                                        - generic [ref=e342]:
+                                            - generic [ref=e350]:
+                                                - paragraph [ref=e351]: Your step before replying is to get a response from the customer, a response from the delivery company and enter those too. You’ll probably still lose but this builds the case further when you take legal action.
+                                                - paragraph [ref=e352]: Payment providers are not THE LAW. They do not have the final say and if the sale is worth it you can pursue the purchaser legally. Start with a letter before action with the option to pay and how to (maybe even reduced amount to encourage it). Escalate to something more threatening if they don’t about how lawyer fees are likely to be added if you must claim this in court. Then the next step is small claims court with all the evidence you have, the correspondence, the letters asking for payment etc.
+                                                - paragraph [ref=e353]: Obviously this can be time consuming and a drag but if the order has a large value and you’re confident you can prove the customer has it, then you can win the judgement.
+                                            - button "Toggle Comment Thread" [expanded] [ref=e356] [cursor=pointer]:
+                                                - img [ref=e359]
+                                            - 'article "Comment thread level 1: Reply from palatheinsane 1 month ago" [ref=e367]':
+                                                - generic "Metadata for palatheinsane's comment" [ref=e368]:
+                                                    - link "palatheinsane's profile --- avatar" [ref=e375] [cursor=pointer]:
+                                                        - /url: /user/palatheinsane/
+                                                        - img "u/palatheinsane avatar" [ref=e378]
+                                                    - generic [ref=e383]:
+                                                        - link "palatheinsane's profile" [ref=e388] [cursor=pointer]:
+                                                            - /url: /user/palatheinsane/
+                                                            - text: palatheinsane
+                                                        - generic [ref=e389]: •
+                                                        - link "1mo ago" [ref=e390] [cursor=pointer]:
+                                                            - /url: /r/ecommerce/comments/1s40e5u/comment/ockfrt3/
+                                                            - time [ref=e391]: 1mo ago
+                                                - generic [ref=e393]:
+                                                    - paragraph [ref=e402]: Fraudsters don’t respond though. That’s the problem.
+                                                    - button "Toggle Comment Thread" [expanded] [ref=e405] [cursor=pointer]:
+                                                        - img [ref=e408]
+                                                    - 'article "Comment thread level 2: Reply from hovis_mavis 1 month ago" [ref=e416]':
+                                                        - generic "Metadata for hovis_mavis's comment" [ref=e417]:
+                                                            - link "hovis_mavis's profile --- avatar" [ref=e424] [cursor=pointer]:
+                                                                - /url: /user/hovis_mavis/
+                                                                - img "u/hovis_mavis avatar" [ref=e427]
+                                                            - generic [ref=e432]:
+                                                                - link "hovis_mavis's profile" [ref=e437] [cursor=pointer]:
+                                                                    - /url: /user/hovis_mavis/
+                                                                    - text: hovis_mavis
+                                                                - generic [ref=e438]: •
+                                                                - link "1mo ago" [ref=e439] [cursor=pointer]:
+                                                                    - /url: /r/ecommerce/comments/1s40e5u/comment/ocklvk8/
+                                                                    - time [ref=e440]: 1mo ago
+                                                        - paragraph [ref=e449]: And eventually you'll get a verdict in your favour once it's through court. A failure to respond to court docs in the UK is a default judgement in your favour.
+                                    - article "Comment from Chaosmusic 1 month ago" [ref=e455]:
+                                        - generic "Metadata for Chaosmusic's comment" [ref=e456]:
+                                            - link "Chaosmusic's profile --- avatar" [ref=e463] [cursor=pointer]:
+                                                - /url: /user/Chaosmusic/
+                                                - img "u/Chaosmusic avatar" [ref=e466]
+                                            - generic [ref=e471]:
+                                                - link "Chaosmusic's profile" [ref=e476] [cursor=pointer]:
+                                                    - /url: /user/Chaosmusic/
+                                                    - text: Chaosmusic
+                                                - generic [ref=e477]: •
+                                                - link "1mo ago" [ref=e478] [cursor=pointer]:
+                                                    - /url: /r/ecommerce/comments/1s40e5u/comment/ockud8j/
+                                                    - time [ref=e479]: 1mo ago
+                                        - generic [ref=e481]:
+                                            - paragraph [ref=e490]: Credit card companies and banks are there to protect their customers. If they did not side with them, customers would simply go to another company or bank. It is massively unfair and your only recourse is to sue.
+                                            - button "Toggle Comment Thread" [expanded] [ref=e493] [cursor=pointer]:
+                                                - img [ref=e496]
+                                            - 'article "Comment thread level 1: Reply from vyleige22 1 month ago" [ref=e504]':
+                                                - generic "Metadata for vyleige22's comment" [ref=e505]:
+                                                    - link "vyleige22's profile --- avatar" [ref=e512] [cursor=pointer]:
+                                                        - /url: /user/vyleige22/
+                                                        - img [ref=e517]
+                                                    - generic [ref=e523]:
+                                                        - link "vyleige22's profile" [ref=e528] [cursor=pointer]:
+                                                            - /url: /user/vyleige22/
+                                                            - text: vyleige22
+                                                        - generic [ref=e529]: •
+                                                        - link "1mo ago" [ref=e530] [cursor=pointer]:
+                                                            - /url: /r/ecommerce/comments/1s40e5u/comment/octsumc/
+                                                            - time [ref=e531]: 1mo ago
+                                                - paragraph [ref=e540]: This. A credit card company makes money off the customer, not you. So they're gonna do the thing that keeps the customer happy (and using the card/paying interest, of course).
+                                    - article "Comment from No_Boysenberry_6827 1 month ago" [ref=e546]:
+                                        - generic "Metadata for No_Boysenberry_6827's comment" [ref=e547]:
+                                            - link "No_Boysenberry_6827's profile --- avatar" [ref=e554] [cursor=pointer]:
+                                                - /url: /user/No_Boysenberry_6827/
+                                                - img [ref=e559]
+                                            - generic [ref=e565]:
+                                                - link "No_Boysenberry_6827's profile" [ref=e570] [cursor=pointer]:
+                                                    - /url: /user/No_Boysenberry_6827/
+                                                    - text: No_Boysenberry_6827
+                                                - generic [ref=e571]: •
+                                                - link "1mo ago" [ref=e572] [cursor=pointer]:
+                                                    - /url: /r/ecommerce/comments/1s40e5u/comment/ocjqrfu/
+                                                    - time [ref=e573]: 1mo ago
+                                        - paragraph [ref=e582]: chargebacks are brutal because the system's designed for buyer protection, not seller fairness. we started tracking dispute patterns and win rates jumped but it took forever to figure out the right evidence format. what's your current chargeback rate?
+                                    - article "Comment from TheBoringbridge 1 month ago" [ref=e588]:
+                                        - generic "Metadata for TheBoringbridge's comment" [ref=e589]:
+                                            - link "TheBoringbridge's profile --- avatar" [ref=e596] [cursor=pointer]:
+                                                - /url: /user/TheBoringbridge/
+                                                - img "u/TheBoringbridge avatar" [ref=e599]
+                                            - generic [ref=e604]:
+                                                - link "TheBoringbridge's profile" [ref=e609] [cursor=pointer]:
+                                                    - /url: /user/TheBoringbridge/
+                                                    - text: TheBoringbridge
+                                                - generic [ref=e610]: •
+                                                - link "1mo ago" [ref=e611] [cursor=pointer]:
+                                                    - /url: /r/ecommerce/comments/1s40e5u/comment/ock3jlq/
+                                                    - time [ref=e612]: 1mo ago
+                                        - paragraph [ref=e621]: Not just you. We lost one with full proof as well.
+                                    - article "Comment from Old-Roof709 1 month ago" [ref=e627]:
+                                        - generic "Metadata for Old-Roof709's comment" [ref=e628]:
+                                            - link "Old-Roof709's profile --- avatar" [ref=e635] [cursor=pointer]:
+                                                - /url: /user/Old-Roof709/
+                                                - img [ref=e640]
+                                            - generic [ref=e646]:
+                                                - link "Old-Roof709's profile" [ref=e651] [cursor=pointer]:
+                                                    - /url: /user/Old-Roof709/
+                                                    - text: Old-Roof709
+                                                - generic [ref=e652]: •
+                                                - link "1mo ago" [ref=e653] [cursor=pointer]:
+                                                    - /url: /r/ecommerce/comments/1s40e5u/comment/ocjevob/
+                                                    - time [ref=e654]: 1mo ago
+                                        - paragraph [ref=e663]: This is exactly why online selling sucks sometimes. the system is built to protect buyers no matter what, even if theyre lying. i run a small shop and chargebacks eat into profits constantly.
+                                    - article "Comment from Federal_Standard5917 1 month ago" [ref=e669]:
+                                        - generic "Metadata for Federal_Standard5917's comment" [ref=e670]:
+                                            - link "Federal_Standard5917's profile --- avatar" [ref=e677] [cursor=pointer]:
+                                                - /url: /user/Federal_Standard5917/
+                                                - img "u/Federal_Standard5917 avatar" [ref=e680]
+                                            - generic [ref=e685]:
+                                                - link "Federal_Standard5917's profile" [ref=e690] [cursor=pointer]:
+                                                    - /url: /user/Federal_Standard5917/
+                                                    - text: Federal_Standard5917
+                                                - generic [ref=e691]: •
+                                                - link "1mo ago" [ref=e692] [cursor=pointer]:
+                                                    - /url: /r/ecommerce/comments/1s40e5u/comment/ocjllqg/
+                                                    - time [ref=e693]: 1mo ago
+                                        - paragraph [ref=e702]: ran a test once where i submitted identical evidence packets for two chargebacks same week, one won one lost. literally same docs, different processors. the inconsistency is the actual problem, it's not a merit system it's a lottery and some processors just have worse bank relationships on dispute resolution than others
+                                    - article "Comment from Plane-Marionberry380 1 month ago" [ref=e708]:
+                                        - generic "Metadata for Plane-Marionberry380's comment" [ref=e709]:
+                                            - link "Plane-Marionberry380's profile --- avatar" [ref=e716] [cursor=pointer]:
+                                                - /url: /user/Plane-Marionberry380/
+                                                - img "u/Plane-Marionberry380 avatar" [ref=e719]
+                                            - generic [ref=e724]:
+                                                - link "Plane-Marionberry380's profile" [ref=e729] [cursor=pointer]:
+                                                    - /url: /user/Plane-Marionberry380/
+                                                    - text: Plane-Marionberry380
+                                                - generic [ref=e730]: •
+                                                - link "1mo ago" [ref=e731] [cursor=pointer]:
+                                                    - /url: /r/ecommerce/comments/1s40e5u/comment/ocjqz5f/
+                                                    - time [ref=e732]: 1mo ago
+                                        - paragraph [ref=e741]: Ugh yeah, been there too,got a chargeback last month for a package with full tracking and signature confirmation. Feels like the bank just rubber-stamps whatever the customer says, no matter how much proof you show. It’s exhausting trying to fight something where the deck is stacked so hard against you.
+                                    - article "Comment from mguozhen 1 month ago" [ref=e747]:
+                                        - generic "Metadata for mguozhen's comment" [ref=e748]:
+                                            - link "mguozhen's profile --- avatar" [ref=e755] [cursor=pointer]:
+                                                - /url: /user/mguozhen/
+                                                - img "u/mguozhen avatar" [ref=e758]
+                                            - generic [ref=e763]:
+                                                - link "mguozhen's profile" [ref=e768] [cursor=pointer]:
+                                                    - /url: /user/mguozhen/
+                                                    - text: mguozhen
+                                                - generic [ref=e769]: •
+                                                - link "1mo ago" [ref=e770] [cursor=pointer]:
+                                                    - /url: /r/ecommerce/comments/1s40e5u/comment/ocl3iwz/
+                                                    - time [ref=e771]: 1mo ago
+                                        - generic [ref=e779]:
+                                            - paragraph [ref=e780]:
+                                                - strong [ref=e781]: The card networks genuinely don't care about your evidence — they care about their own reason codes
+                                                - text: ', and most processors don''t tell you that "Item Not Received" disputes on card-present-equivalent transactions have different thresholds than what you submitted against.'
+                                            - paragraph [ref=e782]: Signature confirmation helps, but it's not the magic bullet people think. Visa and Mastercard both require the signature to be tied to a specific address match and the carrier confirmation has to hit their exact format requirements — a tracking screenshot often doesn't meet that bar even when it's clearly legitimate.
+                                            - paragraph [ref=e783]: The real fight happens at the representment stage, not the initial rebuttal. If your processor is handling this in-house (common with Stripe, Square, Shopify Payments), they're often submitting a generic response rather than coding it to the specific reason code — in your case probably Visa RC 13.1 or Mastercard's equivalent.
+                                            - paragraph [ref=e784]: Third-party chargeback management tools like Chargebacks911 or Midigator will show you the actual win rates by reason code — INR disputes on tracked shipments with signature typically win around 20-30%, which is brutal but not zero. The industry-wide merchant win rate is hovering around 12% overall, so you're not doing something wrong.
+                                            - paragraph [ref=e785]: For future orders, carrier
+                                    - generic "Verwaltetes Node.js Hosting. Sie programmieren, wir halten es am Laufen. Direkt aus GitHub oder Ihrer IDE bereitstellen." [ref=e791]:
+                                        - generic [ref=e792]:
+                                            - 'generic "Advertisement: Verwaltetes Node.js Hosting. Sie programmieren, wir halten es am Laufen. Direkt aus GitHub oder Ihrer IDE bereitstellen." [ref=e793]':
+                                                - 'link "Advertisement: Verwaltetes Node.js Hosting. Sie programmieren, wir halten es am Laufen. Direkt aus GitHub oder Ihrer IDE bereitstellen." [ref=e794] [cursor=pointer]':
+                                                    - /url: https://alb.reddit.com/cr?za=UNooNyp6jlWEpdPq7kvAW99YFtWpHtQHkxni0uY_ugw32zXSyI6GzWXOd03QkHKc0JfifxF49_W8Nb1zyljcV0lEtOCEJ9I64Ih3He4_WABdZE9x_t_svRS0kxmJqoJ6QhXPEOuRQxcwPQjoL1pvzi5qPKq8bqoFUU0kqFjxkjuCOU39x16FYukypmlWIWf9JnzMrl_MeoPvk2f4tyVnTxnEHxZGigtMpxO1bklHKOP2rTsfRf0-tchkl02FJBPtU9NM03XP8eOvRVtgxnJZccHsdBA77ekgeYi8UPLRH4RWNKh7vGSlA-ORnU0v91k3dYMuJdLNgLfTwq16fFGncgY-wH111NrkExO6_kReYUolG6hwJZVR5aIn_LnHVVBjeTcKH3PeHzWNZBL-RLM7S9_dfUrLJQL9jda6L5EEbtWRXQOOqcfBtpVZRa_UbzpRI6NrdNewe_FPSEaE10Rh6xDXwhXmyxpHy35lo995J-J6mCTquz-KgrTYpW1cGY4IvBAIVDg_WPswLrbPQM8sOqhvq-9TQv1xe-Dz6JdlemyL9Gh6eJpfjdO4tlQ5y3lsFFqOcrxnlSyTeP8USribXiYAWobptHIOzFu-SqF_YB2ndj6ZsMQCtxD3iT_WFI_JEuRArBPdBjUangRZE81vrsSGi802ppnOQfMfwcTrTabgCwK7yH8OctBJR6XTGh3tDDpxxxNMwyCDktO3nfAQ1sOkyenYnE2yXxcZpdHz2ajtfeLbvq-QadHfd9zImP3Tyqbcc3pkfqHXWwGFL0E3Q5fDoWkF&zp=RolsaGklnuuWKXHj7IaU4AOO28RDcx5RqO9iWIKvUrngUUIZTz3XZKQtWoagBEY_2uHcFLcANx_9rO52JRjmw4Q6-pUeYGk1ak3XE7841iZTlaIOz5MDkDtp0Sa-yoosckEDXF8jroUOshYZ77dtZsNhwE7Fw2MjwgspWkFqD2iD3KKQ5nNHrG7vkTrFTWqjNFpIGYthNQU-zBaVa4W6aAYRMoxFmqrVgrp5gizOZrtGc2eiGait4evMMhv-DIWoYeTqGo66we15UNZffaxbPTOhefHjyaZ4lh-FO6_SGXlhiMzgWr5SoHwsuCze48Mqo3ydKG-Dmz5mj55pb5-80WZtq_6TdLH9Et3DIkZbeWro6xtz1ruv7Lb1fKrRKkR8Wg8CwfYGv9bPJCv2aWoFCBW03obg7Qz3iQNpdzYuX8dgghUEiiNi1eimuysMClsq11eHQwCsDd5OvoV0YB0j3cf5STiFcR8fGDsfBqfY9tEZxfVI8bTxLQQuCo3Gb5wHdnJlYaqu-vJ5KrSYj4TGsQO6mTRQSoR4yUc0N-N5Gvdv7HPPDOMgX6RU0Z9npse16j40rgKQ
+                                            - generic [ref=e795]:
+                                                - generic [ref=e796]:
+                                                    - link "u/HostingerCOM avatar u/HostingerCOM" [ref=e799] [cursor=pointer]:
+                                                        - /url: /user/HostingerCOM/
+                                                        - img "u/HostingerCOM avatar" [ref=e802]
+                                                        - generic [ref=e803]: u/HostingerCOM
+                                                    - generic [ref=e804]: •
+                                                    - link "Promoted" [ref=e806] [cursor=pointer]:
+                                                        - /url: /user/HostingerCOM/
+                                                        - generic [ref=e807]: Promoted
+                                                    - link [ref=e809] [cursor=pointer]:
+                                                        - /url: https://alb.reddit.com/cr?za=UNooNyp6jlWEpdPq7kvAW99YFtWpHtQHkxni0uY_ugw32zXSyI6GzWXOd03QkHKc0JfifxF49_W8Nb1zyljcV0lEtOCEJ9I64Ih3He4_WABdZE9x_t_svRS0kxmJqoJ6QhXPEOuRQxcwPQjoL1pvzi5qPKq8bqoFUU0kqFjxkjuCOU39x16FYukypmlWIWf9JnzMrl_MeoPvk2f4tyVnTxnEHxZGigtMpxO1bklHKOP2rTsfRf0-tchkl02FJBPtU9NM03XP8eOvRVtgxnJZccHsdBA77ekgeYi8UPLRH4RWNKh7vGSlA-ORnU0v91k3dYMuJdLNgLfTwq16fFGncgY-wH111NrkExO6_kReYUolG6hwJZVR5aIn_LnHVVBjeTcKH3PeHzWNZBL-RLM7S9_dfUrLJQL9jda6L5EEbtWRXQOOqcfBtpVZRa_UbzpRI6NrdNewe_FPSEaE10Rh6xDXwhXmyxpHy35lo995J-J6mCTquz-KgrTYpW1cGY4IvBAIVDg_WPswLrbPQM8sOqhvq-9TQv1xe-Dz6JdlemyL9Gh6eJpfjdO4tlQ5y3lsFFqOcrxnlSyTeP8USribXiYAWobptHIOzFu-SqF_YB2ndj6ZsMQCtxD3iT_WFI_JEuRArBPdBjUangRZE81vrsSGi802ppnOQfMfwcTrTabgCwK7yH8OctBJR6XTGh3tDDpxxxNMwyCDktO3nfAQ1sOkyenYnE2yXxcZpdHz2ajtfeLbvq-QadHfd9zImP3Tyqbcc3pkfqHXWwGFL0E3Q5fDoWkF&zp=RolsaGklnuuWKXHj7IaU4AOO28RDcx5RqO9iWIKvUrngUUIZTz3XZKQtWoagBEY_2uHcFLcANx_9rO52JRjmw4Q6-pUeYGk1ak3XE7841iZTlaIOz5MDkDtp0Sa-yoosckEDXF8jroUOshYZ77dtZsNhwE7Fw2MjwgspWkFqD2iD3KKQ5nNHrG7vkTrFTWqjNFpIGYthNQU-zBaVa4W6aAYRMoxFmqrVgrp5gizOZrtGc2eiGait4evMMhv-DIWoYeTqGo66we15UNZffaxbPTOhefHjyaZ4lh-FO6_SGXlhiMzgWr5SoHwsuCze48Mqo3ydKG-Dmz5mj55pb5-80WZtq_6TdLH9Et3DIkZbeWro6xtz1ruv7Lb1fKrRKkR8Wg8CwfYGv9bPJCv2aWoFCBW03obg7Qz3iQNpdzYuX8dgghUEiiNi1eimuysMClsq11eHQwCsDd5OvoV0YB0j3cf5STiFcR8fGDsfBqfY9tEZxfVI8bTxLQQuCo3Gb5wHdnJlYaqu-vJ5KrSYj4TGsQO6mTRQSoR4yUc0N-N5Gvdv7HPPDOMgX6RU0Z9npse16j40rgKQ
+                                                - button "Open user actions" [ref=e814] [cursor=pointer]:
+                                                    - img [ref=e817]
+                                            - generic [ref=e820]:
+                                                - generic [ref=e821]:
+                                                    - link "Verwaltetes Node.js Hosting. Sie programmieren, wir halten es am Laufen. Direkt aus GitHub oder Ihrer IDE bereitstellen." [ref=e823] [cursor=pointer]:
+                                                        - /url: https://alb.reddit.com/cr?za=UNooNyp6jlWEpdPq7kvAW99YFtWpHtQHkxni0uY_ugw32zXSyI6GzWXOd03QkHKc0JfifxF49_W8Nb1zyljcV0lEtOCEJ9I64Ih3He4_WABdZE9x_t_svRS0kxmJqoJ6QhXPEOuRQxcwPQjoL1pvzi5qPKq8bqoFUU0kqFjxkjuCOU39x16FYukypmlWIWf9JnzMrl_MeoPvk2f4tyVnTxnEHxZGigtMpxO1bklHKOP2rTsfRf0-tchkl02FJBPtU9NM03XP8eOvRVtgxnJZccHsdBA77ekgeYi8UPLRH4RWNKh7vGSlA-ORnU0v91k3dYMuJdLNgLfTwq16fFGncgY-wH111NrkExO6_kReYUolG6hwJZVR5aIn_LnHVVBjeTcKH3PeHzWNZBL-RLM7S9_dfUrLJQL9jda6L5EEbtWRXQOOqcfBtpVZRa_UbzpRI6NrdNewe_FPSEaE10Rh6xDXwhXmyxpHy35lo995J-J6mCTquz-KgrTYpW1cGY4IvBAIVDg_WPswLrbPQM8sOqhvq-9TQv1xe-Dz6JdlemyL9Gh6eJpfjdO4tlQ5y3lsFFqOcrxnlSyTeP8USribXiYAWobptHIOzFu-SqF_YB2ndj6ZsMQCtxD3iT_WFI_JEuRArBPdBjUangRZE81vrsSGi802ppnOQfMfwcTrTabgCwK7yH8OctBJR6XTGh3tDDpxxxNMwyCDktO3nfAQ1sOkyenYnE2yXxcZpdHz2ajtfeLbvq-QadHfd9zImP3Tyqbcc3pkfqHXWwGFL0E3Q5fDoWkF&zp=RolsaGklnuuWKXHj7IaU4AOO28RDcx5RqO9iWIKvUrngUUIZTz3XZKQtWoagBEY_2uHcFLcANx_9rO52JRjmw4Q6-pUeYGk1ak3XE7841iZTlaIOz5MDkDtp0Sa-yoosckEDXF8jroUOshYZ77dtZsNhwE7Fw2MjwgspWkFqD2iD3KKQ5nNHrG7vkTrFTWqjNFpIGYthNQU-zBaVa4W6aAYRMoxFmqrVgrp5gizOZrtGc2eiGait4evMMhv-DIWoYeTqGo66we15UNZffaxbPTOhefHjyaZ4lh-FO6_SGXlhiMzgWr5SoHwsuCze48Mqo3ydKG-Dmz5mj55pb5-80WZtq_6TdLH9Et3DIkZbeWro6xtz1ruv7Lb1fKrRKkR8Wg8CwfYGv9bPJCv2aWoFCBW03obg7Qz3iQNpdzYuX8dgghUEiiNi1eimuysMClsq11eHQwCsDd5OvoV0YB0j3cf5STiFcR8fGDsfBqfY9tEZxfVI8bTxLQQuCo3Gb5wHdnJlYaqu-vJ5KrSYj4TGsQO6mTRQSoR4yUc0N-N5Gvdv7HPPDOMgX6RU0Z9npse16j40rgKQ
+                                                        - generic: Verwaltetes Node.js Hosting. Sie programmieren, wir halten es am Laufen. Direkt aus GitHub oder Ihrer IDE bereitstellen.
+                                                    - generic [ref=e824]:
+                                                        - link [ref=e826] [cursor=pointer]:
+                                                            - /url: https://alb.reddit.com/cr?za=UNooNyp6jlWEpdPq7kvAW99YFtWpHtQHkxni0uY_ugw32zXSyI6GzWXOd03QkHKc0JfifxF49_W8Nb1zyljcV0lEtOCEJ9I64Ih3He4_WABdZE9x_t_svRS0kxmJqoJ6QhXPEOuRQxcwPQjoL1pvzi5qPKq8bqoFUU0kqFjxkjuCOU39x16FYukypmlWIWf9JnzMrl_MeoPvk2f4tyVnTxnEHxZGigtMpxO1bklHKOP2rTsfRf0-tchkl02FJBPtU9NM03XP8eOvRVtgxnJZccHsdBA77ekgeYi8UPLRH4RWNKh7vGSlA-ORnU0v91k3dYMuJdLNgLfTwq16fFGncgY-wH111NrkExO6_kReYUolG6hwJZVR5aIn_LnHVVBjeTcKH3PeHzWNZBL-RLM7S9_dfUrLJQL9jda6L5EEbtWRXQOOqcfBtpVZRa_UbzpRI6NrdNewe_FPSEaE10Rh6xDXwhXmyxpHy35lo995J-J6mCTquz-KgrTYpW1cGY4IvBAIVDg_WPswLrbPQM8sOqhvq-9TQv1xe-Dz6JdlemyL9Gh6eJpfjdO4tlQ5y3lsFFqOcrxnlSyTeP8USribXiYAWobptHIOzFu-SqF_YB2ndj6ZsMQCtxD3iT_WFI_JEuRArBPdBjUangRZE81vrsSGi802ppnOQfMfwcTrTabgCwK7yH8OctBJR6XTGh3tDDpxxxNMwyCDktO3nfAQ1sOkyenYnE2yXxcZpdHz2ajtfeLbvq-QadHfd9zImP3Tyqbcc3pkfqHXWwGFL0E3Q5fDoWkF&zp=RolsaGklnuuWKXHj7IaU4AOO28RDcx5RqO9iWIKvUrngUUIZTz3XZKQtWoagBEY_2uHcFLcANx_9rO52JRjmw4Q6-pUeYGk1ak3XE7841iZTlaIOz5MDkDtp0Sa-yoosckEDXF8jroUOshYZ77dtZsNhwE7Fw2MjwgspWkFqD2iD3KKQ5nNHrG7vkTrFTWqjNFpIGYthNQU-zBaVa4W6aAYRMoxFmqrVgrp5gizOZrtGc2eiGait4evMMhv-DIWoYeTqGo66we15UNZffaxbPTOhefHjyaZ4lh-FO6_SGXlhiMzgWr5SoHwsuCze48Mqo3ydKG-Dmz5mj55pb5-80WZtq_6TdLH9Et3DIkZbeWro6xtz1ruv7Lb1fKrRKkR8Wg8CwfYGv9bPJCv2aWoFCBW03obg7Qz3iQNpdzYuX8dgghUEiiNi1eimuysMClsq11eHQwCsDd5OvoV0YB0j3cf5STiFcR8fGDsfBqfY9tEZxfVI8bTxLQQuCo3Gb5wHdnJlYaqu-vJ5KrSYj4TGsQO6mTRQSoR4yUc0N-N5Gvdv7HPPDOMgX6RU0Z9npse16j40rgKQ
+                                                        - generic [ref=e827]:
+                                                            - link "Learn More" [ref=e829] [cursor=pointer]:
+                                                                - /url: https://alb.reddit.com/cr?za=UNooNyp6jlWEpdPq7kvAW99YFtWpHtQHkxni0uY_ugw32zXSyI6GzWXOd03QkHKc0JfifxF49_W8Nb1zyljcV0lEtOCEJ9I64Ih3He4_WABdZE9x_t_svRS0kxmJqoJ6QhXPEOuRQxcwPQjoL1pvzi5qPKq8bqoFUU0kqFjxkjuCOU39x16FYukypmlWIWf9JnzMrl_MeoPvk2f4tyVnTxnEHxZGigtMpxO1bklHKOP2rTsfRf0-tchkl02FJBPtU9NM03XP8eOvRVtgxnJZccHsdBA77ekgeYi8UPLRH4RWNKh7vGSlA-ORnU0v91k3dYMuJdLNgLfTwq16fFGncgY-wH111NrkExO6_kReYUolG6hwJZVR5aIn_LnHVVBjeTcKH3PeHzWNZBL-RLM7S9_dfUrLJQL9jda6L5EEbtWRXQOOqcfBtpVZRa_UbzpRI6NrdNewe_FPSEaE10Rh6xDXwhXmyxpHy35lo995J-J6mCTquz-KgrTYpW1cGY4IvBAIVDg_WPswLrbPQM8sOqhvq-9TQv1xe-Dz6JdlemyL9Gh6eJpfjdO4tlQ5y3lsFFqOcrxnlSyTeP8USribXiYAWobptHIOzFu-SqF_YB2ndj6ZsMQCtxD3iT_WFI_JEuRArBPdBjUangRZE81vrsSGi802ppnOQfMfwcTrTabgCwK7yH8OctBJR6XTGh3tDDpxxxNMwyCDktO3nfAQ1sOkyenYnE2yXxcZpdHz2ajtfeLbvq-QadHfd9zImP3Tyqbcc3pkfqHXWwGFL0E3Q5fDoWkF&zp=RolsaGklnuuWKXHj7IaU4AOO28RDcx5RqO9iWIKvUrngUUIZTz3XZKQtWoagBEY_2uHcFLcANx_9rO52JRjmw4Q6-pUeYGk1ak3XE7841iZTlaIOz5MDkDtp0Sa-yoosckEDXF8jroUOshYZ77dtZsNhwE7Fw2MjwgspWkFqD2iD3KKQ5nNHrG7vkTrFTWqjNFpIGYthNQU-zBaVa4W6aAYRMoxFmqrVgrp5gizOZrtGc2eiGait4evMMhv-DIWoYeTqGo66we15UNZffaxbPTOhefHjyaZ4lh-FO6_SGXlhiMzgWr5SoHwsuCze48Mqo3ydKG-Dmz5mj55pb5-80WZtq_6TdLH9Et3DIkZbeWro6xtz1ruv7Lb1fKrRKkR8Wg8CwfYGv9bPJCv2aWoFCBW03obg7Qz3iQNpdzYuX8dgghUEiiNi1eimuysMClsq11eHQwCsDd5OvoV0YB0j3cf5STiFcR8fGDsfBqfY9tEZxfVI8bTxLQQuCo3Gb5wHdnJlYaqu-vJ5KrSYj4TGsQO6mTRQSoR4yUc0N-N5Gvdv7HPPDOMgX6RU0Z9npse16j40rgKQ
+                                                                - generic [ref=e831]:
+                                                                    - generic: Learn More
+                                                            - link "hostinger.com" [ref=e834] [cursor=pointer]:
+                                                                - /url: https://alb.reddit.com/cr?za=UNooNyp6jlWEpdPq7kvAW99YFtWpHtQHkxni0uY_ugw32zXSyI6GzWXOd03QkHKc0JfifxF49_W8Nb1zyljcV0lEtOCEJ9I64Ih3He4_WABdZE9x_t_svRS0kxmJqoJ6QhXPEOuRQxcwPQjoL1pvzi5qPKq8bqoFUU0kqFjxkjuCOU39x16FYukypmlWIWf9JnzMrl_MeoPvk2f4tyVnTxnEHxZGigtMpxO1bklHKOP2rTsfRf0-tchkl02FJBPtU9NM03XP8eOvRVtgxnJZccHsdBA77ekgeYi8UPLRH4RWNKh7vGSlA-ORnU0v91k3dYMuJdLNgLfTwq16fFGncgY-wH111NrkExO6_kReYUolG6hwJZVR5aIn_LnHVVBjeTcKH3PeHzWNZBL-RLM7S9_dfUrLJQL9jda6L5EEbtWRXQOOqcfBtpVZRa_UbzpRI6NrdNewe_FPSEaE10Rh6xDXwhXmyxpHy35lo995J-J6mCTquz-KgrTYpW1cGY4IvBAIVDg_WPswLrbPQM8sOqhvq-9TQv1xe-Dz6JdlemyL9Gh6eJpfjdO4tlQ5y3lsFFqOcrxnlSyTeP8USribXiYAWobptHIOzFu-SqF_YB2ndj6ZsMQCtxD3iT_WFI_JEuRArBPdBjUangRZE81vrsSGi802ppnOQfMfwcTrTabgCwK7yH8OctBJR6XTGh3tDDpxxxNMwyCDktO3nfAQ1sOkyenYnE2yXxcZpdHz2ajtfeLbvq-QadHfd9zImP3Tyqbcc3pkfqHXWwGFL0E3Q5fDoWkF&zp=RolsaGklnuuWKXHj7IaU4AOO28RDcx5RqO9iWIKvUrngUUIZTz3XZKQtWoagBEY_2uHcFLcANx_9rO52JRjmw4Q6-pUeYGk1ak3XE7841iZTlaIOz5MDkDtp0Sa-yoosckEDXF8jroUOshYZ77dtZsNhwE7Fw2MjwgspWkFqD2iD3KKQ5nNHrG7vkTrFTWqjNFpIGYthNQU-zBaVa4W6aAYRMoxFmqrVgrp5gizOZrtGc2eiGait4evMMhv-DIWoYeTqGo66we15UNZffaxbPTOhefHjyaZ4lh-FO6_SGXlhiMzgWr5SoHwsuCze48Mqo3ydKG-Dmz5mj55pb5-80WZtq_6TdLH9Et3DIkZbeWro6xtz1ruv7Lb1fKrRKkR8Wg8CwfYGv9bPJCv2aWoFCBW03obg7Qz3iQNpdzYuX8dgghUEiiNi1eimuysMClsq11eHQwCsDd5OvoV0YB0j3cf5STiFcR8fGDsfBqfY9tEZxfVI8bTxLQQuCo3Gb5wHdnJlYaqu-vJ5KrSYj4TGsQO6mTRQSoR4yUc0N-N5Gvdv7HPPDOMgX6RU0Z9npse16j40rgKQ
+                                                                - generic: hostinger.com
+                                                - 'link "Thumbnail image: Verwaltetes Node.js Hosting. Sie programmieren, wir halten es am Laufen. Direkt aus GitHub oder Ihrer IDE bereitstellen." [ref=e837] [cursor=pointer]':
+                                                    - /url: https://alb.reddit.com/cr?za=UNooNyp6jlWEpdPq7kvAW99YFtWpHtQHkxni0uY_ugw32zXSyI6GzWXOd03QkHKc0JfifxF49_W8Nb1zyljcV0lEtOCEJ9I64Ih3He4_WABdZE9x_t_svRS0kxmJqoJ6QhXPEOuRQxcwPQjoL1pvzi5qPKq8bqoFUU0kqFjxkjuCOU39x16FYukypmlWIWf9JnzMrl_MeoPvk2f4tyVnTxnEHxZGigtMpxO1bklHKOP2rTsfRf0-tchkl02FJBPtU9NM03XP8eOvRVtgxnJZccHsdBA77ekgeYi8UPLRH4RWNKh7vGSlA-ORnU0v91k3dYMuJdLNgLfTwq16fFGncgY-wH111NrkExO6_kReYUolG6hwJZVR5aIn_LnHVVBjeTcKH3PeHzWNZBL-RLM7S9_dfUrLJQL9jda6L5EEbtWRXQOOqcfBtpVZRa_UbzpRI6NrdNewe_FPSEaE10Rh6xDXwhXmyxpHy35lo995J-J6mCTquz-KgrTYpW1cGY4IvBAIVDg_WPswLrbPQM8sOqhvq-9TQv1xe-Dz6JdlemyL9Gh6eJpfjdO4tlQ5y3lsFFqOcrxnlSyTeP8USribXiYAWobptHIOzFu-SqF_YB2ndj6ZsMQCtxD3iT_WFI_JEuRArBPdBjUangRZE81vrsSGi802ppnOQfMfwcTrTabgCwK7yH8OctBJR6XTGh3tDDpxxxNMwyCDktO3nfAQ1sOkyenYnE2yXxcZpdHz2ajtfeLbvq-QadHfd9zImP3Tyqbcc3pkfqHXWwGFL0E3Q5fDoWkF&zp=RolsaGklnuuWKXHj7IaU4AOO28RDcx5RqO9iWIKvUrngUUIZTz3XZKQtWoagBEY_2uHcFLcANx_9rO52JRjmw4Q6-pUeYGk1ak3XE7841iZTlaIOz5MDkDtp0Sa-yoosckEDXF8jroUOshYZ77dtZsNhwE7Fw2MjwgspWkFqD2iD3KKQ5nNHrG7vkTrFTWqjNFpIGYthNQU-zBaVa4W6aAYRMoxFmqrVgrp5gizOZrtGc2eiGait4evMMhv-DIWoYeTqGo66we15UNZffaxbPTOhefHjyaZ4lh-FO6_SGXlhiMzgWr5SoHwsuCze48Mqo3ydKG-Dmz5mj55pb5-80WZtq_6TdLH9Et3DIkZbeWro6xtz1ruv7Lb1fKrRKkR8Wg8CwfYGv9bPJCv2aWoFCBW03obg7Qz3iQNpdzYuX8dgghUEiiNi1eimuysMClsq11eHQwCsDd5OvoV0YB0j3cf5STiFcR8fGDsfBqfY9tEZxfVI8bTxLQQuCo3Gb5wHdnJlYaqu-vJ5KrSYj4TGsQO6mTRQSoR4yUc0N-N5Gvdv7HPPDOMgX6RU0Z9npse16j40rgKQ
+                                                    - 'img "Thumbnail image: Verwaltetes Node.js Hosting. Sie programmieren, wir halten es am Laufen. Direkt aus GitHub oder Ihrer IDE bereitstellen." [ref=e838]'
+                                    - article "Comment from Plane-Marionberry380 1 month ago" [ref=e840]:
+                                        - generic "Metadata for Plane-Marionberry380's comment" [ref=e841]:
+                                            - link "Plane-Marionberry380's profile --- avatar" [ref=e848] [cursor=pointer]:
+                                                - /url: /user/Plane-Marionberry380/
+                                                - img "u/Plane-Marionberry380 avatar" [ref=e851]
+                                            - generic [ref=e856]:
+                                                - link "Plane-Marionberry380's profile" [ref=e861] [cursor=pointer]:
+                                                    - /url: /user/Plane-Marionberry380/
+                                                    - text: Plane-Marionberry380
+                                                - generic [ref=e862]: •
+                                                - link "1mo ago" [ref=e863] [cursor=pointer]:
+                                                    - /url: /r/ecommerce/comments/1s40e5u/comment/oclqgaj/
+                                                    - time [ref=e864]: 1mo ago
+                                        - paragraph [ref=e873]: Ugh yeah, been there too. Got a chargeback last month for a package with full tracking and signature confirmation,customer just claimed it vanished. Feels like the bank assumes you’re guilty until proven innocent, and even proof barely moves the needle.
+                                    - article "Comment from MonicaEaton911 1 month ago" [ref=e879]:
+                                        - generic "Metadata for MonicaEaton911's comment" [ref=e880]:
+                                            - link "MonicaEaton911's profile --- avatar" [ref=e887] [cursor=pointer]:
+                                                - /url: /user/MonicaEaton911/
+                                                - img "u/MonicaEaton911 avatar" [ref=e890]
+                                            - generic [ref=e895]:
+                                                - link "MonicaEaton911's profile" [ref=e900] [cursor=pointer]:
+                                                    - /url: /user/MonicaEaton911/
+                                                    - text: MonicaEaton911
+                                                - generic [ref=e901]: •
+                                                - link "1mo ago" [ref=e902] [cursor=pointer]:
+                                                    - /url: /r/ecommerce/comments/1s40e5u/comment/ocm2g9v/
+                                                    - time [ref=e903]: 1mo ago
+                                        - generic [ref=e911]:
+                                            - paragraph [ref=e912]:
+                                                - emphasis [ref=e913]: "I'm sorry you're getting hit with this, but no, it's not just you: chargeback abuse (friendly fraud) is a serious problem that just keeps getting worse."
+                                            - paragraph [ref=e914]:
+                                                - emphasis [ref=e915]: As others have said, the chargeback process favors the customer, but to be fair, that's what it was designed to do. The problem is, it was created a half-century ago -- long before eCommerce existed. Now, there are major loopholes that allow abuse. All the different stakeholders know the system should be updated, but change happens slowly.
+                                            - paragraph [ref=e916]:
+                                                - emphasis [ref=e917]: Yes, you can win reversals over invalid chargebacks... but the system can be fickle. DIY representments statistically succeed less than 25% of the time.
+                                            - paragraph [ref=e918]:
+                                                - emphasis [ref=e919]: That said, I’m curious as to why your alerts are making you panic. Most disputes can be resolved with a simple refund. That’s not ideal, I know, but it’s pretty straightforward, and refunds are usually
+                                                - text: better than receiving a full chargeback.
+                                                - emphasis [ref=e920]: Is there something else going on that’s complicating things?
+                                    - article "Comment from Anantha_datta 1 month ago" [ref=e926]:
+                                        - generic "Metadata for Anantha_datta's comment" [ref=e927]:
+                                            - link "Anantha_datta's profile --- avatar" [ref=e934] [cursor=pointer]:
+                                                - /url: /user/Anantha_datta/
+                                                - img "u/Anantha_datta avatar" [ref=e937]
+                                            - generic [ref=e942]:
+                                                - link "Anantha_datta's profile" [ref=e947] [cursor=pointer]:
+                                                    - /url: /user/Anantha_datta/
+                                                    - text: Anantha_datta
+                                                - generic [ref=e948]: •
+                                                - link "1mo ago" [ref=e949] [cursor=pointer]:
+                                                    - /url: /r/ecommerce/comments/1s40e5u/comment/ocm5l7y/
+                                                    - time [ref=e950]: 1mo ago
+                                        - paragraph [ref=e959]: The theater of evidence is the absolute worst part of running a SaaS or e commerce shop. Even with a signature and GPS tracking, most banks will side with their cardholder 9 times out of 10 just to keep them happy. Honestly, once you’ve submitted the proof, it’s out of your hands most founders just bake a 1-2% fraud tax into their pricing and automate the dispute response so they don't lose their sanity.
+                                    - article "Comment from Worth_Geologist4643 1 month ago" [ref=e965]:
+                                        - generic "Metadata for Worth_Geologist4643's comment" [ref=e966]:
+                                            - link "Worth_Geologist4643's profile --- avatar" [ref=e973] [cursor=pointer]:
+                                                - /url: /user/Worth_Geologist4643/
+                                                - img [ref=e978]
+                                            - generic [ref=e984]:
+                                                - link "Worth_Geologist4643's profile" [ref=e989] [cursor=pointer]:
+                                                    - /url: /user/Worth_Geologist4643/
+                                                    - text: Worth_Geologist4643
+                                                - generic [ref=e990]: •
+                                                - link "1mo ago" [ref=e991] [cursor=pointer]:
+                                                    - /url: /r/ecommerce/comments/1s40e5u/comment/ocmxli3/
+                                                    - time [ref=e992]: 1mo ago
+                                        - generic [ref=e1000]:
+                                            - paragraph [ref=e1001]: Evidence does actually matter now, but only if it's the right kind. Visa recently rolled out Compelling Evidence 3.0 (CE 3.0) specifically to combat this kind of friendly fraud with Reason Code 10.4. Under CE 3.0, liability automatically shifts back to the issuer, and you win the dispute, but you have to provide a very specific historical footprint.
+                                            - paragraph [ref=e1002]: To win, you need to show the following.
+                                            - list [ref=e1003]:
+                                                - listitem [ref=e1004]:
+                                                    - paragraph [ref=e1005]: Two prior, undisputed transactions from that exact customer.
+                                                - listitem [ref=e1006]:
+                                                    - paragraph [ref=e1007]: They must be between 120 and 365 days old.
+                                                - listitem [ref=e1008]:
+                                                    - paragraph [ref=e1009]:
+                                                        - text: Across the old transactions and the new disputed one, at least
+                                                        - strong [ref=e1010]: two
+                                                        - text: core data elements must match perfectly.
+                                                - listitem [ref=e1011]:
+                                                    - paragraph [ref=e1012]:
+                                                        - text: One of those matching elements
+                                                        - emphasis [ref=e1013]: must
+                                                        - text: be their IP Address or Device ID/Fingerprint.
+                                            - paragraph [ref=e1014]: If you provide that exact data packet, the bank is forced to decline the customer's chargeback. Out of curiosity, what e-commerce platform are you currently using?
+                                            - paragraph [ref=e1015]: If you happen to be running on WordPress/Shopify, you should really look into a tool called Sensfrx. It actually captures the Device IDs and IP addresses you need for those disputes, but more importantly, in case of WordPress it pre-emptively blocks suspicious checkouts and friendly fraud attempts in real-time before the payment even processes. It basically stops the problem before the liability ever hits your ledger.
+                                    - article "Comment from movinupandon 1 month ago" [ref=e1021]:
+                                        - generic "Metadata for movinupandon's comment" [ref=e1022]:
+                                            - link "movinupandon's profile --- avatar" [ref=e1029] [cursor=pointer]:
+                                                - /url: /user/movinupandon/
+                                                - img "u/movinupandon avatar" [ref=e1032]
+                                            - generic [ref=e1037]:
+                                                - link "movinupandon's profile" [ref=e1042] [cursor=pointer]:
+                                                    - /url: /user/movinupandon/
+                                                    - text: movinupandon
+                                                - generic [ref=e1043]: •
+                                                - link "1mo ago" [ref=e1044] [cursor=pointer]:
+                                                    - /url: /r/ecommerce/comments/1s40e5u/comment/ocn83hh/
+                                                    - time [ref=e1045]: 1mo ago
+                                        - paragraph [ref=e1054]: I’ve been told verbatim when trying to stop chargebacks where they were clearly trying to scam me that if the buyer keeps fighting it eventually they just side with them.
+                                    - article "Comment from DatEffingGuy 1 month ago" [ref=e1060]:
+                                        - generic "Metadata for DatEffingGuy's comment" [ref=e1061]:
+                                            - link "DatEffingGuy's profile --- avatar" [ref=e1068] [cursor=pointer]:
+                                                - /url: /user/DatEffingGuy/
+                                                - img [ref=e1073]
+                                            - generic [ref=e1079]:
+                                                - link "DatEffingGuy's profile" [ref=e1084] [cursor=pointer]:
+                                                    - /url: /user/DatEffingGuy/
+                                                    - text: DatEffingGuy
+                                                - generic [ref=e1085]: •
+                                                - link "1mo ago" [ref=e1086] [cursor=pointer]:
+                                                    - /url: /r/ecommerce/comments/1s40e5u/comment/ocrbbz0/
+                                                    - time [ref=e1087]: 1mo ago
+                                        - blockquote [ref=e1096]:
+                                            - paragraph [ref=e1097]: It feels like that because in a lot of these cases you’re not actually arguing about what happened after the order — even though that’s what most of the evidence shows. The dispute usually ends up coming down to whether the customer is considered to have authorized the transaction in the first place. So you can have tracking, signatures, photos — all proving delivery — and still lose if that part isn’t clear enough in how it’s evaluated.That’s why it feels like you’re submitting everything… and none of it is actually addressing the question being asked.
+                                    - article "Comment from Vegetable-Bid-9749 1 month ago" [ref=e1103]:
+                                        - generic "Metadata for Vegetable-Bid-9749's comment" [ref=e1104]:
+                                            - link "Vegetable-Bid-9749's profile --- avatar" [ref=e1111] [cursor=pointer]:
+                                                - /url: /user/Vegetable-Bid-9749/
+                                                - img [ref=e1116]
+                                            - generic [ref=e1122]:
+                                                - link "Vegetable-Bid-9749's profile" [ref=e1127] [cursor=pointer]:
+                                                    - /url: /user/Vegetable-Bid-9749/
+                                                    - text: Vegetable-Bid-9749
+                                                - generic [ref=e1128]: •
+                                                - link "1mo ago" [ref=e1129] [cursor=pointer]:
+                                                    - /url: /r/ecommerce/comments/1s40e5u/comment/ocwecz2/
+                                                    - time [ref=e1130]: 1mo ago
+                                        - paragraph [ref=e1139]: You do win some but the system is genuinely stacked against merchants, that part isn't in your head. What changed things for us was getting ahead of it, delivery confirmation on every order, and a short post-purchase message to the customer acknowledging receipt. It creates a paper trail that's harder to dispute. It won't save you on every case but it shifts the odds. The ones where we lose now are mostly where we skipped a step, not where we did everything right.
+                                    - generic "You won't believe how much you get for this price!" [ref=e1145]:
+                                        - generic [ref=e1146]:
+                                            - 'generic "Advertisement: You won''t believe how much you get for this price!" [ref=e1147]':
+                                                - 'link "Advertisement: You won''t believe how much you get for this price!" [ref=e1148] [cursor=pointer]':
+                                                    - /url: https://alb.reddit.com/cr?za=QOljOMv71cO4a4pYpVxKsTuOXNOubAnFVoPFgltCV25nNQJzwIg0Yl223OJ9YJ6Dp4Jr4JuQFkwwZHbMc0MYe51IVryOHbB6gtmkd4bBJCF6PZSTI0qGJvm5QL6S1OcPEWt_gAtZJg9xWXmk-hWjldxBQ6eTTX1lcInaJyeUEZpSyivDJT1YYDB4gEr0tNfWV0vli9ueZMhn24kVVK_aGEY9u3Rq6w3cLaYNgBskOo8J0sXfl2epucq1xNwBXmDDwcxu6904z5NR0CJU1QGGwhLPYxRKxyGJLOpSH5o3PNLFr86Mt2Rxi5vimy25sEsVNN0NzLsvuxzS9Qdsmz-MRZ2o-EPwWq1fQWCnOSE_4feuKlSXHMfTWI8sJj4iNnYdPwCX12yyaBg8NmKXJGpxiEx8DQTf9oZ7aMcngKrbSC0OzdJYKXKnWYDCoX4zoyrNPkNh1Wmqs9lDSvDlauWg6P6okH3ylIPI2EZ44nsp4G4FkSUFzKPuNLu3He_9GySaAiEpZmvdOtd_PMIDMn0glprWsWJz79ZSH79B2EJ0pokXbOIfqzEh9h1ejOuEGeJp_Fnr-B9IbSaScTW9tzf1NNxYJsm2iWktVI6w9Wg_NhUfE1mYJ43pl6yijKA1MRFvq7PhT-WENxEjV4LfqmJGhUE9M2NWAM4V-GmCRf6czmVxsGYjjv7bL7gjBge5sUu_ZvObMOqsi76AwF-ZmV9DCvf776gQBDTFWQc-Rw__qBSUGinPpB6SF7xSbKMUp1tZFWHsFBBWOa-Z27wkL9ovJ_DcO_HojeHgZ1Q&zp=jJsJ6Gtbb07_zO4kD076R7GFlaHsoYcwtbAyk5Pss77_XEG8FWyEe39O24qO9XARShsaUR7hATmcE63WWiPWrq3Z10SveXWR3OYZQhAqqmZl6BXgeo8LWecFWhyRnEt6eq0iy52oElJ1YIwnVScoP6Nesb4BWlzmboGBmyE8a9TlmC7SmiNe6oOyBOvcksHhW5IcwIqEVGRnTkTIK-79fASLdrQCFuXzql6GSEj2HvaoIACRmirg9LyGmQGel40W22b0TX30BXkvcKwhcIT1i-ySi6nPSj4CVPTx5vuVidn33EvdY6qUJw3ypWLT3poChRCiaB79x3dTTjtiZGbUm8ayAvBj2ynxtrO6t1IQ-46xPmpNYzFywsHtz5sF1PIyQBpD7iXgTbvZpeevL30pStWGDQJEgYd9CMjH4zm35elfXa8M7EEzi_HXvLTM5ZE4Y7TBxpNwctFmfi5gI5c5CWxSw2Ny6PEfFxCHk99fv84-RS2DVgdBkFGNdyD_9S1k9ECSIk-fs8jqiYpPyxo0fKq2Z5rfVPNgDJ4QBqzS9HPduwyLNIUyhbb6InT9DZHUiUPsPUFOC5KrHC0ANWVSwAYmgbxINsDQqnvLfxXUnzfHjQjkqSrhyrPTweRYn1cekcn25R1pvMlOBq6fainXAxD-0TjYQh2A5hpR-jeaVDccRsOCN4t1fEU3allWamByiLE429B1STUVM2uzmtTnchv9pxxhmFxZY-xY7gUzQ0GtP6Cl5vhrhrTNLCD4511US8fEyj2iSSSttOOI2omjIywN_Nb90SaP9OmKUD4fBR-LAdjtqhc
+                                            - generic [ref=e1149]:
+                                                - generic [ref=e1150]:
+                                                    - link "u/Alibaba_B2B avatar u/Alibaba_B2B" [ref=e1153] [cursor=pointer]:
+                                                        - /url: /user/Alibaba_B2B/
+                                                        - img "u/Alibaba_B2B avatar" [ref=e1156]
+                                                        - generic [ref=e1157]: u/Alibaba_B2B
+                                                    - generic [ref=e1158]: •
+                                                    - link "Promoted" [ref=e1160] [cursor=pointer]:
+                                                        - /url: /user/Alibaba_B2B/
+                                                        - generic [ref=e1161]: Promoted
+                                                    - link [ref=e1163] [cursor=pointer]:
+                                                        - /url: https://alb.reddit.com/cr?za=QOljOMv71cO4a4pYpVxKsTuOXNOubAnFVoPFgltCV25nNQJzwIg0Yl223OJ9YJ6Dp4Jr4JuQFkwwZHbMc0MYe51IVryOHbB6gtmkd4bBJCF6PZSTI0qGJvm5QL6S1OcPEWt_gAtZJg9xWXmk-hWjldxBQ6eTTX1lcInaJyeUEZpSyivDJT1YYDB4gEr0tNfWV0vli9ueZMhn24kVVK_aGEY9u3Rq6w3cLaYNgBskOo8J0sXfl2epucq1xNwBXmDDwcxu6904z5NR0CJU1QGGwhLPYxRKxyGJLOpSH5o3PNLFr86Mt2Rxi5vimy25sEsVNN0NzLsvuxzS9Qdsmz-MRZ2o-EPwWq1fQWCnOSE_4feuKlSXHMfTWI8sJj4iNnYdPwCX12yyaBg8NmKXJGpxiEx8DQTf9oZ7aMcngKrbSC0OzdJYKXKnWYDCoX4zoyrNPkNh1Wmqs9lDSvDlauWg6P6okH3ylIPI2EZ44nsp4G4FkSUFzKPuNLu3He_9GySaAiEpZmvdOtd_PMIDMn0glprWsWJz79ZSH79B2EJ0pokXbOIfqzEh9h1ejOuEGeJp_Fnr-B9IbSaScTW9tzf1NNxYJsm2iWktVI6w9Wg_NhUfE1mYJ43pl6yijKA1MRFvq7PhT-WENxEjV4LfqmJGhUE9M2NWAM4V-GmCRf6czmVxsGYjjv7bL7gjBge5sUu_ZvObMOqsi76AwF-ZmV9DCvf776gQBDTFWQc-Rw__qBSUGinPpB6SF7xSbKMUp1tZFWHsFBBWOa-Z27wkL9ovJ_DcO_HojeHgZ1Q&zp=jJsJ6Gtbb07_zO4kD076R7GFlaHsoYcwtbAyk5Pss77_XEG8FWyEe39O24qO9XARShsaUR7hATmcE63WWiPWrq3Z10SveXWR3OYZQhAqqmZl6BXgeo8LWecFWhyRnEt6eq0iy52oElJ1YIwnVScoP6Nesb4BWlzmboGBmyE8a9TlmC7SmiNe6oOyBOvcksHhW5IcwIqEVGRnTkTIK-79fASLdrQCFuXzql6GSEj2HvaoIACRmirg9LyGmQGel40W22b0TX30BXkvcKwhcIT1i-ySi6nPSj4CVPTx5vuVidn33EvdY6qUJw3ypWLT3poChRCiaB79x3dTTjtiZGbUm8ayAvBj2ynxtrO6t1IQ-46xPmpNYzFywsHtz5sF1PIyQBpD7iXgTbvZpeevL30pStWGDQJEgYd9CMjH4zm35elfXa8M7EEzi_HXvLTM5ZE4Y7TBxpNwctFmfi5gI5c5CWxSw2Ny6PEfFxCHk99fv84-RS2DVgdBkFGNdyD_9S1k9ECSIk-fs8jqiYpPyxo0fKq2Z5rfVPNgDJ4QBqzS9HPduwyLNIUyhbb6InT9DZHUiUPsPUFOC5KrHC0ANWVSwAYmgbxINsDQqnvLfxXUnzfHjQjkqSrhyrPTweRYn1cekcn25R1pvMlOBq6fainXAxD-0TjYQh2A5hpR-jeaVDccRsOCN4t1fEU3allWamByiLE429B1STUVM2uzmtTnchv9pxxhmFxZY-xY7gUzQ0GtP6Cl5vhrhrTNLCD4511US8fEyj2iSSSttOOI2omjIywN_Nb90SaP9OmKUD4fBR-LAdjtqhc
+                                                - button "Open user actions" [ref=e1168] [cursor=pointer]:
+                                                    - img [ref=e1171]
+                                            - generic [ref=e1174]:
+                                                - generic [ref=e1175]:
+                                                    - link "You won't believe how much you get for this price!" [ref=e1177] [cursor=pointer]:
+                                                        - /url: https://alb.reddit.com/cr?za=QOljOMv71cO4a4pYpVxKsTuOXNOubAnFVoPFgltCV25nNQJzwIg0Yl223OJ9YJ6Dp4Jr4JuQFkwwZHbMc0MYe51IVryOHbB6gtmkd4bBJCF6PZSTI0qGJvm5QL6S1OcPEWt_gAtZJg9xWXmk-hWjldxBQ6eTTX1lcInaJyeUEZpSyivDJT1YYDB4gEr0tNfWV0vli9ueZMhn24kVVK_aGEY9u3Rq6w3cLaYNgBskOo8J0sXfl2epucq1xNwBXmDDwcxu6904z5NR0CJU1QGGwhLPYxRKxyGJLOpSH5o3PNLFr86Mt2Rxi5vimy25sEsVNN0NzLsvuxzS9Qdsmz-MRZ2o-EPwWq1fQWCnOSE_4feuKlSXHMfTWI8sJj4iNnYdPwCX12yyaBg8NmKXJGpxiEx8DQTf9oZ7aMcngKrbSC0OzdJYKXKnWYDCoX4zoyrNPkNh1Wmqs9lDSvDlauWg6P6okH3ylIPI2EZ44nsp4G4FkSUFzKPuNLu3He_9GySaAiEpZmvdOtd_PMIDMn0glprWsWJz79ZSH79B2EJ0pokXbOIfqzEh9h1ejOuEGeJp_Fnr-B9IbSaScTW9tzf1NNxYJsm2iWktVI6w9Wg_NhUfE1mYJ43pl6yijKA1MRFvq7PhT-WENxEjV4LfqmJGhUE9M2NWAM4V-GmCRf6czmVxsGYjjv7bL7gjBge5sUu_ZvObMOqsi76AwF-ZmV9DCvf776gQBDTFWQc-Rw__qBSUGinPpB6SF7xSbKMUp1tZFWHsFBBWOa-Z27wkL9ovJ_DcO_HojeHgZ1Q&zp=jJsJ6Gtbb07_zO4kD076R7GFlaHsoYcwtbAyk5Pss77_XEG8FWyEe39O24qO9XARShsaUR7hATmcE63WWiPWrq3Z10SveXWR3OYZQhAqqmZl6BXgeo8LWecFWhyRnEt6eq0iy52oElJ1YIwnVScoP6Nesb4BWlzmboGBmyE8a9TlmC7SmiNe6oOyBOvcksHhW5IcwIqEVGRnTkTIK-79fASLdrQCFuXzql6GSEj2HvaoIACRmirg9LyGmQGel40W22b0TX30BXkvcKwhcIT1i-ySi6nPSj4CVPTx5vuVidn33EvdY6qUJw3ypWLT3poChRCiaB79x3dTTjtiZGbUm8ayAvBj2ynxtrO6t1IQ-46xPmpNYzFywsHtz5sF1PIyQBpD7iXgTbvZpeevL30pStWGDQJEgYd9CMjH4zm35elfXa8M7EEzi_HXvLTM5ZE4Y7TBxpNwctFmfi5gI5c5CWxSw2Ny6PEfFxCHk99fv84-RS2DVgdBkFGNdyD_9S1k9ECSIk-fs8jqiYpPyxo0fKq2Z5rfVPNgDJ4QBqzS9HPduwyLNIUyhbb6InT9DZHUiUPsPUFOC5KrHC0ANWVSwAYmgbxINsDQqnvLfxXUnzfHjQjkqSrhyrPTweRYn1cekcn25R1pvMlOBq6fainXAxD-0TjYQh2A5hpR-jeaVDccRsOCN4t1fEU3allWamByiLE429B1STUVM2uzmtTnchv9pxxhmFxZY-xY7gUzQ0GtP6Cl5vhrhrTNLCD4511US8fEyj2iSSSttOOI2omjIywN_Nb90SaP9OmKUD4fBR-LAdjtqhc
+                                                        - generic: You won't believe how much you get for this price!
+                                                    - generic [ref=e1178]:
+                                                        - link [ref=e1180] [cursor=pointer]:
+                                                            - /url: https://alb.reddit.com/cr?za=QOljOMv71cO4a4pYpVxKsTuOXNOubAnFVoPFgltCV25nNQJzwIg0Yl223OJ9YJ6Dp4Jr4JuQFkwwZHbMc0MYe51IVryOHbB6gtmkd4bBJCF6PZSTI0qGJvm5QL6S1OcPEWt_gAtZJg9xWXmk-hWjldxBQ6eTTX1lcInaJyeUEZpSyivDJT1YYDB4gEr0tNfWV0vli9ueZMhn24kVVK_aGEY9u3Rq6w3cLaYNgBskOo8J0sXfl2epucq1xNwBXmDDwcxu6904z5NR0CJU1QGGwhLPYxRKxyGJLOpSH5o3PNLFr86Mt2Rxi5vimy25sEsVNN0NzLsvuxzS9Qdsmz-MRZ2o-EPwWq1fQWCnOSE_4feuKlSXHMfTWI8sJj4iNnYdPwCX12yyaBg8NmKXJGpxiEx8DQTf9oZ7aMcngKrbSC0OzdJYKXKnWYDCoX4zoyrNPkNh1Wmqs9lDSvDlauWg6P6okH3ylIPI2EZ44nsp4G4FkSUFzKPuNLu3He_9GySaAiEpZmvdOtd_PMIDMn0glprWsWJz79ZSH79B2EJ0pokXbOIfqzEh9h1ejOuEGeJp_Fnr-B9IbSaScTW9tzf1NNxYJsm2iWktVI6w9Wg_NhUfE1mYJ43pl6yijKA1MRFvq7PhT-WENxEjV4LfqmJGhUE9M2NWAM4V-GmCRf6czmVxsGYjjv7bL7gjBge5sUu_ZvObMOqsi76AwF-ZmV9DCvf776gQBDTFWQc-Rw__qBSUGinPpB6SF7xSbKMUp1tZFWHsFBBWOa-Z27wkL9ovJ_DcO_HojeHgZ1Q&zp=jJsJ6Gtbb07_zO4kD076R7GFlaHsoYcwtbAyk5Pss77_XEG8FWyEe39O24qO9XARShsaUR7hATmcE63WWiPWrq3Z10SveXWR3OYZQhAqqmZl6BXgeo8LWecFWhyRnEt6eq0iy52oElJ1YIwnVScoP6Nesb4BWlzmboGBmyE8a9TlmC7SmiNe6oOyBOvcksHhW5IcwIqEVGRnTkTIK-79fASLdrQCFuXzql6GSEj2HvaoIACRmirg9LyGmQGel40W22b0TX30BXkvcKwhcIT1i-ySi6nPSj4CVPTx5vuVidn33EvdY6qUJw3ypWLT3poChRCiaB79x3dTTjtiZGbUm8ayAvBj2ynxtrO6t1IQ-46xPmpNYzFywsHtz5sF1PIyQBpD7iXgTbvZpeevL30pStWGDQJEgYd9CMjH4zm35elfXa8M7EEzi_HXvLTM5ZE4Y7TBxpNwctFmfi5gI5c5CWxSw2Ny6PEfFxCHk99fv84-RS2DVgdBkFGNdyD_9S1k9ECSIk-fs8jqiYpPyxo0fKq2Z5rfVPNgDJ4QBqzS9HPduwyLNIUyhbb6InT9DZHUiUPsPUFOC5KrHC0ANWVSwAYmgbxINsDQqnvLfxXUnzfHjQjkqSrhyrPTweRYn1cekcn25R1pvMlOBq6fainXAxD-0TjYQh2A5hpR-jeaVDccRsOCN4t1fEU3allWamByiLE429B1STUVM2uzmtTnchv9pxxhmFxZY-xY7gUzQ0GtP6Cl5vhrhrTNLCD4511US8fEyj2iSSSttOOI2omjIywN_Nb90SaP9OmKUD4fBR-LAdjtqhc
+                                                        - generic [ref=e1181]:
+                                                            - link "Learn More" [ref=e1183] [cursor=pointer]:
+                                                                - /url: https://alb.reddit.com/cr?za=QOljOMv71cO4a4pYpVxKsTuOXNOubAnFVoPFgltCV25nNQJzwIg0Yl223OJ9YJ6Dp4Jr4JuQFkwwZHbMc0MYe51IVryOHbB6gtmkd4bBJCF6PZSTI0qGJvm5QL6S1OcPEWt_gAtZJg9xWXmk-hWjldxBQ6eTTX1lcInaJyeUEZpSyivDJT1YYDB4gEr0tNfWV0vli9ueZMhn24kVVK_aGEY9u3Rq6w3cLaYNgBskOo8J0sXfl2epucq1xNwBXmDDwcxu6904z5NR0CJU1QGGwhLPYxRKxyGJLOpSH5o3PNLFr86Mt2Rxi5vimy25sEsVNN0NzLsvuxzS9Qdsmz-MRZ2o-EPwWq1fQWCnOSE_4feuKlSXHMfTWI8sJj4iNnYdPwCX12yyaBg8NmKXJGpxiEx8DQTf9oZ7aMcngKrbSC0OzdJYKXKnWYDCoX4zoyrNPkNh1Wmqs9lDSvDlauWg6P6okH3ylIPI2EZ44nsp4G4FkSUFzKPuNLu3He_9GySaAiEpZmvdOtd_PMIDMn0glprWsWJz79ZSH79B2EJ0pokXbOIfqzEh9h1ejOuEGeJp_Fnr-B9IbSaScTW9tzf1NNxYJsm2iWktVI6w9Wg_NhUfE1mYJ43pl6yijKA1MRFvq7PhT-WENxEjV4LfqmJGhUE9M2NWAM4V-GmCRf6czmVxsGYjjv7bL7gjBge5sUu_ZvObMOqsi76AwF-ZmV9DCvf776gQBDTFWQc-Rw__qBSUGinPpB6SF7xSbKMUp1tZFWHsFBBWOa-Z27wkL9ovJ_DcO_HojeHgZ1Q&zp=jJsJ6Gtbb07_zO4kD076R7GFlaHsoYcwtbAyk5Pss77_XEG8FWyEe39O24qO9XARShsaUR7hATmcE63WWiPWrq3Z10SveXWR3OYZQhAqqmZl6BXgeo8LWecFWhyRnEt6eq0iy52oElJ1YIwnVScoP6Nesb4BWlzmboGBmyE8a9TlmC7SmiNe6oOyBOvcksHhW5IcwIqEVGRnTkTIK-79fASLdrQCFuXzql6GSEj2HvaoIACRmirg9LyGmQGel40W22b0TX30BXkvcKwhcIT1i-ySi6nPSj4CVPTx5vuVidn33EvdY6qUJw3ypWLT3poChRCiaB79x3dTTjtiZGbUm8ayAvBj2ynxtrO6t1IQ-46xPmpNYzFywsHtz5sF1PIyQBpD7iXgTbvZpeevL30pStWGDQJEgYd9CMjH4zm35elfXa8M7EEzi_HXvLTM5ZE4Y7TBxpNwctFmfi5gI5c5CWxSw2Ny6PEfFxCHk99fv84-RS2DVgdBkFGNdyD_9S1k9ECSIk-fs8jqiYpPyxo0fKq2Z5rfVPNgDJ4QBqzS9HPduwyLNIUyhbb6InT9DZHUiUPsPUFOC5KrHC0ANWVSwAYmgbxINsDQqnvLfxXUnzfHjQjkqSrhyrPTweRYn1cekcn25R1pvMlOBq6fainXAxD-0TjYQh2A5hpR-jeaVDccRsOCN4t1fEU3allWamByiLE429B1STUVM2uzmtTnchv9pxxhmFxZY-xY7gUzQ0GtP6Cl5vhrhrTNLCD4511US8fEyj2iSSSttOOI2omjIywN_Nb90SaP9OmKUD4fBR-LAdjtqhc
+                                                                - generic [ref=e1185]:
+                                                                    - generic: Learn More
+                                                            - link "alibaba.com" [ref=e1188] [cursor=pointer]:
+                                                                - /url: https://alb.reddit.com/cr?za=QOljOMv71cO4a4pYpVxKsTuOXNOubAnFVoPFgltCV25nNQJzwIg0Yl223OJ9YJ6Dp4Jr4JuQFkwwZHbMc0MYe51IVryOHbB6gtmkd4bBJCF6PZSTI0qGJvm5QL6S1OcPEWt_gAtZJg9xWXmk-hWjldxBQ6eTTX1lcInaJyeUEZpSyivDJT1YYDB4gEr0tNfWV0vli9ueZMhn24kVVK_aGEY9u3Rq6w3cLaYNgBskOo8J0sXfl2epucq1xNwBXmDDwcxu6904z5NR0CJU1QGGwhLPYxRKxyGJLOpSH5o3PNLFr86Mt2Rxi5vimy25sEsVNN0NzLsvuxzS9Qdsmz-MRZ2o-EPwWq1fQWCnOSE_4feuKlSXHMfTWI8sJj4iNnYdPwCX12yyaBg8NmKXJGpxiEx8DQTf9oZ7aMcngKrbSC0OzdJYKXKnWYDCoX4zoyrNPkNh1Wmqs9lDSvDlauWg6P6okH3ylIPI2EZ44nsp4G4FkSUFzKPuNLu3He_9GySaAiEpZmvdOtd_PMIDMn0glprWsWJz79ZSH79B2EJ0pokXbOIfqzEh9h1ejOuEGeJp_Fnr-B9IbSaScTW9tzf1NNxYJsm2iWktVI6w9Wg_NhUfE1mYJ43pl6yijKA1MRFvq7PhT-WENxEjV4LfqmJGhUE9M2NWAM4V-GmCRf6czmVxsGYjjv7bL7gjBge5sUu_ZvObMOqsi76AwF-ZmV9DCvf776gQBDTFWQc-Rw__qBSUGinPpB6SF7xSbKMUp1tZFWHsFBBWOa-Z27wkL9ovJ_DcO_HojeHgZ1Q&zp=jJsJ6Gtbb07_zO4kD076R7GFlaHsoYcwtbAyk5Pss77_XEG8FWyEe39O24qO9XARShsaUR7hATmcE63WWiPWrq3Z10SveXWR3OYZQhAqqmZl6BXgeo8LWecFWhyRnEt6eq0iy52oElJ1YIwnVScoP6Nesb4BWlzmboGBmyE8a9TlmC7SmiNe6oOyBOvcksHhW5IcwIqEVGRnTkTIK-79fASLdrQCFuXzql6GSEj2HvaoIACRmirg9LyGmQGel40W22b0TX30BXkvcKwhcIT1i-ySi6nPSj4CVPTx5vuVidn33EvdY6qUJw3ypWLT3poChRCiaB79x3dTTjtiZGbUm8ayAvBj2ynxtrO6t1IQ-46xPmpNYzFywsHtz5sF1PIyQBpD7iXgTbvZpeevL30pStWGDQJEgYd9CMjH4zm35elfXa8M7EEzi_HXvLTM5ZE4Y7TBxpNwctFmfi5gI5c5CWxSw2Ny6PEfFxCHk99fv84-RS2DVgdBkFGNdyD_9S1k9ECSIk-fs8jqiYpPyxo0fKq2Z5rfVPNgDJ4QBqzS9HPduwyLNIUyhbb6InT9DZHUiUPsPUFOC5KrHC0ANWVSwAYmgbxINsDQqnvLfxXUnzfHjQjkqSrhyrPTweRYn1cekcn25R1pvMlOBq6fainXAxD-0TjYQh2A5hpR-jeaVDccRsOCN4t1fEU3allWamByiLE429B1STUVM2uzmtTnchv9pxxhmFxZY-xY7gUzQ0GtP6Cl5vhrhrTNLCD4511US8fEyj2iSSSttOOI2omjIywN_Nb90SaP9OmKUD4fBR-LAdjtqhc
+                                                                - generic: alibaba.com
+                                                - generic [ref=e1189] [cursor=pointer]:
+                                                    - 'img "Clickable image which will reveal the video player: You won''t believe how much you get for this price!" [ref=e1190]'
+                                                    - button "Play video" [ref=e1191]:
+                                                        - img [ref=e1192]
+                                            - generic:
+                                                - generic:
+                                                    - button "Collapse video player" [ref=e1194] [cursor=pointer]:
+                                                        - img [ref=e1195]
+                                                        - generic [ref=e1197]:
+                                                            - generic: Collapse video player
+                                                    - generic [ref=e1203]:
+                                                        - generic [ref=e1204]:
+                                                            - button "Toggle playback" [ref=e1205] [cursor=pointer]:
+                                                                - img [ref=e1206]
+                                                            - generic "Media time" [ref=e1208]
+                                                            - generic [ref=e1214]:
+                                                                - generic [ref=e1215]: 0:00
+                                                                - generic [ref=e1216]: / 0:00
+                                                            - button "Toggle captions" [ref=e1217] [cursor=pointer]:
+                                                                - img [ref=e1218]
+                                                            - generic [ref=e1221]:
+                                                                - button "Settings" [ref=e1222] [cursor=pointer]:
+                                                                    - img [ref=e1223]
+                                                                - generic:
+                                                                    - button:
+                                                                        - generic:
+                                                                            - img
+                                                                        - generic: Auto
+                                                            - button "Toggle fullscreen" [ref=e1225] [cursor=pointer]:
+                                                                - img [ref=e1226]
+                                                        - button "Toggle volume" [ref=e1231] [cursor=pointer]:
+                                                            - img [ref=e1232]
+                                    - article "Comment from Pretty_Anxiety_618 1 month ago" [ref=e1236]:
+                                        - generic "Metadata for Pretty_Anxiety_618's comment" [ref=e1237]:
+                                            - link "Pretty_Anxiety_618's profile --- avatar" [ref=e1244] [cursor=pointer]:
+                                                - /url: /user/Pretty_Anxiety_618/
+                                                - img "u/Pretty_Anxiety_618 avatar" [ref=e1247]
+                                            - generic [ref=e1252]:
+                                                - link "Pretty_Anxiety_618's profile" [ref=e1257] [cursor=pointer]:
+                                                    - /url: /user/Pretty_Anxiety_618/
+                                                    - text: Pretty_Anxiety_618
+                                                - generic [ref=e1258]: •
+                                                - link "1mo ago" [ref=e1259] [cursor=pointer]:
+                                                    - /url: /r/ecommerce/comments/1s40e5u/comment/ocz9sch/
+                                                    - time [ref=e1260]: 1mo ago
+                                        - paragraph [ref=e1269]: dont fight - pay and move on. If this is regular - theres chargeback insurance thats worth it
+                                    - article "Comment from Pyroechidna1 1 month ago" [ref=e1275]:
+                                        - generic "Metadata for Pyroechidna1's comment" [ref=e1276]:
+                                            - link "Pyroechidna1's profile --- avatar" [ref=e1283] [cursor=pointer]:
+                                                - /url: /user/Pyroechidna1/
+                                                - generic [ref=e1285]:
+                                                    - img [ref=e1287]
+                                                    - img [ref=e1291]
+                                                    - img [ref=e1294]
+                                            - generic [ref=e1300]:
+                                                - link "Pyroechidna1's profile" [ref=e1305] [cursor=pointer]:
+                                                    - /url: /user/Pyroechidna1/
+                                                    - text: Pyroechidna1
+                                                - generic [ref=e1306]: •
+                                                - link "1mo ago" [ref=e1307] [cursor=pointer]:
+                                                    - /url: /r/ecommerce/comments/1s40e5u/comment/ockdvpo/
+                                                    - time [ref=e1308]: 1mo ago
+                                        - paragraph [ref=e1317]: This is when I'm glad to have Forter to offload the risk
+                                    - article "Comment from Abraham9001 1 month ago" [ref=e1323]:
+                                        - generic "Metadata for Abraham9001's comment" [ref=e1324]:
+                                            - link "Abraham9001's profile --- avatar" [ref=e1331] [cursor=pointer]:
+                                                - /url: /user/Abraham9001/
+                                                - img [ref=e1336]
+                                            - generic [ref=e1342]:
+                                                - link "Abraham9001's profile" [ref=e1347] [cursor=pointer]:
+                                                    - /url: /user/Abraham9001/
+                                                    - text: Abraham9001
+                                                - generic [ref=e1348]: •
+                                                - link "1mo ago" [ref=e1349] [cursor=pointer]:
+                                                    - /url: /r/ecommerce/comments/1s40e5u/comment/oclw5ni/
+                                                    - time [ref=e1350]: 1mo ago
+                                        - paragraph [ref=e1359]: I have an idea for a solution but I wonder if the merchants will want to participant in this experiment.
+                                    - article "Comment from [deleted] 1 month ago" [ref=e1365]:
+                                        - generic "Metadata for [deleted]'s comment" [ref=e1366]:
+                                            - button [ref=e1368] [cursor=pointer]:
+                                                - img [ref=e1371]
+                                            - generic [ref=e1377]:
+                                                - generic [ref=e1381]: '[deleted]'
+                                                - generic [ref=e1382]: •
+                                                - link "1mo ago" [ref=e1383] [cursor=pointer]:
+                                                    - /url: /r/ecommerce/comments/1s40e5u/comment/ocjkhwd/
+                                                    - time [ref=e1384]: 1mo ago
+                                    - article "Comment from [deleted] 1 month ago" [ref=e1386]:
+                                        - generic "Metadata for [deleted]'s comment" [ref=e1387]:
+                                            - button [ref=e1389] [cursor=pointer]:
+                                                - img [ref=e1392]
+                                            - generic [ref=e1398]:
+                                                - generic [ref=e1402]: '[deleted]'
+                                                - generic [ref=e1403]: •
+                                                - link "1mo ago" [ref=e1404] [cursor=pointer]:
+                                                    - /url: /r/ecommerce/comments/1s40e5u/comment/ocjrbyc/
+                                                    - time [ref=e1405]: 1mo ago
+                                    - article "Comment from [deleted] 1 month ago" [ref=e1407]:
+                                        - generic "Metadata for [deleted]'s comment" [ref=e1408]:
+                                            - button [ref=e1410] [cursor=pointer]:
+                                                - img [ref=e1413]
+                                            - generic [ref=e1419]:
+                                                - generic [ref=e1423]: '[deleted]'
+                                                - generic [ref=e1424]: •
+                                                - link "1mo ago" [ref=e1425] [cursor=pointer]:
+                                                    - /url: /r/ecommerce/comments/1s40e5u/comment/ockljs5/
+                                                    - time [ref=e1426]: 1mo ago
+                                    - article "Comment from [deleted] 1 month ago" [ref=e1428]:
+                                        - generic "Metadata for [deleted]'s comment" [ref=e1429]:
+                                            - button [ref=e1431] [cursor=pointer]:
+                                                - img [ref=e1434]
+                                            - generic [ref=e1440]:
+                                                - generic [ref=e1444]: '[deleted]'
+                                                - generic [ref=e1445]: •
+                                                - link "1mo ago" [ref=e1446] [cursor=pointer]:
+                                                    - /url: /r/ecommerce/comments/1s40e5u/comment/ocn5tn4/
+                                                    - time [ref=e1447]: 1mo ago
+                                    - article "Comment from [deleted] 1 month ago" [ref=e1449]:
+                                        - generic "Metadata for [deleted]'s comment" [ref=e1450]:
+                                            - button [ref=e1452] [cursor=pointer]:
+                                                - img [ref=e1455]
+                                            - generic [ref=e1461]:
+                                                - generic [ref=e1465]: '[deleted]'
+                                                - generic [ref=e1466]: •
+                                                - link "1mo ago" [ref=e1467] [cursor=pointer]:
+                                                    - /url: /r/ecommerce/comments/1s40e5u/comment/ocsxyc3/
+                                                    - time [ref=e1468]: 1mo ago
+                                    - article "Comment from [deleted] 1 month ago" [ref=e1470]:
+                                        - generic "Metadata for [deleted]'s comment" [ref=e1471]:
+                                            - button [ref=e1473] [cursor=pointer]:
+                                                - img [ref=e1476]
+                                            - generic [ref=e1482]:
+                                                - generic [ref=e1486]: '[deleted]'
+                                                - generic [ref=e1487]: •
+                                                - link "1mo ago" [ref=e1488] [cursor=pointer]:
+                                                    - /url: /r/ecommerce/comments/1s40e5u/comment/oczd4ap/
+                                                    - time [ref=e1489]: 1mo ago
+                                    - article "Comment from [deleted] 1 month ago" [ref=e1491]:
+                                        - generic "Metadata for [deleted]'s comment" [ref=e1492]:
+                                            - button [ref=e1494] [cursor=pointer]:
+                                                - img [ref=e1497]
+                                            - generic [ref=e1503]:
+                                                - generic [ref=e1507]: '[deleted]'
+                                                - generic [ref=e1508]: •
+                                                - link "1mo ago" [ref=e1509] [cursor=pointer]:
+                                                    - /url: /r/ecommerce/comments/1s40e5u/comment/od56mje/
+                                                    - time [ref=e1510]: 1mo ago
+                                    - article "Comment from [deleted] 28 days ago" [ref=e1512]:
+                                        - generic "Metadata for [deleted]'s comment" [ref=e1513]:
+                                            - button [ref=e1515] [cursor=pointer]:
+                                                - img [ref=e1518]
+                                            - generic [ref=e1524]:
+                                                - generic [ref=e1528]: '[deleted]'
+                                                - generic [ref=e1529]: •
+                                                - link "28d ago" [ref=e1530] [cursor=pointer]:
+                                                    - /url: /r/ecommerce/comments/1s40e5u/comment/oe0okdu/
+                                                    - time [ref=e1531]: 28d ago
+                        - generic [ref=e1532]:
+                            - complementary "Community information" [ref=e1536]:
+                                - generic [ref=e1537]:
+                                    - generic [ref=e1539]:
+                                        - heading "Community Info Section" [level=1] [ref=e1540]
+                                        - generic [ref=e1541]:
+                                            - link "r/ecommerce" [ref=e1543] [cursor=pointer]:
+                                                - /url: /r/ecommerce/
+                                                - generic [ref=e1544]: r/ecommerce
+                                            - button "Join" [ref=e1548] [cursor=pointer]
+                                        - generic [ref=e1549]:
+                                            - generic [ref=e1550]: Reddit eCommerce
+                                            - generic [ref=e1551]: A community dedicated to the design and implementation of eCommerce sites. For seasoned retailers or newcomers to the industry, this is the perfect place to seek guidance and discuss all aspects of selling online. Engage in insightful discussions on topics such as selling tips, marketing strategies, SEO optimization, product selection, checkout processes, conversions, and more. Our community provides a platform for helpful and honest discussions aimed at helping you increase your online sales.
+                                            - button "Show more" [ref=e1552] [cursor=pointer]:
+                                                - generic [ref=e1554]: Show more
+                                            - generic [ref=e1555]:
+                                                - generic [ref=e1557]:
+                                                    - img [ref=e1558]
+                                                    - text: Created Mar 17, 2008
+                                                - generic [ref=e1561]:
+                                                    - img [ref=e1562]
+                                                    - text: Public
+                                        - generic [ref=e1564]:
+                                            - generic [ref=e1565]:
+                                                - strong [ref=e1567]:
+                                                    - generic: 88K
+                                                - generic [ref=e1568]: Entrepreneurs
+                                            - generic [ref=e1569]:
+                                                - strong [ref=e1571]:
+                                                    - generic: 2.9K
+                                                - generic [ref=e1572]: Online Now
+                                    - separator [ref=e1573]
+                                    - generic [ref=e1574]:
+                                        - heading "User flair" [level=2] [ref=e1576]:
+                                            - generic [ref=e1577]: User flair
+                                        - button "u/merged_and_deployed avatar merged_and_deployed" [ref=e1579]:
+                                            - generic [ref=e1581]:
+                                                - img "u/merged_and_deployed avatar" [ref=e1586]
+                                                - generic [ref=e1588]: merged_and_deployed
+                                    - separator [ref=e1589]
+                                    - generic [ref=e1590]:
+                                        - heading "r/ecommerce Rules" [level=2] [ref=e1592]:
+                                            - generic [ref=e1593]: r/ecommerce Rules
+                                        - generic [ref=e1594]:
+                                            - group [ref=e1596]:
+                                                - generic "1 No Soliciting, Promotion, or Direct Soliciting via DM" [ref=e1597] [cursor=pointer]:
+                                                    - generic [ref=e1599]:
+                                                        - generic [ref=e1600]:
+                                                            - generic [ref=e1602]: '1'
+                                                            - heading "No Soliciting, Promotion, or Direct Soliciting via DM" [level=2] [ref=e1606]
+                                                        - img [ref=e1609]
+                                            - group [ref=e1612]:
+                                                - generic "2 No External Links (Except Site Reviews)" [ref=e1613] [cursor=pointer]:
+                                                    - generic [ref=e1615]:
+                                                        - generic [ref=e1616]:
+                                                            - generic [ref=e1618]: '2'
+                                                            - heading "No External Links (Except Site Reviews)" [level=2] [ref=e1622]
+                                                        - img [ref=e1625]
+                                            - group [ref=e1628]:
+                                                - generic "3 No 3PL Related Threads" [ref=e1629] [cursor=pointer]:
+                                                    - generic [ref=e1631]:
+                                                        - generic [ref=e1632]:
+                                                            - generic [ref=e1634]: '3'
+                                                            - heading "No 3PL Related Threads" [level=2] [ref=e1638]
+                                                        - img [ref=e1641]
+                                            - group [ref=e1644]:
+                                                - generic "4 No \"Get Rich Quick\", \"Success Stories\", Case Studies, etc" [ref=e1645] [cursor=pointer]:
+                                                    - generic [ref=e1647]:
+                                                        - generic [ref=e1648]:
+                                                            - generic [ref=e1650]: '4'
+                                                            - heading "No \"Get Rich Quick\", \"Success Stories\", Case Studies, etc" [level=2] [ref=e1654]
+                                                        - img [ref=e1657]
+                                            - group [ref=e1660]:
+                                                - generic "5 Do not post courses, themes, or stores for sale" [ref=e1661] [cursor=pointer]:
+                                                    - generic [ref=e1663]:
+                                                        - generic [ref=e1664]:
+                                                            - generic [ref=e1666]: '5'
+                                                            - heading "Do not post courses, themes, or stores for sale" [level=2] [ref=e1670]
+                                                        - img [ref=e1673]
+                                            - generic [ref=e1676]:
+                                                - generic [ref=e1678]: '6'
+                                                - heading "Any 'AMA'-type post must first be approved by mods." [level=2] [ref=e1682]
+                                            - group [ref=e1684]:
+                                                - generic "7 No 'Dev Research' posts" [ref=e1685] [cursor=pointer]:
+                                                    - generic [ref=e1687]:
+                                                        - generic [ref=e1688]:
+                                                            - generic [ref=e1690]: '7'
+                                                            - heading "No 'Dev Research' posts" [level=2] [ref=e1694]
+                                                        - img [ref=e1697]
+                                            - group [ref=e1700]:
+                                                - generic "8 NO AI or Suspected AI Slop" [ref=e1701] [cursor=pointer]:
+                                                    - generic [ref=e1703]:
+                                                        - generic [ref=e1704]:
+                                                            - generic [ref=e1706]: '8'
+                                                            - heading "NO AI or Suspected AI Slop" [level=2] [ref=e1710]
+                                                        - img [ref=e1713]
+                                    - separator [ref=e1715]
+                                    - generic [ref=e1716]:
+                                        - heading "Moderators" [level=2] [ref=e1718]:
+                                            - generic [ref=e1719]: Moderators
+                                        - link "Message Mods" [ref=e1721] [cursor=pointer]:
+                                            - /url: https://www.reddit.com/message/compose?to=r/ecommerce
+                                            - generic [ref=e1722]:
+                                                - img [ref=e1724]
+                                                - generic [ref=e1726]: Message Mods
+                                        - generic [ref=e1728]:
+                                            - img [ref=e1735]
+                                            - generic [ref=e1739]:
+                                                - link "u/Leviathant" [ref=e1740] [cursor=pointer]:
+                                                    - /url: /user/Leviathant/
+                                                - 'generic "Flair: Enterprise SME, moderator" [ref=e1742]': Enterprise SME, moderator
+                                        - generic [ref=e1744]:
+                                            - img [ref=e1751]
+                                            - generic [ref=e1755]:
+                                                - link "u/qverb" [ref=e1756] [cursor=pointer]:
+                                                    - /url: /user/qverb/
+                                                - 'generic "Flair: moderator" [ref=e1758]': moderator
+                                        - generic [ref=e1760]:
+                                            - img "u/camaro2ss avatar" [ref=e1765]
+                                            - generic [ref=e1768]:
+                                                - link "u/camaro2ss" [ref=e1769] [cursor=pointer]:
+                                                    - /url: /user/camaro2ss/
+                                                - 'generic "Flair: mod" [ref=e1771]': mod
+                                        - generic [ref=e1773]:
+                                            - generic [ref=e1777]:
+                                                - img [ref=e1779]
+                                                - img [ref=e1783]
+                                                - img [ref=e1786]
+                                            - generic [ref=e1790]:
+                                                - link "u/camrncrazy" [ref=e1791] [cursor=pointer]:
+                                                    - /url: /user/camrncrazy/
+                                                - 'generic "Flair: SEO-Mod" [ref=e1793]': SEO-Mod
+                                        - generic [ref=e1795]:
+                                            - img "u/adventurepaul avatar" [ref=e1800]
+                                            - generic [ref=e1801]:
+                                                - link "u/adventurepaul" [ref=e1804] [cursor=pointer]:
+                                                    - /url: /user/adventurepaul/
+                                                - generic [ref=e1806]: Paul
+                                        - link "View all moderators" [ref=e1807] [cursor=pointer]:
+                                            - /url: /mod/ecommerce/moderators/
+                                            - generic [ref=e1809]: View all moderators
+                            - generic [ref=e1811]:
+                                - link "Reddit Rules" [ref=e1814] [cursor=pointer]:
+                                    - /url: https://www.redditinc.com/policies/content-policy
+                                - link "Privacy Policy" [ref=e1817] [cursor=pointer]:
+                                    - /url: https://www.reddit.com/policies/privacy-policy
+                                - link "User Agreement" [ref=e1820] [cursor=pointer]:
+                                    - /url: https://www.redditinc.com/policies/user-agreement
+                                - link "Accessibility" [ref=e1823] [cursor=pointer]:
+                                    - /url: https://support.reddithelp.com/hc/sections/38303584022676-Accessibility
+                                - link "Reddit, Inc. © 2026. All rights reserved." [ref=e1825] [cursor=pointer]:
+                                    - /url: https://redditinc.com
+                - generic [ref=e1827]:
+                    - button "Collapse Navigation" [ref=e1830] [cursor=pointer]:
+                        - img [ref=e1833]
+                        - generic [ref=e1835]:
+                            - generic: Collapse Navigation
+                    - navigation "Primary" [ref=e1840]:
+                        - generic [ref=e1842]:
+                            - link "Home" [ref=e1844] [cursor=pointer]:
+                                - /url: /?feed=home
+                                - generic [ref=e1845]:
+                                    - img [ref=e1847]
+                                    - generic [ref=e1850]: Home
+                            - link "Popular" [ref=e1852] [cursor=pointer]:
+                                - /url: /r/popular/
+                                - generic [ref=e1853]:
+                                    - img [ref=e1855]
+                                    - generic [ref=e1858]: Popular
+                            - link "News" [ref=e1859] [cursor=pointer]:
+                                - /url: /news/
+                                - generic [ref=e1860]:
+                                    - img [ref=e1862]
+                                    - generic [ref=e1866]: News
+                            - link "Explore" [ref=e1868] [cursor=pointer]:
+                                - /url: /explore/
+                                - generic [ref=e1869]:
+                                    - img [ref=e1871]
+                                    - generic [ref=e1874]: Explore
+                            - button "Start a community" [ref=e1875] [cursor=pointer]:
+                                - generic [ref=e1876]:
+                                    - img [ref=e1878]
+                                    - generic [ref=e1881]: Start a community
+                        - separator [ref=e1882]
+                        - group [ref=e1886]:
+                            - generic "GAMES ON REDDIT" [ref=e1887] [cursor=pointer]:
+                                - generic [ref=e1888]:
+                                    - generic [ref=e1893]:
+                                        - generic: GAMES ON REDDIT
+                                    - img [ref=e1896]
+                            - generic [ref=e1899]:
+                                - link "Featured Game" [ref=e1903] [cursor=pointer]:
+                                    - /url: https://www.reddit.com/r/BubbleShooterPro/comments/1t0eulr?entry_point=games_drawer_featured_game
+                                    - generic [ref=e1905]:
+                                        - generic [ref=e1909]:
+                                            - heading "Bubble Shooter Pro" [level=3] [ref=e1910]
+                                            - paragraph [ref=e1911]: Burst Bubbles
+                                        - generic [ref=e1914]: NEW
+                                - generic [ref=e1916]:
+                                    - link "Hot and Cold" [ref=e1918] [cursor=pointer]:
+                                        - /url: https://www.reddit.com/r/HotAndCold/comments/1snywpt?entry_point=games_drawer_personalized_game
+                                        - generic [ref=e1919]:
+                                            - img [ref=e1924]
+                                            - generic [ref=e1928]: Hot and Cold
+                                    - link "BattleBirds" [ref=e1930] [cursor=pointer]:
+                                        - /url: https://www.reddit.com/r/BattleBirds/comments/1sc5wg1?entry_point=games_drawer_personalized_game
+                                        - generic [ref=e1931]:
+                                            - img [ref=e1936]
+                                            - generic [ref=e1940]: BattleBirds
+                                    - link "Zencrossbow" [ref=e1942] [cursor=pointer]:
+                                        - /url: https://www.reddit.com/r/ZenCrossbow/comments/1sxm3lt?entry_point=games_drawer_personalized_game
+                                        - generic [ref=e1943]:
+                                            - img [ref=e1948]
+                                            - generic [ref=e1952]: Zencrossbow
+                                - link "Discover More" [ref=e1954] [cursor=pointer]:
+                                    - /url: /r/GamesOnReddit
+                                    - generic [ref=e1955]:
+                                        - img [ref=e1957]
+                                        - generic [ref=e1961]: Discover More
+                        - separator [ref=e1962]
+                        - group [ref=e1964]:
+                            - generic "CUSTOM FEEDS" [ref=e1965] [cursor=pointer]:
+                                - generic [ref=e1967]:
+                                    - generic [ref=e1970]: CUSTOM FEEDS
+                                    - img [ref=e1973]
+                            - button "Create Custom Feed" [ref=e1979] [cursor=pointer]:
+                                - generic [ref=e1980]:
+                                    - img [ref=e1982]
+                                    - generic [ref=e1985]: Create Custom Feed
+                        - separator [ref=e1986]
+                        - group [ref=e1989]:
+                            - generic "RECENT" [ref=e1990] [cursor=pointer]:
+                                - generic [ref=e1991]:
+                                    - generic [ref=e1994]: RECENT
+                                    - img [ref=e1997]
+                            - generic [ref=e2000]:
+                                - link "r/stripe" [ref=e2001] [cursor=pointer]:
+                                    - /url: /r/stripe/
+                                    - generic [ref=e2002]:
+                                        - img [ref=e2007]
+                                        - generic [ref=e2010]: r/stripe
+                                - link "r/AmazonFBA" [ref=e2011] [cursor=pointer]:
+                                    - /url: /r/AmazonFBA/
+                                    - generic [ref=e2012]:
+                                        - img [ref=e2017]
+                                        - generic [ref=e2020]: r/AmazonFBA
+                                - link "r/FulfillmentByAmazon" [ref=e2021] [cursor=pointer]:
+                                    - /url: /r/FulfillmentByAmazon/
+                                    - generic [ref=e2022]:
+                                        - img [ref=e2027]
+                                        - generic [ref=e2030]: r/FulfillmentByAmazon
+                                - link "r/AmazonSeller" [ref=e2031] [cursor=pointer]:
+                                    - /url: /r/AmazonSeller/
+                                    - generic [ref=e2032]:
+                                        - img [ref=e2038]
+                                        - generic [ref=e2042]: r/AmazonSeller
+                                - link "r/realestateinvesting" [ref=e2043] [cursor=pointer]:
+                                    - /url: /r/realestateinvesting/
+                                    - generic [ref=e2044]:
+                                        - img [ref=e2050]
+                                        - generic [ref=e2054]: r/realestateinvesting
+                        - group [ref=e2056]:
+                            - generic "COMMUNITIES" [ref=e2057] [cursor=pointer]:
+                                - generic [ref=e2059]:
+                                    - generic [ref=e2062]: COMMUNITIES
+                                    - img [ref=e2065]
+                            - generic [ref=e2068]:
+                                - link "Manage Communities" [ref=e2069] [cursor=pointer]:
+                                    - /url: /user/merged_and_deployed/communities
+                                    - generic [ref=e2070]:
+                                        - img [ref=e2072]
+                                        - generic [ref=e2075]: Manage Communities
+                                - generic [ref=e2077]:
+                                    - link "r/AI_Agents" [ref=e2079] [cursor=pointer]:
+                                        - /url: /r/AI_Agents/
+                                        - generic [ref=e2080]:
+                                            - img [ref=e2085]
+                                            - generic [ref=e2088]: r/AI_Agents
+                                        - button "Add community to favorites" [ref=e2091]:
+                                            - img [ref=e2094]
+                                    - link "r/AmazonFBA" [ref=e2097] [cursor=pointer]:
+                                        - /url: /r/AmazonFBA/
+                                        - generic [ref=e2098]:
+                                            - img [ref=e2103]
+                                            - generic [ref=e2106]: r/AmazonFBA
+                                        - button "Add community to favorites" [ref=e2109]:
+                                            - img [ref=e2112]
+                                    - link "r/AmazonSeller" [ref=e2115] [cursor=pointer]:
+                                        - /url: /r/AmazonSeller/
+                                        - generic [ref=e2116]:
+                                            - img [ref=e2122]
+                                            - generic [ref=e2126]: r/AmazonSeller
+                                        - button "Add community to favorites" [ref=e2129]:
+                                            - img [ref=e2132]
+                                    - link "r/ClaudeAI" [ref=e2135] [cursor=pointer]:
+                                        - /url: /r/ClaudeAI/
+                                        - generic [ref=e2136]:
+                                            - img [ref=e2141]
+                                            - generic [ref=e2144]: r/ClaudeAI
+                                        - button "Add community to favorites" [ref=e2147]:
+                                            - img [ref=e2150]
+                                    - link "r/ClaudeCode" [ref=e2153] [cursor=pointer]:
+                                        - /url: /r/ClaudeCode/
+                                        - generic [ref=e2154]:
+                                            - img [ref=e2159]
+                                            - generic [ref=e2162]: r/ClaudeCode
+                                        - button "Add community to favorites" [ref=e2165]:
+                                            - img [ref=e2168]
+                                    - link "r/founder" [ref=e2171] [cursor=pointer]:
+                                        - /url: /r/founder/
+                                        - generic [ref=e2172]:
+                                            - img [ref=e2178]
+                                            - generic [ref=e2182]: r/founder
+                                        - button "Add community to favorites" [ref=e2185]:
+                                            - img [ref=e2188]
+                                    - link "r/FulfillmentByAmazon" [ref=e2191] [cursor=pointer]:
+                                        - /url: /r/FulfillmentByAmazon/
+                                        - generic [ref=e2192]:
+                                            - img [ref=e2197]
+                                            - generic [ref=e2200]: r/FulfillmentByAmazon
+                                        - button "Add community to favorites" [ref=e2203]:
+                                            - img [ref=e2206]
+                                    - link "r/linux" [ref=e2209] [cursor=pointer]:
+                                        - /url: /r/linux/
+                                        - generic [ref=e2210]:
+                                            - img [ref=e2215]
+                                            - generic [ref=e2218]: r/linux
+                                        - button "Add community to favorites" [ref=e2221]:
+                                            - img [ref=e2224]
+                                    - link "r/LocalLLM" [ref=e2227] [cursor=pointer]:
+                                        - /url: /r/LocalLLM/
+                                        - generic [ref=e2228]:
+                                            - img [ref=e2233]
+                                            - generic [ref=e2236]: r/LocalLLM
+                                        - button "Add community to favorites" [ref=e2239]:
+                                            - img [ref=e2242]
+                                    - link "r/mcp" [ref=e2245] [cursor=pointer]:
+                                        - /url: /r/mcp/
+                                        - generic [ref=e2246]:
+                                            - img [ref=e2251]
+                                            - generic [ref=e2254]: r/mcp
+                                        - button "Add community to favorites" [ref=e2257]:
+                                            - img [ref=e2260]
+                                    - link "r/ProductManagement" [ref=e2263] [cursor=pointer]:
+                                        - /url: /r/ProductManagement/
+                                        - generic [ref=e2264]:
+                                            - img [ref=e2269]
+                                            - generic [ref=e2272]: r/ProductManagement
+                                        - button "Add community to favorites" [ref=e2275]:
+                                            - img [ref=e2278]
+                                    - link "r/PydanticAI" [ref=e2281] [cursor=pointer]:
+                                        - /url: /r/PydanticAI/
+                                        - generic [ref=e2282]:
+                                            - img [ref=e2287]
+                                            - generic [ref=e2290]: r/PydanticAI
+                                        - button "Add community to favorites" [ref=e2293]:
+                                            - img [ref=e2296]
+                                    - link "r/startups" [ref=e2299] [cursor=pointer]:
+                                        - /url: /r/startups/
+                                        - generic [ref=e2300]:
+                                            - img [ref=e2305]
+                                            - generic [ref=e2308]: r/startups
+                                        - button "Add community to favorites" [ref=e2311]:
+                                            - img [ref=e2314]
+                        - separator [ref=e2316]
+                        - navigation "Reddit resources" [ref=e2317]:
+                            - group [ref=e2319]:
+                                - generic "RESOURCES" [ref=e2320] [cursor=pointer]:
+                                    - generic [ref=e2322]:
+                                        - generic [ref=e2325]: RESOURCES
+                                        - img [ref=e2328]
+                                - generic [ref=e2331]:
+                                    - link "About Reddit" [ref=e2333] [cursor=pointer]:
+                                        - /url: https://www.redditinc.com
+                                        - generic [ref=e2334]:
+                                            - img [ref=e2336]
+                                            - generic [ref=e2340]: About Reddit
+                                    - link "Advertise" [ref=e2342] [cursor=pointer]:
+                                        - /url: https://ads.reddit.com/register?utm_source=web3x_consumer&utm_name=left_nav_cta
+                                        - generic [ref=e2343]:
+                                            - img [ref=e2345]
+                                            - generic [ref=e2349]: Advertise
+                                    - link "Developer Platform" [ref=e2351] [cursor=pointer]:
+                                        - /url: https://developers.reddit.com/?utm_source=reddit&utm_medium=left_nav_resources
+                                        - generic [ref=e2352]:
+                                            - img [ref=e2354]
+                                            - generic [ref=e2358]: Developer Platform
+                                    - link "Reddit Pro BETA" [ref=e2360] [cursor=pointer]:
+                                        - /url: /reddit-pro?utm_source=reddit&utm_medium=left_nav_resources
+                                        - generic [ref=e2361]:
+                                            - img [ref=e2363]
+                                            - generic [ref=e2367]:
+                                                - generic [ref=e2368]: Reddit Pro
+                                                - generic [ref=e2369]: BETA
+                                    - link "Help" [ref=e2371] [cursor=pointer]:
+                                        - /url: https://support.reddithelp.com/hc?utm_source=reddit&utm_medium=footer&utm_campaign=evergreen
+                                        - generic [ref=e2372]:
+                                            - img [ref=e2374]
+                                            - generic [ref=e2378]: Help
+                                    - link "Blog" [ref=e2380] [cursor=pointer]:
+                                        - /url: https://redditblog.com/
+                                        - generic [ref=e2381]:
+                                            - img [ref=e2383]
+                                            - generic [ref=e2387]: Blog
+                                    - link "Careers" [ref=e2389] [cursor=pointer]:
+                                        - /url: https://www.redditinc.com/careers
+                                        - generic [ref=e2390]:
+                                            - img [ref=e2392]
+                                            - generic [ref=e2396]: Careers
+                                    - link "Press" [ref=e2398] [cursor=pointer]:
+                                        - /url: https://www.redditinc.com/press
+                                        - generic [ref=e2399]:
+                                            - img [ref=e2401]
+                                            - generic [ref=e2405]: Press
+                                    - separator [ref=e2406]
+                                    - link "Best of Reddit" [ref=e2408] [cursor=pointer]:
+                                        - /url: https://www.reddit.com/posts/2026/global/
+                                        - generic [ref=e2409]:
+                                            - img [ref=e2411]
+                                            - generic [ref=e2416]: Best of Reddit
+                                    - separator [ref=e2417]
+                                    - link "Reddit Rules" [ref=e2419] [cursor=pointer]:
+                                        - /url: https://www.redditinc.com/policies/content-policy
+                                        - generic [ref=e2420]:
+                                            - img [ref=e2422]
+                                            - generic [ref=e2426]: Reddit Rules
+                                    - link "Privacy Policy" [ref=e2428] [cursor=pointer]:
+                                        - /url: https://www.reddit.com/policies/privacy-policy
+                                        - generic [ref=e2429]:
+                                            - img [ref=e2431]
+                                            - generic [ref=e2435]: Privacy Policy
+                                    - link "User Agreement" [ref=e2437] [cursor=pointer]:
+                                        - /url: https://www.redditinc.com/policies/user-agreement
+                                        - generic [ref=e2438]:
+                                            - img [ref=e2440]
+                                            - generic [ref=e2444]: User Agreement
+                                    - link "Accessibility" [ref=e2446] [cursor=pointer]:
+                                        - /url: https://support.reddithelp.com/hc/sections/38303584022676-Accessibility
+                                        - generic [ref=e2447]:
+                                            - img [ref=e2449]
+                                            - generic [ref=e2454]: Accessibility
+                        - link "Reddit, Inc. © 2026. All rights reserved." [ref=e2456] [cursor=pointer]:
+                            - /url: https://redditinc.com

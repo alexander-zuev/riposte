@@ -1,0 +1,603 @@
+- generic [active] [ref=e1]:
+    - link "Skip to main content" [ref=e2] [cursor=pointer]:
+        - /url: '#main-content'
+        - generic [ref=e4]: Skip to main content
+    - generic [ref=e6]:
+        - generic:
+            - generic [ref=e7]:
+                - generic: 'Won my first ever high ticket dispute!!! : r/stripe'
+            - banner [ref=e10]:
+                - navigation [ref=e11]:
+                    - link "Home" [ref=e15] [cursor=pointer]:
+                        - /url: /
+                        - img [ref=e17]
+                    - search [ref=e33]:
+                        - generic [ref=e35]:
+                            - img [ref=e38]
+                            - generic "Remove r/stripe filter and expand search to all of Reddit" [ref=e41] [cursor=pointer]:
+                                - button [pressed] [ref=e42]:
+                                    - generic [ref=e46]: r/stripe
+                                    - img [ref=e48]
+                            - textbox "Remove r/stripe filter and expand search to all of Reddit" [ref=e51]:
+                                - /placeholder: Search in r/stripe
+                    - generic [ref=e52]:
+                        - generic [ref=e53]:
+                            - link "Advertise on Reddit" [ref=e59] [cursor=pointer]:
+                                - /url: https://ads.reddit.com/register?utm_source=web3x_consumer&utm_name=nav_cta
+                                - img [ref=e62]
+                                - generic [ref=e64]:
+                                    - generic: Advertise on Reddit
+                            - button "Open chat" [ref=e70] [cursor=pointer]:
+                                - img [ref=e73]
+                                - generic [ref=e75]:
+                                    - generic: Open chat
+                            - link "Create post" [ref=e80] [cursor=pointer]:
+                                - /url: /r/stripe/submit/
+                                - generic [ref=e81]:
+                                    - img [ref=e83]
+                                    - generic [ref=e85]: Create
+                                - generic [ref=e86]:
+                                    - generic: Create post
+                            - link "Open inbox" [ref=e90] [cursor=pointer]:
+                                - /url: /notifications
+                                - img [ref=e93]
+                                - generic [ref=e95]:
+                                    - generic: Open inbox
+                        - button "User Avatar Expand user menu" [ref=e100] [cursor=pointer]:
+                            - img "User Avatar" [ref=e108]
+                            - generic [ref=e110]:
+                                - generic: Expand user menu
+            - generic [ref=e111]:
+                - generic [ref=e112]:
+                    - generic [ref=e113]:
+                        - generic:
+                            - generic:
+                                - link "Skip to Navigation" [ref=e114] [cursor=pointer]:
+                                    - /url: '#left-sidebar-container'
+                                - link "Skip to Right Sidebar" [ref=e115] [cursor=pointer]:
+                                    - /url: '#right-sidebar-container'
+                    - generic [ref=e116]:
+                        - main [ref=e117]:
+                            - 'generic "Won my first ever high ticket dispute!!! : r/stripe"'
+                            - generic [ref=e118]:
+                                - generic [ref=e119]:
+                                    - generic [ref=e120]:
+                                        - button "Back" [ref=e122] [cursor=pointer]:
+                                            - img [ref=e125]
+                                            - generic [ref=e127]:
+                                                - generic: Back
+                                        - link "Go to stripe" [ref=e130] [cursor=pointer]:
+                                            - /url: /r/stripe/
+                                            - generic [ref=e134]:
+                                                - generic: Go to stripe
+                                        - group [ref=e135]:
+                                            - generic [ref=e136]:
+                                                - link "r/stripe" [ref=e140] [cursor=pointer]:
+                                                    - /url: /r/stripe/
+                                                - generic [ref=e141]: •
+                                                - time [ref=e142]: 7mo ago
+                                            - 'link "Author: sammyfudger123" [ref=e148] [cursor=pointer]':
+                                                - /url: /user/sammyfudger123/
+                                                - generic [ref=e149]: sammyfudger123
+                                    - generic [ref=e150]:
+                                        - img "Archived post" [ref=e154]
+                                        - button "Open user actions" [ref=e158] [cursor=pointer]:
+                                            - img [ref=e161]
+                                - generic [ref=e164]:
+                                    - 'heading "Post Title: Won my first ever high ticket dispute!!!" [level=1] [ref=e165]': Won my first ever high ticket dispute!!!
+                                    - 'link "Flair: Solved" [ref=e168] [cursor=pointer]':
+                                        - /url: /r/stripe/?f=flair_name%3A%22Solved%22
+                                        - 'generic "Flair: Solved" [ref=e170]': Solved
+                                - img "r/stripe - Won my first ever high ticket dispute!!!" [ref=e176] [cursor=pointer]
+                                - generic [ref=e180]:
+                                    - paragraph [ref=e181]: Customer randomly decided to dispute after me and him worked together for 8 months and claimed "Product not received"
+                                    - paragraph [ref=e182]: I gathered all relevant information and used chatgpt to help me structure my evidence into one big document.
+                                    - paragraph [ref=e183]: Only 2 weeks later I receive this email from stripe.
+                                    - paragraph [ref=e184]:
+                                        - strong [ref=e185]: 'Key tips for evidence:'
+                                    - paragraph [ref=e186]: Add images/screenshots
+                                    - paragraph [ref=e187]: Highlight important text
+                                    - paragraph [ref=e188]: Always relate the evidence back to the customers claim
+                                    - paragraph [ref=e189]: Have a nice day everyone :)
+                                - generic [ref=e191]:
+                                    - img [ref=e192]
+                                    - generic [ref=e195]: Archived post. New comments cannot be posted and votes cannot be cast.
+                                - generic "Actions available for this post" [ref=e196]:
+                                    - generic [ref=e199]:
+                                        - button "Upvote" [disabled]:
+                                            - generic:
+                                                - img
+                                            - generic:
+                                                - generic: Upvote
+                                        - generic [ref=e201]: '62'
+                                        - button "Downvote" [disabled]:
+                                            - generic:
+                                                - img
+                                            - generic:
+                                                - generic: Downvote
+                                    - button "21 Go to comments" [ref=e202] [cursor=pointer]:
+                                        - generic [ref=e203]:
+                                            - img [ref=e205]
+                                            - generic [ref=e208]: '21'
+                                        - generic [ref=e209]:
+                                            - generic: Go to comments
+                                    - button "Give award" [ref=e211] [cursor=pointer]:
+                                        - img [ref=e214]
+                                    - button "Share" [ref=e219] [cursor=pointer]:
+                                        - generic [ref=e220]:
+                                            - img [ref=e222]
+                                            - generic [ref=e225]: Share
+                            - img [ref=e230]
+                        - generic [ref=e243]:
+                            - complementary "Community information" [ref=e247]:
+                                - generic [ref=e248]:
+                                    - generic [ref=e250]:
+                                        - heading "Community Info Section" [level=1] [ref=e251]
+                                        - generic [ref=e252]:
+                                            - link "r/stripe" [ref=e254] [cursor=pointer]:
+                                                - /url: /r/stripe/
+                                                - generic [ref=e255]: r/stripe
+                                            - button "Join" [ref=e259] [cursor=pointer]
+                                        - generic [ref=e260]:
+                                            - generic [ref=e261]: Stripe
+                                            - generic [ref=e262]: Stripe is a technology company that builds economic infrastructure for the internet. Businesses of every size—from new startups to public companies—use Stripe to accept payments and manage their businesses online. This is an unofficial community subreddit—if you're looking for help, reach out to Stripe at https://support.stripe.com/contact.
+                                            - generic [ref=e263]:
+                                                - generic [ref=e265]:
+                                                    - img [ref=e266]
+                                                    - text: Created Jan 23, 2012
+                                                - generic [ref=e269]:
+                                                    - img [ref=e270]
+                                                    - text: Public
+                                        - generic [ref=e272]:
+                                            - generic [ref=e273]:
+                                                - strong [ref=e275]:
+                                                    - generic: 30K
+                                                - generic [ref=e276]: Weekly visitors
+                                            - generic [ref=e277]:
+                                                - strong [ref=e279]:
+                                                    - generic: '452'
+                                                - generic [ref=e280]: Weekly contributions
+                                    - separator [ref=e281]
+                                    - generic [ref=e282]:
+                                        - heading "User flair" [level=2] [ref=e284]:
+                                            - generic [ref=e285]: User flair
+                                        - button "u/merged_and_deployed avatar merged_and_deployed" [ref=e287]:
+                                            - generic [ref=e289]:
+                                                - img "u/merged_and_deployed avatar" [ref=e294]
+                                                - generic [ref=e296]: merged_and_deployed
+                                    - separator [ref=e297]
+                                    - generic [ref=e298]:
+                                        - heading "Community Bookmarks" [level=2] [ref=e300]:
+                                            - generic [ref=e301]: Community Bookmarks
+                                        - generic [ref=e302]:
+                                            - button "Website" [ref=e305] [cursor=pointer]:
+                                                - generic [ref=e308]: Website
+                                            - button "Social Media" [ref=e313] [cursor=pointer]:
+                                                - generic [ref=e316]: Social Media
+                                    - separator [ref=e319]
+                                    - generic [ref=e320]:
+                                        - heading "r/stripe Rules" [level=2] [ref=e322]:
+                                            - generic [ref=e323]: r/stripe Rules
+                                        - generic [ref=e324]:
+                                            - group [ref=e326]:
+                                                - generic "1 Read the FAQ" [ref=e327] [cursor=pointer]:
+                                                    - generic [ref=e329]:
+                                                        - generic [ref=e330]:
+                                                            - generic [ref=e332]: '1'
+                                                            - heading "Read the FAQ" [level=2] [ref=e336]
+                                                        - img [ref=e339]
+                                            - group [ref=e342]:
+                                                - generic "2 This isn't Stripe Account Support" [ref=e343] [cursor=pointer]:
+                                                    - generic [ref=e345]:
+                                                        - generic [ref=e346]:
+                                                            - generic [ref=e348]: '2'
+                                                            - heading "This isn't Stripe Account Support" [level=2] [ref=e352]
+                                                        - img [ref=e355]
+                                            - group [ref=e358]:
+                                                - generic "3 Posts about Account Rejections/Reserves/Closures should include relevant details." [ref=e359] [cursor=pointer]:
+                                                    - generic [ref=e361]:
+                                                        - generic [ref=e362]:
+                                                            - generic [ref=e364]: '3'
+                                                            - heading "Posts about Account Rejections/Reserves/Closures should include relevant details." [level=2] [ref=e368]
+                                                        - img [ref=e371]
+                                            - group [ref=e374]:
+                                                - generic "4 Harassment, bigotry, hate speech, and racism will not be tolerated." [ref=e375] [cursor=pointer]:
+                                                    - generic [ref=e377]:
+                                                        - generic [ref=e378]:
+                                                            - generic [ref=e380]: '4'
+                                                            - heading "Harassment, bigotry, hate speech, and racism will not be tolerated." [level=2] [ref=e384]
+                                                        - img [ref=e387]
+                                            - group [ref=e390]:
+                                                - generic "5 No Spam, Self-promotion, or Services that violate Stripe Services Agreement" [ref=e391] [cursor=pointer]:
+                                                    - generic [ref=e393]:
+                                                        - generic [ref=e394]:
+                                                            - generic [ref=e396]: '5'
+                                                            - heading "No Spam, Self-promotion, or Services that violate Stripe Services Agreement" [level=2] [ref=e400]
+                                                        - img [ref=e403]
+                                            - group [ref=e406]:
+                                                - generic "6 No reporting other Stripe users" [ref=e407] [cursor=pointer]:
+                                                    - generic [ref=e409]:
+                                                        - generic [ref=e410]:
+                                                            - generic [ref=e412]: '6'
+                                                            - heading "No reporting other Stripe users" [level=2] [ref=e416]
+                                                        - img [ref=e419]
+                                            - group [ref=e422]:
+                                                - generic "7 No Sharing of Private Account Info" [ref=e423] [cursor=pointer]:
+                                                    - generic [ref=e425]:
+                                                        - generic [ref=e426]:
+                                                            - generic [ref=e428]: '7'
+                                                            - heading "No Sharing of Private Account Info" [level=2] [ref=e432]
+                                                        - img [ref=e435]
+                                            - group [ref=e438]:
+                                                - generic "8 AI is welcome, misinformation is not" [ref=e439] [cursor=pointer]:
+                                                    - generic [ref=e441]:
+                                                        - generic [ref=e442]:
+                                                            - generic [ref=e444]: '8'
+                                                            - heading "AI is welcome, misinformation is not" [level=2] [ref=e448]
+                                                        - img [ref=e451]
+                                    - separator [ref=e453]
+                                    - generic [ref=e454]:
+                                        - heading "Stripe" [level=2] [ref=e456]:
+                                            - generic [ref=e457]: Stripe
+                                        - link [ref=e458] [cursor=pointer]:
+                                            - /url: https://stripe.com/about
+                                    - separator [ref=e459]
+                                    - generic [ref=e460]:
+                                        - heading "Social Media" [level=2] [ref=e462]:
+                                            - generic [ref=e463]: Social Media
+                                        - generic [ref=e464]:
+                                            - link "Stripe Website Stripe Website" [ref=e465] [cursor=pointer]:
+                                                - /url: https://stripe.com
+                                                - generic [ref=e468]: Stripe Website
+                                                - generic [ref=e469]:
+                                                    - generic: Stripe Website
+                                            - link "Twitter Twitter" [ref=e470] [cursor=pointer]:
+                                                - /url: https://twitter.com/stripe
+                                                - generic [ref=e473]: Twitter
+                                                - generic [ref=e474]:
+                                                    - generic: Twitter
+                                            - link "Facebook Facebook" [ref=e475] [cursor=pointer]:
+                                                - /url: https://www.facebook.com/StripeHQ
+                                                - generic [ref=e478]: Facebook
+                                                - generic [ref=e479]:
+                                                    - generic: Facebook
+                                            - link "YouTube YouTube" [ref=e480] [cursor=pointer]:
+                                                - /url: https://www.youtube.com/channel/UCM1guA1E-RHLO2OyfQPOkEQ
+                                                - generic [ref=e483]: YouTube
+                                                - generic [ref=e484]:
+                                                    - generic: YouTube
+                                            - link "Reddit Reddit" [ref=e485] [cursor=pointer]:
+                                                - /url: https://www.reddit.com/r/stripe/
+                                                - generic [ref=e488]: Reddit
+                                                - generic [ref=e489]:
+                                                    - generic: Reddit
+                                    - separator [ref=e490]
+                                    - generic [ref=e491]:
+                                        - heading "Moderators" [level=2] [ref=e493]:
+                                            - generic [ref=e494]: Moderators
+                                        - link "Message Mods" [ref=e496] [cursor=pointer]:
+                                            - /url: https://www.reddit.com/message/compose?to=r/stripe
+                                            - generic [ref=e497]:
+                                                - img [ref=e499]
+                                                - generic [ref=e501]: Message Mods
+                                        - generic [ref=e503]:
+                                            - img "u/ccb621 avatar" [ref=e508]
+                                            - generic [ref=e511]:
+                                                - link "u/ccb621" [ref=e512] [cursor=pointer]:
+                                                    - /url: /user/ccb621/
+                                                - 'generic "Flair: :United_States:" [ref=e514]'
+                                        - generic [ref=e519]:
+                                            - img "u/Realistic_Answer_449 avatar" [ref=e524]
+                                            - generic [ref=e525]:
+                                                - link "u/Realistic_Answer_449" [ref=e528] [cursor=pointer]:
+                                                    - /url: /user/Realistic_Answer_449/
+                                                - generic [ref=e530]: Greg @ Stripe
+                                        - generic [ref=e532]:
+                                            - img "u/StripeTeam avatar" [ref=e537]
+                                            - generic [ref=e538]:
+                                                - link "u/StripeTeam" [ref=e541] [cursor=pointer]:
+                                                    - /url: /user/StripeTeam/
+                                                - generic [ref=e543]: We Are Stripe
+                                        - generic [ref=e545]:
+                                            - img "u/Stripe_Help avatar" [ref=e550]
+                                            - generic [ref=e551]:
+                                                - generic [ref=e553]:
+                                                    - link "u/Stripe_Help" [ref=e554] [cursor=pointer]:
+                                                        - /url: /user/Stripe_Help/
+                                                    - 'generic "Flair: :Stripe:" [ref=e556]'
+                                                - generic [ref=e561]: Stripe Help
+                                        - link "View all moderators" [ref=e562] [cursor=pointer]:
+                                            - /url: /mod/stripe/moderators/
+                                            - generic [ref=e564]: View all moderators
+                            - generic [ref=e566]:
+                                - link "Reddit Rules" [ref=e569] [cursor=pointer]:
+                                    - /url: https://www.redditinc.com/policies/content-policy
+                                - link "Privacy Policy" [ref=e572] [cursor=pointer]:
+                                    - /url: https://www.reddit.com/policies/privacy-policy
+                                - link "User Agreement" [ref=e575] [cursor=pointer]:
+                                    - /url: https://www.redditinc.com/policies/user-agreement
+                                - link "Accessibility" [ref=e578] [cursor=pointer]:
+                                    - /url: https://support.reddithelp.com/hc/sections/38303584022676-Accessibility
+                                - link "Reddit, Inc. © 2026. All rights reserved." [ref=e580] [cursor=pointer]:
+                                    - /url: https://redditinc.com
+                - generic [ref=e582]:
+                    - button "Collapse Navigation" [ref=e585] [cursor=pointer]:
+                        - img [ref=e588]
+                        - generic [ref=e590]:
+                            - generic: Collapse Navigation
+                    - navigation "Primary" [ref=e595]:
+                        - generic [ref=e597]:
+                            - link "Home" [ref=e599] [cursor=pointer]:
+                                - /url: /?feed=home
+                                - generic [ref=e600]:
+                                    - img [ref=e602]
+                                    - generic [ref=e605]: Home
+                            - link "Popular" [ref=e607] [cursor=pointer]:
+                                - /url: /r/popular/
+                                - generic [ref=e608]:
+                                    - img [ref=e610]
+                                    - generic [ref=e613]: Popular
+                            - link "News" [ref=e614] [cursor=pointer]:
+                                - /url: /news/
+                                - generic [ref=e615]:
+                                    - img [ref=e617]
+                                    - generic [ref=e621]: News
+                            - link "Explore" [ref=e623] [cursor=pointer]:
+                                - /url: /explore/
+                                - generic [ref=e624]:
+                                    - img [ref=e626]
+                                    - generic [ref=e629]: Explore
+                            - button "Start a community" [ref=e630] [cursor=pointer]:
+                                - generic [ref=e631]:
+                                    - img [ref=e633]
+                                    - generic [ref=e636]: Start a community
+                        - separator [ref=e637]
+                        - group [ref=e641]:
+                            - generic "GAMES ON REDDIT" [ref=e642] [cursor=pointer]:
+                                - generic [ref=e643]:
+                                    - generic [ref=e648]:
+                                        - generic: GAMES ON REDDIT
+                                    - img [ref=e651]
+                            - generic [ref=e654]:
+                                - link "Featured Game" [ref=e658] [cursor=pointer]:
+                                    - /url: https://www.reddit.com/r/BubbleShooterPro/comments/1t0eulr?entry_point=games_drawer_featured_game
+                                    - generic [ref=e660]:
+                                        - generic [ref=e664]:
+                                            - heading "Bubble Shooter Pro" [level=3] [ref=e665]
+                                            - paragraph [ref=e666]: Burst Bubbles
+                                        - generic [ref=e669]: NEW
+                                - generic [ref=e671]:
+                                    - link "Hot and Cold" [ref=e673] [cursor=pointer]:
+                                        - /url: https://www.reddit.com/r/HotAndCold/comments/1snywpt?entry_point=games_drawer_personalized_game
+                                        - generic [ref=e674]:
+                                            - img [ref=e679]
+                                            - generic [ref=e683]: Hot and Cold
+                                    - link "BattleBirds" [ref=e685] [cursor=pointer]:
+                                        - /url: https://www.reddit.com/r/BattleBirds/comments/1sc5wg1?entry_point=games_drawer_personalized_game
+                                        - generic [ref=e686]:
+                                            - img [ref=e691]
+                                            - generic [ref=e695]: BattleBirds
+                                    - link "Zencrossbow" [ref=e697] [cursor=pointer]:
+                                        - /url: https://www.reddit.com/r/ZenCrossbow/comments/1sxm3lt?entry_point=games_drawer_personalized_game
+                                        - generic [ref=e698]:
+                                            - img [ref=e703]
+                                            - generic [ref=e707]: Zencrossbow
+                                - link "Discover More" [ref=e709] [cursor=pointer]:
+                                    - /url: /r/GamesOnReddit
+                                    - generic [ref=e710]:
+                                        - img [ref=e712]
+                                        - generic [ref=e716]: Discover More
+                        - separator [ref=e717]
+                        - group [ref=e722]:
+                            - generic "RECENT" [ref=e723] [cursor=pointer]:
+                                - generic [ref=e724]:
+                                    - generic [ref=e727]: RECENT
+                                    - img [ref=e730]
+                            - generic [ref=e733]:
+                                - link "r/stripe" [ref=e734] [cursor=pointer]:
+                                    - /url: /r/stripe/
+                                    - generic [ref=e735]:
+                                        - img [ref=e740]
+                                        - generic [ref=e743]: r/stripe
+                                - link "r/AmazonFBA" [ref=e744] [cursor=pointer]:
+                                    - /url: /r/AmazonFBA/
+                                    - generic [ref=e745]:
+                                        - img [ref=e750]
+                                        - generic [ref=e753]: r/AmazonFBA
+                                - link "r/FulfillmentByAmazon" [ref=e754] [cursor=pointer]:
+                                    - /url: /r/FulfillmentByAmazon/
+                                    - generic [ref=e755]:
+                                        - img [ref=e760]
+                                        - generic [ref=e763]: r/FulfillmentByAmazon
+                                - link "r/AmazonSeller" [ref=e764] [cursor=pointer]:
+                                    - /url: /r/AmazonSeller/
+                                    - generic [ref=e765]:
+                                        - img [ref=e771]
+                                        - generic [ref=e775]: r/AmazonSeller
+                                - link "r/realestateinvesting" [ref=e776] [cursor=pointer]:
+                                    - /url: /r/realestateinvesting/
+                                    - generic [ref=e777]:
+                                        - img [ref=e783]
+                                        - generic [ref=e787]: r/realestateinvesting
+                        - group [ref=e789]:
+                            - generic "COMMUNITIES" [ref=e790] [cursor=pointer]:
+                                - generic [ref=e792]:
+                                    - generic [ref=e795]: COMMUNITIES
+                                    - img [ref=e798]
+                            - generic [ref=e801]:
+                                - link "Manage Communities" [ref=e802] [cursor=pointer]:
+                                    - /url: /user/merged_and_deployed/communities
+                                    - generic [ref=e803]:
+                                        - img [ref=e805]
+                                        - generic [ref=e808]: Manage Communities
+                                - generic [ref=e810]:
+                                    - link "r/AI_Agents" [ref=e812] [cursor=pointer]:
+                                        - /url: /r/AI_Agents/
+                                        - generic [ref=e813]:
+                                            - img [ref=e818]
+                                            - generic [ref=e821]: r/AI_Agents
+                                        - button "Add community to favorites" [ref=e824]:
+                                            - img [ref=e827]
+                                    - link "r/AmazonFBA" [ref=e830] [cursor=pointer]:
+                                        - /url: /r/AmazonFBA/
+                                        - generic [ref=e831]:
+                                            - img [ref=e836]
+                                            - generic [ref=e839]: r/AmazonFBA
+                                        - button "Add community to favorites" [ref=e842]:
+                                            - img [ref=e845]
+                                    - link "r/AmazonSeller" [ref=e848] [cursor=pointer]:
+                                        - /url: /r/AmazonSeller/
+                                        - generic [ref=e849]:
+                                            - img [ref=e855]
+                                            - generic [ref=e859]: r/AmazonSeller
+                                        - button "Add community to favorites" [ref=e862]:
+                                            - img [ref=e865]
+                                    - link "r/ClaudeAI" [ref=e868] [cursor=pointer]:
+                                        - /url: /r/ClaudeAI/
+                                        - generic [ref=e869]:
+                                            - img [ref=e874]
+                                            - generic [ref=e877]: r/ClaudeAI
+                                        - button "Add community to favorites" [ref=e880]:
+                                            - img [ref=e883]
+                                    - link "r/ClaudeCode" [ref=e886] [cursor=pointer]:
+                                        - /url: /r/ClaudeCode/
+                                        - generic [ref=e887]:
+                                            - img [ref=e892]
+                                            - generic [ref=e895]: r/ClaudeCode
+                                        - button "Add community to favorites" [ref=e898]:
+                                            - img [ref=e901]
+                                    - link "r/founder" [ref=e904] [cursor=pointer]:
+                                        - /url: /r/founder/
+                                        - generic [ref=e905]:
+                                            - img [ref=e911]
+                                            - generic [ref=e915]: r/founder
+                                        - button "Add community to favorites" [ref=e918]:
+                                            - img [ref=e921]
+                                    - link "r/FulfillmentByAmazon" [ref=e924] [cursor=pointer]:
+                                        - /url: /r/FulfillmentByAmazon/
+                                        - generic [ref=e925]:
+                                            - img [ref=e930]
+                                            - generic [ref=e933]: r/FulfillmentByAmazon
+                                        - button "Add community to favorites" [ref=e936]:
+                                            - img [ref=e939]
+                                    - link "r/linux" [ref=e942] [cursor=pointer]:
+                                        - /url: /r/linux/
+                                        - generic [ref=e943]:
+                                            - img [ref=e948]
+                                            - generic [ref=e951]: r/linux
+                                        - button "Add community to favorites" [ref=e954]:
+                                            - img [ref=e957]
+                                    - link "r/LocalLLM" [ref=e960] [cursor=pointer]:
+                                        - /url: /r/LocalLLM/
+                                        - generic [ref=e961]:
+                                            - img [ref=e966]
+                                            - generic [ref=e969]: r/LocalLLM
+                                        - button "Add community to favorites" [ref=e972]:
+                                            - img [ref=e975]
+                                    - link "r/mcp" [ref=e978] [cursor=pointer]:
+                                        - /url: /r/mcp/
+                                        - generic [ref=e979]:
+                                            - img [ref=e984]
+                                            - generic [ref=e987]: r/mcp
+                                        - button "Add community to favorites" [ref=e990]:
+                                            - img [ref=e993]
+                                    - link "r/ProductManagement" [ref=e996] [cursor=pointer]:
+                                        - /url: /r/ProductManagement/
+                                        - generic [ref=e997]:
+                                            - img [ref=e1002]
+                                            - generic [ref=e1005]: r/ProductManagement
+                                        - button "Add community to favorites" [ref=e1008]:
+                                            - img [ref=e1011]
+                                    - link "r/PydanticAI" [ref=e1014] [cursor=pointer]:
+                                        - /url: /r/PydanticAI/
+                                        - generic [ref=e1015]:
+                                            - img [ref=e1020]
+                                            - generic [ref=e1023]: r/PydanticAI
+                                        - button "Add community to favorites" [ref=e1026]:
+                                            - img [ref=e1029]
+                                    - link "r/startups" [ref=e1032] [cursor=pointer]:
+                                        - /url: /r/startups/
+                                        - generic [ref=e1033]:
+                                            - img [ref=e1038]
+                                            - generic [ref=e1041]: r/startups
+                                        - button "Add community to favorites" [ref=e1044]:
+                                            - img [ref=e1047]
+                        - separator [ref=e1049]
+                        - navigation "Reddit resources" [ref=e1050]:
+                            - group [ref=e1052]:
+                                - generic "RESOURCES" [ref=e1053] [cursor=pointer]:
+                                    - generic [ref=e1055]:
+                                        - generic [ref=e1058]: RESOURCES
+                                        - img [ref=e1061]
+                                - generic [ref=e1064]:
+                                    - link "About Reddit" [ref=e1066] [cursor=pointer]:
+                                        - /url: https://www.redditinc.com
+                                        - generic [ref=e1067]:
+                                            - img [ref=e1069]
+                                            - generic [ref=e1073]: About Reddit
+                                    - link "Advertise" [ref=e1075] [cursor=pointer]:
+                                        - /url: https://ads.reddit.com/register?utm_source=web3x_consumer&utm_name=left_nav_cta
+                                        - generic [ref=e1076]:
+                                            - img [ref=e1078]
+                                            - generic [ref=e1082]: Advertise
+                                    - link "Developer Platform" [ref=e1084] [cursor=pointer]:
+                                        - /url: https://developers.reddit.com/?utm_source=reddit&utm_medium=left_nav_resources
+                                        - generic [ref=e1085]:
+                                            - img [ref=e1087]
+                                            - generic [ref=e1091]: Developer Platform
+                                    - link "Reddit Pro BETA" [ref=e1093] [cursor=pointer]:
+                                        - /url: /reddit-pro?utm_source=reddit&utm_medium=left_nav_resources
+                                        - generic [ref=e1094]:
+                                            - img [ref=e1096]
+                                            - generic [ref=e1100]:
+                                                - generic [ref=e1101]: Reddit Pro
+                                                - generic [ref=e1102]: BETA
+                                    - link "Help" [ref=e1104] [cursor=pointer]:
+                                        - /url: https://support.reddithelp.com/hc?utm_source=reddit&utm_medium=footer&utm_campaign=evergreen
+                                        - generic [ref=e1105]:
+                                            - img [ref=e1107]
+                                            - generic [ref=e1111]: Help
+                                    - link "Blog" [ref=e1113] [cursor=pointer]:
+                                        - /url: https://redditblog.com/
+                                        - generic [ref=e1114]:
+                                            - img [ref=e1116]
+                                            - generic [ref=e1120]: Blog
+                                    - link "Careers" [ref=e1122] [cursor=pointer]:
+                                        - /url: https://www.redditinc.com/careers
+                                        - generic [ref=e1123]:
+                                            - img [ref=e1125]
+                                            - generic [ref=e1129]: Careers
+                                    - link "Press" [ref=e1131] [cursor=pointer]:
+                                        - /url: https://www.redditinc.com/press
+                                        - generic [ref=e1132]:
+                                            - img [ref=e1134]
+                                            - generic [ref=e1138]: Press
+                                    - separator [ref=e1139]
+                                    - link "Best of Reddit" [ref=e1141] [cursor=pointer]:
+                                        - /url: https://www.reddit.com/posts/2026/global/
+                                        - generic [ref=e1142]:
+                                            - img [ref=e1144]
+                                            - generic [ref=e1149]: Best of Reddit
+                                    - separator [ref=e1150]
+                                    - link "Reddit Rules" [ref=e1152] [cursor=pointer]:
+                                        - /url: https://www.redditinc.com/policies/content-policy
+                                        - generic [ref=e1153]:
+                                            - img [ref=e1155]
+                                            - generic [ref=e1159]: Reddit Rules
+                                    - link "Privacy Policy" [ref=e1161] [cursor=pointer]:
+                                        - /url: https://www.reddit.com/policies/privacy-policy
+                                        - generic [ref=e1162]:
+                                            - img [ref=e1164]
+                                            - generic [ref=e1168]: Privacy Policy
+                                    - link "User Agreement" [ref=e1170] [cursor=pointer]:
+                                        - /url: https://www.redditinc.com/policies/user-agreement
+                                        - generic [ref=e1171]:
+                                            - img [ref=e1173]
+                                            - generic [ref=e1177]: User Agreement
+                                    - link "Accessibility" [ref=e1179] [cursor=pointer]:
+                                        - /url: https://support.reddithelp.com/hc/sections/38303584022676-Accessibility
+                                        - generic [ref=e1180]:
+                                            - img [ref=e1182]
+                                            - generic [ref=e1187]: Accessibility
+                        - link "Reddit, Inc. © 2026. All rights reserved." [ref=e1189] [cursor=pointer]:
+                            - /url: https://redditinc.com

@@ -1,11 +1,18 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { auth } from '#/lib/auth'
+import { getAuthInstance } from '@worker/infrastructure/auth'
+import { tanstackStartCookies } from 'better-auth/tanstack-start'
 
 export const Route = createFileRoute('/api/auth/$')({
   server: {
     handlers: {
-      GET: ({ request }) => auth.handler(request),
-      POST: ({ request }) => auth.handler(request),
+      GET: ({ request }) => {
+        const auth = getAuthInstance([tanstackStartCookies()])
+        return auth.handler(request)
+      },
+      POST: ({ request }) => {
+        const auth = getAuthInstance([tanstackStartCookies()])
+        return auth.handler(request)
+      },
     },
   },
 })

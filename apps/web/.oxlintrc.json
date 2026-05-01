@@ -1,0 +1,87 @@
+{
+  "extends": ["../../oxlint.json"],
+  "plugins": [
+    "unicorn",
+    "typescript",
+    "import",
+    "promise",
+    "react",
+    "react-perf",
+    "jsx-a11y",
+    "vitest"
+  ],
+  "categories": {
+    "suspicious": "warn",
+    "perf": "warn",
+    "restriction": "warn"
+  },
+  "rules": {
+    "no-restricted-imports": [
+      "error",
+      {
+        "paths": [
+          {
+            "name": "@riposte/core",
+            "message": "Use @riposte/core/client for browser code. Direct @riposte/core imports include Node.js dependencies (Stripe, drizzle) causing \"Buffer is not defined\" errors."
+          }
+        ]
+      }
+    ],
+    "react/no-array-index-key": "error",
+    "react/jsx-no-constructed-context-values": "error",
+    "react/react-in-jsx-scope": "off",
+    "react/no-multi-comp": "off",
+    "react/jsx-filename-extension": "off",
+    "react/only-export-components": "off",
+    "jsx-a11y/no-autofocus": "off",
+    "unicorn/no-instanceof-builtins": "off"
+  },
+  "overrides": [
+    {
+      "files": [
+        "**/*.test.*",
+        "**/*.spec.*",
+        "**/test/**",
+        "**/tests/**",
+        "**/__tests__/**",
+        "**/*.stories.*",
+        ".storybook/**"
+      ],
+      "rules": {
+        "react/no-array-index-key": "off",
+        "no-restricted-imports": "off",
+        "no-empty-function": "off"
+      }
+    },
+    {
+      "files": ["src/server/**/*", "src/server.ts", "src/start.ts", "src/routes/api/**/*"],
+      "rules": {
+        "no-restricted-imports": "off"
+      }
+    },
+    {
+      "files": ["src/features/**/*", "src/pages/**/*", "src/lib/**/*", "src/ui/**/*"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "name": "@riposte/core",
+                "message": "Use @riposte/core/client for browser code. Direct @riposte/core imports include Node.js dependencies (Stripe, drizzle) causing \"Buffer is not defined\" errors."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "ignorePatterns": [
+    "scripts/**",
+    ".tanstack/**",
+    ".storybook/**",
+    "**/*.stories.*",
+    "**/routeTree.gen.ts",
+    "worker-configuration.d.ts"
+  ]
+}

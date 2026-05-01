@@ -1,0 +1,377 @@
+@import '@radix-ui/colors/slate.css';
+@import '@radix-ui/colors/slate-dark.css';
+@import '@radix-ui/colors/slate-alpha.css';
+@import '@radix-ui/colors/slate-dark-alpha.css';
+@import '@radix-ui/colors/indigo.css';
+@import '@radix-ui/colors/indigo-dark.css';
+@import '@radix-ui/colors/indigo-alpha.css';
+@import '@radix-ui/colors/indigo-dark-alpha.css';
+@import '@radix-ui/colors/blue.css';
+@import '@radix-ui/colors/blue-dark.css';
+@import '@radix-ui/colors/green.css';
+@import '@radix-ui/colors/green-dark.css';
+@import '@radix-ui/colors/green-alpha.css';
+@import '@radix-ui/colors/green-dark-alpha.css';
+@import '@radix-ui/colors/amber.css';
+@import '@radix-ui/colors/amber-dark.css';
+@import '@radix-ui/colors/amber-alpha.css';
+@import '@radix-ui/colors/amber-dark-alpha.css';
+@import '@radix-ui/colors/violet.css';
+@import '@radix-ui/colors/violet-dark.css';
+@import '@radix-ui/colors/violet-alpha.css';
+@import '@radix-ui/colors/violet-dark-alpha.css';
+@import '@radix-ui/colors/plum.css';
+@import '@radix-ui/colors/plum-dark.css';
+@import '@radix-ui/colors/plum-alpha.css';
+@import '@radix-ui/colors/plum-dark-alpha.css';
+@import '@radix-ui/colors/red.css';
+@import '@radix-ui/colors/red-dark.css';
+
+/*
+ * ⚠️  SHADCN/UI DEPENDENCY - Token names below are REQUIRED by ShadCN components
+ *
+ * Design Token System - Raw tokens defined OUTSIDE CSS layers
+ *
+ * Light/Dark Mode Architecture:
+ * 1. All custom design tokens (colors, fonts, etc.) defined in :root
+ * 2. Tokens mapped to Tailwind CSS classes via @theme inline
+ * 3. Dark mode uses .dark class to override only necessary :root variables
+ * 4. Non-themeable tokens (like brand colors) stay consistent across modes
+ */
+
+/* === LIGHT MODE (DEFAULT) === */
+/* Raw CSS custom properties - these are the source of truth for all design tokens */
+:root {
+  /* === STRUCTURAL HIERARCHY ===
+     * Layer Stack (from back to front):
+     *
+     * Layer 0: Background (--background)
+     *   └─ Base canvas for the entire application
+     *   └─ Used: body, main content areas, Dialog content
+     *
+     * Layer 1: Surface (--surface)
+     *   └─ Primary content containers
+     *   └─ Used: Card, Sidebar base
+     *
+     * Layer 2: Popover (--popover)
+     *   └─ Floating overlays and menus
+     *   └─ Used: DropdownMenu, Tooltip, Select options
+     *
+     * Interactive States (additive):
+     *   └─ Hover: --surface-hover
+     *   └─ Active: --surface-active
+     * --------------------------------- */
+  /* BASE SURFACES COLORS */
+  --background: var(--slate-1); /* Layer 0: Main canvas */
+  --surface: var(--slate-2); /* Layer 1: Cards, panels */
+  --sidebar: var(--slate-2); /* Layer 1: Sidebar (same as surface) */
+  --popover: var(
+    --slate-2
+  ); /* Layer 2: Floating elements (elevated via shadow + border, not color) */
+  --panel-translucent: var(--slate-a2); /* Semi-transparent panels */
+  --overlay: var(--slate-a5); /* Modal overlays */
+
+  /* BRAND COLORS */
+  --accent: var(--indigo-9);
+  --accent-secondary: var(--amber-9);
+
+  /* SEMANTIC COLORS */
+  --success: var(--green-9);
+  --destructive: var(--red-9);
+  --info: var(--blue-9);
+  --warning: var(--amber-9);
+
+  /* TEXT FOREGROUND COLORS */
+  --foreground: var(--slate-12); /* Main text color */
+  --secondary-foreground: var(--slate-12); /* Dark text on secondary buttons */
+  --accent-foreground: var(--slate-1); /* Light text */
+  --primary-foreground: var(--slate-1); /* Light text on primary buttons */
+  --accent-secondary-foreground: var(--slate-1);
+  --destructive-foreground: var(--slate-1);
+  --success-foreground: var(--green-12);
+
+  /* LOW CONTRAST ON COLOR BACKGROUND */
+  --destructive-foreground-low-contrast: var(--red-5);
+  --accent-foreground-low-contrast: var(--indigo-5); /* More muted text on primary buttons */
+  --success-foreground-low-contrast: var(--green-5); /* More muted text on primary buttons */
+  --warning-foreground-low-contrast: var(--amber-5); /* More muted text on primary buttons */
+  --info-foreground-low-contrast: var(--blue-5); /* More muted text on primary buttons */
+
+  /* MUTED TEXT FOREGROUND COLOR (step 11 for contrast) */
+  --muted-foreground: var(--slate-11);
+  --secondary-foreground-muted: var(--slate-11);
+  --success-muted-foreground: var(--green-11);
+  --destructive-muted-foreground: var(--red-11);
+  --info-muted-foreground: var(--blue-11);
+  --warning-muted-foreground: var(--amber-11);
+  --accent-muted-foreground: var(--indigo-11);
+  --accent-secondary-muted-foreground: var(--amber-11);
+
+  /* HOVER STATE (1 step darker then solid)*/
+  --background-hover: var(--slate-3); /* step 2 is too dim for hover */
+  --surface-hover: var(--slate-4); /* Hover state */
+  --accent-hover: var(--indigo-10); /* Accent button hover */
+  --destructive-hover: var(--red-10); /* Already defined above */
+  --success-hover: var(--green-10); /* Already defined above */
+  --warning-hover: var(--amber-10); /* Warning button hover */
+  --info-hover: var(--blue-10); /* Info button hover */
+
+  /* ACTIVE STATE (1 step darker then hover) */
+  --background-active: var(--slate-4); /* */
+  --surface-active: var(--slate-5); /* Active/pressed */
+  --accent-active: var(--indigo-7); /* Accent button hover */
+  --destructive-active: var(--red-7); /* Already defined above */
+  --success-active: var(--green-7); /* Already defined above */
+
+  /* TRANSCRIPT SEGMENT STATES */
+  --segment-hover-bg: var(--slate-3); /* Subtle hover background */
+  --segment-active-bg: var(--indigo-4); /* Active/clicked background */
+  --segment-active-text: var(--indigo-11); /* Active text color */
+
+  /* MUTED SOLID COLORS (step 3 for backgrounds) */
+  --muted: var(--slate-3);
+  --accent-muted: var(--indigo-3);
+  --accent-secondary-muted: var(--amber-3);
+  --success-muted: var(--green-3);
+  --destructive-muted: var(--red-3);
+  --info-muted: var(--blue-3);
+  --warning-muted: var(--amber-3);
+
+  /* MUTED HOVER COLORS (step 4 - 1 step darker) */
+  --success-muted-hover: var(--green-4);
+  --destructive-muted-hover: var(--red-4);
+  --info-muted-hover: var(--blue-4);
+  --warning-muted-hover: var(--amber-4);
+  --accent-muted-hover: var(--indigo-4);
+  --accent-secondary-muted-hover: var(--amber-4);
+
+  /* BORDER COLORS  */
+  /* DEFAULT BORDER COLOR (step 6)*/
+  /* HOVERED BORDER COLOR (step 7)*/
+  /* FOCUSED/ACTIVE BORDER COLOR (step 8)*/
+  --border-non-interactive: var(--slate-6);
+  --border-interactive: var(--slate-7);
+  --border-interactive-strong: var(--slate-8);
+  --border: var(--border-non-interactive);
+
+  /* DESTRUCTIVE BORDER COLORS (for error states) */
+  --border-destructive-non-interactive: var(--red-6);
+  --border-destructive-interactive: var(--red-7);
+  --border-destructive-interactive-strong: var(--red-8);
+
+  /* UI COLOR MAPPINGS */
+  --primary: var(--accent);
+  --secondary: var(--slate-5);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
+  --ring: var(--indigo-a8); /* Soft alpha halo — blends on any background */
+  --sidebar-ring: var(--indigo-a8);
+  --card-foreground: var(--foreground);
+  --popover-foreground: var(--foreground);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-border: var(--border-non-interactive);
+  --input: var(--border-interactive);
+
+  /* LOGO COMPONENT COLORS — hardcoded, keycap is always dark regardless of theme */
+  --keycap-edge: #1a1a1a;
+  --keycap-top: #2a2a2a;
+  --keycap-shadow: #1a1a1a;
+
+  /*CHART COLORS */
+  --chart-1: var(--blue-9); /* Primary blue - great for main data */
+  --chart-2: var(--amber-9); /* Secondary data */
+  --chart-3: var(--green-9); /* Success/positive metrics */
+  --chart-4: var(--violet-9); /* Tertiary categorical */
+  --chart-5: var(--red-9); /* Error/negative metrics */
+}
+
+/* === TAILWIND THEME MAPPING === */
+/* Map raw CSS tokens to Tailwind utility classes */
+/* This enables: bg-primary, text-foreground, rounded-lg, etc. */
+/* ⚠️ SHADCN REQUIRED MAPPINGS - DO NOT RENAME --color-* tokens */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-card: var(--surface);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-accent-foreground-muted: var(--accent-foreground-low-contrast);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent-secondary: var(--accent-secondary);
+  --color-accent-secondary-foreground: var(--accent-secondary-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success-foreground: var(--primary-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /*    Additional custom tokens */
+  /*INTERACTIVE STATES*/
+  --color-destructive-hover: var(--destructive-hover);
+  --color-background-hover: var(--background-hover);
+  --color-surface-hover: var(--surface-hover); /* Make existing token available */
+  --color-surface-active: var(--surface-active);
+
+  /*    States */
+  --color-success: var(--success);
+  --color-info: var(--info);
+  --color-warning: var(--warning);
+  --color-error: var(--destructive);
+
+  /*    Low contrast foreground variants */
+  --color-accent-foreground-low-contrast: var(--accent-foreground-low-contrast);
+  --color-destructive-foreground-low-contrast: var(--destructive-foreground-low-contrast);
+  --color-success-foreground-low-contrast: var(--success-foreground-low-contrast);
+  --color-warning-foreground-low-contrast: var(--warning-foreground-low-contrast);
+  --color-info-foreground-low-contrast: var(--info-foreground-low-contrast);
+
+  /*    True muted foreground (step 11 for muted backgrounds) */
+  --color-accent-muted-foreground: var(--accent-muted-foreground);
+  --color-accent-secondary-muted-foreground: var(--accent-secondary-muted-foreground);
+  --color-destructive-muted-foreground: var(--destructive-muted-foreground);
+  --color-success-muted-foreground: var(--success-muted-foreground);
+  --color-warning-muted-foreground: var(--warning-muted-foreground);
+  --color-info-muted-foreground: var(--info-muted-foreground);
+
+  /*    Hover states for semantic colors */
+  --color-accent-hover: var(--accent-hover);
+  --color-success-hover: var(--success-hover);
+  --color-warning-hover: var(--warning-hover);
+  --color-info-hover: var(--info-hover);
+
+  /*    Muted backgrounds */
+  --color-accent-muted: var(--accent-muted);
+  --color-accent-secondary-muted: var(--accent-secondary-muted);
+  --color-success-muted: var(--success-muted);
+  --color-destructive-muted: var(--destructive-muted);
+  --color-warning-muted: var(--warning-muted);
+  --color-info-muted: var(--info-muted);
+
+  /*    Muted background hovers */
+  --color-accent-muted-hover: var(--accent-muted-hover);
+  --color-accent-secondary-muted-hover: var(--accent-secondary-muted-hover);
+  --color-success-muted-hover: var(--success-muted-hover);
+  --color-destructive-muted-hover: var(--destructive-muted-hover);
+  --color-warning-muted-hover: var(--warning-muted-hover);
+  --color-info-muted-hover: var(--info-muted-hover);
+
+  /*    Keycap colors */
+  --color-keycap-edge: var(--keycap-edge);
+  --color-keycap-top: var(--keycap-top);
+  --color-keycap-shadow: var(--keycap-shadow);
+
+  /*    Badge backgrounds (translucent) */
+  --color-slate-a6: var(--slate-a6);
+  --color-green-a6: var(--green-a6);
+  --color-amber-a6: var(--amber-a6);
+  --color-red-a6: var(--red-a6);
+  --color-blue-a6: var(--blue-a6);
+  --color-indigo-a3: var(--indigo-a3);
+  --color-indigo-a6: var(--indigo-a6);
+  --color-violet-a2: var(--violet-a2);
+  --color-violet-a3: var(--violet-a3);
+  --color-violet-a4: var(--violet-a4);
+  --color-violet-a6: var(--violet-a6);
+  --color-plum-a3: var(--plum-a3);
+  --color-plum-a6: var(--plum-a6);
+
+  /*    Badge borders (step 6 - subtle non-interactive) */
+  --color-slate-6: var(--slate-6);
+  --color-green-6: var(--green-6);
+  --color-amber-6: var(--amber-6);
+  --color-red-6: var(--red-6);
+  --color-blue-6: var(--blue-6);
+  --color-violet-6: var(--violet-6);
+  --color-plum-6: var(--plum-6);
+
+  /*    Step 9 — solid color */
+  --color-violet-9: var(--violet-9);
+  --color-plum-9: var(--plum-9);
+  --color-indigo-9: var(--indigo-9);
+
+  /*    Step 11 — muted text on color bg */
+  --color-indigo-11: var(--indigo-11);
+  --color-violet-11: var(--violet-11);
+  --color-plum-11: var(--plum-11);
+  --color-amber-11: var(--amber-11);
+
+  /*    Badge text (step 12 - high contrast) */
+  --color-slate-12: var(--slate-12);
+  --color-green-12: var(--green-12);
+  --color-amber-12: var(--amber-12);
+  --color-red-12: var(--red-12);
+  --color-blue-12: var(--blue-12);
+  --color-violet-12: var(--violet-12);
+  --color-plum-12: var(--plum-12);
+
+  /*    Mid steps — for asset canvases and gradient mixes */
+  --color-violet-3: var(--violet-3);
+  --color-violet-4: var(--violet-4);
+  --color-violet-5: var(--violet-5);
+  --color-plum-3: var(--plum-3);
+  --color-plum-5: var(--plum-5);
+  --color-indigo-3: var(--indigo-3);
+  --color-indigo-4: var(--indigo-4);
+  --color-indigo-5: var(--indigo-5);
+
+  /*    Transcript segment states */
+  --color-segment-hover-bg: var(--segment-hover-bg);
+  --color-segment-active-bg: var(--segment-active-bg);
+  --color-segment-active-text: var(--segment-active-text);
+
+  /*    Overlay and translucent panels */
+  --color-overlay: var(--overlay);
+  --color-panel-translucent: var(--panel-translucent);
+
+  /*    SVG fill colors */
+  --fill-popover: var(--popover);
+
+  /*    Border states for interactive elements */
+  --color-border-non-interactive: var(--border-non-interactive);
+  --color-border-interactive: var(--border-interactive);
+  --color-border-interactive-strong: var(--border-interactive-strong);
+
+  /*    Destructive border states for error elements */
+  --color-border-destructive-non-interactive: var(--border-destructive-non-interactive);
+  --color-border-destructive-interactive: var(--border-destructive-interactive);
+  --color-border-destructive-interactive-strong: var(--border-destructive-interactive-strong);
+}
+
+/* Dark mode is handled automatically by Radix Colors imports (*-dark.css).
+   When .dark class is present, Radix variables auto-switch to dark values. */
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+    transition-timing-function: ease-out;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}

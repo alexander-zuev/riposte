@@ -3,8 +3,8 @@ import { defineConfig } from 'drizzle-kit'
 const isProd = process.env.DRIZZLE_ENV === 'production'
 
 export default defineConfig({
-  schema: './src/server/db/schema',
-  out: './src/server/db/migrations',
+  schema: './src/server/infrastructure/db/schema',
+  out: './src/server/infrastructure/db/migrations',
   dialect: 'sqlite',
 
   ...(isProd

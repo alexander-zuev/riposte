@@ -30,7 +30,7 @@ hydrateRoot(
       fallback={
         <div className="flex min-h-screen items-center justify-center p-8">
           <div className="text-center">
-            <h1 className="text-2xl font-bold">Something went wrong</h1>
+            <h1>Something went wrong</h1>
             <button onClick={() => window.location.reload()} className="mt-4 underline">
               Try again
             </button>

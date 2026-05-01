@@ -19,22 +19,44 @@
   "placement": {
     "mode": "smart",
   },
-  "version_metadata": {
-    "binding": "CF_VERSION_METADATA",
-  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["RateLimiterDO"] }],
   "env": {
     "dev": {
       "name": "riposte-dev",
       "version_metadata": {
         "binding": "CF_VERSION_METADATA",
       },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "riposte-staging",
+          "database_id": "a10edb21-7276-412b-b16f-c403cdb35041",
+        },
+      ],
+      "kv_namespaces": [{ "binding": "AUTH_KV" }],
+      "queues": {
+        "producers": [{ "binding": "BACKGROUND_QUEUE", "queue": "riposte-background-dev" }],
+      },
+      "durable_objects": {
+        "bindings": [{ "name": "AUTH_RATE_LIMITER", "class_name": "RateLimiterDO" }],
+      },
       "vars": {
         "ENV": "development",
+        "APP_URL": "http://localhost:3000",
         "SENTRY_DSN": "https://be15dbb0ce04a60ac3d39dc7ddb9fec2@o4508393623257088.ingest.us.sentry.io/4511314272583680",
         "POSTHOG_API_KEY": "phc_nYQ6Wm37RsonpnciM4CkjVaFtgQwU3XBBducMjZTfA4K",
+        "GOOGLE_CLIENT_ID": "189119872614-1ef29kgrij3mmc38sbbmh7tl358835bg.apps.googleusercontent.com",
+        "GITHUB_CLIENT_ID": "Ov23lipY2ARnuolBpq4A",
       },
       "secrets": {
-        "required": ["BETTER_AUTH_SECRET"],
+        "required": [
+          "BETTER_AUTH_SECRET",
+          "GOOGLE_CLIENT_SECRET",
+          "GITHUB_CLIENT_SECRET",
+          "TURNSTILE_SECRET_KEY",
+          "STRIPE_SECRET_KEY",
+          "STRIPE_WEBHOOK_SECRET",
+        ],
       },
     },
     "staging": {
@@ -42,13 +64,37 @@
       "version_metadata": {
         "binding": "CF_VERSION_METADATA",
       },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "riposte-staging",
+          "database_id": "a10edb21-7276-412b-b16f-c403cdb35041",
+        },
+      ],
+      "kv_namespaces": [{ "binding": "AUTH_KV" }],
+      "queues": {
+        "producers": [{ "binding": "BACKGROUND_QUEUE", "queue": "riposte-background-staging" }],
+      },
+      "durable_objects": {
+        "bindings": [{ "name": "AUTH_RATE_LIMITER", "class_name": "RateLimiterDO" }],
+      },
       "vars": {
         "ENV": "staging",
+        "APP_URL": "https://staging.riposte.sh",
         "SENTRY_DSN": "https://be15dbb0ce04a60ac3d39dc7ddb9fec2@o4508393623257088.ingest.us.sentry.io/4511314272583680",
         "POSTHOG_API_KEY": "phc_nYQ6Wm37RsonpnciM4CkjVaFtgQwU3XBBducMjZTfA4K",
+        "GOOGLE_CLIENT_ID": "",
+        "GITHUB_CLIENT_ID": "",
       },
       "secrets": {
-        "required": ["BETTER_AUTH_SECRET"],
+        "required": [
+          "BETTER_AUTH_SECRET",
+          "GOOGLE_CLIENT_SECRET",
+          "GITHUB_CLIENT_SECRET",
+          "TURNSTILE_SECRET_KEY",
+          "STRIPE_SECRET_KEY",
+          "STRIPE_WEBHOOK_SECRET",
+        ],
       },
       "routes": [{ "pattern": "staging.riposte.sh", "custom_domain": true }],
     },
@@ -57,13 +103,37 @@
       "version_metadata": {
         "binding": "CF_VERSION_METADATA",
       },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "riposte-prod",
+          "database_id": "9f315f01-2074-4dee-bbba-d7756b70ed8b",
+        },
+      ],
+      "kv_namespaces": [{ "binding": "AUTH_KV" }],
+      "queues": {
+        "producers": [{ "binding": "BACKGROUND_QUEUE", "queue": "riposte-background-prod" }],
+      },
+      "durable_objects": {
+        "bindings": [{ "name": "AUTH_RATE_LIMITER", "class_name": "RateLimiterDO" }],
+      },
       "vars": {
         "ENV": "production",
+        "APP_URL": "https://riposte.sh",
         "SENTRY_DSN": "https://be15dbb0ce04a60ac3d39dc7ddb9fec2@o4508393623257088.ingest.us.sentry.io/4511314272583680",
         "POSTHOG_API_KEY": "phc_nYQ6Wm37RsonpnciM4CkjVaFtgQwU3XBBducMjZTfA4K",
+        "GOOGLE_CLIENT_ID": "",
+        "GITHUB_CLIENT_ID": "",
       },
       "secrets": {
-        "required": ["BETTER_AUTH_SECRET"],
+        "required": [
+          "BETTER_AUTH_SECRET",
+          "GOOGLE_CLIENT_SECRET",
+          "GITHUB_CLIENT_SECRET",
+          "TURNSTILE_SECRET_KEY",
+          "STRIPE_SECRET_KEY",
+          "STRIPE_WEBHOOK_SECRET",
+        ],
       },
       "routes": [{ "pattern": "riposte.sh", "custom_domain": true }],
     },

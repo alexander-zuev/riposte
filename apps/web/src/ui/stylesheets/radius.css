@@ -1,0 +1,36 @@
+/*
+ * Radius Scale — based on Radix Themes 6-step system
+ * https://www.radix-ui.com/themes/docs/theme/radius
+ *
+ * Hand-picked values (3, 4, 6, 8, 12, 16) × --radius-factor.
+ * Adjust factor to scale all radii globally: 0.75 (sharp), 1.0 (default), 1.5 (round).
+ *
+ * ⚠️  Shadcn components require --radius, --radius-sm/md/lg/xl token names.
+ *     These are mapped to Radix steps below — do not rename.
+ */
+
+/* === RADIX RADIUS SCALE === */
+:root {
+  --radius-factor: 0;
+  --radius-1: calc(3px * var(--radius-factor));
+  --radius-2: calc(4px * var(--radius-factor));
+  --radius-3: calc(6px * var(--radius-factor));
+  --radius-4: calc(8px * var(--radius-factor));
+  --radius-5: calc(12px * var(--radius-factor));
+  --radius-6: calc(16px * var(--radius-factor));
+  --radius-full: 9999px;
+}
+
+/* === TAILWIND + SHADCN MAPPING === */
+:root {
+  --radius: var(--radius-5); /* Shadcn base token — bumped to lg (12px) */
+}
+
+@theme inline {
+  --radius-xs: var(--radius-1); /* 3px  — subtle rounding */
+  --radius-sm: var(--radius-2); /* 4px  — small elements (badges, chips) */
+  --radius-md: var(--radius-3); /* 6px  — inputs, buttons */
+  --radius-lg: var(--radius-4); /* 8px  — cards, dialogs */
+  --radius-xl: var(--radius-5); /* 12px — panels, large surfaces */
+  --radius-2xl: var(--radius-6); /* 16px — hero cards, marketing */
+}

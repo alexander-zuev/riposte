@@ -1,81 +1,50 @@
-## ⚔️ Riposte
+## 🤺 Riposte
 
 Open-source AI agent that wins your Stripe disputes on autopilot.
 
-### What it does
-
-- Wakes on Stripe dispute webhooks — responds in <60 seconds
-- Queries YOUR database for real user activity (not generic Stripe data)
-- Builds evidence cases with actual usage stats, screenshots, and timelines
-- Generates a structured PDF and submits directly to Stripe
-- Self-heals when your schema changes — no hardcoded queries
-- Notifies you when a dispute is handled (Slack / Telegram / Discord / Email)
-
 ### Why
 
-Most businesses ignore disputes because evidence collection takes 30-60 min per case. Default win rate: ~10-20%. With detailed, app-specific evidence: 50%+.
+**Disputes are existential.** Exceed 0.75% dispute rate and card networks put you in a monitoring program. If you can't bring it down, fines start (Mastercard: $5K/month escalating to $100K/month over 19+ months of non-compliance). Worst case: they cut you off from processing payments entirely.
 
-Chargeflow automates this but charges 25% of recovered revenue and only pulls generic Stripe data. Riposte is free and reads your actual database.
+**But fighting them is a losing game.** Collecting evidence takes hours per case. Every dispute costs $15, contest and lose = $30. Most businesses just eat the loss.
+
+**Existing tools can't help.** They all pull generic payment data. None of them can access your app's database, user activity logs, or the actual product your customer received. That's why the evidence is shallow and win rates stay low.
+
+**Riposte reads your actual data.** It queries your database for real user activity, pulls screenshots of what they received, and builds evidence that answers the only question the bank cares about: _"Did this person get what they paid for?"_
 
 ### How it works
 
-```
-You deploy Riposte → open the chat UI → agent onboards itself
+**Cloud** — 1-click setup at [riposte.sh](https://riposte.sh). Connect Stripe, connect your DB, done.
 
-Agent asks for:
-  1. Stripe restricted key (disputes + customer read)
-  2. DB connection (PlanetScale / Supabase / Postgres via MCP)
-  3. One paragraph about your product
-
-Agent discovers:
-  - Your DB schema
-  - Where user activity lives
-  - What data to pull per dispute
-
-Then runs on autopilot forever.
-```
-
-### Architecture
-
-90% deterministic, 10% AI.
-
-```
-Stripe webhook (charge.dispute.created)
-  |
-  [DETERMINISTIC] Pull dispute + charge + customer from Stripe
-  [AGENT via MCP] Query merchant DB for user activity
-  [DETERMINISTIC] Pull invoice PDF from Stripe
-  [DETERMINISTIC] Generate evidence PDF (activity table, screenshots, stats)
-  [AI] Generate 3 persuasive text fields
-  [DETERMINISTIC] Upload to Stripe, submit evidence
-  [DETERMINISTIC] Notify merchant
-```
-
-Built on Cloudflare Agents SDK (Think). Each user gets an isolated agent instance with persistent storage and a virtual filesystem.
-
-### Quick start
+**Self-hosted** — deploy to your own Cloudflare account:
 
 ```bash
 git clone https://github.com/alexander-zuev/riposte
-cd riposte
-# Set your Claude API key
-echo "ANTHROPIC_API_KEY=sk-..." > .dev.vars
-# Deploy to your Cloudflare account
 pnpm install && pnpm deploy
-# Open the chat UI and let the agent onboard you
+```
+
+Both use the same agent. 90% deterministic, 10% AI.
+
+```
+1. CONNECT     Stripe key + DB connection + describe your product
+                          ↓
+2. DISCOVER    Agent reads your schema, finds user activity tables
+                          ↓
+3. AUTOPILOT   Webhook fires → pulls evidence → generates PDF → submits to Stripe
+                          ↓
+4. NOTIFY      Slack / Telegram / Discord / Email
 ```
 
 ### Tech stack
 
-| Layer | What |
-|---|---|
-| Agent runtime | Cloudflare Workers + Think (Durable Objects) |
-| Agent filesystem | @cloudflare/shell (Workspace — SQLite + R2) |
-| LLM | Claude via @ai-sdk/anthropic |
-| DB access | MCP (PlanetScale, Supabase, Postgres) |
-| PDF generation | Deterministic (structured layout, image resize, 5MB limit) |
-| Evidence submission | Stripe Disputes API |
-| Notifications | Slack / Telegram / Discord / Email |
+| Layer               | What                                                       |
+| ------------------- | ---------------------------------------------------------- |
+| Agent runtime       | Cloudflare Workers + Agents SDK                            |
+| LLM                 | Claude via @ai-sdk/anthropic                               |
+| DB access           | MCP (PlanetScale, Supabase, Postgres)                      |
+| PDF generation      | Deterministic (structured layout, image resize, 5MB limit) |
+| Evidence submission | Stripe Disputes API                                        |
+| Notifications       | Slack / Telegram / Discord / Email                         |
 
 ### License
 

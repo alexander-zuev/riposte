@@ -34,7 +34,7 @@ export const Route = createRootRouteWithContext<{
     return (
       <div className="flex min-h-screen items-center justify-center p-8">
         <div className="text-center">
-          <h1 className="text-2xl font-bold">Something went wrong</h1>
+          <h1>Something went wrong</h1>
           <button onClick={reset} className="mt-4 underline">
             Try again
           </button>
@@ -45,7 +45,7 @@ export const Route = createRootRouteWithContext<{
   notFoundComponent: () => (
     <div className="flex min-h-screen items-center justify-center p-8">
       <div className="text-center">
-        <h1 className="text-2xl font-bold">404 — Not found</h1>
+        <h1>404 — Not found</h1>
       </div>
     </div>
   ),
@@ -68,7 +68,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         <AnalyticsProvider>
-          <ThemeProvider attribute="class" defaultTheme="light">
+          <ThemeProvider attribute="class" defaultTheme="dark">
             {children}
           </ThemeProvider>
         </AnalyticsProvider>

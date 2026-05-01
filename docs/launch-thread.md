@@ -78,7 +78,7 @@ If you're on Stripe and losing disputes — this is for you.
 
 # README
 
-## ⚔️ Riposte
+## 🤺 Riposte
 
 Open-source AI agent that wins your Stripe disputes on autopilot.
 
@@ -93,28 +93,35 @@ Open-source AI agent that wins your Stripe disputes on autopilot.
 
 ### Why
 
-Exceed 0.75% dispute rate and Stripe flags you. Stay above Visa's 0.5% or Mastercard's 1.5% threshold and card networks escalate fines from $5K to $100K/month — and eventually refuse to process your payments entirely.
+**Disputes are existential.** Exceed 0.75% dispute rate and card networks flag you. Fines escalate from $5K to $100K/month. Stay too long and Visa/Mastercard refuse to process your payments — permanently.
 
-But collecting evidence takes hours per dispute, so most businesses just eat the loss. Every dispute costs $15. Contest and lose = $30. Stripe's own "Smart Disputes" takes 30% of recovered revenue.
+**But fighting them is a losing game.** Collecting evidence takes hours per case. Every dispute costs $15, contest and lose = $30. Most businesses just eat the loss. Default win rate: ~10-20%.
 
-Riposte is free, open-source, and reads your actual database — not just generic Stripe data like Chargeflow (25% of recovered).
+**Existing tools can't help.** Stripe's Smart Disputes, Chargeflow, Chargebacks911 — they all pull generic payment data. None of them can access your app's database, user activity logs, or the actual product your customer received. That's why the evidence is shallow and win rates stay low.
+
+**Riposte reads your actual data.** It queries your database for real user activity, pulls screenshots of what they received, and builds evidence that answers the only question the bank cares about: _"Did this person get what they paid for?"_
 
 ### How it works
 
+**Cloud** — 1-click setup at [riposte.sh](https://riposte.sh). Connect Stripe, connect your DB, done.
+
+**Self-hosted** — deploy to your own Cloudflare account:
+
+```bash
+git clone https://github.com/alexander-zuev/riposte
+pnpm install && pnpm deploy
 ```
-You deploy Riposte → open the chat UI → agent onboards itself
 
-Agent asks for:
-  1. Stripe restricted key (disputes + customer read)
-  2. DB connection (PlanetScale / Supabase / Postgres via MCP)
-  3. One paragraph about your product
+Both use the same agent. On first run, it onboards itself:
 
-Agent discovers:
-  - Your DB schema
-  - Where user activity lives
-  - What data to pull per dispute
-
-Then runs on autopilot forever.
+```
+1. CONNECT     Stripe key + DB connection + describe your product
+                          ↓
+2. DISCOVER    Agent reads your schema, finds user activity tables
+                          ↓
+3. AUTOPILOT   Webhook fires → pulls evidence → generates PDF → submits to Stripe
+                          ↓
+4. NOTIFY      Slack / Telegram / Discord / Email
 ```
 
 ### Architecture

@@ -16,8 +16,8 @@
     "lint:fix": "oxlint . --fix --quiet",
     "build": "tsdown",
     "dev": "tsdown --watch",
-    "test": "vitest run --reporter=dot --silent",
-    "test:unit": "vitest run --reporter=dot --silent",
+    "test": "vitest run --reporter=dot --silent --passWithNoTests",
+    "test:unit": "vitest run --reporter=dot --silent --passWithNoTests",
     "test:watch": "vitest"
   },
   "dependencies": {

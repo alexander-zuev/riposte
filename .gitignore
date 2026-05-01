@@ -1,0 +1,66 @@
+# Dependencies & Package Managers
+node_modules/
+.pnpm-store/
+
+# Build Outputs & Artifacts
+dist/
+build/
+*.tsbuildinfo
+
+# Environment & Configuration
+# dotenvx: encrypted .env files are committed; private keys are NOT
+.env.keys
+# Wrangler local dev vars (not managed by dotenvx)
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+!.dev.vars.*.example
+# Keep .env.example files visible
+!.env.example
+!.env.*.example
+
+# Cloud & Serverless
+.wrangler/
+
+# Frontend & React/Vite Specific
+.tanstack/
+storybook-static/
+*storybook.log
+
+# IDEs & Editors
+.vscode/
+.idea/
+.windsurf/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Logs & Diagnostics
+logs/
+*.log
+npm-debug.log*
+.pnpm-debug.log*
+
+# Testing & Coverage
+coverage/
+.nyc_output/
+
+# Claude Code
+.claude/settings.local.json
+.claude/agent-memory/
+.claude/projects/
+.claude/worktrees/
+.claude/plan.md
+.claude/scheduled_tasks.lock
+CLAUDE.local.md
+
+# Turbo
+.turbo
+
+# Vitest
+.vitest/
+
+# Build output
+.output/

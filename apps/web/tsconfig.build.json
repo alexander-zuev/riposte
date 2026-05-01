@@ -1,0 +1,5 @@
+{
+  "extends": "./tsconfig.json",
+  "include": ["src/**/*.ts", "src/**/*.tsx", "worker-configuration.d.ts", "env.d.ts"],
+  "exclude": [".storybook", "test"]
+}

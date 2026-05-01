@@ -1,0 +1,1 @@
+// @riposte/core entry point

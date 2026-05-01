@@ -1,0 +1,33 @@
+{
+  "name": "@riposte/core",
+  "version": "1.0.0",
+  "description": "Core package with shared domain models, contracts, and schemas",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "default": "./dist/index.mjs"
+    }
+  },
+  "scripts": {
+    "prepare": "tsdown",
+    "typecheck": "tsc --noEmit",
+    "lint": "oxlint . --quiet",
+    "lint:fix": "oxlint . --fix --quiet",
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "test": "vitest run --reporter=dot --silent",
+    "test:unit": "vitest run --reporter=dot --silent",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "catalog:",
+    "@types/node": "catalog:",
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

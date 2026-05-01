@@ -1,5 +1,9 @@
 ## 🤺 Riposte
 
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
+[![Status: Early Development](https://img.shields.io/badge/Status-Early_Development-orange.svg)]()
+[![Deploy to Cloudflare Workers](https://img.shields.io/badge/Deploy_to-Cloudflare_Workers-F38020.svg?logo=cloudflare)](https://developers.cloudflare.com/workers/)
+
 Open-source AI agent that wins your Stripe disputes on autopilot.
 
 ### Why

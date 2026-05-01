@@ -67,3 +67,6 @@ CLAUDE.local.md
 
 # Build output
 .output/
+
+# Docs (private research)
+docs/

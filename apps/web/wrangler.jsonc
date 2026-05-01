@@ -1,8 +1,8 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "riposte",
-  "compatibility_date": "2026-05-01",
-  "compatibility_flags": ["nodejs_compat"],
+  "compatibility_date": "2026-04-21",
+  "compatibility_flags": ["nodejs_compat", "enhanced_error_serialization"],
   "main": "./src/server.ts",
   "upload_source_maps": true,
   "observability": {
@@ -19,7 +19,12 @@
   "placement": {
     "mode": "smart",
   },
-  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["RateLimiterDO"] }],
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["RateLimiterDO"],
+    },
+  ],
   "env": {
     "dev": {
       "name": "riposte-dev",
@@ -33,12 +38,34 @@
           "database_id": "a10edb21-7276-412b-b16f-c403cdb35041",
         },
       ],
-      "kv_namespaces": [{ "binding": "AUTH_KV" }],
+      "kv_namespaces": [
+        {
+          "binding": "AUTH_KV",
+        },
+        {
+          "binding": "CACHE_KV",
+          "id": "bb86e16ef25d43cabcad08f2d3ae8fb3",
+        },
+      ],
       "queues": {
-        "producers": [{ "binding": "BACKGROUND_QUEUE", "queue": "riposte-background-dev" }],
+        "producers": [
+          {
+            "binding": "BACKGROUND_QUEUE",
+            "queue": "riposte-background-staging",
+          },
+          {
+            "binding": "CRITICAL_QUEUE",
+            "queue": "riposte-critical-staging",
+          },
+        ],
       },
       "durable_objects": {
-        "bindings": [{ "name": "AUTH_RATE_LIMITER", "class_name": "RateLimiterDO" }],
+        "bindings": [
+          {
+            "name": "AUTH_RATE_LIMITER",
+            "class_name": "RateLimiterDO",
+          },
+        ],
       },
       "vars": {
         "ENV": "development",
@@ -71,12 +98,34 @@
           "database_id": "a10edb21-7276-412b-b16f-c403cdb35041",
         },
       ],
-      "kv_namespaces": [{ "binding": "AUTH_KV" }],
+      "kv_namespaces": [
+        {
+          "binding": "AUTH_KV",
+        },
+        {
+          "binding": "CACHE_KV",
+          "id": "bb86e16ef25d43cabcad08f2d3ae8fb3",
+        },
+      ],
       "queues": {
-        "producers": [{ "binding": "BACKGROUND_QUEUE", "queue": "riposte-background-staging" }],
+        "producers": [
+          {
+            "binding": "BACKGROUND_QUEUE",
+            "queue": "riposte-background-staging",
+          },
+          {
+            "binding": "CRITICAL_QUEUE",
+            "queue": "riposte-critical-staging",
+          },
+        ],
       },
       "durable_objects": {
-        "bindings": [{ "name": "AUTH_RATE_LIMITER", "class_name": "RateLimiterDO" }],
+        "bindings": [
+          {
+            "name": "AUTH_RATE_LIMITER",
+            "class_name": "RateLimiterDO",
+          },
+        ],
       },
       "vars": {
         "ENV": "staging",
@@ -96,7 +145,12 @@
           "STRIPE_WEBHOOK_SECRET",
         ],
       },
-      "routes": [{ "pattern": "staging.riposte.sh", "custom_domain": true }],
+      "routes": [
+        {
+          "pattern": "staging.riposte.sh",
+          "custom_domain": true,
+        },
+      ],
     },
     "prod": {
       "name": "riposte",
@@ -110,20 +164,42 @@
           "database_id": "9f315f01-2074-4dee-bbba-d7756b70ed8b",
         },
       ],
-      "kv_namespaces": [{ "binding": "AUTH_KV" }],
+      "kv_namespaces": [
+        {
+          "binding": "AUTH_KV",
+        },
+        {
+          "binding": "CACHE_KV",
+          "id": "bb86e16ef25d43cabcad08f2d3ae8fb3",
+        },
+      ],
       "queues": {
-        "producers": [{ "binding": "BACKGROUND_QUEUE", "queue": "riposte-background-prod" }],
+        "producers": [
+          {
+            "binding": "BACKGROUND_QUEUE",
+            "queue": "riposte-background-prod",
+          },
+          {
+            "binding": "CRITICAL_QUEUE",
+            "queue": "riposte-critical-prod",
+          },
+        ],
       },
       "durable_objects": {
-        "bindings": [{ "name": "AUTH_RATE_LIMITER", "class_name": "RateLimiterDO" }],
+        "bindings": [
+          {
+            "name": "AUTH_RATE_LIMITER",
+            "class_name": "RateLimiterDO",
+          },
+        ],
       },
       "vars": {
         "ENV": "production",
         "APP_URL": "https://riposte.sh",
         "SENTRY_DSN": "https://be15dbb0ce04a60ac3d39dc7ddb9fec2@o4508393623257088.ingest.us.sentry.io/4511314272583680",
         "POSTHOG_API_KEY": "phc_nYQ6Wm37RsonpnciM4CkjVaFtgQwU3XBBducMjZTfA4K",
-        "GOOGLE_CLIENT_ID": "",
-        "GITHUB_CLIENT_ID": "",
+        "GOOGLE_CLIENT_ID": "189119872614-dmtnkqeoibjubc0frpkms8sptbn9j2h0.apps.googleusercontent.com",
+        "GITHUB_CLIENT_ID": "Ov23litSGfhKN1kOckGN",
       },
       "secrets": {
         "required": [
@@ -131,11 +207,16 @@
           "GOOGLE_CLIENT_SECRET",
           "GITHUB_CLIENT_SECRET",
           "TURNSTILE_SECRET_KEY",
-          "STRIPE_SECRET_KEY",
-          "STRIPE_WEBHOOK_SECRET",
+          // "STRIPE_SECRET_KEY",
+          // "STRIPE_WEBHOOK_SECRET",
         ],
       },
-      "routes": [{ "pattern": "riposte.sh", "custom_domain": true }],
+      "routes": [
+        {
+          "pattern": "riposte.sh",
+          "custom_domain": true,
+        },
+      ],
     },
   },
 }

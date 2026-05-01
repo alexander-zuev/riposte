@@ -1,28 +1,28 @@
+import { config } from 'dotenv'
 import { defineConfig } from 'drizzle-kit'
 
-const isProd = process.env.DRIZZLE_ENV === 'production'
+config({ path: '.env' })
+
+const env = process.env.DRIZZLE_ENV || 'dev'
+
+if (!['dev', 'prod'].includes(env)) {
+  throw new Error(`Invalid DRIZZLE_ENV: ${env}. Must be one of: dev, prod`)
+}
+console.log(`\n🗄️  Drizzle running against: ${env.toUpperCase()}\n`)
+
+const dbUrl = {
+  dev: process.env.DATABASE_URL_DEV!,
+  prod: process.env.DATABASE_URL_PROD!,
+}[env as 'dev' | 'prod']
 
 export default defineConfig({
+  dialect: 'postgresql',
   schema: './src/server/infrastructure/db/schema',
   out: './src/server/infrastructure/db/migrations',
-  dialect: 'sqlite',
-
-  ...(isProd
-    ? {
-        driver: 'd1-http',
-        dbCredentials: {
-          accountId: process.env.CLOUDFLARE_ACCOUNT_ID!,
-          databaseId: process.env.CLOUDFLARE_DATABASE_ID!,
-          token: process.env.CLOUDFLARE_D1_TOKEN!,
-        },
-      }
-    : {
-        dbCredentials: {
-          url: '.wrangler/state/v3/d1/miniflare-D1DatabaseObject/placeholder.sqlite',
-        },
-      }),
-
+  casing: 'snake_case',
+  dbCredentials: {
+    url: dbUrl,
+  },
   strict: true,
   verbose: true,
-  tablesFilter: ['!_cf_KV'],
 })

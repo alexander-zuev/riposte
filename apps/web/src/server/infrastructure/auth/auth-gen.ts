@@ -3,6 +3,6 @@ import { betterAuth } from 'better-auth/minimal'
 
 import { createBetterAuthOptions } from './options'
 
-const adapter = drizzleAdapter({} as any, { provider: 'sqlite' })
+const adapter = drizzleAdapter({} as any, { provider: 'pg' })
 
 export const auth = betterAuth(createBetterAuthOptions(adapter))

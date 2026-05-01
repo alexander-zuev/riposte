@@ -45,11 +45,11 @@
         "binding": "AI",
         "remote": true,
       },
-      "d1_databases": [
+      "hyperdrive": [
         {
-          "binding": "DB",
-          "database_name": "riposte-staging",
-          "database_id": "a10edb21-7276-412b-b16f-c403cdb35041",
+          "binding": "HYPERDRIVE",
+          "id": "d734852c734e497985f9ec9afe2feb4e",
+          "localConnectionString": "postgres://riposte-app:riposte-app@localhost:5432/riposte",
         },
       ],
       "kv_namespaces": [
@@ -124,13 +124,6 @@
         "binding": "AI",
         "remote": true,
       },
-      "d1_databases": [
-        {
-          "binding": "DB",
-          "database_name": "riposte-staging",
-          "database_id": "a10edb21-7276-412b-b16f-c403cdb35041",
-        },
-      ],
       "kv_namespaces": [
         {
           "binding": "AUTH_KV",
@@ -208,11 +201,10 @@
       "ai": {
         "binding": "AI",
       },
-      "d1_databases": [
+      "hyperdrive": [
         {
-          "binding": "DB",
-          "database_name": "riposte-prod",
-          "database_id": "9f315f01-2074-4dee-bbba-d7756b70ed8b",
+          "binding": "HYPERDRIVE",
+          "id": "d734852c734e497985f9ec9afe2feb4e",
         },
       ],
       "kv_namespaces": [

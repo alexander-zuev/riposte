@@ -1,18 +1,17 @@
-import type { DrizzleD1Database } from 'drizzle-orm/d1'
-import { drizzle } from 'drizzle-orm/d1'
+import { drizzle } from 'drizzle-orm/postgres-js'
+import postgres from 'postgres'
 
 import { config } from './config'
-import type * as schema from './schema'
+import type { DbEnv, DrizzleDb } from './types'
 
-export type DatabaseConnection = DrizzleD1Database<typeof schema>
-
-/**
- * Creates a Drizzle database connection.
- *
- * In HTTP context: d1 is a D1DatabaseSession (via withD1Session middleware)
- *   → reads route to nearest replica, writes always hit primary
- * In non-HTTP context (Workflows, queues): d1 is raw D1Database → all queries hit primary
- */
-export function createDatabase(d1: D1Database): DatabaseConnection {
-  return drizzle(d1, config)
+export function createDatabase(env: DbEnv): DrizzleDb {
+  const client = postgres(env.HYPERDRIVE.connectionString, {
+    max: 5,
+    prepare: false,
+    fetch_types: false,
+  })
+  return drizzle(client, {
+    ...config,
+    logger: false,
+  })
 }

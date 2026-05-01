@@ -196,17 +196,28 @@ Cloudflare-native with DDD adapters. Anyone can write adapters for Vercel, Railw
 
 ## Ubiquitous Language
 
-| Their word               | What they mean                                                      |
-| ------------------------ | ------------------------------------------------------------------- |
-| chargeback               | dispute (used interchangeably)                                      |
-| evidence                 | documents/screenshots/text submitted to fight a dispute             |
-| dispute rate             | % of transactions disputed — the metric that can kill your business |
-| friendly fraud           | customer received the product but disputes anyway                   |
-| "product not received"   | most common false dispute reason code                               |
-| "subscription cancelled" | second most common false reason code                                |
-| Chase                    | the issuing bank merchants hate — "I never won a case with Chase"   |
-| $15 fee                  | Stripe dispute fee, charged even if you win                         |
-| monitoring program       | Visa/Mastercard penalty program for high dispute rates              |
+| Their word               | What they mean                                                                         |
+| ------------------------ | -------------------------------------------------------------------------------------- |
+| chargeback               | dispute (used interchangeably)                                                         |
+| evidence                 | documents/screenshots/text submitted to fight a dispute                                |
+| dispute rate             | % of transactions disputed — the metric that can kill your business                    |
+| friendly fraud           | customer received the product but disputes anyway                                      |
+| "product not received"   | most common false dispute reason code                                                  |
+| "subscription cancelled" | second most common false reason code                                                   |
+| reason code              | issuer's classification (Visa 10.4, MC 4837, etc.) — determines what evidence you need |
+| representment            | formal name for submitting evidence to contest a dispute                               |
+| pre-arbitration          | second round if you lose representment, still decided by issuer                        |
+| arbitration              | $400-$600 fee, first neutral review — Stripe almost never escalates                    |
+| issuer / issuing bank    | the customer's bank (Chase, AMEX, etc.) — they decide everything                       |
+| acquirer                 | Stripe's role — processes payments, receives chargebacks                               |
+| CE 3.0                   | Visa Compelling Evidence 3.0 — auto-shifts liability with prior transaction proof      |
+| RDR                      | Rapid Dispute Resolution — auto-refund to avoid dispute (can backfire)                 |
+| Chase                    | the issuing bank merchants hate — "I never won a case with Chase"                      |
+| AMEX                     | both network AND issuer — structurally harder to win against                           |
+| $15 fee                  | Stripe dispute fee, charged even if you win                                            |
+| monitoring program       | Visa/Mastercard penalty program for high dispute rates                                 |
+| "fraud tax"              | the 1-2% merchants bake into pricing to absorb expected dispute losses                 |
+| "theater of evidence"    | the feeling that submitting proof is performative — nobody reads it                    |
 
 ## Validation
 
@@ -250,6 +261,38 @@ Banks don't operate with minimal evidence. They want comprehensive, timestamped,
 4. Usage logs with timestamps showing the customer actively used the product
 5. Relating evidence directly to the customer's specific claim
 6. "I gathered all relevant information and used ChatGPT to help me structure my evidence into one big document" — [won a high-ticket dispute](https://www.reddit.com/r/stripe/comments/1o0c5dt/)
+
+### Dispute rates are tracked per card network, not globally
+
+Stripe's dashboard shows one dispute rate. But Visa and Mastercard track separately. A merchant at 0.9% globally could be at 1.33% on Visa and 0.25% on Mastercard — and get flagged. Visa dropped its threshold from 1.5% to 0.9% in January 2026. Even won disputes count against your rate. ([Analyzed hundreds of suspended accounts](https://www.reddit.com/r/SaaS/comments/1p19ech/i_analyzed_hundreds_of_suspended_stripe_accounts/))
+
+Mastercard uses a different formula: current month disputes / previous month transactions. A slow month after a big month inflates the rate.
+
+### "It's a lottery, not a merit system"
+
+"Ran a test once where I submitted identical evidence packets for two chargebacks same week, one won one lost. Literally same docs, different processors. The inconsistency is the actual problem." Industry-wide merchant win rate is ~12%. ([Arguing with someone who cannot lose](https://www.reddit.com/r/ecommerce/comments/1s40e5u/))
+
+### Visa Compelling Evidence 3.0 — a new weapon
+
+Visa CE 3.0 can automatically shift liability back to the issuer for friendly fraud (Reason Code 10.4), but requires very specific data: two prior undisputed transactions from the same customer (120-365 days old), with at least two matching data elements (one must be IP address or device fingerprint). Most merchants don't know this exists. ([Same thread](https://www.reddit.com/r/ecommerce/comments/1s40e5u/))
+
+### Friendly fraud is the dominant problem, not real fraud
+
+"A lot of them aren't even true fraud, just customers skipping support and going straight to their bank." — [r/smallbusiness](https://www.reddit.com/r/smallbusiness/comments/1sx05w7/). Customers who got the product dispute because there was no post-delivery communication. A "Delivered successfully — reply if you didn't receive it" message submitted as evidence changes outcomes.
+
+### E-commerce parallel — "losing more to chargebacks than ads"
+
+"The amount of money I lose every month to chargebacks is actually insane. Facebook ads? I can handle. Chargebacks? They're eating my margins alive. And for HALF of them, the customer already got their order. It's like paying to be robbed." — [r/ecommerce](https://www.reddit.com/r/ecommerce/comments/1p2r5fz/)
+
+E-commerce operators build elaborate fraud prevention systems but the response side — building evidence after a dispute — remains manual.
+
+### For early-stage SaaS, a single dispute costs more than the subscription
+
+"Lost around 20 EUR on a 9.99 subscription" — $15 dispute fee + the subscription itself. At early stage, dispute fees can exceed revenue per customer. ([SaaS owner's nightmare](https://www.reddit.com/r/SaaS/comments/1rwwckl/))
+
+### Card testing attacks create hundreds of disputes overnight
+
+"Fraudsters flooded our platform with hundreds of card testing attempts. Stripe is holding us liable for ALL chargebacks + dispute fees. We only earned ~10% commission per transaction." — startup facing insolvency from dispute fees on hundreds of fraudulent chargebacks they didn't cause. ([Stripe about to sink our startup](https://www.reddit.com/r/smallbusiness/comments/1m1jef3/))
 
 ### The $15 fee is salt in the wound
 

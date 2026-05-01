@@ -55,6 +55,20 @@
       }
     },
     {
+      "files": ["src/ui/components/ui/**/*"],
+      "rules": {
+        "no-rest-spread-properties": "off",
+        "react/forbid-component-props": "off",
+        "react-perf/jsx-no-jsx-as-prop": "off",
+        "react-perf/jsx-no-new-object-as-prop": "off",
+        "react-perf/jsx-no-new-function-as-prop": "off",
+        "no-optional-chaining": "off",
+        "no-unsafe-type-assertion": "off",
+        "no-underscore-dangle": "off",
+        "no-restricted-imports": "off"
+      }
+    },
+    {
       "files": ["src/server/**/*", "src/server.ts", "src/start.ts", "src/routes/api/**/*"],
       "rules": {
         "no-restricted-imports": "off",

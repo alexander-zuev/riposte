@@ -1,4 +1,0 @@
-.storybook/**
-**/*.stories.*
-.tanstack/**
-**/migrations/**

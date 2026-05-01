@@ -3,8 +3,8 @@
 **Status:** BUILDING
 **Date started:** 2026-04-30
 **Priority:** HIGH — ship ASAP, window is open NOW
-**Repo:** TBD (public GitHub)
-**License:** MIT
+**Repo:** github.com/alexander-zuev/riposte (private, will go public at launch)
+**License:** AGPLv3
 
 ## One-liner
 
@@ -17,10 +17,11 @@ Levelsio (Interior AI) shared his entire auto-dispute system publicly. He went f
 ## Problem
 
 - US buyers abuse chargebacks — one tap in their banking app to get free stuff
-- Most businesses ignore disputes because manual evidence collection takes 30-60 min per dispute
+- Most businesses ignore disputes because manual evidence collection takes hours per dispute
 - Default win rate ~10-20%. With good evidence: 50%+
-- Every dispute costs $30 fee (only refunded if you win)
-- Over 1% dispute rate → Stripe/Visa/Mastercard permanently shuts you down. Personally. For life.
+- Every dispute costs $15 fee. Contest and lose = another $15. That's $30 per lost dispute ([Stripe pricing](https://stripe.com/pricing))
+- Stripe recommends staying below 0.75% dispute rate. Visa flags at 0.5%, Mastercard at 1.5%. Exceed for too long → escalating fines ($5K-$100K/mo), and ultimately card networks refuse to process your payments ([Stripe: monitoring programs](https://docs.stripe.com/disputes/monitoring-programs))
+- Stripe's own "Smart Disputes" takes 30% of recovered amount — positioning themselves as the solution to the problem they charge you for
 - Existing tools (Chargeflow, Chargebacks911) pull generic Stripe data. They don't have access to your app's DB/logs/storage — so the evidence is shallow.
 
 ## Why an agent, not a SaaS dashboard
@@ -28,6 +29,7 @@ Levelsio (Interior AI) shared his entire auto-dispute system publicly. He went f
 Chargeflow is a SaaS. You connect Stripe, they pull payment data, generate generic responses.
 
 An agent is fundamentally different:
+
 - **Reads your codebase** — understands your schema, what data exists
 - **Queries your DB** — pulls actual user activity (signups, actions, timestamps)
 - **Reads your logs** — builds activity timelines
@@ -40,32 +42,32 @@ The evidence quality is 10x because it's app-specific, not generic.
 
 ### One-time setup (onboarding, 5 min)
 
-| Field | Type | Source |
-|---|---|---|
-| `product_description` | Text | Founder describes product once |
-| `refund_policy_disclosure` | Text | "Displayed during checkout, accessible at /legal" |
-| `cancellation_policy_disclosure` | Text | "Shown during checkout, cancel anytime from /settings" |
-| `refund_policy` | File upload | Static policy PDF |
-| `cancellation_policy` | File upload | Static policy PDF |
+| Field                            | Type        | Source                                                 |
+| -------------------------------- | ----------- | ------------------------------------------------------ |
+| `product_description`            | Text        | Founder describes product once                         |
+| `refund_policy_disclosure`       | Text        | "Displayed during checkout, accessible at /legal"      |
+| `cancellation_policy_disclosure` | Text        | "Shown during checkout, cancel anytime from /settings" |
+| `refund_policy`                  | File upload | Static policy PDF                                      |
+| `cancellation_policy`            | File upload | Static policy PDF                                      |
 
 ### Auto-generated per dispute (agent pulls from APIs)
 
-| Field | Type | Source |
-|---|---|---|
-| `customer_name` | Text | Stripe customer object |
-| `customer_email_address` | Text | Stripe customer object |
-| `service_date` | Text | Stripe charge object (Y-m-d) |
-| `receipt` | File upload | Stripe invoice PDF (`invoice->invoice_pdf` URL) |
-| `access_activity_log` | Text | DB + logs + Stripe — signup date, actions done, last active, plan, total paid, recent activity with timestamps |
-| `service_documentation` | File upload | Generated PDF: customer info, usage summary, activity table, up to 6 actual product screenshots (resized to 500px wide, JPEG q75, under 5MB) |
+| Field                    | Type        | Source                                                                                                                                       |
+| ------------------------ | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `customer_name`          | Text        | Stripe customer object                                                                                                                       |
+| `customer_email_address` | Text        | Stripe customer object                                                                                                                       |
+| `service_date`           | Text        | Stripe charge object (Y-m-d)                                                                                                                 |
+| `receipt`                | File upload | Stripe invoice PDF (`invoice->invoice_pdf` URL)                                                                                              |
+| `access_activity_log`    | Text        | DB + logs + Stripe — signup date, actions done, last active, plan, total paid, recent activity with timestamps                               |
+| `service_documentation`  | File upload | Generated PDF: customer info, usage summary, activity table, up to 6 actual product screenshots (resized to 500px wide, JPEG q75, under 5MB) |
 
 ### AI-generated per dispute (agent + prompt, varies per case)
 
-| Field | Type | What the AI writes |
-|---|---|---|
-| `uncategorized_text` | Text | The argument: "User signed up Jan 3, used for 4 months, generated 847 photos, never requested refund" |
-| `refund_refusal_explanation` | Text | Why no refund — "never asked" vs "asked after dispute" vs "exceeded policy window" |
-| `cancellation_rebuttal` | Text | Prove they used it — references actual activity dates and counts |
+| Field                        | Type | What the AI writes                                                                                    |
+| ---------------------------- | ---- | ----------------------------------------------------------------------------------------------------- |
+| `uncategorized_text`         | Text | The argument: "User signed up Jan 3, used for 4 months, generated 847 photos, never requested refund" |
+| `refund_refusal_explanation` | Text | Why no refund — "never asked" vs "asked after dispute" vs "exceeded policy window"                    |
+| `cancellation_rebuttal`      | Text | Prove they used it — references actual activity dates and counts                                      |
 
 ### Screenshots — why they matter
 
@@ -105,28 +107,29 @@ MAINTENANCE (v2, optional)
 
 ## Tech Stack
 
-| Layer | What | Cost |
-|---|---|---|
-| Agent runtime | Cloudflare Workers / Durable Objects | $5-25/mo |
-| Stripe integration | Stripe API (webhooks + disputes + files) | Free |
-| DB access | Read-only connection to customer's DB (Postgres, MySQL, SQLite) | Free |
-| PDF generation | FPDF or Puppeteer for rich PDFs | Free |
-| Image processing | Sharp/GD — resize screenshots to fit 5MB limit | Free |
-| Storage | R2 for evidence PDFs | Pennies |
-| LLM | Claude/GPT for evidence text generation | $5-20/mo |
-| Notifications | Slack webhook / Telegram bot / email | Free |
+| Layer              | What                                                            | Cost     |
+| ------------------ | --------------------------------------------------------------- | -------- |
+| Agent runtime      | Cloudflare Workers / Durable Objects                            | $5-25/mo |
+| Stripe integration | Stripe API (webhooks + disputes + files)                        | Free     |
+| DB access          | Read-only connection to customer's DB (Postgres, MySQL, SQLite) | Free     |
+| PDF generation     | FPDF or Puppeteer for rich PDFs                                 | Free     |
+| Image processing   | Sharp/GD — resize screenshots to fit 5MB limit                  | Free     |
+| Storage            | R2 for evidence PDFs                                            | Pennies  |
+| LLM                | Claude/GPT for evidence text generation                         | $5-20/mo |
+| Notifications      | Slack webhook / Telegram bot / email                            | Free     |
 
 ## Business Model
 
 **This is NOT the revenue product. This is the audience builder.**
 
-- Open-source, MIT license, free forever
+- Open-source, AGPLv3, free to self-host
 - No hosted version (for now)
 - No community PRs — issues only, my repo, my rules
 - Goal: GitHub stars, HN frontpage, Twitter followers, credibility
 - Revenue comes later from ReturnHawk (closed-source, paid)
 
 **Why open-source:**
+
 1. Nothing proprietary — levelsio shared the full spec publicly
 2. Zero audience today — OSS builds it
 3. Lenny Rachitsky said "I need this." Peter Yang asked "can you open source this?" Demand is public and literal.
@@ -136,14 +139,14 @@ MAINTENANCE (v2, optional)
 
 ## Competitive Landscape
 
-| Company | What | Gap |
-|---|---|---|
-| **Chargeflow** | AI auto-dispute, 25% of won | Generic evidence — no DB/log access. SaaS, not agent. |
-| **Chargebacks911** | Enterprise chargeback mgmt | Enterprise only, expensive, manual |
-| **Midigator (Kount)** | Dispute automation | Enterprise, payment processor focused |
-| **Sift** | Fraud + disputes | Enterprise suite, overkill for SMBs |
-| **Levelsio DIY** | Custom PHP scripts per app | Not a product — manual setup per app |
-| **Us** | **Open-source agent with app-specific evidence + network intelligence** | **The only tool that reads your actual codebase/DB** |
+| Company               | What                                                                    | Gap                                                   |
+| --------------------- | ----------------------------------------------------------------------- | ----------------------------------------------------- |
+| **Chargeflow**        | AI auto-dispute, 25% of won                                             | Generic evidence — no DB/log access. SaaS, not agent. |
+| **Chargebacks911**    | Enterprise chargeback mgmt                                              | Enterprise only, expensive, manual                    |
+| **Midigator (Kount)** | Dispute automation                                                      | Enterprise, payment processor focused                 |
+| **Sift**              | Fraud + disputes                                                        | Enterprise suite, overkill for SMBs                   |
+| **Levelsio DIY**      | Custom PHP scripts per app                                              | Not a product — manual setup per app                  |
+| **Us**                | **Open-source agent with app-specific evidence + network intelligence** | **The only tool that reads your actual codebase/DB**  |
 
 Key difference: Chargeflow pulls Stripe data. We pull YOUR data. That's why the evidence is 10x better.
 
@@ -168,13 +171,14 @@ Stripe webhook (charge.dispute.created)
   ├── [DETERMINISTIC] Pull invoice PDF from Stripe
   ├── [DETERMINISTIC] Pull screenshots/deliverables from storage
   ├── [DETERMINISTIC] Generate evidence PDF (user info, activity table, images)
-  ├── [AI — 10%] Generate persuasive text for uncategorized_text, 
+  ├── [AI — 10%] Generate persuasive text for uncategorized_text,
   │                cancellation_rebuttal, refund_refusal_explanation
   ├── [DETERMINISTIC] Upload files to Stripe, submit evidence
   └── [DETERMINISTIC] Notify via Slack/Telegram/email
 ```
 
 **Cloudflare-native, DDD with adapters:**
+
 - Workers for webhook handler + API
 - Durable Objects or Queues for reliable processing
 - D1 for dispute tracking
@@ -185,6 +189,7 @@ Stripe webhook (charge.dispute.created)
 ## Validation
 
 ### Already validated (publicly, today)
+
 - Levelsio shared system + results, massive viral engagement
 - Tibo built same thing for Revid in 1 hour, winning disputes
 - @indiesoftwaredv winning disputes with Claude-prepared documents
@@ -195,6 +200,7 @@ Stripe webhook (charge.dispute.created)
 - Bram (@Bram_SaaS): "Market this as an app it's a no brainer I need this for apps doing volume"
 
 ### Risk
+
 - **Someone else ships the OSS version first.** Levelsio posted hours ago. Window is closing.
 
 ## Next Actions

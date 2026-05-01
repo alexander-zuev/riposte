@@ -1,1 +1,1 @@
-// @riposte/core entry point
+export * from './infrastructure'

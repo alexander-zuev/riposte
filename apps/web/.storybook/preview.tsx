@@ -9,7 +9,7 @@ import {
 } from '@tanstack/react-router'
 import { createContext, useContext, type ReactNode } from 'react'
 
-import '../src/ui/stylesheets/styles.css'
+import '../src/ui/stylesheets/globals.css'
 
 export const queryClient = new QueryClient({
   defaultOptions: {

@@ -3,7 +3,7 @@
   "name": "riposte",
   "compatibility_date": "2026-05-01",
   "compatibility_flags": ["nodejs_compat"],
-  "main": "@tanstack/react-start/server-entry",
+  "main": "./src/server.ts",
   "upload_source_maps": true,
   "observability": {
     "logs": {
@@ -21,5 +21,51 @@
   },
   "version_metadata": {
     "binding": "CF_VERSION_METADATA",
+  },
+  "env": {
+    "dev": {
+      "name": "riposte-dev",
+      "version_metadata": {
+        "binding": "CF_VERSION_METADATA",
+      },
+      "vars": {
+        "ENV": "development",
+        "SENTRY_DSN": "https://be15dbb0ce04a60ac3d39dc7ddb9fec2@o4508393623257088.ingest.us.sentry.io/4511314272583680",
+        "POSTHOG_API_KEY": "phc_nYQ6Wm37RsonpnciM4CkjVaFtgQwU3XBBducMjZTfA4K",
+      },
+      "secrets": {
+        "required": ["BETTER_AUTH_SECRET"],
+      },
+    },
+    "staging": {
+      "name": "riposte-staging",
+      "version_metadata": {
+        "binding": "CF_VERSION_METADATA",
+      },
+      "vars": {
+        "ENV": "staging",
+        "SENTRY_DSN": "https://be15dbb0ce04a60ac3d39dc7ddb9fec2@o4508393623257088.ingest.us.sentry.io/4511314272583680",
+        "POSTHOG_API_KEY": "phc_nYQ6Wm37RsonpnciM4CkjVaFtgQwU3XBBducMjZTfA4K",
+      },
+      "secrets": {
+        "required": ["BETTER_AUTH_SECRET"],
+      },
+      "routes": [{ "pattern": "staging.riposte.sh", "custom_domain": true }],
+    },
+    "prod": {
+      "name": "riposte",
+      "version_metadata": {
+        "binding": "CF_VERSION_METADATA",
+      },
+      "vars": {
+        "ENV": "production",
+        "SENTRY_DSN": "https://be15dbb0ce04a60ac3d39dc7ddb9fec2@o4508393623257088.ingest.us.sentry.io/4511314272583680",
+        "POSTHOG_API_KEY": "phc_nYQ6Wm37RsonpnciM4CkjVaFtgQwU3XBBducMjZTfA4K",
+      },
+      "secrets": {
+        "required": ["BETTER_AUTH_SECRET"],
+      },
+      "routes": [{ "pattern": "riposte.sh", "custom_domain": true }],
+    },
   },
 }

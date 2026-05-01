@@ -3,7 +3,7 @@
   "singleQuote": true,
   "sortImports": true,
   "sortTailwindcss": {
-    "stylesheet": "apps/web/src/ui/stylesheets/styles.css"
+    "stylesheet": "apps/web/src/ui/stylesheets/globals.css"
   },
   "ignorePatterns": [
     "**/node_modules/**",

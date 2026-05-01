@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "prepare": "husky",
-    "dev": "turbo run dev --ui=stream",
+    "dev": "turbo run dev",
     "build": "turbo run build",
     "build:prod": "turbo run build:prod",
     "typecheck": "turbo run typecheck",
@@ -18,9 +18,12 @@
     "deploy:prod": "pnpm --filter @riposte/web run deploy:prod",
     "db:generate": "pnpm --filter @riposte/web run db:generate",
     "db:migrate:dev": "pnpm --filter @riposte/web run db:migrate:dev",
-    "db:migrate:preview": "pnpm --filter @riposte/web run db:migrate:preview",
+    "db:migrate:staging": "pnpm --filter @riposte/web run db:migrate:staging",
     "db:migrate:prod": "pnpm --filter @riposte/web run db:migrate:prod",
-    "db:studio": "pnpm --filter @riposte/web run db:studio"
+    "db:studio": "pnpm --filter @riposte/web run db:studio",
+    "tail": "pnpm --filter @riposte/web run logs:prod",
+    "tail:staging": "pnpm --filter @riposte/web run logs",
+    "cf-typegen": "pnpm --filter @riposte/web run cf-typegen"
   },
   "devDependencies": {
     "husky": "catalog:",

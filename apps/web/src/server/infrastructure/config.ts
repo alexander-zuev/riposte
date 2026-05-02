@@ -24,8 +24,8 @@ export function getServerConfig() {
     turnstileSecretKey: env.TURNSTILE_SECRET_KEY!,
 
     stripe: {
-      secretKey: env.STRIPE_SECRET_KEY!,
-      webhookSecret: env.STRIPE_WEBHOOK_SECRET!,
+      secretKey: env.STRIPE_SECRET_KEY || '',
+      webhookSecret: env.STRIPE_WEBHOOK_SECRET || '',
     },
 
     kvStorage: env.AUTH_KV!,

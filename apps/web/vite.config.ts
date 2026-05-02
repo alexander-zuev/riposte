@@ -71,6 +71,7 @@ export default defineConfig(() => {
       host: 'localhost',
       port: 3000,
       open: false,
+      allowedHosts: ['tunnel.riposte.sh'],
     },
   }
 })

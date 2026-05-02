@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "prepare": "husky",
-    "dev": "turbo run dev",
+    "dev": "turbo run dev tunnel",
+    "tunnel": "pnpm --filter @riposte/web tunnel",
     "build": "turbo run build",
     "build:core": "pnpm --filter @riposte/core run build",
     "build:prod": "turbo run build:prod",

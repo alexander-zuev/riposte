@@ -132,6 +132,12 @@
         "binding": "AI",
         "remote": true,
       },
+      "hyperdrive": [
+        {
+          "binding": "HYPERDRIVE",
+          "id": "d734852c734e497985f9ec9afe2feb4e",
+        },
+      ],
       "kv_namespaces": [
         {
           "binding": "AUTH_KV",

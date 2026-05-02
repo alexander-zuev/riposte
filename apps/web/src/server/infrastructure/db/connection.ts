@@ -11,7 +11,7 @@ export const config = {
   schema,
 } satisfies DrizzleConfig<typeof schema>
 
-export function createDatabase(env: DbEnv): DrizzleDb {
+export function createDatabase(env: Env): DrizzleDb {
   const client = postgres(env.HYPERDRIVE.connectionString, {
     max: 5,
     prepare: true,
@@ -21,8 +21,3 @@ export function createDatabase(env: DbEnv): DrizzleDb {
 }
 
 export type DrizzleDb = PostgresJsDatabase<typeof schema>
-
-export interface DbEnv {
-  HYPERDRIVE: Hyperdrive
-  ENV: string
-}

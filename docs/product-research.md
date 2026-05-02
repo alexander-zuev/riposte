@@ -1,47 +1,74 @@
 # Product Research
 
-## User
+Riposte is an open-source AI agent that fights Stripe disputes — pulls real usage evidence from the merchant's own systems, builds a case, submits it to Stripe, and wins disputes that merchants currently lose because they can't mobilize their own data fast enough.
 
-**Indie founders and small SaaS/e-commerce operators on Stripe.** Solo or small team. They handle disputes themselves because they can't afford a dedicated fraud team. Technical enough to self-host or connect APIs, but don't have time to manually fight every chargeback.
+## Context — How Disputes Work
 
-Their words: "small business owner", "indie dev", "SaaS founder", "solo founder", "bootstrapped"
+Online payments flow through four parties: the **cardholder** (customer), their **issuing bank** (Chase, AMEX, etc.), the **card network** (Visa, Mastercard, AMEX), and the **acquirer** (Stripe, on behalf of the merchant). When a customer pays, money moves from issuer → network → acquirer → merchant.
+
+A **dispute** (also called a chargeback) happens when a cardholder questions a payment with their issuing bank. The bank immediately reverses the charge — money leaves the merchant's account before anyone investigates. The merchant then has **7-21 days** to submit evidence proving the transaction was legitimate (**representment**). After submission, the cardholder's bank reviews evidence — takes up to **75 days** to decide. Three merchant options: submit evidence, accept dispute, or do nothing (= auto-lose). Chargebacks are projected to increase 24% globally from 2025 to 2028, totalling 324 million transactions each year ([Stripe](https://stripe.com/guides/introduction-to-payment-disputes)).
+
+**Withdrawn disputes** still require evidence — many issuers treat no evidence as acceptance of liability even after withdrawal. Agent must always submit ([Stripe](https://docs.stripe.com/disputes/withdrawing)).
+
+**Dispute categories** ([Stripe](https://stripe.com/guides/introduction-to-payment-disputes)): fraudulent, product not received, product unacceptable, subscription cancelled, credit not processed, duplicate, general.
+
+The **issuing bank** decides the outcome, not Stripe ([how disputes work](https://docs.stripe.com/disputes/how-disputes-work), [representment explained](https://stripe.com/resources/more/representment-explained)). Stripe is the acquirer — they pass evidence through but have no decision-making power. If the issuer's decision is contested, it escalates to the card network whose ruling is final and binding.
+
+If the merchant loses representment, the next step is **pre-arbitration** (still decided by the issuer). After that comes **arbitration** — the first time a neutral party reviews the case — but it costs $400-$600 and Stripe almost never escalates to it.
+
+**Fees ([Stripe pricing](https://stripe.com/pricing), [dispute fees FAQ](https://support.stripe.com/questions/dispute-fees-faq)):** Two separate fees — a **dispute received fee** (charged when opened, non-refundable) and a **dispute countered fee** (charged if you submit evidence, refunded if you win). US: $15 each.
+
+**Dispute rates** are tracked per card network, not globally. Every dispute increases your rate — win or lose. Visa flags at 0.5% ([dropped threshold to 0.9% in Jan 2026](https://www.reddit.com/r/SaaS/comments/1p19ech/i_analyzed_hundreds_of_suspended_stripe_accounts/)), Mastercard at 1.5%. Exceed thresholds → monitoring programme with network fines of **$50-$150 per dispute** on top of Stripe's fees ([Stripe](https://stripe.com/guides/introduction-to-payment-disputes#understanding-the-dispute-lifecycle), [monitoring programs](https://docs.stripe.com/disputes/monitoring-programs)). Sustained high rates = card networks terminate processing permanently. A merchant at 0.9% globally could be 1.33% on Visa and 0.25% on Mastercard — flagged on Visa only. Mastercard uses current month disputes / previous month transactions, so a slow month after a big one inflates the rate.
+
+AMEX is structurally different — both the card network AND the issuer. They evaluate and decide as the same entity, and their brand is built on cardholder protection. Win rates against AMEX are consistently lower. — [r/stripe](https://www.reddit.com/r/stripe/comments/1skgiix/stripe_dispute_team_is_useless/)
+
+Industry-wide merchant win rate: **~12%**. "Ran a test once where I submitted identical evidence packets for two chargebacks same week, one won one lost. Literally same docs, different processors." — [r/ecommerce](https://www.reddit.com/r/ecommerce/comments/1s40e5u/)
 
 ## Problem
 
-A customer opens their banking app, taps "dispute charge," and the merchant loses money — even when the customer clearly used the product.
+Most disputes are friendly fraud — the customer received the product but disputes anyway. "A lot of them aren't even true fraud, just customers skipping support and going straight to their bank." — [r/smallbusiness](https://www.reddit.com/r/smallbusiness/comments/1sx05w7/)
 
-**What actually happens:**
+### 1. Building evidence is manual and slow — so merchants don't bother
 
-1. Stripe emails you: "A customer has disputed a payment"
-2. You have 7-21 days to respond with evidence
-3. You open the Stripe dashboard, stare at a form, wonder what to write
-4. A bank reviewer — who has never heard of your product — decides in under 60 seconds
-5. You lose. Money gone. Plus $15 fee. Contested and lost = $30.
+Responding to a dispute means pulling data from Stripe, querying your database for user activity, structuring it into the right format for the right dispute category (7 types), and submitting within 7-21 days. One shot — can't edit after submission. This takes 30-60 minutes per dispute.
 
-**How bad is it:**
+- GitHub Sponsors: "Disputes were rarely, if ever, contested due to the time involved." Smart Disputes saves them 4-5 hours/week. — [Stripe case study](https://stripe.com/customers/github)
+- "I've easily lost mid-five-figures to disputes over the years in SaaS" — [r/stripe](https://www.reddit.com/r/stripe/comments/1m9xzo5/)
+- "I submitted everything — signed policies, receipts, text messages, photos of the student in my studio... Chase sided with her" — [lost $1,225](https://www.reddit.com/r/stripe/comments/1m9xzo5/chargeback_with_proof_she_received_services/)
 
-- Each dispute costs $15 minimum, $30 if you contest and lose ([Stripe pricing](https://stripe.com/pricing))
-- Default win rate: 10-20% — most merchants don't bother
-- "I've easily lost mid-five-figures to disputes over the years in SaaS" — [r/stripe, 18d ago](https://www.reddit.com/r/stripe/comments/1m9xzo5/)
-- Visa flags at 0.5% dispute rate, Mastercard at 1.5%. Stripe warns at 0.75%. Fines: $5K-$100K/month. Sustained = card networks terminate you permanently ([Stripe monitoring programs](https://docs.stripe.com/disputes/monitoring-programs))
-- "I submitted everything — signed policies, receipts, text messages, photos of the student in my studio... Chase sided with her" — [small business owner, lost $1,225](https://www.reddit.com/r/stripe/comments/1m9xzo5/chargeback_with_proof_she_received_services/)
-- "That got me thinking how every single client can basically scam us" — [r/stripe, 20d ago](https://www.reddit.com/r/stripe/)
+### 2. Win rate is terrible — weak evidence, no strategy
 
-## Current Solutions (All Broken)
+Industry-wide merchant win rate: ~12%. Merchants submit generic Stripe data or skip categories entirely. The bank reviewer scans evidence in under 60 seconds.
 
-**Ignore it** — Eat the loss. Hope dispute rate stays low. Most common approach.
+- "I went with Stripe's recommendation of 'Smart Dispute' with minimal proof attached and that got rejected" — [r/stripe](https://www.reddit.com/r/stripe/comments/1rlyox0/unfair_disputes_are_ruining_businesses/)
+- "Ran a test once where I submitted identical evidence packets for two chargebacks same week, one won one lost." — [r/ecommerce](https://www.reddit.com/r/ecommerce/comments/1s40e5u/)
+- "The amount of money I lose every month to chargebacks is actually insane. Chargebacks? They're eating my margins alive." — [r/ecommerce](https://www.reddit.com/r/ecommerce/comments/1p2r5fz/)
 
-**Fight manually** — Open dashboard, download data, write a response, upload screenshots, pray. 30-60 minutes per dispute. Evidence is generic. Win rate stays low.
+### Who has this problem
 
-**Stripe Smart Disputes** — Auto-responds using data Stripe already has. 30% of recovered amount. "I can't believe I won a dispute (Stripe Automatic Smart Dispute)" — the surprise says everything.
+Every Stripe merchant with digital proof of delivery somewhere in their stack. The pain scales with dispute volume, but even a single dispute hurts at early stage ("Lost around 20 EUR on a 9.99 subscription" — [$15 fee + the sub itself](https://www.reddit.com/r/SaaS/comments/1rwwckl/)).
 
-**Stripe Dispute Prevention (RDR)** — Auto-refunds to avoid disputes. "Stripe Dispute Prevention just refunded $1500 when customer only disputed $200 — now they won't fix it" — [r/stripe](https://www.reddit.com/r/stripe/comments/1l2b82s/)
+| Segment                            | Evidence source                                                      | Why they're underserved                                                     |
+| ---------------------------------- | -------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| **SaaS / AI tools** (launch)       | Database — session logs, feature usage, API calls, generated outputs | Evidence exists but is trapped in their DB. No tool queries it.             |
+| **Online courses / education**     | Database — lesson completion, progress, quiz scores                  | Completion data proves delivery. Same gap.                                  |
+| **Marketplaces / platforms**       | Database — transaction history, activity on both sides               | Eat disputes on transactions they only facilitated.                         |
+| **E-commerce** (expansion)         | Shopify / WooCommerce — order history, fulfillment, tracking         | Existing tools handle this but with generic data. Agent pulls richer proof. |
+| **Service businesses** (expansion) | CRM / project tools — deal history, deliverables, communication logs | Evidence scattered across HubSpot, email, Drive. No one aggregates it.      |
 
-**Chargeflow** — 25% of recovered revenue. Pulls generic Stripe data only. No access to merchant's database or user activity.
+## Current Solutions
 
-**Chargebacks911 / Sift / Kount** — Enterprise. Expensive. Months to onboard. Overkill for small operators.
+Merchants either don't contest, fight manually, or use tools that only access payment data — none of them pull evidence from the merchant's own systems.
 
-**The gap they all share:** They only see what Stripe sees — payment data, timestamps, card info. None of them answer the bank's actual question.
+**Don't contest** — Accept the loss. Most common. GitHub Sponsors: "Disputes were rarely, if ever, contested due to the time involved." — [Stripe case study](https://stripe.com/customers/github)
+
+**Fight manually** — Pull data yourself, structure a case, submit. 30-60 min per dispute. Evidence scattered across Stripe, database, email, storage.
+
+**Stripe Smart Disputes** ([docs](https://docs.stripe.com/disputes/smart-disputes)) — Auto-submits evidence using Stripe's own data (transaction, cardholder, payment history). 30% of recovered. No access beyond what Stripe already has. "I went with Stripe's recommendation of 'Smart Dispute' with minimal proof attached and that got rejected" — [r/stripe](https://www.reddit.com/r/stripe/comments/1rlyox0/unfair_disputes_are_ruining_businesses/)
+
+**Chargeflow** ([site](https://www.chargeflow.io/products/automation)) — Connects to Shopify, helpdesks, shipping carriers. 1000+ data points. 25% of recovered. 100+ integrations. Good for e-commerce. No access to your application database.
+
+**The gap:** For SaaS, AI tools, courses, digital products — the winning evidence is user activity in your database (sessions, usage, generated content). None of them can access it.
 
 ## The Insight
 
@@ -57,15 +84,22 @@ That's not a payment record. That's a case.
 
 **What winners actually do** (from threads where merchants won):
 
-- "I gathered all relevant information and used ChatGPT to help me structure my evidence into one big document" — [won a high-ticket dispute](https://www.reddit.com/r/stripe/comments/1o0c5dt/)
-- Winning evidence: "Proof of service delivery (3+ pages), Proof of client acknowledgement, Reviewer Summary & Exhibit Index"
-- "Always relate the evidence back to the customer's claim"
+1. Evidence ready before disputes happen, not after
+2. A single structured document — not scattered attachments
+3. Speed — submitting within hours, not days
+4. Usage logs with timestamps showing the customer actively used the product
+5. Relating evidence directly to the customer's specific claim
+6. "I gathered all relevant information and used ChatGPT to help me structure my evidence into one big document" — [won a high-ticket dispute](https://www.reddit.com/r/stripe/comments/1o0c5dt/)
 
-**Pattern:** People who win invest hours building structured, app-specific evidence. People who lose submit generic Stripe data.
+Screenshots matter disproportionately. The bank reviewer scans a PDF in 30 seconds — images are undeniable. SaaS dashboards, generated content, completed lessons, AI outputs. Stripe doesn't require them, but they answer the core question visually.
 
-Levelsio (Interior AI) proved this at scale — went from losing every dispute to winning them, including a $1,199 case — by pulling real user activity from his database. But he built custom PHP scripts hardcoded to his app.
+AMEX reviewers specifically respond better to a single clear document that walks through a timeline rather than scattered attachments. Usage logs beat contracts for service businesses.
 
-## What Stripe Needs (Evidence Spec)
+**Visa CE 3.0** — a new weapon most merchants don't know exists. Automatically shifts liability for friendly fraud (Reason Code 10.4) if you provide two prior undisputed transactions (120-365 days old) with at least two matching data elements (one must be IP address or device fingerprint). — [r/ecommerce](https://www.reddit.com/r/ecommerce/comments/1s40e5u/)
+
+Levelsio (Interior AI) proved this approach at scale — went from losing every dispute to winning them, including a $1,199 case — by pulling real user activity from his database. But he built custom PHP scripts hardcoded to his app.
+
+## Evidence Spec (What Stripe Needs)
 
 ### One-time setup (onboarding)
 
@@ -96,32 +130,9 @@ Levelsio (Interior AI) proved this at scale — went from losing every dispute t
 | `refund_refusal_explanation` | Text | Why no refund — "never asked" vs "asked after dispute" vs "exceeded policy window"                    |
 | `cancellation_rebuttal`      | Text | Prove they used it — references actual activity dates and counts                                      |
 
-## Why an Agent, Not a SaaS
-
-Chargeflow is a SaaS. You connect Stripe, they pull payment data, generate generic responses.
-
-An agent is fundamentally different:
-
-- **Reads your codebase** — understands your schema, what data exists
-- **Queries your DB** — pulls actual user activity (signups, actions, timestamps)
-- **Reads your logs** — builds activity timelines
-- **Accesses your storage** — grabs actual screenshots/deliverables the user received
-- **Writes to Stripe** — submits evidence via Disputes API
-
-The evidence quality is 10x because it's app-specific, not generic.
-
-## Why Screenshots Matter
-
-Screenshots = proof the customer received something. The bank reviewer scans a PDF in 30 seconds. Images are undeniable.
-
-- **SaaS:** Screenshots of their dashboard, activity, generated content
-- **E-commerce:** Order confirmation, delivery photos, tracking
-- **Courses:** Completed lessons, progress screenshots
-- **AI tools:** The actual outputs they generated (levelsio's winning move)
-
-Stripe doesn't technically require them. But they massively increase win rate because they answer the bank's core question: "Did this person get what they paid for?"
-
 ## How Riposte Works
+
+**Why an agent, not a SaaS:** Chargeflow connects to Stripe and pulls payment data. An agent connects to your database, reads your schema, queries actual user activity, grabs screenshots from your storage, and submits app-specific evidence. The evidence quality is 10x because it's not generic.
 
 ### Product flow
 
@@ -139,20 +150,75 @@ AUTOPILOT (every dispute, forever)
 ├── Queries YOUR DB/logs for that user's activity
 ├── Pulls screenshots/deliverables from YOUR storage
 ├── Generates evidence text + PDF
+├── CONTEST DECISION (see below)
 ├── Submits to Stripe in <60 seconds
 └── Notifies you (Slack/Telegram/Discord/Email)
 
-LEARNING (v2)
-├── Review win/loss → agent learns what evidence wins
-├── Tweak prompt for dispute patterns
-└── Add new evidence sources as app evolves
+REVIEW (v2, periodic)
+├── Analyze won vs lost cases — what evidence correlated with wins
+├── Propose changes: strategy, prompts, evidence sources, data access
+└── Surface gaps: "you'd win more if I had access to X"
 ```
+
+**Contest decision:** Contesting costs $15 (countered fee). Agent needs a strategy: contest all, contest if confident, or notify merchant and let them decide.
+
+### Building a winning case
+
+**Category-specific strategy:** Agent categorizes the dispute (7 types), then runs different checks per category — e.g. "duplicate" → did we actually charge twice? "subscription cancelled" → check cancellation vs charge timestamps.
+
+**Evidence per category:** Stripe lists required evidence per dispute category ([visual evidence](https://docs.stripe.com/disputes/visual-evidence), [best practices](https://docs.stripe.com/disputes/best-practices)). This is the agent's playbook.
+
+**Customer authorization (>50% of disputes):** AVS matches, CVC confirmations, IP address matching billing address, signed receipts, 3DS authentication. Stripe auto-includes AVS/CVC/IP if available — agent verifies during onboarding that this data is captured.
+
+**Proof of delivery (digital goods):** IP address or system log proving the customer downloaded content or used the software/service. This is exactly what the agent pulls from the merchant's DB.
+
+**Proof of delivery (physical goods):** Full shipping address (not just city/postal code), tracking confirmation. If "Ship to" name differs from cardholder, document why (gift purchase).
+
+**Formatting constraints:** Max 4.5MB combined, under 50 pages (Mastercard: under 19). Min 12pt font, portrait orientation. Concise and professional — issuers process thousands daily, won't read lengthy docs.
+
+**Terms of service:** Include a screenshot of checkout showing terms/refund policy — not the full policy text, issuers won't read it ([best practices](https://docs.stripe.com/disputes/best-practices)). Agent should capture or request this screenshot during onboarding.
+
+**Discrediting evidence:** Two things that invalidate a dispute — customer withdrawal documentation (`customer_communication`) and proof of prior compensation (`refund_refusal_explanation`). Agent should learn during onboarding how the merchant communicates with customers and where refund/compensation records live.
+
+**Partial refunds:** Customer can dispute the full amount even after receiving a partial refund — merchant gets double-charged. Always contest: issuers are "very willing to rectify" ([best practices](https://docs.stripe.com/disputes/best-practices)). Agent checks Stripe for prior refunds on the charge, submits proof — near-guaranteed win, no DB access needed.
+
+### Dispute Readiness Score
+
+Gamified checklist shown during/after onboarding. Helps merchants improve their evidence stack before a dispute hits. Items like: save IP addresses, log user activity, retain data 75+ days, capture AVS/CVC at checkout, screenshot checkout terms, store customer communications. Each item improves the score — higher score = stronger cases.
+
+**One submission only:** Can't edit or add evidence after submitting ([responding](https://docs.stripe.com/disputes/responding)). Agent must get it right the first time.
+
+### Background evidence
+
+Stripe auto-captures some background evidence (billing address, name, email, IP, receipt) if the integration supports it ([best practices](https://docs.stripe.com/disputes/best-practices)). The more data the merchant's integration passes to Stripe at payment time, the stronger the baseline. Agent should match IP/email from merchant's logs to Stripe checkout session — if they match, that's strong authorization proof.
+
+### Dashboard & analytics
+
+**Dispute metrics:** Win/loss rate, dispute rate per card network, average response time, cost saved vs manual.
+
+**Customer intelligence:** Repeat offenders (same customer filing multiple disputes), customers linked by shared signals (email, IP, device fingerprint, shipping address). Alert if heuristic detects a pattern — e.g. cluster of disputes from related accounts.
+
+### Edge cases ([how disputes work](https://docs.stripe.com/disputes/how-disputes-work))
+
+**Multiple disputes per payment:** Customer can file again with a different reason code or for a different line item. Agent must check for existing disputes on the same payment and handle each individually.
+
+**Early Fraud Warnings:** Visa (TC40) and Mastercard (SAFE) flag potentially fraudulent payments before disputes. 80% escalate to chargebacks if merchant does nothing. Agent should act on EFWs — refund if amount ≤ dispute fee, otherwise prepare evidence preemptively.
+
+**AMEX/Discover inquiries:** Pre-dispute phase — can resolve without fees by providing evidence or issuing refund. Agent should prioritize these as free wins.
+
+**Late wins:** Disputes marked `lost` can shift to `won` when issuers adjust outside normal cycles. Agent should track these.
+
+**Local Payment Methods (LPMs):** Klarna, PayPal etc. — not card networks, separate dispute processes. The LPM provider decides (not a bank), 180-day dispute window (vs 120 for cards), different fees and evidence requirements per provider ([Klarna disputes](https://docs.stripe.com/disputes/klarna), [PayPal disputes](https://docs.stripe.com/disputes/paypal)). Must explicitly list supported LPMs — each needs its own integration.
+
+### Dispute prevention (v2+)
+
+Reduce disputes before they happen. Stripe already does some of this ([prevention preview](https://docs.stripe.com/disputes/prevention-preview)) — send transaction data to cardholders so they recognize charges, auto-refund high-risk low-value disputes. Agent could go further: analyze dispute patterns, flag risky customers pre-charge, recommend merchant-side changes (clearer billing descriptors, post-purchase confirmation emails, better refund flow).
 
 ### Architecture — 90% deterministic, 10% AI
 
 ```
 Stripe webhook (charge.dispute.created)
-  |
+  │
   [DETERMINISTIC] Pull dispute + charge + customer from Stripe
   [AGENT via MCP] Query merchant DB for user activity
   [DETERMINISTIC] Pull invoice PDF from Stripe
@@ -162,7 +228,7 @@ Stripe webhook (charge.dispute.created)
   [DETERMINISTIC] Notify merchant
 ```
 
-No hallucinated evidence. AI writes three persuasive text fields. Everything else — data collection, PDF generation, Stripe submission — is deterministic code.
+No hallucinated evidence. AI writes three text fields. Everything else is deterministic code.
 
 ### Tech stack
 
@@ -176,27 +242,13 @@ No hallucinated evidence. AI writes three persuasive text fields. Everything els
 | Evidence submission | Stripe Disputes API                                        |
 | Notifications       | Slack / Telegram / Discord / Email                         |
 
-Cloudflare-native with DDD adapters. Anyone can write adapters for Vercel, Railway, AWS — but the CF version is canonical.
-
 **vs. manual:** Hours per dispute → under 60 seconds.
 **vs. Chargeflow:** 25% fee, generic data → free, your actual data.
 **vs. Stripe Smart Disputes:** 30% fee, same generic data → free, app-specific evidence.
 
-## Competitive Landscape
-
-| Product               | What                                 | Gap                                         |
-| --------------------- | ------------------------------------ | ------------------------------------------- |
-| Chargeflow            | AI auto-dispute, 25% of won          | Generic evidence — no DB access             |
-| Chargebacks911        | Enterprise chargeback mgmt           | Enterprise only, expensive, manual          |
-| Midigator (Kount)     | Dispute automation                   | Enterprise, payment processor focused       |
-| Sift                  | Fraud + disputes                     | Enterprise suite, overkill for SMBs         |
-| Stripe Smart Disputes | Auto-respond with Stripe data        | 30% fee, same generic data                  |
-| Levelsio DIY          | Custom PHP scripts per app           | Not a product — manual setup per app        |
-| **Riposte**           | **Agent with app-specific evidence** | **The only tool that reads your actual DB** |
-
 ## Ubiquitous Language
 
-| Their word               | What they mean                                                                         |
+| Term                     | Meaning                                                                                |
 | ------------------------ | -------------------------------------------------------------------------------------- |
 | chargeback               | dispute (used interchangeably)                                                         |
 | evidence                 | documents/screenshots/text submitted to fight a dispute                                |
@@ -228,88 +280,3 @@ Cloudflare-native with DDD adapters. Anyone can write adapters for Vercel, Railw
 - Lenny Rachitsky: "I need this"
 - Peter Yang: "can you open source this?"
 - Bram (@Bram_SaaS): "Market this as an app it's a no brainer I need this for apps doing volume"
-
-## Deep Research Insights
-
-### The dispute process is rigged against merchants
-
-The issuing bank (Chase, AMEX, etc.) decides everything. Stripe has no say. The bank already gave the customer a temporary credit, so they have zero incentive to side with you. The first time a neutral third party looks at evidence is arbitration — which costs $400-$600 and Stripe almost never escalates to. ([Unfair disputes thread](https://www.reddit.com/r/stripe/comments/1rlyox0/unfair_disputes_are_ruining_businesses/))
-
-"The system's so broken — they basically get to play judge, jury, and executioner the whole way through until arbitration." — immigration lawyer in the same thread
-
-### AMEX disputes are structurally different
-
-With Visa/Mastercard, the issuing bank makes the decision. With AMEX, American Express is both the card network AND the issuer — they evaluate and decide as the same entity. AMEX's brand is built on cardholder protection. Win rates against AMEX are consistently lower. "I recently had to deal with a 1k chargeback... Customer used it for 11 months and disputed it. Stripe gave their money back despite all the usage logs." ([Stripe dispute team is useless](https://www.reddit.com/r/stripe/comments/1skgiix/stripe_dispute_team_is_useless/))
-
-AMEX reviewers respond better to a single clear document that walks through a timeline rather than scattered attachments. Usage logs beat contracts for service businesses.
-
-### Smart Disputes fail because they assume minimal evidence works
-
-"I went with Stripe's recommendation of 'Smart Dispute' with minimal proof attached and that got rejected, then when I learned from a friend that I need to provide all the details, I spent 3 days accumulating all the proof" — [Unfair disputes thread](https://www.reddit.com/r/stripe/comments/1rlyox0/unfair_disputes_are_ruining_businesses/)
-
-Banks don't operate with minimal evidence. They want comprehensive, timestamped, clearly-organized proof. Smart Disputes submit the bare minimum.
-
-### The real problem is mobilizing evidence, not having it
-
-"The real issue isn't that you lacked proof. It's that you couldn't mobilize it fast enough." Most merchants have the evidence scattered across systems — Stripe dashboard, database, email threads, screenshots. When a dispute hits, they spend days manually pulling, organizing, and formatting. By then it's too late or too exhausting.
-
-### What actually wins disputes (from people who won)
-
-1. Evidence ready before disputes happen, not after
-2. A single structured document — not scattered attachments
-3. Speed — submitting within hours, not days
-4. Usage logs with timestamps showing the customer actively used the product
-5. Relating evidence directly to the customer's specific claim
-6. "I gathered all relevant information and used ChatGPT to help me structure my evidence into one big document" — [won a high-ticket dispute](https://www.reddit.com/r/stripe/comments/1o0c5dt/)
-
-### Dispute rates are tracked per card network, not globally
-
-Stripe's dashboard shows one dispute rate. But Visa and Mastercard track separately. A merchant at 0.9% globally could be at 1.33% on Visa and 0.25% on Mastercard — and get flagged. Visa dropped its threshold from 1.5% to 0.9% in January 2026. Even won disputes count against your rate. ([Analyzed hundreds of suspended accounts](https://www.reddit.com/r/SaaS/comments/1p19ech/i_analyzed_hundreds_of_suspended_stripe_accounts/))
-
-Mastercard uses a different formula: current month disputes / previous month transactions. A slow month after a big month inflates the rate.
-
-### "It's a lottery, not a merit system"
-
-"Ran a test once where I submitted identical evidence packets for two chargebacks same week, one won one lost. Literally same docs, different processors. The inconsistency is the actual problem." Industry-wide merchant win rate is ~12%. ([Arguing with someone who cannot lose](https://www.reddit.com/r/ecommerce/comments/1s40e5u/))
-
-### Visa Compelling Evidence 3.0 — a new weapon
-
-Visa CE 3.0 can automatically shift liability back to the issuer for friendly fraud (Reason Code 10.4), but requires very specific data: two prior undisputed transactions from the same customer (120-365 days old), with at least two matching data elements (one must be IP address or device fingerprint). Most merchants don't know this exists. ([Same thread](https://www.reddit.com/r/ecommerce/comments/1s40e5u/))
-
-### Friendly fraud is the dominant problem, not real fraud
-
-"A lot of them aren't even true fraud, just customers skipping support and going straight to their bank." — [r/smallbusiness](https://www.reddit.com/r/smallbusiness/comments/1sx05w7/). Customers who got the product dispute because there was no post-delivery communication. A "Delivered successfully — reply if you didn't receive it" message submitted as evidence changes outcomes.
-
-### E-commerce parallel — "losing more to chargebacks than ads"
-
-"The amount of money I lose every month to chargebacks is actually insane. Facebook ads? I can handle. Chargebacks? They're eating my margins alive. And for HALF of them, the customer already got their order. It's like paying to be robbed." — [r/ecommerce](https://www.reddit.com/r/ecommerce/comments/1p2r5fz/)
-
-E-commerce operators build elaborate fraud prevention systems but the response side — building evidence after a dispute — remains manual.
-
-### For early-stage SaaS, a single dispute costs more than the subscription
-
-"Lost around 20 EUR on a 9.99 subscription" — $15 dispute fee + the subscription itself. At early stage, dispute fees can exceed revenue per customer. ([SaaS owner's nightmare](https://www.reddit.com/r/SaaS/comments/1rwwckl/))
-
-### Card testing attacks create hundreds of disputes overnight
-
-"Fraudsters flooded our platform with hundreds of card testing attempts. Stripe is holding us liable for ALL chargebacks + dispute fees. We only earned ~10% commission per transaction." — startup facing insolvency from dispute fees on hundreds of fraudulent chargebacks they didn't cause. ([Stripe about to sink our startup](https://www.reddit.com/r/smallbusiness/comments/1m1jef3/))
-
-### The $15 fee is salt in the wound
-
-"PSA: Accepting a Stripe dispute still costs you $15" — you pay even if you don't contest. Contest and lose = $30. This fee alone discourages fighting small disputes, which trains merchants to accept losses. ([PSA thread](https://www.reddit.com/r/stripe/comments/1so7dfa/))
-
-### Chargeflow appears as astroturf in dispute threads
-
-In the $5k chargeback thread (likely AI-generated), a suspicious comment appeared: "heard about chargeflow lately its this ai thing that automates fighting them" — formatted differently from organic comments, reads like planted marketing. The community called it out as AI-generated content. This tells us the market is actively being targeted by competitors.
-
-## Sources
-
-- [r/stripe](https://www.reddit.com/r/stripe/) — 31K weekly visitors, primary community
-- [Chargeback with PROOF she received services](https://www.reddit.com/r/stripe/comments/1m9xzo5/) — $1,225 lost despite full evidence
-- [Won my first high ticket dispute](https://www.reddit.com/r/stripe/comments/1o0c5dt/) — ChatGPT-structured evidence won
-- [Stripe Dispute Prevention refunded $1500](https://www.reddit.com/r/stripe/comments/1l2b82s/) — Stripe's own tools backfire
-- [Stripe dispute team is useless](https://www.reddit.com/r/stripe/) — "lost mid-five-figures" (18d ago)
-- [Unfair disputes are ruining businesses](https://www.reddit.com/r/stripe/) — 46 comments, 2mo ago
-- [Stripe monitoring programs](https://docs.stripe.com/disputes/monitoring-programs) — official escalation rules
-- [Stripe pricing](https://stripe.com/pricing) — $15 dispute fee
-- Levelsio's public dispute system — origin of the approach

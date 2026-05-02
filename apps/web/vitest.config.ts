@@ -45,6 +45,7 @@ export default defineConfig({
           name: 'unit',
           dir: 'test/unit',
           include: ['**/*.test.ts'],
+          setupFiles: ['test/unit/setup.ts'],
           isolate: false,
         },
       },

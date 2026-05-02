@@ -1,10 +1,7 @@
-/**
- * Centralized database mocks for unit tests
- *
- * Mocks Drizzle's chainable query builder and transaction API.
- * Hyperdrive/Postgres isn't simulated by CF vitest pool, so we must mock.
- */
+import type { UUIDv4 } from '@riposte/core'
 import { vi } from 'vitest'
+
+import { testEvent } from './messages'
 
 export interface MockTransaction {
   // SELECT chain
@@ -30,10 +27,6 @@ export interface MockDatabase {
   update: ReturnType<typeof vi.fn>
 }
 
-/**
- * Creates a mock transaction with chainable query builder
- * Default: all queries return empty arrays
- */
 export function createMockTx(): MockTransaction {
   const tx: MockTransaction = {
     select: vi.fn(),
@@ -67,9 +60,6 @@ export function createMockTx(): MockTransaction {
   return tx
 }
 
-/**
- * Creates a mock database that executes transaction callbacks
- */
 export function createMockDb(tx: MockTransaction): MockDatabase {
   return {
     transaction: vi.fn(async (callback: (tx: MockTransaction) => Promise<unknown>) => {
@@ -81,14 +71,12 @@ export function createMockDb(tx: MockTransaction): MockDatabase {
   }
 }
 
-/**
- * Helper to create mock outbox rows
- */
-export function createMockOutboxRow(id: string, eventName: string, processed = false) {
+export function createMockOutboxRow(id?: string, published = false) {
+  const event = testEvent(id ? { id: id as UUIDv4 } : undefined)
   return {
-    id,
-    payload: { type: 'event' as const, name: eventName, data: {} },
+    id: event.id,
+    payload: event,
     createdAt: new Date(),
-    publishedAt: processed ? new Date() : null,
+    publishedAt: published ? new Date() : null,
   }
 }

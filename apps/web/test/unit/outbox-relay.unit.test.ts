@@ -1,17 +1,8 @@
-/**
- * Unit tests for OutboxRelay.flush()
- *
- * Tests the instance method that:
- * 1. Selects pending events from outbox (FOR UPDATE SKIP LOCKED)
- * 2. Sends them to queue
- * 3. Marks them as processed
- */
+import type { IOutboxRepository } from '@server/domain/repository/interfaces'
+import { OutboxRelay } from '@server/infrastructure/queues/outbox-relay'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import type { IOutboxRepository } from '@server/domain/repository/interfaces'
 import type { MockDatabase } from '../mocks'
-
-import { OutboxRelay } from '@server/infrastructure/queues/outbox-relay'
 import {
   createMockDb,
   createMockEnv,
@@ -20,7 +11,6 @@ import {
   createMockTx,
 } from '../mocks'
 
-// Mock the queue client
 const mockQueueClient = createMockQueueService()
 vi.mock('@server/infrastructure/queues/queue-client', () => ({
   QueueClient: vi.fn(function () {
@@ -28,7 +18,6 @@ vi.mock('@server/infrastructure/queues/queue-client', () => ({
   }),
 }))
 
-// Mock the outbox repository
 const mockOutboxRepo: IOutboxRepository = {
   persistEvents: vi.fn().mockResolvedValue(undefined),
   assertMessageNotProcessed: vi.fn().mockResolvedValue(undefined),
@@ -71,7 +60,7 @@ describe.sequential('OutboxRelay', () => {
     })
 
     it('processes single pending event', async () => {
-      const row = createMockOutboxRow('evt-1', 'TestEvent')
+      const row = createMockOutboxRow()
       vi.mocked(mockOutboxRepo.retrievePending).mockResolvedValue([row])
       vi.mocked(mockOutboxRepo.publishPending).mockResolvedValue([row.id])
 
@@ -82,13 +71,9 @@ describe.sequential('OutboxRelay', () => {
     })
 
     it('processes batch of events up to limit', async () => {
-      const rows = Array.from({ length: 5 }, (_, i) =>
-        createMockOutboxRow(`evt-${i}`, 'TestEvent'),
-      )
+      const rows = Array.from({ length: 5 }, () => createMockOutboxRow())
       vi.mocked(mockOutboxRepo.retrievePending).mockResolvedValue(rows)
-      vi.mocked(mockOutboxRepo.publishPending).mockResolvedValue(
-        rows.map((r) => r.id),
-      )
+      vi.mocked(mockOutboxRepo.publishPending).mockResolvedValue(rows.map((r) => r.id))
 
       const result = await relay.flush(env, 5)
 
@@ -97,7 +82,7 @@ describe.sequential('OutboxRelay', () => {
     })
 
     it('marks events as processed after queue send', async () => {
-      const row = createMockOutboxRow('evt-1', 'TestEvent')
+      const row = createMockOutboxRow()
       vi.mocked(mockOutboxRepo.retrievePending).mockResolvedValue([row])
       vi.mocked(mockOutboxRepo.publishPending).mockResolvedValue([row.id])
 
@@ -119,11 +104,9 @@ describe.sequential('OutboxRelay', () => {
     })
 
     it('throws on queue failure (tx rolls back)', async () => {
-      const row = createMockOutboxRow('evt-1', 'TestEvent')
+      const row = createMockOutboxRow()
       vi.mocked(mockOutboxRepo.retrievePending).mockResolvedValue([row])
-      mockQueueClient.sendBatch.mockRejectedValue(
-        new Error('Queue unavailable'),
-      )
+      mockQueueClient.sendBatch.mockRejectedValue(new Error('Queue unavailable'))
 
       await expect(relay.flush(env)).rejects.toThrow('Queue unavailable')
     })

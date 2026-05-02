@@ -1,44 +1,31 @@
-/**
- * Unit tests for event-context
- *
- * Tests AsyncLocalStorage-based event collection:
- * - registerEvents throws outside context
- * - registerEvents collects events within context
- * - getCollectedEvents returns empty array outside context
- * - Concurrent contexts are isolated
- */
-import { describe, expect, it } from 'vitest'
-
-import { createEvent } from '@riposte/core'
-
+import type { UUIDv4 } from '@riposte/core'
 import {
   getCollectedEvents,
   registerEvents,
   runWithEventContext,
 } from '@server/infrastructure/context/event-context'
+import { describe, expect, it } from 'vitest'
 
-const mockEvent = (id: string) =>
-  createEvent(
-    'UserSignedUp',
-    { userId: `user-${id}`, email: `${id}@test.com`, signupMethod: 'google' },
-    id as `${string}-${string}-${string}-${string}-${string}`,
-  )
+import { testEvent } from '../mocks'
 
 describe('event-context', () => {
   describe('registerEvents', () => {
     it('throws when called outside context', () => {
-      expect(() => registerEvents([mockEvent('1')])).toThrow('outside UoW')
+      expect(() => registerEvents([testEvent()])).toThrow('outside UoW')
     })
 
     it('collects events within context', async () => {
+      const evt1 = testEvent({ id: '00000000-0000-0000-0000-000000000001' as UUIDv4 })
+      const evt2 = testEvent({ id: '00000000-0000-0000-0000-000000000002' as UUIDv4 })
+
       await runWithEventContext(async () => {
-        registerEvents([mockEvent('1')])
-        registerEvents([mockEvent('2')])
+        registerEvents([evt1])
+        registerEvents([evt2])
 
         const events = getCollectedEvents()
         expect(events).toHaveLength(2)
-        expect(events[0]!.id).toBe('1')
-        expect(events[1]!.id).toBe('2')
+        expect(events[0]!.id).toBe(evt1.id)
+        expect(events[1]!.id).toBe(evt2.id)
       })
     })
   })
@@ -57,24 +44,27 @@ describe('event-context', () => {
 
   describe('context isolation', () => {
     it('isolates concurrent contexts', async () => {
+      const evtA = testEvent({ id: '00000000-0000-0000-0000-00000000000a' as UUIDv4 })
+      const evtB = testEvent({ id: '00000000-0000-0000-0000-00000000000b' as UUIDv4 })
+
       const results = await Promise.all([
         runWithEventContext(async () => {
-          registerEvents([mockEvent('a')])
+          registerEvents([evtA])
           return getCollectedEvents().map((e) => e.id)
         }),
         runWithEventContext(async () => {
-          registerEvents([mockEvent('b')])
+          registerEvents([evtB])
           return getCollectedEvents().map((e) => e.id)
         }),
       ])
 
-      expect(results[0]).toEqual(['a'])
-      expect(results[1]).toEqual(['b'])
+      expect(results[0]).toEqual([evtA.id])
+      expect(results[1]).toEqual([evtB.id])
     })
 
     it('does not leak events between contexts', async () => {
       await runWithEventContext(async () => {
-        registerEvents([mockEvent('first')])
+        registerEvents([testEvent()])
       })
 
       await runWithEventContext(async () => {

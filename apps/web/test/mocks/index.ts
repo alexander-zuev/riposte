@@ -1,4 +1,6 @@
 export * from './db'
+export * from './durable-objects'
 export * from './env'
 export * from './messages'
+export * from './outbox-repository'
 export * from './queue'

@@ -39,6 +39,9 @@
       "new_classes": ["OutboxRelayDO"],
     },
   ],
+  "triggers": {
+    "crons": ["*/1 * * * *"],
+  },
   "env": {
     "dev": {
       "name": "riposte-dev",

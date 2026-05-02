@@ -1,8 +1,8 @@
 import type { DomainMessage } from '@riposte/core'
 import { createLogger, queueMessageSchema } from '@riposte/core'
+import * as Sentry from '@sentry/cloudflare'
 import { MessageBus } from '@server/application/message-bus/message-bus'
 import type { IMessageBus } from '@server/application/message-bus/message-bus'
-import * as Sentry from '@sentry/cloudflare'
 
 const logger = createLogger('queue-consumer')
 
@@ -15,10 +15,10 @@ export class QueueConsumer {
 
   async processBatch(batch: MessageBatch): Promise<void> {
     logger.debug('batch_received', { count: batch.messages.length })
-    await Promise.allSettled(batch.messages.map((message) => this.processMessage(message)))
+    await Promise.allSettled(batch.messages.map(async (message) => this.processMessage(message)))
   }
 
-  private async processMessage(message: Message<unknown>): Promise<void> {
+  private async processMessage(message: Message): Promise<void> {
     const msg = await this.parseMessage(message.body)
     if (!msg) {
       message.ack()
@@ -47,7 +47,7 @@ export class QueueConsumer {
     return result.data
   }
 
-  private handleError(message: Message<unknown>, msg: DomainMessage, error: unknown): void {
+  private handleError(message: Message, msg: DomainMessage, error: unknown): void {
     const retryable = error instanceof Error && 'retryable' in error && error.retryable === true
 
     if (!retryable || message.attempts >= QueueConsumer.MAX_ATTEMPTS) {

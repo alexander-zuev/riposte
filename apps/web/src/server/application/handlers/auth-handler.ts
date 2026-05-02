@@ -4,11 +4,7 @@ import type { CommandHandler, EventHandler, QueryHandler } from '@server/applica
 
 const logger = createLogger('auth-handler')
 
-export const sendWelcomeEmail: CommandHandler<SendWelcomeEmail, void> = async (
-  command,
-  _env,
-  _tx,
-) => {
+export const sendWelcomeEmail: CommandHandler<SendWelcomeEmail> = async (command, _env, _tx) => {
   logger.info('SendWelcomeEmail', { email: command.email })
   // TODO: implement email sending via Resend
 }

@@ -102,7 +102,7 @@ export class MessageBus implements IMessageBus {
       return await executeUoW(
         this.env,
         this.ctx,
-        (tx: DrizzleDb) => {
+        async (tx: DrizzleDb) => {
           return handler(command, this.env, tx)
         },
         command.id,
@@ -130,7 +130,7 @@ export class MessageBus implements IMessageBus {
       await executeUoW(
         this.env,
         this.ctx,
-        (tx) => Promise.all(handlers.map((handler) => handler(event, this.env, tx))),
+        async (tx) => Promise.all(handlers.map(async (handler) => handler(event, this.env, tx))),
         event.id,
       )
     } catch (e) {

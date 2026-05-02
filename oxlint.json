@@ -72,14 +72,20 @@
         "unicorn/filename-case": "off",
         "typescript/no-explicit-any": "off",
         "typescript/no-non-null-assertion": "off",
+        "typescript/no-empty-object-type": "off",
         "typescript/explicit-function-return-type": "off",
-        "no-unused-vars": "off",
-        "no-undefined": "off",
         "typescript/no-floating-promises": "off",
         "typescript/unbound-method": "off",
         "typescript/restrict-template-expressions": "off",
         "typescript/no-misused-spread": "off",
-        "vitest/require-mock-type-parameters": "off"
+        "no-unused-vars": "off",
+        "no-undefined": "off",
+        "oxc/no-optional-chaining": "off",
+        "oxc/no-barrel-file": "off",
+        "import/no-relative-parent-imports": "off",
+        "import/unambiguous": "off",
+        "vitest/require-mock-type-parameters": "off",
+        "vitest/require-test-timeout": "off"
       }
     }
   ]

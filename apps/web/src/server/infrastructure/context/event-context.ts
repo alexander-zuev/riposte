@@ -4,7 +4,8 @@ import type { DomainEvent } from '@riposte/core'
 
 const eventContext = new AsyncLocalStorage<DomainEvent[]>()
 
-export const runWithEventContext = <T>(fn: () => Promise<T>): Promise<T> => eventContext.run([], fn)
+export const runWithEventContext = async <T>(fn: () => Promise<T>): Promise<T> =>
+  eventContext.run([], fn)
 
 export const registerEvents = (events: DomainEvent[]): void => {
   const store = eventContext.getStore()

@@ -31,7 +31,7 @@ export async function executeUoW<T>(
   const db = createDatabase(env)
 
   // Event context + transaction
-  const result = await runWithEventContext(() =>
+  const result = await runWithEventContext(async () =>
     db.transaction(async (tx: DrizzleDb) => {
       const outboxRepo = new OutboxRepository(tx)
 

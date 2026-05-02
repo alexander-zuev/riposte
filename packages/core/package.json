@@ -25,6 +25,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "postgres": "^3.4.9",
     "zod": "catalog:"
   },
   "devDependencies": {

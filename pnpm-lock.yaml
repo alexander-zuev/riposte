@@ -399,6 +399,9 @@ importers:
 
   packages/core:
     dependencies:
+      postgres:
+        specifier: ^3.4.9
+        version: 3.4.9
       zod:
         specifier: 'catalog:'
         version: 4.3.6

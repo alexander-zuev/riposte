@@ -37,7 +37,6 @@ export const baseCommandSchema = baseInternalSchema.extend({
 export const baseEventSchema = baseInternalSchema.extend({
   type: z.literal('event'),
   timestamp: TimestamptzSchema,
-  source: z.enum(['r2', 'webhook']).optional(), // undefined = internal
 })
 
 // Query: data request

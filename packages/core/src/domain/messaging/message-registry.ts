@@ -5,7 +5,7 @@ import {
   sendWelcomeEmailSchema,
   userSignedUpSchema,
 } from '../auth/auth.messages'
-import { r2EventNotificationSchema } from '../storage/r2.messages'
+import { r2EventSchema, r2EventTransform } from '../storage/r2.messages'
 
 /* -------------------------------------------------------------------------------------------------
  * Command Union & Map
@@ -23,7 +23,10 @@ export type CommandMap = {
  * Event Union & Map
  * ----------------------------------------------------------------------------------------------- */
 
-export const domainEventSchema = z.discriminatedUnion('name', [userSignedUpSchema])
+export const domainEventSchema = z.discriminatedUnion('name', [
+  userSignedUpSchema,
+  r2EventSchema,
+])
 
 export type DomainEvent = z.infer<typeof domainEventSchema>
 export type EventName = DomainEvent['name']
@@ -53,11 +56,11 @@ export type DomainMessage = DomainCommand | DomainEvent | DomainQuery
  * Queue Message Schema
  *
  * Union of all message schemas accepted by the queue consumer.
- * Validates incoming queue payloads before routing to the message bus.
+ * Domain messages pass through, raw R2 events get transformed.
  * ----------------------------------------------------------------------------------------------- */
 
 export const queueMessageSchema = z.union([
   domainCommandSchema,
   domainEventSchema,
-  r2EventNotificationSchema,
+  r2EventTransform,
 ])

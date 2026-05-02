@@ -35,7 +35,7 @@
       "new_sqlite_classes": ["RateLimiterDO"],
     },
     {
-      "tag": "v1",
+      "tag": "v2",
       "new_classes": ["OutboxRelayDO"],
     },
   ],

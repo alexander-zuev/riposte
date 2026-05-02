@@ -1,9 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { LandingPage } from '@web/pages/public/landing/landing-page'
 
 export const Route = createFileRoute('/_public/')({
-  component: RouteComponent,
+  component: LandingPage,
 })
-
-function RouteComponent() {
-  return <div>Hello "/_public/"!</div>
-}

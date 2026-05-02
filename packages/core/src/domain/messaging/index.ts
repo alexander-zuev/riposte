@@ -1,3 +1,4 @@
+export type { BaseCommand, BaseEvent, BaseQuery } from '../base/base.messages'
 export { createCommand, createEvent, createQuery } from './factory'
 export type {
   CommandMap,
@@ -5,9 +6,15 @@ export type {
   DomainCommand,
   DomainEvent,
   DomainMessage,
+  DomainQuery,
   EventMap,
   EventName,
   QueryMap,
   QueryName,
 } from './message-registry'
-export { domainCommandSchema, domainEventSchema } from './message-registry'
+export {
+  domainCommandSchema,
+  domainEventSchema,
+  domainQuerySchema,
+  queueMessageSchema,
+} from './message-registry'

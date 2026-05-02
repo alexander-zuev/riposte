@@ -1,6 +1,6 @@
 import { rootRouteId, useRouter } from '@tanstack/react-router'
-import type { Theme } from '@web/server/functions/theme.fn'
-import { setThemeServerFn } from '@web/server/functions/theme.fn'
+import type { Theme } from '@web/server/entrypoints/functions/theme.fn'
+import { setThemeServerFn } from '@web/server/entrypoints/functions/theme.fn'
 import type { PropsWithChildren } from 'react'
 import { createContext, use, useCallback, useMemo } from 'react'
 

@@ -1,6 +1,6 @@
 import { sentryGlobalRequestMiddleware } from '@sentry/tanstackstart-react'
-import { errorMiddleware, loggingMiddleware } from '@server/middleware'
 import { createStart } from '@tanstack/react-start'
+import { errorMiddleware, loggingMiddleware } from '@web/server/infrastructure/middleware'
 
 export const startInstance = createStart(() => {
   return {

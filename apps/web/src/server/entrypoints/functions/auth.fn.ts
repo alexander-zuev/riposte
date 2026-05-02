@@ -1,9 +1,8 @@
 import { AuthenticationError } from '@riposte/core'
-import { createLogger } from '@riposte/core/client'
+import { createLogger } from '@riposte/core'
+import { getAuthInstance } from '@server/infrastructure/auth'
 import { createServerFn } from '@tanstack/react-start'
 import { getRequestHeaders } from '@tanstack/react-start/server'
-
-import { getAuthInstance } from '../infrastructure/auth'
 
 const logger = createLogger('auth-fn')
 

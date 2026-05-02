@@ -34,6 +34,10 @@
       "tag": "v1",
       "new_sqlite_classes": ["RateLimiterDO"],
     },
+    {
+      "tag": "v1",
+      "new_classes": ["OutboxRelayDO"],
+    },
   ],
   "env": {
     "dev": {
@@ -93,6 +97,10 @@
           {
             "name": "AUTH_RATE_LIMITER",
             "class_name": "RateLimiterDO",
+          },
+          {
+            "name": "OUTBOX_RELAY",
+            "class_name": "OutboxRelayDO",
           },
         ],
       },
@@ -166,6 +174,10 @@
             "name": "AUTH_RATE_LIMITER",
             "class_name": "RateLimiterDO",
           },
+          {
+            "name": "OUTBOX_RELAY",
+            "class_name": "OutboxRelayDO",
+          },
         ],
       },
       "vars": {
@@ -192,6 +204,71 @@
           "custom_domain": true,
         },
       ],
+    },
+    "test": {
+      "name": "riposte-test",
+      "compatibility_flags": ["nodejs_compat", "service_binding_extra_handlers"],
+      "vars": {
+        "ENV": "test",
+        "APP_URL": "http://localhost:3000",
+        "SENTRY_DSN": "",
+        "POSTHOG_API_KEY": "",
+        "GOOGLE_CLIENT_ID": "",
+        "GITHUB_CLIENT_ID": "",
+        "BETTER_AUTH_SECRET": "test-secret",
+        "GOOGLE_CLIENT_SECRET": "test",
+        "GITHUB_CLIENT_SECRET": "test",
+        "TURNSTILE_SECRET_KEY": "test",
+        "STRIPE_SECRET_KEY": "test",
+        "STRIPE_WEBHOOK_SECRET": "test",
+      },
+      "kv_namespaces": [
+        {
+          "binding": "AUTH_KV",
+          "id": "test-auth-kv",
+        },
+        {
+          "binding": "CACHE_KV",
+          "id": "test-cache-kv",
+        },
+      ],
+      "queues": {
+        "producers": [
+          {
+            "binding": "BACKGROUND_QUEUE",
+            "queue": "riposte-background-test",
+          },
+          {
+            "binding": "CRITICAL_QUEUE",
+            "queue": "riposte-critical-test",
+          },
+        ],
+        "consumers": [
+          {
+            "queue": "riposte-critical-test",
+            "max_batch_size": 1,
+            "max_batch_timeout": 0,
+            "max_retries": 5,
+          },
+          {
+            "queue": "riposte-background-test",
+            "max_batch_size": 10,
+            "max_retries": 3,
+          },
+        ],
+      },
+      "durable_objects": {
+        "bindings": [
+          {
+            "name": "AUTH_RATE_LIMITER",
+            "class_name": "RateLimiterDO",
+          },
+          {
+            "name": "OUTBOX_RELAY",
+            "class_name": "OutboxRelayDO",
+          },
+        ],
+      },
     },
     "prod": {
       "name": "riposte",
@@ -248,6 +325,10 @@
           {
             "name": "AUTH_RATE_LIMITER",
             "class_name": "RateLimiterDO",
+          },
+          {
+            "name": "OUTBOX_RELAY",
+            "class_name": "OutboxRelayDO",
           },
         ],
       },

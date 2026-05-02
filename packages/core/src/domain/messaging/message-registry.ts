@@ -1,6 +1,11 @@
 import { z } from 'zod'
 
-import { sendWelcomeEmailSchema, userSignedUpSchema } from '../auth/auth.messages'
+import {
+  getSessionStatusSchema,
+  sendWelcomeEmailSchema,
+  userSignedUpSchema,
+} from '../auth/auth.messages'
+import { r2EventNotificationSchema } from '../storage/r2.messages'
 
 /* -------------------------------------------------------------------------------------------------
  * Command Union & Map
@@ -30,14 +35,29 @@ export type EventMap = {
  * Query Union & Map
  * ----------------------------------------------------------------------------------------------- */
 
-// Add query schemas here as domains define them
-// export const domainQuerySchema = z.discriminatedUnion('name', [])
-// export type DomainQuery = z.infer<typeof domainQuerySchema>
-export type QueryName = never
-export type QueryMap = Record<never, never>
+export const domainQuerySchema = z.discriminatedUnion('name', [getSessionStatusSchema])
+
+export type DomainQuery = z.infer<typeof domainQuerySchema>
+export type QueryName = DomainQuery['name']
+export type QueryMap = {
+  [K in QueryName]: Extract<DomainQuery, { name: K }>
+}
 
 /* -------------------------------------------------------------------------------------------------
  * Combined Message Type
  * ----------------------------------------------------------------------------------------------- */
 
-export type DomainMessage = DomainCommand | DomainEvent
+export type DomainMessage = DomainCommand | DomainEvent | DomainQuery
+
+/* -------------------------------------------------------------------------------------------------
+ * Queue Message Schema
+ *
+ * Union of all message schemas accepted by the queue consumer.
+ * Validates incoming queue payloads before routing to the message bus.
+ * ----------------------------------------------------------------------------------------------- */
+
+export const queueMessageSchema = z.union([
+  domainCommandSchema,
+  domainEventSchema,
+  r2EventNotificationSchema,
+])

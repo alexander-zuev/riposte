@@ -1,6 +1,6 @@
 import { createLogger } from '@riposte/core/client'
 import { createFileRoute, Outlet } from '@tanstack/react-router'
-import { getSession } from '@web/server/functions/auth.fn'
+import { getSession } from '@web/server/entrypoints/functions/auth.fn'
 
 const logger = createLogger('public-route')
 

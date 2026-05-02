@@ -12,4 +12,5 @@
 export * from './domain/messaging'
 export * from './domain/primitives'
 export * from './domain/auth'
+export * from './domain/storage'
 export * from './infrastructure'

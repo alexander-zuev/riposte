@@ -12,12 +12,5 @@
     },
     "verbatimModuleSyntax": false
   },
-  "include": [
-    "src/**/*.ts",
-    "src/**/*.tsx",
-    ".storybook/**/*.ts",
-    ".storybook/**/*.tsx",
-    "worker-configuration.d.ts",
-    "env.d.ts"
-  ]
+  "include": ["**/*.ts", "**/*.tsx"]
 }

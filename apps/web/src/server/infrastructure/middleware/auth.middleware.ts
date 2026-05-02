@@ -1,11 +1,11 @@
 import { AuthenticationError } from '@riposte/core'
-import { createLogger } from '@riposte/core/client'
+import { createLogger } from '@riposte/core'
 import * as Sentry from '@sentry/cloudflare'
 import { createMiddleware } from '@tanstack/react-start'
 import { getRequestHeaders } from '@tanstack/react-start/server'
 
-import { getAuthInstance } from '../infrastructure/auth'
-import type { Session, User } from '../infrastructure/auth/types'
+import { getAuthInstance } from '../auth'
+import type { Session, User } from '../auth/types'
 
 const logger = createLogger('auth-middleware')
 

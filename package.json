@@ -43,7 +43,7 @@
       "oxfmt --write",
       "oxlint --fix"
     ],
-    "*.{json,jsonc,yaml,yml,md,css}": [
+    "!(docs)/**/*.{json,jsonc,yaml,yml,md,css}": [
       "oxfmt --write"
     ]
   },

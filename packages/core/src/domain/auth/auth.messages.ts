@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-import { baseCommandSchema, baseEventSchema } from '../base/base.messages'
+import { baseCommandSchema, baseEventSchema, baseQuerySchema } from '../base/base.messages'
 import { UserIdSchema } from '../primitives'
 
 export const userSignedUpSchema = baseEventSchema.extend({
@@ -19,3 +19,10 @@ export const sendWelcomeEmailSchema = baseCommandSchema.extend({
 })
 
 export type SendWelcomeEmail = z.infer<typeof sendWelcomeEmailSchema>
+
+export const getSessionStatusSchema = baseQuerySchema.extend({
+  name: z.literal('GetSessionStatus'),
+  userId: UserIdSchema,
+})
+
+export type GetSessionStatus = z.infer<typeof getSessionStatusSchema>

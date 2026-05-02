@@ -72,6 +72,7 @@
     "zustand": "catalog:"
   },
   "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "catalog:",
     "@rolldown/plugin-babel": "catalog:",
     "@sentry/vite-plugin": "catalog:",
     "@storybook/addon-themes": "catalog:",

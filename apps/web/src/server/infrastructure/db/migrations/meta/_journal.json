@@ -8,6 +8,13 @@
       "when": 1777669917936,
       "tag": "0000_boring_jamie_braddock",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1777708520901,
+      "tag": "0001_talented_bucky",
+      "breakpoints": true
     }
   ]
 }

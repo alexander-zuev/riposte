@@ -10,6 +10,7 @@ build/
 # Environment & Configuration
 # dotenvx: encrypted .env files are committed; private keys are NOT
 .env.keys
+# Drizzle migration connection strings (encrypted with dotenvx)
 # Wrangler local dev vars (not managed by dotenvx)
 .dev.vars
 .dev.vars.*

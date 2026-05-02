@@ -1,28 +1,27 @@
-import { config } from 'dotenv'
 import { defineConfig } from 'drizzle-kit'
+import { z } from 'zod'
 
-config({ path: '.env' })
+const envSchema = z
+  .object({
+    DRIZZLE_ENV: z.enum(['dev', 'prod']).default('dev'),
+    DATABASE_URL_DEV: z.string().min(1),
+    DATABASE_URL_PROD: z.string().min(1),
+  })
+  .transform((val) => ({
+    env: val.DRIZZLE_ENV,
+    url: val.DRIZZLE_ENV === 'dev' ? val.DATABASE_URL_DEV : val.DATABASE_URL_PROD,
+  }))
 
-const env = process.env.DRIZZLE_ENV || 'dev'
+const { env, url } = envSchema.parse(process.env)
 
-if (!['dev', 'prod'].includes(env)) {
-  throw new Error(`Invalid DRIZZLE_ENV: ${env}. Must be one of: dev, prod`)
-}
 console.log(`\n🗄️  Drizzle running against: ${env.toUpperCase()}\n`)
-
-const dbUrl = {
-  dev: process.env.DATABASE_URL_DEV!,
-  prod: process.env.DATABASE_URL_PROD!,
-}[env as 'dev' | 'prod']
 
 export default defineConfig({
   dialect: 'postgresql',
   schema: './src/server/infrastructure/db/schema',
   out: './src/server/infrastructure/db/migrations',
   casing: 'snake_case',
-  dbCredentials: {
-    url: dbUrl,
-  },
+  dbCredentials: { url },
   strict: true,
   verbose: true,
 })

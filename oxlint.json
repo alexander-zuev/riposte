@@ -32,6 +32,9 @@
     "typescript/no-unused-vars": "warn",
     "typescript/no-explicit-any": "off",
     "typescript/no-non-null-assertion": "off",
+    "oxc/no-async-await": "off",
+    "oxc/no-rest-spread-properties": "off",
+    "oxc/no-barrel-file": "warn",
     "oxc/no-accumulating-spread": "error",
     "oxc/no-map-spread": "error",
     "unicorn/prefer-array-find": "error",
@@ -41,7 +44,11 @@
     "no-use-before-define": "off",
     "typescript/no-floating-promises": "warn",
     "complexity": ["warn", 30],
-    "node/no-process-env": "off"
+    "no-console": "off",
+    "import/no-default-export": "off",
+    "node/no-process-env": "off",
+    "typescript/explicit-member-accessibility": "off",
+    "typescript/explicit-module-boundary-types": "off"
   },
   "ignorePatterns": [
     "**/node_modules/**",

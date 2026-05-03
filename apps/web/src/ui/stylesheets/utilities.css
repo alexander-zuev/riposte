@@ -108,6 +108,18 @@
   @apply p-6; /* Standard card internal space */
 }
 
+/*
+===== SYSTEM/DATA TYPOGRAPHY =====
+JetBrains Mono for IDs, timestamps, logs, events, metadata
+*/
+
+/* JetBrains Mono for system truth: case IDs, timestamps, Stripe IDs,
+   event names, logs, metadata, webhook names, source labels */
+@utility text-system {
+  font-family: var(--font-mono);
+  letter-spacing: var(--code-letter-spacing);
+}
+
 /* Slide up animation for text cycling */
 @keyframes slide-up {
   from {

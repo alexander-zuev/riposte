@@ -1,12 +1,13 @@
-import { zodResolver } from '@hookform/resolvers/zod'
 import { ArrowRightIcon, CaretRightIcon, CheckIcon } from '@phosphor-icons/react'
-import { joinWaitlist } from '@web/server/entrypoints/functions/waitlist.fn'
+import { useForm } from '@tanstack/react-form'
+import { useMutation } from '@tanstack/react-query'
+import { rpc } from '@web/lib/clients/rpc'
+import { joinWaitlist, joinWaitlistInput } from '@web/server/entrypoints/functions/waitlist.fn'
 import { Button } from '@web/ui/components/ui/button'
+import { FieldError } from '@web/ui/components/ui/field'
 import { Input } from '@web/ui/components/ui/input'
 import { Logo } from '@web/ui/components/ui/logo'
-import { useRef, useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { z } from 'zod'
+import { useRef } from 'react'
 
 const STEPS = [
   {
@@ -108,20 +109,18 @@ export function LandingPage() {
   )
 }
 
-const waitlistSchema = z.object({ email: z.email() })
-type WaitlistValues = z.infer<typeof waitlistSchema>
-
 function WaitlistForm({ emailRef }: { emailRef: React.RefObject<HTMLInputElement | null> }) {
-  const [submitted, setSubmitted] = useState(false)
-  const {
-    register,
-    handleSubmit,
-    formState: { isSubmitting, errors },
-  } = useForm<WaitlistValues>({ resolver: zodResolver(waitlistSchema) })
+  const mutation = useMutation({
+    mutationFn: (data: { email: string }) => rpc<null>(joinWaitlist({ data })),
+  })
 
-  const { ref: rhfRef, ...emailProps } = register('email')
+  const form = useForm({
+    defaultValues: { email: '' },
+    validators: { onChange: joinWaitlistInput },
+    onSubmit: ({ value }) => mutation.mutate(value),
+  })
 
-  if (submitted) {
+  if (mutation.isSuccess) {
     return (
       <div className="flex items-center gap-2 text-success-muted-foreground">
         <CheckIcon size={18} />
@@ -130,38 +129,55 @@ function WaitlistForm({ emailRef }: { emailRef: React.RefObject<HTMLInputElement
     )
   }
 
-  const onSubmit = async (data: WaitlistValues) => {
-    await joinWaitlist({ data })
-    setSubmitted(true)
-  }
-
   return (
     <div className="flex flex-col items-center gap-2">
-      <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex items-center gap-3">
-        <Input
-          type="email"
-          placeholder="Enter your email"
-          className="h-9 w-72 text-sm"
-          ref={(el) => {
-            rhfRef(el)
-            if (emailRef) emailRef.current = el
-          }}
-          {...emailProps}
-        />
-        <Button
-          variant="default"
-          size="lg"
-          type="submit"
-          disabled={isSubmitting}
-          className="text-sm"
-        >
-          Join Waitlist
-          <ArrowRightIcon size={18} />
-        </Button>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault()
+          form.handleSubmit()
+        }}
+        noValidate
+        className="flex flex-col items-center gap-2"
+      >
+        <div className="flex items-center gap-3">
+          <form.Field name="email">
+            {(field) => (
+              <Input
+                id={field.name}
+                name={field.name}
+                type="email"
+                placeholder="Enter your email"
+                className="h-9 w-72 text-sm"
+                value={field.state.value}
+                onBlur={field.handleBlur}
+                onChange={(e) => field.handleChange(e.target.value)}
+                aria-invalid={field.state.meta.isTouched && !field.state.meta.isValid}
+                ref={emailRef}
+              />
+            )}
+          </form.Field>
+          <Button
+            variant="default"
+            size="lg"
+            type="submit"
+            disabled={mutation.isPending}
+            className="text-sm"
+          >
+            Join Waitlist
+            <ArrowRightIcon size={18} />
+          </Button>
+        </div>
+        <div className="h-5">
+          <form.Subscribe selector={(state) => state.fieldMeta.email}>
+            {(meta) => {
+              if (mutation.isError)
+                return <p className="text-sm text-destructive">Something went wrong. Try again.</p>
+              if (!meta?.isTouched || meta.isValid) return null
+              return <FieldError errors={meta.errors} />
+            }}
+          </form.Subscribe>
+        </div>
       </form>
-      <p className={`h-5 text-sm ${errors.email ? 'text-destructive' : 'invisible'}`}>
-        {errors.email?.message ?? ' '}
-      </p>
     </div>
   )
 }

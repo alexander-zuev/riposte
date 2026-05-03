@@ -34,20 +34,12 @@ const GAP_CLASS: Record<LogoSize, string> = {
 function LogoIcon({ size = 32, className }: { size?: number; className?: string }) {
   return (
     <svg
-      viewBox="0 0 32 28"
+      viewBox="0 0 32 36"
       height={size}
-      fill="none"
-      stroke="currentColor"
+      fill="currentColor"
       className={cn('shrink-0', className)}
       aria-hidden="true"
-    >
-      <path
-        d="M10 5L4 11L10 17M4 11H24L29.5 16.5L24 22H18"
-        strokeWidth="2.8"
-        strokeLinecap="butt"
-        strokeLinejoin="miter"
-      />
-    </svg>
+    ></svg>
   )
 }
 
@@ -56,9 +48,7 @@ function Logo({ variant = 'full', size = 'md', href, className }: LogoProps) {
     <>
       {variant !== 'wordmark' && <LogoIcon size={ICON_HEIGHT[size]} />}
       {variant !== 'icon' && (
-        <span
-          className={cn('font-brand font-bold uppercase tracking-[0.18em]', WORDMARK_CLASS[size])}
-        >
+        <span className={cn('font-brand font-bold tracking-[0.18em]', WORDMARK_CLASS[size])}>
           Riposte
         </span>
       )}

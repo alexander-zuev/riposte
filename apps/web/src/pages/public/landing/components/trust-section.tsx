@@ -1,7 +1,6 @@
 import { Eye, Key, GitBranch, ShieldCheck } from '@phosphor-icons/react'
 import Section from '@web/ui/components/layout/section'
-import { motion, useInView } from 'motion/react'
-import { useRef } from 'react'
+import { motion } from 'motion/react'
 
 import { SectionBadge } from './section-badge'
 
@@ -29,12 +28,9 @@ const guarantees = [
 ]
 
 export function TrustSection() {
-  const ref = useRef<HTMLDivElement>(null)
-  const isInView = useInView(ref, { once: true, margin: '-100px' })
-
   return (
     <Section>
-      <div ref={ref} className="container-max-w-5xl flex flex-col items-center">
+      <div className="container-max-w-5xl flex flex-col items-center">
         <SectionBadge>Security</SectionBadge>
 
         <h2 className="text-display mt-4 text-center">Built for paranoid founders</h2>
@@ -44,7 +40,8 @@ export function TrustSection() {
             <motion.div
               key={g.title}
               initial={{ opacity: 0, y: 16 }}
-              animate={isInView ? { opacity: 1, y: 0 } : {}}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: '-100px' }}
               transition={{ delay: i * 0.1, duration: 0.4 }}
               className="flex items-start gap-4 rounded-lg border border-border bg-surface p-5"
             >

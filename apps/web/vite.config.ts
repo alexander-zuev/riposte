@@ -20,7 +20,7 @@ export default defineConfig(() => {
           entry: './lib/router/router.tsx',
           generatedRouteTree: './lib/router/routeTree.gen.ts',
         },
-        importProtection: { enabled: false },
+        importProtection: { enabled: true },
       }),
       react(),
       babel({ presets: [reactCompilerPreset({ target: '19' })] }),

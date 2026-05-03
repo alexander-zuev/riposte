@@ -18,10 +18,10 @@ const ICON_HEIGHT: Record<LogoSize, number> = {
 }
 
 const WORDMARK_CLASS: Record<LogoSize, string> = {
-  xs: 'text-[11px]',
-  sm: 'text-[13px]',
-  md: 'text-[17px]',
-  lg: 'text-[22px]',
+  xs: 'text-base',
+  sm: 'text-lg',
+  md: 'text-2xl',
+  lg: 'text-3xl',
 }
 
 const GAP_CLASS: Record<LogoSize, string> = {
@@ -31,15 +31,67 @@ const GAP_CLASS: Record<LogoSize, string> = {
   lg: 'gap-3',
 }
 
-function LogoIcon({ size = 32, className }: { size?: number; className?: string }) {
+type LogoIconVariant = 'default' | 'dark' | 'app'
+
+const SHARDS = (
+  <>
+    <polygon points="3,0 21,0 30,9 21,18" />
+    <polygon points="3,14 15,14 15,28 3,16" />
+    <polygon points="30,28 21,28 21,19" />
+  </>
+)
+
+function LogoIcon({
+  size = 32,
+  variant = 'default',
+  className,
+}: {
+  size?: number
+  variant?: LogoIconVariant
+  className?: string
+}) {
+  if (variant === 'dark') {
+    return (
+      <svg
+        viewBox="0 0 38 36"
+        height={size}
+        className={cn('shrink-0', className)}
+        aria-hidden="true"
+      >
+        <rect x={0} y={0} width={38} height={36} fill="var(--gray-12, #1c1917)" />
+        <g transform="translate(4, 4)" fill="white">
+          {SHARDS}
+        </g>
+      </svg>
+    )
+  }
+
+  if (variant === 'app') {
+    return (
+      <svg
+        viewBox="0 0 38 36"
+        height={size}
+        className={cn('shrink-0', className)}
+        aria-hidden="true"
+      >
+        <rect x={0} y={0} width={38} height={36} fill="var(--accent, #84cc16)" />
+        <g transform="translate(4, 4)" fill="var(--gray-12, #1c1917)">
+          {SHARDS}
+        </g>
+      </svg>
+    )
+  }
+
   return (
     <svg
-      viewBox="0 0 32 36"
+      viewBox="0 0 30 28"
       height={size}
       fill="currentColor"
       className={cn('shrink-0', className)}
       aria-hidden="true"
-    ></svg>
+    >
+      {SHARDS}
+    </svg>
   )
 }
 
@@ -48,7 +100,7 @@ function Logo({ variant = 'full', size = 'md', href, className }: LogoProps) {
     <>
       {variant !== 'wordmark' && <LogoIcon size={ICON_HEIGHT[size]} />}
       {variant !== 'icon' && (
-        <span className={cn('font-brand font-bold tracking-[0.18em]', WORDMARK_CLASS[size])}>
+        <span className={cn('font-brand font-bold tracking-[0.08em]', WORDMARK_CLASS[size])}>
           Riposte
         </span>
       )}
@@ -76,4 +128,4 @@ function Logo({ variant = 'full', size = 'md', href, className }: LogoProps) {
 }
 
 export { Logo, LogoIcon }
-export type { LogoProps }
+export type { LogoProps, LogoIconVariant }

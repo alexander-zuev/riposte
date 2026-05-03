@@ -1,4 +1,4 @@
-import { getAuthInstance } from '@server/infrastructure/auth'
+import { getAuthInstance } from '@server/infrastructure/auth/auth'
 import { createFileRoute } from '@tanstack/react-router'
 import { tanstackStartCookies } from 'better-auth/tanstack-start'
 

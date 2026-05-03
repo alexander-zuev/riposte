@@ -4,7 +4,7 @@ import { betterAuth } from 'better-auth/minimal'
 import { env } from 'cloudflare:workers'
 
 import { getServerConfig } from '../config'
-import { createDatabase } from '../db'
+import { createDatabase } from '../db/connection'
 import { createBetterAuthOptions } from './options'
 import type { AuthConfig } from './types'
 

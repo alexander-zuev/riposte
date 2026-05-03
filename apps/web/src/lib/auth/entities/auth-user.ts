@@ -1,4 +1,6 @@
-import type { User } from '@web/server/infrastructure/auth/types'
+import type { authClient } from '@web/lib/clients/auth.client'
+
+type User = (typeof authClient)['$Infer']['Session']['user']
 
 export class AuthUser {
   constructor(private readonly user: User) {}

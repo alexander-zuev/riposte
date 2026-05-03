@@ -5,7 +5,7 @@ import { createRootRouteWithContext, HeadContent, Outlet, Scripts } from '@tanst
 import { ThemeProvider } from '@web/lib/hooks/use-theme'
 import { AnalyticsProvider } from '@web/lib/providers/posthog-provider'
 import { defaultHead } from '@web/lib/seo/seo'
-import { getThemeServerFn } from '@web/server/entrypoints/functions/theme.fn' // clears stale dark cookies
+import { getThemeServerFn } from '@web/server/entrypoints/functions/theme.fn'
 import { Toaster } from '@web/ui/components/ui/sonner'
 import { TooltipProvider } from '@web/ui/components/ui/tooltip'
 import { useEffect } from 'react'

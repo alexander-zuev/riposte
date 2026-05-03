@@ -1,6 +1,5 @@
 import Section from '@web/ui/components/layout/section'
-import { motion, useInView } from 'motion/react'
-import { useRef } from 'react'
+import { motion } from 'motion/react'
 
 import { SectionBadge } from './section-badge'
 
@@ -35,8 +34,8 @@ function EvidenceCard() {
   return (
     <div className="rounded-lg border border-border bg-background p-4 text-left text-xs">
       <div className="flex items-center gap-2">
-        <div className="h-2 w-2 rounded-full bg-accent-secondary" />
-        <span className="font-medium text-accent-secondary-muted-foreground">
+        <div className="bg-accent-secondary h-2 w-2 rounded-full" />
+        <span className="text-accent-secondary-muted-foreground font-medium">
           gathering evidence
         </span>
       </div>
@@ -123,12 +122,9 @@ const steps = [
 ]
 
 export function HowItWorksSection() {
-  const ref = useRef<HTMLDivElement>(null)
-  const isInView = useInView(ref, { once: true, margin: '-100px' })
-
   return (
     <Section>
-      <div ref={ref} className="container-max-w-6xl flex flex-col items-center">
+      <div className="container-max-w-6xl flex flex-col items-center">
         <SectionBadge>How it works</SectionBadge>
 
         <h2 className="text-display mt-4 text-center">Dispute comes in. Evidence goes out.</h2>
@@ -138,7 +134,8 @@ export function HowItWorksSection() {
             <motion.div
               key={step.number}
               initial={{ opacity: 0, y: 24 }}
-              animate={isInView ? { opacity: 1, y: 0 } : {}}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: '-100px' }}
               transition={{ delay: i * 0.2, duration: 0.5 }}
               className="flex flex-col rounded-lg border border-border bg-surface p-6"
             >
@@ -158,7 +155,8 @@ export function HowItWorksSection() {
 
         <motion.p
           initial={{ opacity: 0 }}
-          animate={isInView ? { opacity: 1 } : {}}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true, margin: '-100px' }}
           transition={{ delay: 0.8, duration: 0.5 }}
           className="mt-16 text-center text-sm text-muted-foreground"
         >

@@ -1,6 +1,5 @@
 import Section from '@web/ui/components/layout/section'
-import { motion, useInView } from 'motion/react'
-import { useRef } from 'react'
+import { motion } from 'motion/react'
 
 import { AnimatedCounter } from './animated-counter'
 import { SectionBadge } from './section-badge'
@@ -27,12 +26,9 @@ const costs = [
 ]
 
 export function ProblemSection() {
-  const ref = useRef<HTMLDivElement>(null)
-  const isInView = useInView(ref, { once: true, margin: '-100px' })
-
   return (
     <Section background="panel">
-      <div ref={ref} className="container-max-w-6xl flex flex-col items-center">
+      <div className="container-max-w-6xl flex flex-col items-center">
         <SectionBadge>The cost of doing nothing</SectionBadge>
 
         <h2 className="text-display mt-4 text-center">Every dispute has a price</h2>
@@ -42,7 +38,8 @@ export function ProblemSection() {
             <motion.div
               key={cost.label}
               initial={{ opacity: 0, y: 20 }}
-              animate={isInView ? { opacity: 1, y: 0 } : {}}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: '-100px' }}
               transition={{ delay: i * 0.15, duration: 0.5 }}
               className="flex flex-col items-center text-center"
             >
@@ -57,7 +54,8 @@ export function ProblemSection() {
 
         <motion.p
           initial={{ opacity: 0 }}
-          animate={isInView ? { opacity: 1 } : {}}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true, margin: '-100px' }}
           transition={{ delay: 0.6, duration: 0.5 }}
           className="mt-16 max-w-2xl text-center text-muted-foreground"
         >

@@ -1,9 +1,8 @@
 import type { IconWeight } from '@phosphor-icons/react'
 import { Pulse, Target, FileText, Lightning } from '@phosphor-icons/react'
 import Section from '@web/ui/components/layout/section'
-import { motion, useInView } from 'motion/react'
+import { motion } from 'motion/react'
 import type { ComponentType, ReactNode } from 'react'
-import { useRef } from 'react'
 
 import { SectionBadge } from './section-badge'
 
@@ -141,12 +140,9 @@ const features: Array<{
 ]
 
 export function FeaturesSection() {
-  const ref = useRef<HTMLDivElement>(null)
-  const isInView = useInView(ref, { once: true, margin: '-100px' })
-
   return (
     <Section background="panel">
-      <div ref={ref} className="container-max-w-6xl flex flex-col items-center">
+      <div className="container-max-w-6xl flex flex-col items-center">
         <SectionBadge>Features</SectionBadge>
 
         <h2 className="text-display mt-4 text-center">Everything you need to win</h2>
@@ -156,7 +152,8 @@ export function FeaturesSection() {
             <motion.div
               key={feature.title}
               initial={{ opacity: 0, y: 20 }}
-              animate={isInView ? { opacity: 1, y: 0 } : {}}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: '-100px' }}
               transition={{ delay: i * 0.12, duration: 0.4 }}
               className="rounded-lg border border-border bg-background p-6"
             >

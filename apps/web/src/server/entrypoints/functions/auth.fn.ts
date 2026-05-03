@@ -1,10 +1,8 @@
-import { AuthenticationError } from '@riposte/core'
-import { createLogger } from '@riposte/core'
-import { getAuthInstance } from '@server/infrastructure/auth'
+import { AuthenticationError } from '@riposte/core/client'
+import { createLogger } from '@riposte/core/client'
+import { getAuthInstance } from '@server/infrastructure/auth/auth'
 import { createServerFn } from '@tanstack/react-start'
 import { getRequestHeaders } from '@tanstack/react-start/server'
-
-const logger = createLogger('auth-fn')
 
 export const getSession = createServerFn({ method: 'GET' }).handler(async () => {
   const headers = getRequestHeaders()
@@ -13,6 +11,7 @@ export const getSession = createServerFn({ method: 'GET' }).handler(async () => 
 })
 
 export const ensureSession = createServerFn({ method: 'GET' }).handler(async () => {
+  const logger = createLogger('auth-fn')
   try {
     const headers = getRequestHeaders()
     const auth = getAuthInstance()

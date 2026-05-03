@@ -1,5 +1,6 @@
-import type { Theme } from '@web/server/entrypoints/functions/theme.fn'
 import type { PropsWithChildren } from 'react'
+
+type Theme = 'light'
 import { createContext, use, useMemo } from 'react'
 
 interface ThemeContextVal {

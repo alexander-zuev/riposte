@@ -67,12 +67,12 @@ const lines: Array<{ id: string; text: string; indent?: number; color?: string }
 
 export function TerminalDemo() {
   const ref = useRef<HTMLDivElement>(null)
-  const isInView = useInView(ref, { once: true, margin: '-100px' })
+  const isInView = useInView(ref, { once: true, margin: '-50px' })
 
   return (
     <div
       ref={ref}
-      className="mx-auto w-full max-w-3xl overflow-hidden rounded-lg border border-border shadow-[0_0_60px_-12px_var(--lime-a5)]"
+      className="mx-auto w-full max-w-3xl overflow-hidden rounded-lg border border-border"
     >
       <div className="flex items-center gap-2 border-b border-border bg-surface px-4 py-2.5">
         <div className="flex gap-1.5">
@@ -94,7 +94,7 @@ export function TerminalDemo() {
             <motion.div
               key={line.id}
               initial={{ opacity: 0 }}
-              animate={isInView ? { opacity: 1 } : { opacity: 0 }}
+              animate={isInView ? { opacity: 1 } : undefined}
               transition={{ delay: i * 0.12, duration: 0.3 }}
               className={line.color ?? 'text-foreground'}
               style={{ paddingLeft: `${indent}rem` }}
@@ -106,7 +106,7 @@ export function TerminalDemo() {
 
         <motion.span
           initial={{ opacity: 0 }}
-          animate={isInView ? { opacity: [0, 1, 0] } : { opacity: 0 }}
+          animate={isInView ? { opacity: [0, 1, 0] } : undefined}
           transition={{
             delay: lines.length * 0.12,
             duration: 1,

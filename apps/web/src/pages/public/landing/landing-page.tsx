@@ -1,25 +1,19 @@
 import { PageShell } from '@web/ui/components/layout/page/page-shell'
 
 import { CtaSection } from './components/cta-section'
-import { FaqSection } from './components/faq-section'
-import { FeaturesSection } from './components/features-section'
-import { FounderSection } from './components/founder-section'
+import { Footer } from './components/footer'
 import { HeroSection } from './components/hero-section'
-import { HowItWorksSection } from './components/how-it-works-section'
-import { ProblemSection } from './components/problem-section'
+import { ScrollStage } from './components/scroll-show/scroll-stage'
 import { TrustSection } from './components/trust-section'
 
 export function LandingPage() {
   return (
     <PageShell width="none" frame="none">
       <HeroSection />
-      <ProblemSection />
-      <HowItWorksSection />
-      <FeaturesSection />
+      <ScrollStage />
       <TrustSection />
-      <FounderSection />
-      <FaqSection />
       <CtaSection />
+      <Footer />
     </PageShell>
   )
 }

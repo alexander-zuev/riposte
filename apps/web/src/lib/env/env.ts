@@ -43,8 +43,8 @@ export const settings = {
 
   posthog: {
     apiKey: env.VITE_PUBLIC_POSTHOG_KEY,
-    apiHost: 'https://us.i.posthog.com',
+    apiHost: '/api/relay',
     uiHost: 'https://us.posthog.com',
-    enabled: env.MODE !== 'development',
+    enabled: true, // TODO: revert to env.MODE !== 'development'
   },
 }

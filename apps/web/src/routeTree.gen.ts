@@ -8,14 +8,14 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from './../../routes/__root'
-import { Route as PublicRouteRouteImport } from './../../routes/_public/route'
-import { Route as PublicIndexRouteImport } from './../../routes/_public/index'
-import { Route as PublicTermsRouteImport } from './../../routes/_public/terms'
-import { Route as PublicSignInRouteImport } from './../../routes/_public/sign-in'
-import { Route as PublicPrivacyRouteImport } from './../../routes/_public/privacy'
-import { Route as ApiRelaySplatRouteImport } from './../../routes/api/relay/$'
-import { Route as ApiAuthSplatRouteImport } from './../../routes/api/auth/$'
+import { Route as rootRouteImport } from './routes/__root'
+import { Route as PublicRouteRouteImport } from './routes/_public/route'
+import { Route as PublicIndexRouteImport } from './routes/_public/index'
+import { Route as PublicTermsRouteImport } from './routes/_public/terms'
+import { Route as PublicSignInRouteImport } from './routes/_public/sign-in'
+import { Route as PublicPrivacyRouteImport } from './routes/_public/privacy'
+import { Route as ApiRelaySplatRouteImport } from './routes/api/relay/$'
+import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
 const PublicRouteRoute = PublicRouteRouteImport.update({
   id: '/_public',
@@ -186,13 +186,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from '../../start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

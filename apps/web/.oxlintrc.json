@@ -35,7 +35,8 @@
     "react/jsx-filename-extension": "off",
     "react/only-export-components": "off",
     "jsx-a11y/no-autofocus": "off",
-    "unicorn/no-instanceof-builtins": "off"
+    "unicorn/no-instanceof-builtins": "off",
+    "no-optional-chaining": "off"
   },
   "overrides": [
     {
@@ -62,7 +63,6 @@
         "react-perf/jsx-no-jsx-as-prop": "off",
         "react-perf/jsx-no-new-object-as-prop": "off",
         "react-perf/jsx-no-new-function-as-prop": "off",
-        "no-optional-chaining": "off",
         "no-unsafe-type-assertion": "off",
         "no-underscore-dangle": "off",
         "no-restricted-imports": "off"

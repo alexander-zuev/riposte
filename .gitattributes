@@ -1,2 +1,8 @@
 * text=auto eol=lf
 *.{cmd,bat} text eol=crlf
+
+# Encrypted test files (git-crypt)
+**/test/** filter=git-crypt diff=git-crypt
+**/*.test.ts filter=git-crypt diff=git-crypt
+**/*.test.tsx filter=git-crypt diff=git-crypt
+**/vitest.config.ts filter=git-crypt diff=git-crypt

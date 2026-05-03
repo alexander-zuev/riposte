@@ -348,8 +348,6 @@
         "POSTHOG_API_KEY": "phc_nYQ6Wm37RsonpnciM4CkjVaFtgQwU3XBBducMjZTfA4K",
         "GOOGLE_CLIENT_ID": "189119872614-dmtnkqeoibjubc0frpkms8sptbn9j2h0.apps.googleusercontent.com",
         "GITHUB_CLIENT_ID": "Ov23litSGfhKN1kOckGN",
-        "STRIPE_SECRET_KEY": "",
-        "STRIPE_WEBHOOK_SECRET": "",
       },
       "secrets": {
         "required": [
@@ -357,8 +355,8 @@
           "GOOGLE_CLIENT_SECRET",
           "GITHUB_CLIENT_SECRET",
           "TURNSTILE_SECRET_KEY",
-          // "STRIPE_SECRET_KEY",
-          // "STRIPE_WEBHOOK_SECRET",
+          "STRIPE_SECRET_KEY",
+          "STRIPE_WEBHOOK_SECRET",
         ],
       },
       "routes": [

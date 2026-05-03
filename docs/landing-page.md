@@ -18,9 +18,10 @@ After the show: minimal closing sections to convert.
 ### Technical Approach
 
 - `position: sticky` container inside a tall scroll runway (~500vh)
+- **Lenis** for smooth scrolling (buttery interpolated scroll, used by Cora and most top-tier scroll sites)
 - `useScroll` + `useTransform` from `motion/react` drive all animations
 - Each act maps to a scroll progress range (0→1)
-- No external animation libraries needed — motion v12 handles everything
+- No external animation libraries beyond motion v12 + Lenis
 
 ```
 ┌──────────────────────────────────────────┐
@@ -406,3 +407,49 @@ Two cards side by side.
 - [ ] Alexander's photo for founder section (removed from v2 — consider adding back later)
 - [ ] og:image for social sharing (screenshot of the evidence document from Act 3)
 - [ ] Mobile scroll testing
+
+---
+
+## Reference: Cora (cora.computer) Landing Page Analysis
+
+Every's email AI agent. Best-in-class scroll-driven narrative landing page.
+
+### Their Stack
+- **Next.js** (App Router + RSC) + **Tailwind** + **CSS Modules**
+- **Lenis** for smooth scrolling
+- **Custom JS** (rAF + scroll position → transforms) — no GSAP, no Framer Motion
+- One giant **illustrated background** (`background.webp`, 1256×10874px) with scroll-driven `translateY` parallax
+- Cloud overlay images at different parallax speeds for depth
+- `split-text-module` for text reveal animations
+- `frame-sequence-module` for product demo animations
+
+### Their Scroll Architecture
+```
+[hero - 100vh]
+[feature 1 wrapper - ~300vh]  →  sticky child pins, shows "Cora screens your email"
+[feature 2 wrapper - ~300vh]  →  sticky child pins, shows "Cora drafts responses"
+[feature 3 wrapper - ~300vh]  →  sticky child pins, shows "Cora briefs you"
+[feature 4 wrapper - ~300vh]  →  sticky child pins, shows "Cora learns"
+[trust + pricing + cta]
+```
+Multiple independent sticky sections. Each feature is its own scroll runway.
+
+### Riposte vs Cora — Approach Comparison
+
+| | **Riposte** | **Cora** |
+|---|---|---|
+| **Metaphor** | Theater — one stage, five acts | Painting — scroll through a landscape |
+| **Background** | Dark canvas (system-themed) | One 10,000px illustrated painting |
+| **Scroll structure** | Single 500vh sticky runway | Multiple ~300vh sticky sections |
+| **Animation driver** | `motion/react` (useScroll + useTransform) | Lenis + custom rAF → CSS transforms |
+| **Smooth scroll** | None (native) | Lenis |
+| **Content** | One narrative (a real dispute, start to finish) | Feature showcase (4 independent features) |
+| **Emotional hook** | Tension → resolution (storytelling) | Warmth → calm (illustrated world) |
+| **Art investment** | Low (data-driven visuals, code-generated) | High (commissioned illustration) |
+| **Complexity** | Higher (choreographed 5-act sequence) | Lower (each section independent) |
+
+### Key Takeaways
+1. **Lenis is the right call** for smooth scrolling — adopt it for Riposte
+2. Riposte's single-stage theater approach is more ambitious but also more compelling for our use case (showing a complete workflow end-to-end)
+3. Cora's approach is easier to build — independent sections can be developed/tested in isolation
+4. The illustrated background is Cora's secret weapon — Riposte's dark data-driven stage is a different but valid vibe

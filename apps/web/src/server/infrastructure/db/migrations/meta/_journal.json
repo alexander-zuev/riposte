@@ -15,6 +15,13 @@
       "when": 1777708520901,
       "tag": "0001_talented_bucky",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1777825508001,
+      "tag": "0002_unknown_scarlet_witch",
+      "breakpoints": true
     }
   ]
 }

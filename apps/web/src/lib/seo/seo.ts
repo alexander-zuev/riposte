@@ -12,9 +12,9 @@ export type RoutePath = {
 
 export const CANONICAL_ORIGIN = 'https://riposte.sh'
 export const SITE_NAME = 'Riposte'
-export const DEFAULT_TITLE = 'Riposte | AI Agent That Wins Your Stripe Disputes'
+export const DEFAULT_TITLE = 'Riposte — Fight and Win Stripe Disputes on Autopilot'
 export const DEFAULT_DESCRIPTION =
-  'Open-source AI agent that fights Stripe chargebacks on autopilot. Builds evidence cases from your actual app data and submits in under 60 seconds.'
+  'Turns your app data — sessions, logins, usage history — into chargeback evidence 10x stronger than Stripe alone. Webhook in, evidence out. Open-source.'
 export const DEFAULT_OG_IMAGE = `${CANONICAL_ORIGIN}/og-image.png`
 export const DEFAULT_OG_IMAGE_ALT = 'Riposte — AI-powered chargeback defense agent'
 export const THEME_COLOR = '#0C0A09'

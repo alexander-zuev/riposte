@@ -1,4 +1,6 @@
 import type { StorybookConfig } from '@storybook/react-vite'
+import { tanstackStartPlugin } from 'storybook-addon-tanstack-start/plugin'
+import { mergeConfig } from 'vite'
 
 const config: StorybookConfig = {
   stories: ['./**/*.stories.@(js|jsx|mjs|ts|tsx)', '../src/**/*.stories.@(js|jsx|mjs|ts|tsx)'],
@@ -14,6 +16,11 @@ const config: StorybookConfig = {
   },
   core: {
     disableTelemetry: true,
+  },
+  async viteFinal(config) {
+    return mergeConfig(config, {
+      plugins: [tanstackStartPlugin()],
+    })
   },
 }
 

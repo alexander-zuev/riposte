@@ -23,7 +23,7 @@ vi.mock('cloudflare:workers', () => mockCloudflareWorkersModule())
 import { OutboxRelayDO } from '@server/infrastructure/durable-objects/outbox-relay-do'
 
 describe.sequential('OutboxRelayDO', () => {
-  let dobj: OutboxRelayDO
+  let dobj: InstanceType<typeof OutboxRelayDO>
   let env: Env
 
   beforeEach(() => {

@@ -1,4 +1,47 @@
 /*
- * Shadow Design System
- * Dark theme: use surface elevation + borders for separation, not shadows.
+ * Shadow system — Radix Themes 6-step scale (light theme only)
+ * Source: https://github.com/radix-ui/themes/blob/main/packages/radix-ui-themes/src/styles/tokens/shadow.css
+ *
+ * Uses gray-alpha + black-alpha for neutral shadows against warm sand surfaces.
+ *
+ * Mapping:
+ *   shadow-inset → Radix 1 (input fields)
+ *   shadow-sm    → Radix 2 (subtle card elevation)
+ *   shadow       → Radix 3 (card classic)
+ *   shadow-md    → Radix 4 (popovers, dropdowns, selects)
+ *   shadow-lg    → Radix 5 (hover cards, larger floating)
+ *   shadow-xl    → Radix 6 (dialogs, sheets)
  */
+
+:root {
+  --shadow-1:
+    inset 0 0 0 1px var(--gray-a5), inset 0 1.5px 2px 0 var(--gray-a2),
+    inset 0 1.5px 2px 0 var(--black-a2);
+
+  --shadow-2:
+    0 0 0 1px var(--gray-a3), 0 0 0 0.5px var(--black-a1), 0 1px 1px 0 var(--gray-a2),
+    0 2px 1px -1px var(--black-a1), 0 1px 3px 0 var(--black-a1);
+
+  --shadow-3:
+    0 0 0 1px var(--gray-a3), 0 2px 3px -2px var(--gray-a3), 0 3px 12px -4px var(--black-a2),
+    0 4px 16px -8px var(--black-a2);
+
+  --shadow-4:
+    0 0 0 1px var(--gray-a3), 0 8px 40px var(--black-a1), 0 12px 32px -16px var(--gray-a3);
+
+  --shadow-5:
+    0 0 0 1px var(--gray-a3), 0 12px 60px var(--black-a3), 0 12px 32px -16px var(--gray-a5);
+
+  --shadow-6:
+    0 0 0 1px var(--gray-a3), 0 12px 60px var(--black-a3), 0 16px 64px var(--gray-a2),
+    0 16px 36px -20px var(--gray-a7);
+}
+
+@theme inline {
+  --shadow-inset: var(--shadow-1);
+  --shadow-sm: var(--shadow-2);
+  --shadow: var(--shadow-3);
+  --shadow-md: var(--shadow-4);
+  --shadow-lg: var(--shadow-5);
+  --shadow-xl: var(--shadow-6);
+}

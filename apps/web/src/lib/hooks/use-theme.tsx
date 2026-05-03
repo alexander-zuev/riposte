@@ -1,34 +1,15 @@
-import { rootRouteId, useRouter } from '@tanstack/react-router'
 import type { Theme } from '@web/server/entrypoints/functions/theme.fn'
-import { setThemeServerFn } from '@web/server/entrypoints/functions/theme.fn'
 import type { PropsWithChildren } from 'react'
-import { createContext, use, useCallback, useMemo } from 'react'
+import { createContext, use, useMemo } from 'react'
 
 interface ThemeContextVal {
   theme: Theme
-  setTheme: (val: Theme) => void
 }
 
 const ThemeContext = createContext<ThemeContextVal | null>(null)
 
-export function ThemeProvider({ children, theme }: PropsWithChildren<{ theme: Theme }>) {
-  const router = useRouter()
-
-  const setTheme = useCallback(
-    (val: Theme) => {
-      setThemeServerFn({ data: val })
-        .then(async () =>
-          router.invalidate({
-            filter: (match) => match.id === rootRouteId,
-          }),
-        )
-        .catch(() => {})
-    },
-    [router],
-  )
-
-  const value = useMemo(() => ({ theme, setTheme }), [theme, setTheme])
-
+export function ThemeProvider({ children }: PropsWithChildren) {
+  const value = useMemo<ThemeContextVal>(() => ({ theme: 'light' }), [])
   return <ThemeContext value={value}>{children}</ThemeContext>
 }
 

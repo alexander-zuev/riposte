@@ -1,4 +1,5 @@
-import type { Preview } from '@storybook/react-vite'
+import { withThemeByClassName } from '@storybook/addon-themes'
+import type { Preview, ReactRenderer } from '@storybook/react-vite'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import {
   createMemoryHistory,
@@ -30,14 +31,13 @@ function RenderStory() {
 
 const storyPath = '/__story__'
 const rootRoute = createRootRoute()
-const storyRoutes = [
+rootRoute.addChildren([
   createRoute({
     path: storyPath,
     getParentRoute: () => rootRoute,
     component: RenderStory,
   }),
-]
-rootRoute.addChildren(storyRoutes)
+])
 
 const storyRouter = createRouter({
   history: createMemoryHistory({ initialEntries: [storyPath] }),
@@ -55,6 +55,10 @@ const preview: Preview = {
     backgrounds: { disable: true },
   },
   decorators: [
+    withThemeByClassName<ReactRenderer>({
+      themes: { light: 'light', dark: 'dark' },
+      defaultTheme: 'light',
+    }),
     (Story) => (
       <StoryContext.Provider value={() => <Story />}>
         <RouterProvider router={storyRouter} />

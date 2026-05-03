@@ -1,3 +1,4 @@
+@import '@fontsource-variable/inter';
 @import '@fontsource-variable/jetbrains-mono';
 @import 'tailwindcss';
 @import 'tw-animate-css';
@@ -9,22 +10,18 @@
 
 @tailwind utilities;
 
-@custom-variant dark (&:is(.dark *));
+/* Light-only. Uncomment + restore dark Radix imports in colors.css to re-enable. */
+/* @custom-variant dark (&:is(.dark *)); */
 
 :root {
+  color-scheme: light;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-.dark {
-  color-scheme: dark;
-}
-
-.light {
-  color-scheme: light;
-}
+/* .dark { color-scheme: dark; } */
 
 html.landing-lenis {
   scroll-behavior: auto;

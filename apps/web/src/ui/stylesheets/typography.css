@@ -291,6 +291,7 @@
   /* Links */
   a {
     font-weight: var(--font-weight-medium);
+    text-decoration-line: none;
     text-decoration-thickness: 1px;
     text-underline-offset: 0.3em;
     transition:

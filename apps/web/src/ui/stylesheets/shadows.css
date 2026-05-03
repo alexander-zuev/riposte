@@ -2,7 +2,7 @@
  * Shadow system — Radix Themes 6-step scale (light theme only)
  * Source: https://github.com/radix-ui/themes/blob/main/packages/radix-ui-themes/src/styles/tokens/shadow.css
  *
- * Uses gray-alpha + black-alpha for neutral shadows against warm sand surfaces.
+ * Uses gray-alpha + black-alpha for neutral shadows against gray surfaces.
  *
  * Mapping:
  *   shadow-inset → Radix 1 (input fields)

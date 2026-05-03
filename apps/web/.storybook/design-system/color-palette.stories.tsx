@@ -36,27 +36,27 @@ export const SurfaceHierarchy: Story = {
       <div className="border-2 border-dashed border-border bg-background p-6">
         <div className="mb-1 flex items-center gap-2">
           <code className="text-xs text-muted-foreground">--background</code>
-          <span className="text-xs text-muted-foreground">sand-1 · body, main canvas, dialogs</span>
+          <span className="text-xs text-muted-foreground">gray-1 · body, main canvas, dialogs</span>
         </div>
 
         <div className="mt-4 border bg-surface p-6 shadow-sm">
           <div className="mb-1 flex items-center gap-2">
             <code className="text-xs text-muted-foreground">--surface</code>
-            <span className="text-xs text-muted-foreground">sand-2 · cards, sidebar, panels</span>
+            <span className="text-xs text-muted-foreground">gray-2 · cards, sidebar, panels</span>
           </div>
 
           <div className="mt-4 flex gap-3">
             <div className="border bg-muted px-3 py-2">
               <code className="text-xs text-muted-foreground">--muted</code>
-              <span className="ml-2 text-xs text-muted-foreground">sand-3</span>
+              <span className="ml-2 text-xs text-muted-foreground">gray-3</span>
             </div>
             <div className="border bg-surface-hover px-3 py-2">
               <code className="text-xs text-muted-foreground">--surface-hover</code>
-              <span className="ml-2 text-xs text-muted-foreground">sand-4</span>
+              <span className="ml-2 text-xs text-muted-foreground">gray-4</span>
             </div>
             <div className="border bg-surface-active px-3 py-2">
               <code className="text-xs text-muted-foreground">--surface-active</code>
-              <span className="ml-2 text-xs text-muted-foreground">sand-5</span>
+              <span className="ml-2 text-xs text-muted-foreground">gray-5</span>
             </div>
           </div>
 
@@ -64,7 +64,7 @@ export const SurfaceHierarchy: Story = {
             <div className="flex items-center gap-2">
               <code className="text-xs text-muted-foreground">--popover</code>
               <span className="text-xs text-muted-foreground">
-                sand-2 + shadow · dropdowns, tooltips
+                gray-2 + shadow · dropdowns, tooltips
               </span>
             </div>
           </div>
@@ -186,16 +186,16 @@ export const SemanticColors: Story = {
         </div>
       </div>
 
-      {/* Accent — amber, used sparingly */}
+      {/* Accent — lime, used sparingly */}
       <div>
         <h6 className="mb-3 text-muted-foreground">
-          Accent (amber) — evidence highlights, primary emphasis
+          Accent (lime) — evidence highlights, primary emphasis
         </h6>
         <div className="grid grid-cols-4 gap-2 md:max-w-md">
-          <Token name="Solid" token="amber-9" className="bg-accent" />
-          <Token name="Hover" token="amber-10" className="bg-accent-hover" />
-          <Token name="Muted" token="amber-3" className="bg-accent-muted" />
-          <Token name="Active" token="amber-7" className="bg-accent-active" />
+          <Token name="Solid" token="lime-9" className="bg-accent" />
+          <Token name="Hover" token="lime-10" className="bg-accent-hover" />
+          <Token name="Muted" token="lime-3" className="bg-accent-muted" />
+          <Token name="Active" token="lime-7" className="bg-accent-active" />
         </div>
       </div>
 
@@ -206,10 +206,10 @@ export const SemanticColors: Story = {
         </h6>
         <div className="flex gap-2">
           {[
-            { name: 'blue-9', cls: 'bg-chart-1' },
+            { name: 'lime-9', cls: 'bg-chart-1' },
             { name: 'amber-9', cls: 'bg-chart-2' },
             { name: 'green-9', cls: 'bg-chart-3' },
-            { name: 'sand-9', cls: 'bg-chart-4' },
+            { name: 'gray-9', cls: 'bg-chart-4' },
             { name: 'red-9', cls: 'bg-chart-5' },
           ].map((c) => (
             <div key={c.name} className="flex flex-col items-center gap-1">
@@ -233,20 +233,20 @@ export const BordersAndStates: Story = {
           <div className="h-12 border-2 border-border-non-interactive bg-background" />
           <code className="text-xs">border-non-interactive</code>
           <small className="block text-muted-foreground">
-            sand-6 · card edges, dividers, separators
+            gray-6 · card edges, dividers, separators
           </small>
         </div>
         <div className="space-y-2">
           <div className="h-12 border-2 border-border-interactive bg-background" />
           <code className="text-xs">border-interactive</code>
           <small className="block text-muted-foreground">
-            sand-7 · input borders, clickable elements
+            gray-7 · input borders, clickable elements
           </small>
         </div>
         <div className="space-y-2">
           <div className="h-12 border-2 border-border-interactive-strong bg-background" />
           <code className="text-xs">border-interactive-strong</code>
-          <small className="block text-muted-foreground">sand-8 · focus, hover borders</small>
+          <small className="block text-muted-foreground">gray-8 · focus, hover borders</small>
         </div>
       </div>
 
@@ -278,12 +278,12 @@ export const BordersAndStates: Story = {
           <div className="space-y-1">
             <label className="text-xs font-medium">API key</label>
             <Input placeholder="sk_live_..." />
-            <small className="text-muted-foreground">sand-7 default border</small>
+            <small className="text-muted-foreground">gray-7 default border</small>
           </div>
           <div className="space-y-1">
             <label className="text-xs font-medium">Webhook secret</label>
             <Input placeholder="whsec_..." className="border-ring ring-1 ring-ring" />
-            <small className="text-muted-foreground">ring-ring (amber-a8) · focus state</small>
+            <small className="text-muted-foreground">ring-ring (lime-a8) · focus state</small>
           </div>
           <div className="space-y-1">
             <label className="text-xs font-medium">Invalid key</label>
@@ -340,9 +340,9 @@ export const TextForegrounds: Story = {
         </CardContent>
         <CardFooter className="text-xs text-muted-foreground">
           <code className="text-xs">foreground</code>
-          <span className="mx-1">= sand-12 ·</span>
+          <span className="mx-1">= gray-12 ·</span>
           <code className="text-xs">muted-foreground</code>
-          <span className="mx-1">= sand-11</span>
+          <span className="mx-1">= gray-11</span>
         </CardFooter>
       </Card>
 
@@ -352,19 +352,19 @@ export const TextForegrounds: Story = {
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           <div className="bg-accent p-4">
             <h6 className="text-accent-foreground">Accent</h6>
-            <small className="text-accent-foreground-low-contrast">sand-12 on amber-9</small>
+            <small className="text-accent-foreground-low-contrast">gray-12 on lime-9</small>
           </div>
           <div className="bg-success p-4">
             <h6 className="text-success-foreground">Success</h6>
-            <small className="text-success-foreground-low-contrast">sand-1 on green-9</small>
+            <small className="text-success-foreground-low-contrast">gray-1 on green-9</small>
           </div>
           <div className="bg-destructive p-4">
             <h6 className="text-destructive-foreground">Destructive</h6>
-            <small className="text-destructive-foreground-low-contrast">sand-1 on red-9</small>
+            <small className="text-destructive-foreground-low-contrast">gray-1 on red-9</small>
           </div>
           <div className="bg-info p-4">
             <h6 className="text-info-foreground">Info</h6>
-            <small className="text-info-foreground-low-contrast">sand-1 on blue-9</small>
+            <small className="text-info-foreground-low-contrast">gray-1 on blue-9</small>
           </div>
         </div>
       </div>

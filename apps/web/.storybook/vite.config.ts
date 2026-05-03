@@ -1,7 +1,16 @@
+import { createRequire } from 'node:module'
+import path from 'node:path'
+
 import babel from '@rolldown/plugin-babel'
 import tailwindcss from '@tailwindcss/vite'
 import react, { reactCompilerPreset } from '@vitejs/plugin-react'
 import { defineConfig, type Plugin } from 'vite'
+
+const require = createRequire(import.meta.url)
+const startStubs = path.resolve(
+  path.dirname(require.resolve('storybook-addon-tanstack-start/plugin')),
+  'mocks/start-stubs.mjs',
+)
 
 function mockPlatformModules(): Plugin {
   const mocks: Record<string, string> = {
@@ -50,6 +59,9 @@ export default defineConfig({
   },
   resolve: {
     tsconfigPaths: true,
+    alias: {
+      '@tanstack/react-start/server': startStubs,
+    },
   },
   optimizeDeps: {
     include: ['@tanstack/react-router', 'use-sync-external-store/shim/with-selector'],

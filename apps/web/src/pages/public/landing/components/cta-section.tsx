@@ -14,7 +14,7 @@ export function CtaSection() {
             </p>
             <a
               href="/sign-in"
-              className="mt-6 inline-flex items-center justify-center rounded-md bg-accent px-5 py-2.5 font-medium text-accent-foreground no-underline shadow-[0_0_24px_-4px_var(--amber-a5)] transition-colors hover:bg-accent-hover hover:no-underline"
+              className="mt-6 inline-flex items-center justify-center rounded-md bg-accent px-5 py-2.5 font-medium text-accent-foreground no-underline shadow-[0_0_24px_-4px_var(--lime-a5)] transition-colors hover:bg-accent-hover hover:no-underline"
             >
               Get Started Free
             </a>

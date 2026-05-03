@@ -19,7 +19,11 @@ const config: StorybookConfig = {
   },
   async viteFinal(config) {
     return mergeConfig(config, {
-      plugins: [tanstackStartPlugin()],
+      plugins: [
+        tanstackStartPlugin({
+          additionalServerModules: ['@tanstack/react-start/server'],
+        }),
+      ],
     })
   },
 }

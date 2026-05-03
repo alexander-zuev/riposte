@@ -72,7 +72,7 @@ export function TerminalDemo() {
   return (
     <div
       ref={ref}
-      className="mx-auto w-full max-w-3xl overflow-hidden rounded-lg border border-border shadow-[0_0_60px_-12px_var(--amber-a5)]"
+      className="mx-auto w-full max-w-3xl overflow-hidden rounded-lg border border-border shadow-[0_0_60px_-12px_var(--lime-a5)]"
     >
       <div className="flex items-center gap-2 border-b border-border bg-surface px-4 py-2.5">
         <div className="flex gap-1.5">

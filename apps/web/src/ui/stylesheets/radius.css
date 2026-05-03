@@ -23,7 +23,7 @@
 
 /* === TAILWIND + SHADCN MAPPING === */
 :root {
-  --radius: var(--radius-5); /* Shadcn base token — bumped to lg (12px) */
+  --radius: var(--radius-6); /* Shadcn base token — bumped to xl (16px) */
 }
 
 @theme inline {

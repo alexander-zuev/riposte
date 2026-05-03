@@ -19,7 +19,7 @@ export function HeroSection() {
         <div className="mt-8">
           <a
             href="/sign-in"
-            className="inline-flex items-center rounded-md bg-accent px-6 py-3 font-medium text-accent-foreground no-underline shadow-[0_0_24px_-4px_var(--amber-a5)] transition-colors hover:bg-accent-hover hover:no-underline"
+            className="inline-flex items-center rounded-md bg-accent px-6 py-3 font-medium text-accent-foreground no-underline shadow-[0_0_24px_-4px_var(--lime-a5)] transition-colors hover:bg-accent-hover hover:no-underline"
           >
             Get Started Free
           </a>

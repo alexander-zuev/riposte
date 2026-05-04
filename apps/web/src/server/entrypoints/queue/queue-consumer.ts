@@ -3,7 +3,7 @@ import { createLogger, queueMessageSchema, ValidationError } from '@riposte/core
 import * as Sentry from '@sentry/cloudflare'
 import { MessageBus } from '@server/application/message-bus/message-bus'
 import type { IMessageBus } from '@server/application/message-bus/message-bus'
-import { isTaggedError, Result } from 'better-result'
+import { isPanic, isTaggedError, Result } from 'better-result'
 
 const logger = createLogger('queue-consumer')
 
@@ -34,14 +34,16 @@ export class QueueConsumer {
         }, this)
 
         if (result.isErr()) {
-          this.handleFailure(message, parsedMsg, result.error)
+          this.handleFailure(message, parsedMsg, result.error, {
+            retryUnknown: isPanic(result.error),
+          })
           return
         }
 
         message.ack()
         logger.info('processed', { name: result.value.name })
       } catch (error) {
-        this.handleFailure(message, parsedMsg, error)
+        this.handleFailure(message, parsedMsg, error, { retryUnknown: true })
       }
     })
   }
@@ -51,7 +53,11 @@ export class QueueConsumer {
     if (!parsed.success) {
       return Result.err(
         new ValidationError({
-          issues: parsed.error.issues,
+          issues: parsed.error.issues.map((i) => ({
+            code: i.code,
+            path: i.path.map((p) => (typeof p === 'symbol' ? String(p) : p)),
+            message: i.message,
+          })),
           message: 'Invalid queue message format',
         }),
       )
@@ -60,8 +66,16 @@ export class QueueConsumer {
     return Result.ok(parsed.data)
   }
 
-  private handleFailure(message: Message, msg: DomainMessage | undefined, error: unknown): void {
-    const retryable = isTaggedError(error) && 'retryable' in error && error.retryable === true
+  private handleFailure(
+    message: Message,
+    msg: DomainMessage | undefined,
+    error: unknown,
+    options?: { retryUnknown?: boolean },
+  ): void {
+    const panicRetryable = isPanic(error)
+    const taggedRetryable = isTaggedError(error) && 'retryable' in error && error.retryable === true
+    const unknownRetryable = options?.retryUnknown === true && !isTaggedError(error)
+    const retryable = panicRetryable || taggedRetryable || unknownRetryable
 
     if (!retryable || message.attempts >= QueueConsumer.MAX_ATTEMPTS) {
       logger.error('dlq', {

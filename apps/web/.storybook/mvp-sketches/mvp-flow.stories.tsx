@@ -2,93 +2,110 @@ import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useMemo, useReducer, useState } from 'react'
 
 const meta: Meta = {
-  title: 'MVP Sketches/Automated Dispute Agent',
+  title: 'MVP Sketches/Riposte Founder Journey',
   parameters: { layout: 'fullscreen' },
 }
 export default meta
 type Story = StoryObj
 
-type ConnectorStatus = 'not_connected' | 'validating' | 'connected' | 'expired' | 'failed'
-type CaseStatus =
-  | 'received'
-  | 'investigating'
-  | 'evidence_ready'
-  | 'submitted'
-  | 'waiting'
-  | 'won'
-  | 'lost'
-  | 'failed'
+type AccessStatus = 'empty' | 'checking' | 'ready' | 'broken' | 'optional'
+type TestStatus = 'not_run' | 'running' | 'passed' | 'failed'
+type AutopilotStatus = 'off' | 'payment_required' | 'live' | 'paused'
+type CaseStatus = 'new' | 'investigating' | 'submitted' | 'waiting' | 'won' | 'lost' | 'blocked'
 
-type Connector = {
-  id: string
-  label: string
+type AccessItem = {
+  id: 'stripe' | 'database' | 'evidence' | 'policies' | 'notifications' | 'billing'
+  title: string
+  why: string
   scope: string
-  status: ConnectorStatus
-  lastRefresh: string
-  nextRefresh: string
+  status: AccessStatus
+  required: boolean
 }
 
-type DisputeCase = {
+type CaseItem = {
   id: string
   customer: string
   amount: string
   reason: string
   due: string
   status: CaseStatus
-  strength: number
+  evidence: number
 }
 
-type TimelineItem = {
-  time: string
-  title: string
-  detail: string
-  state: 'done' | 'active' | 'blocked' | 'pending'
+type SetupState = {
+  access: AccessItem[]
+  test: TestStatus
+  autopilot: AutopilotStatus
 }
 
-const initialConnectors: Connector[] = [
+type SetupAction =
+  | { type: 'connect'; id: AccessItem['id'] }
+  | { type: 'break'; id: AccessItem['id'] }
+  | { type: 'run-test' }
+  | { type: 'pass-test' }
+  | { type: 'fail-test' }
+  | { type: 'add-payment' }
+  | { type: 'enable-autopilot' }
+  | { type: 'pause-autopilot' }
+  | { type: 'reset' }
+
+const emptyAccess: AccessItem[] = [
   {
     id: 'stripe',
-    label: 'Stripe',
-    scope: 'disputes.read, disputes.write, customers.read, charges.read',
-    status: 'connected',
-    lastRefresh: '2 min ago',
-    nextRefresh: 'in 58 min',
+    title: 'Stripe',
+    why: 'Receive disputes, read charge/customer data, submit evidence.',
+    scope: 'Restricted key or OAuth: disputes, charges, customers.',
+    status: 'empty',
+    required: true,
   },
   {
     id: 'database',
-    label: 'Application database',
-    scope: 'read-only SQL role, customer/activity tables only',
-    status: 'connected',
-    lastRefresh: '4 min ago',
-    nextRefresh: 'in 26 min',
+    title: 'Read-only app data',
+    why: 'Find proof that the customer used the product.',
+    scope: 'Read-only SQL role. No writes, no schema changes.',
+    status: 'empty',
+    required: true,
   },
   {
-    id: 'storage',
-    label: 'Evidence storage',
-    scope: 'read-only screenshots, invoices, deliverables',
-    status: 'connected',
-    lastRefresh: '7 min ago',
-    nextRefresh: 'in 53 min',
+    id: 'evidence',
+    title: 'Evidence files',
+    why: 'Pull screenshots, invoices, generated outputs, course progress, exports.',
+    scope: 'Read-only storage bucket or signed file access.',
+    status: 'optional',
+    required: false,
   },
   {
-    id: 'slack',
-    label: 'Slack',
-    scope: 'post messages to #chargebacks',
-    status: 'connected',
-    lastRefresh: '12 min ago',
-    nextRefresh: 'in 18 min',
+    id: 'policies',
+    title: 'Product + policies',
+    why: 'Explain what was sold and what refund/cancellation terms applied.',
+    scope: 'Plain text + policy links/PDFs + checkout screenshot.',
+    status: 'empty',
+    required: true,
   },
   {
-    id: 'telegram',
-    label: 'Telegram',
-    scope: 'send bot messages to founder chat',
-    status: 'not_connected',
-    lastRefresh: 'never',
-    nextRefresh: 'after setup',
+    id: 'notifications',
+    title: 'Slack / Telegram',
+    why: 'Tell the founder when disputes are handled or automation breaks.',
+    scope: 'Post to one selected channel.',
+    status: 'empty',
+    required: true,
+  },
+  {
+    id: 'billing',
+    title: 'Payment method',
+    why: 'Required before Riposte can run on autopilot.',
+    scope: 'Stripe Billing customer + payment method.',
+    status: 'empty',
+    required: true,
   },
 ]
 
-const initialCases: DisputeCase[] = [
+const liveAccess: AccessItem[] = emptyAccess.map((item) => ({
+  ...item,
+  status: item.id === 'evidence' ? 'optional' : 'ready',
+}))
+
+const cases: CaseItem[] = [
   {
     id: 'dp_3Qx9Kl2m',
     customer: 'maria@acme.ai',
@@ -96,7 +113,7 @@ const initialCases: DisputeCase[] = [
     reason: 'fraudulent',
     due: 'May 12',
     status: 'submitted',
-    strength: 92,
+    evidence: 92,
   },
   {
     id: 'dp_7Rm4Np8v',
@@ -105,7 +122,7 @@ const initialCases: DisputeCase[] = [
     reason: 'product_not_received',
     due: 'May 14',
     status: 'investigating',
-    strength: 74,
+    evidence: 74,
   },
   {
     id: 'dp_2Wf6Bt3j',
@@ -114,75 +131,142 @@ const initialCases: DisputeCase[] = [
     reason: 'subscription_canceled',
     due: 'May 18',
     status: 'won',
-    strength: 86,
+    evidence: 86,
   },
+]
+
+const testSteps = [
+  'Fetch recent Stripe charge and customer',
+  'Match customer to app account',
+  'Query usage/events with read-only DB role',
+  'Assemble timeline and Stripe evidence fields',
+  'Render sample PDF packet',
+  'Send Slack/Telegram test notification',
 ]
 
 const evidenceFacts = [
-  'Account created 2026-04-18 after successful checkout',
+  'Customer created account after successful payment',
   '37 authenticated sessions from same device family',
-  'Last active 2 days before dispute',
-  'Generated 184 AI outputs and downloaded 16 files',
+  '184 product outputs generated after purchase',
+  '16 exports/downloads completed',
   'No refund request or support ticket before dispute',
-  'Checkout IP matches 34 later login events',
+  'Checkout IP matches later login IP range',
 ]
 
-const generatedStripeFields = [
-  {
-    label: 'uncategorized_text',
-    value:
-      'The cardholder received and used the service after purchase. Riposte found authenticated usage, product delivery events, and matching device/network signals.',
-  },
-  {
-    label: 'access_activity_log',
-    value:
-      '2026-04-18 signup, 37 sessions, 184 generated outputs, 16 downloads, last activity 2026-05-02.',
-  },
-  {
-    label: 'refund_refusal_explanation',
-    value:
-      'No refund was refused. The merchant has no record of a refund request before the cardholder opened this dispute.',
-  },
-]
+function setupReducer(state: SetupState, action: SetupAction): SetupState {
+  if (action.type === 'reset') return { access: emptyAccess, test: 'not_run', autopilot: 'off' }
+  if (action.type === 'run-test') return { ...state, test: 'running' }
+  if (action.type === 'pass-test')
+    return { ...state, test: 'passed', autopilot: 'payment_required' }
+  if (action.type === 'fail-test') return { ...state, test: 'failed', autopilot: 'off' }
+  if (action.type === 'add-payment') {
+    return {
+      ...state,
+      access: state.access.map((item) =>
+        item.id === 'billing' ? { ...item, status: 'ready' as const } : item,
+      ),
+    }
+  }
+  if (action.type === 'enable-autopilot') return { ...state, autopilot: 'live' }
+  if (action.type === 'pause-autopilot') return { ...state, autopilot: 'paused' }
 
-function statusLabel(status: ConnectorStatus | CaseStatus) {
+  return {
+    ...state,
+    access: state.access.map((item) => {
+      if (item.id !== action.id) return item
+      return { ...item, status: action.type === 'connect' ? 'ready' : 'broken' }
+    }),
+    autopilot: action.type === 'break' ? 'paused' : state.autopilot,
+  }
+}
+
+function statusText(status: AccessStatus | TestStatus | AutopilotStatus | CaseStatus) {
   return status.replaceAll('_', ' ')
 }
 
-function statusTone(status: ConnectorStatus | CaseStatus) {
-  if (status === 'connected' || status === 'won' || status === 'submitted') return 'bg-zinc-900 text-white'
-  if (status === 'failed' || status === 'expired' || status === 'lost') return 'bg-white text-zinc-950 ring-2 ring-zinc-950'
-  if (status === 'validating' || status === 'investigating' || status === 'evidence_ready') {
-    return 'bg-zinc-200 text-zinc-950'
+function tone(status: AccessStatus | TestStatus | AutopilotStatus | CaseStatus) {
+  if (
+    status === 'ready' ||
+    status === 'passed' ||
+    status === 'live' ||
+    status === 'won' ||
+    status === 'submitted'
+  ) {
+    return 'bg-zinc-950 text-white'
+  }
+  if (
+    status === 'broken' ||
+    status === 'failed' ||
+    status === 'paused' ||
+    status === 'lost' ||
+    status === 'blocked'
+  ) {
+    return 'bg-white text-zinc-950 ring-2 ring-zinc-950'
+  }
+  if (
+    status === 'checking' ||
+    status === 'running' ||
+    status === 'payment_required' ||
+    status === 'investigating'
+  ) {
+    return 'bg-zinc-300 text-zinc-950'
   }
   return 'bg-white text-zinc-600 ring-1 ring-zinc-300'
 }
 
-function Shell({ title, subtitle, children }: { title: string; subtitle: string; children: React.ReactNode }) {
+function Pill({ status }: { status: AccessStatus | TestStatus | AutopilotStatus | CaseStatus }) {
+  return (
+    <span
+      className={`inline-flex border border-zinc-950 px-2 py-0.5 text-[11px] font-medium capitalize ${tone(status)}`}
+    >
+      {statusText(status)}
+    </span>
+  )
+}
+
+function Shell({
+  title,
+  subtitle,
+  children,
+}: {
+  title: string
+  subtitle: string
+  children: React.ReactNode
+}) {
   return (
     <div className="min-h-screen bg-zinc-100 p-6 text-zinc-950">
       <div className="mx-auto max-w-7xl">
-        <div className="mb-5 flex items-end justify-between border-b-2 border-zinc-950 pb-3">
+        <header className="mb-5 flex items-end justify-between border-b-2 border-zinc-950 pb-3">
           <div>
-            <div className="text-[11px] font-medium uppercase tracking-[0.24em] text-zinc-500">
-              Riposte MVP sketch
+            <div className="text-[11px] font-medium tracking-[0.24em] text-zinc-500 uppercase">
+              Riposte pencil MVP
             </div>
             <h1 className="mt-1 text-2xl font-semibold tracking-normal">{title}</h1>
             <p className="mt-1 max-w-3xl text-sm text-zinc-600">{subtitle}</p>
           </div>
           <div className="hidden border-2 border-zinc-950 bg-white px-3 py-2 text-xs md:block">
-            Low fidelity / mocked logic
+            1000ft / mocked logic
           </div>
-        </div>
+        </header>
         {children}
       </div>
     </div>
   )
 }
 
-function SketchPanel({ title, children, className = '' }: { title: string; children: React.ReactNode; className?: string }) {
+function Panel({
+  title,
+  children,
+  className = '',
+}: {
+  title: string
+  children: React.ReactNode
+  className?: string
+}) {
   return (
-    <section className={`border-2 border-zinc-950 bg-white shadow-[5px_5px_0_#18181b] ${className}`}>
+    <section
+      className={`border-2 border-zinc-950 bg-white shadow-[5px_5px_0_#18181b] ${className}`}
+    >
       <div className="border-b-2 border-zinc-950 px-4 py-2">
         <h2 className="text-sm font-semibold">{title}</h2>
       </div>
@@ -191,14 +275,14 @@ function SketchPanel({ title, children, className = '' }: { title: string; child
   )
 }
 
-function SketchButton({
+function Button({
   children,
-  onClick,
   active = false,
+  onClick,
 }: {
   children: React.ReactNode
-  onClick?: () => void
   active?: boolean
+  onClick?: () => void
 }) {
   return (
     <button
@@ -213,54 +297,86 @@ function SketchButton({
   )
 }
 
-function StatusPill({ status }: { status: ConnectorStatus | CaseStatus }) {
-  return (
-    <span className={`inline-flex border border-zinc-950 px-2 py-0.5 text-[11px] font-medium capitalize ${statusTone(status)}`}>
-      {statusLabel(status)}
-    </span>
-  )
-}
-
-function WireBox({ label, children }: { label: string; children?: React.ReactNode }) {
+function Box({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="border-2 border-dashed border-zinc-400 bg-zinc-50 p-3">
-      <div className="text-[11px] font-medium uppercase tracking-[0.16em] text-zinc-500">{label}</div>
-      {children ? <div className="mt-2">{children}</div> : <div className="mt-8 h-10 bg-zinc-200" />}
+      <div className="text-[11px] font-medium tracking-[0.16em] text-zinc-500 uppercase">
+        {label}
+      </div>
+      <div className="mt-2">{children}</div>
     </div>
   )
 }
 
-function ConnectorRow({
-  connector,
-  onRefresh,
+function AccessRow({
+  item,
+  onConnect,
   onBreak,
 }: {
-  connector: Connector
-  onRefresh?: () => void
+  item: AccessItem
+  onConnect?: () => void
   onBreak?: () => void
 }) {
   return (
-    <div className="grid gap-3 border-b border-zinc-300 py-3 last:border-b-0 md:grid-cols-[1.2fr_1fr_auto]">
+    <div className="grid gap-3 border-b border-zinc-300 py-3 last:border-b-0 md:grid-cols-[1fr_auto]">
       <div>
-        <div className="flex items-center gap-2">
-          <strong className="text-sm">{connector.label}</strong>
-          <StatusPill status={connector.status} />
+        <div className="flex flex-wrap items-center gap-2">
+          <strong className="text-sm">{item.title}</strong>
+          <Pill status={item.status} />
+          {!item.required && <span className="text-[11px] text-zinc-500">optional for MVP</span>}
         </div>
-        <p className="mt-1 text-xs text-zinc-600">{connector.scope}</p>
+        <p className="mt-1 text-xs text-zinc-600">{item.why}</p>
+        <p className="mt-1 font-mono text-[11px] text-zinc-500">{item.scope}</p>
       </div>
-      <div className="text-xs text-zinc-600">
-        <div>Last refresh: {connector.lastRefresh}</div>
-        <div>Next refresh: {connector.nextRefresh}</div>
-      </div>
-      <div className="flex gap-2">
-        <SketchButton onClick={onRefresh}>Refresh</SketchButton>
-        <SketchButton onClick={onBreak}>Break</SketchButton>
+      <div className="flex gap-2 md:justify-end">
+        <Button onClick={onConnect}>{item.status === 'ready' ? 'Re-test' : 'Connect'}</Button>
+        <Button onClick={onBreak}>Break</Button>
       </div>
     </div>
   )
 }
 
-function CaseTable({ cases, selectedId, onSelect }: { cases: DisputeCase[]; selectedId?: string; onSelect: (id: string) => void }) {
+function AutopilotCard({ state }: { state: SetupState }) {
+  const requiredReady = state.access
+    .filter((item) => item.required)
+    .every((item) => item.status === 'ready')
+  const canEnable =
+    requiredReady && state.test === 'passed' && state.autopilot !== 'payment_required'
+  const message =
+    state.autopilot === 'live'
+      ? 'Riposte is listening for Stripe disputes and will submit evidence automatically.'
+      : state.autopilot === 'paused'
+        ? 'Autopilot is paused because a required system needs attention.'
+        : state.autopilot === 'payment_required'
+          ? 'Setup test passed. Add payment to enable live dispute protection.'
+          : 'Riposte is not active yet. Finish setup and run a test.'
+
+  return (
+    <Panel title="Autopilot control">
+      <div className="flex items-center justify-between">
+        <div className="text-3xl font-semibold">{state.autopilot === 'live' ? 'ON' : 'OFF'}</div>
+        <Pill status={state.autopilot} />
+      </div>
+      <p className="mt-3 text-sm text-zinc-600">{message}</p>
+      <div className="mt-4 grid gap-2 text-xs">
+        <div className="flex justify-between border border-zinc-300 p-2">
+          <span>Required systems</span>
+          <span>{requiredReady ? 'ready' : 'incomplete'}</span>
+        </div>
+        <div className="flex justify-between border border-zinc-300 p-2">
+          <span>Setup test</span>
+          <span>{statusText(state.test)}</span>
+        </div>
+        <div className="flex justify-between border border-zinc-300 p-2">
+          <span>Can enable</span>
+          <span>{canEnable ? 'yes' : 'no'}</span>
+        </div>
+      </div>
+    </Panel>
+  )
+}
+
+function CaseTable({ selected, onSelect }: { selected?: string; onSelect: (id: string) => void }) {
   return (
     <div className="overflow-hidden border-2 border-zinc-950">
       <table className="w-full text-left text-xs">
@@ -268,9 +384,10 @@ function CaseTable({ cases, selectedId, onSelect }: { cases: DisputeCase[]; sele
           <tr className="border-b-2 border-zinc-950">
             <th className="px-3 py-2">Case</th>
             <th className="px-3 py-2">Customer</th>
+            <th className="px-3 py-2">Amount</th>
             <th className="px-3 py-2">Reason</th>
             <th className="px-3 py-2">Due</th>
-            <th className="px-3 py-2">Strength</th>
+            <th className="px-3 py-2">Evidence</th>
             <th className="px-3 py-2">Status</th>
           </tr>
         </thead>
@@ -280,16 +397,17 @@ function CaseTable({ cases, selectedId, onSelect }: { cases: DisputeCase[]; sele
               key={item.id}
               onClick={() => onSelect(item.id)}
               className={`cursor-pointer border-b border-zinc-300 last:border-b-0 ${
-                selectedId === item.id ? 'bg-zinc-100 outline outline-2 outline-zinc-950' : 'bg-white'
+                selected === item.id ? 'bg-zinc-100 outline outline-2 outline-zinc-950' : 'bg-white'
               }`}
             >
               <td className="px-3 py-2 font-mono">{item.id}</td>
               <td className="px-3 py-2">{item.customer}</td>
+              <td className="px-3 py-2">{item.amount}</td>
               <td className="px-3 py-2">{item.reason}</td>
               <td className="px-3 py-2">{item.due}</td>
-              <td className="px-3 py-2">{item.strength}/100</td>
+              <td className="px-3 py-2">{item.evidence}/100</td>
               <td className="px-3 py-2">
-                <StatusPill status={item.status} />
+                <Pill status={item.status} />
               </td>
             </tr>
           ))}
@@ -299,222 +417,150 @@ function CaseTable({ cases, selectedId, onSelect }: { cases: DisputeCase[]; sele
   )
 }
 
-function timelineFor(status: CaseStatus): TimelineItem[] {
-  const order: CaseStatus[] = ['received', 'investigating', 'evidence_ready', 'submitted', 'waiting', 'won']
-  const currentIndex = order.indexOf(status === 'lost' ? 'won' : status === 'failed' ? 'investigating' : status)
-  return [
-    {
-      time: '00:00',
-      title: 'Stripe webhook received',
-      detail: 'charge.dispute.created created the case and locked the response due date.',
-      state: currentIndex >= 0 ? 'done' : 'pending',
-    },
-    {
-      time: '00:04',
-      title: 'Agent queried read-only sources',
-      detail: 'Stripe, database, storage, and usage logs were queried using scoped credentials.',
-      state: status === 'failed' ? 'blocked' : currentIndex >= 1 ? 'done' : 'pending',
-    },
-    {
-      time: '00:22',
-      title: 'Evidence packet generated',
-      detail: 'Timeline, facts, generated Stripe fields, and PDF attachment were assembled.',
-      state: currentIndex >= 2 ? 'done' : 'pending',
-    },
-    {
-      time: '00:41',
-      title: 'Evidence submitted to Stripe',
-      detail: 'One-shot submission was recorded with request id and packet hash.',
-      state: currentIndex >= 3 ? 'done' : 'pending',
-    },
-    {
-      time: 'days',
-      title: status === 'lost' ? 'Issuer marked dispute lost' : 'Issuer marked dispute won',
-      detail: status === 'lost' ? 'Dashboard should show evidence gaps.' : '$249 recovered and result added to metrics.',
-      state: status === 'won' || status === 'lost' ? 'done' : currentIndex >= 4 ? 'active' : 'pending',
-    },
-  ]
+const initialState: SetupState = {
+  access: emptyAccess,
+  test: 'not_run',
+  autopilot: 'off',
 }
 
-function StepRail({ steps, current, onSelect }: { steps: string[]; current: number; onSelect: (index: number) => void }) {
-  return (
-    <div className="flex flex-wrap gap-2">
-      {steps.map((step, index) => (
-        <SketchButton key={step} active={index === current} onClick={() => onSelect(index)}>
-          {index + 1}. {step}
-        </SketchButton>
-      ))}
-    </div>
-  )
-}
-
-export const CompleteMvpFlowMap: Story = {
-  name: 'Complete MVP Flow Map',
+export const FirstLoginControlRoom: Story = {
+  name: '1. First Login Control Room',
   render: () => {
-    const steps = ['Create workspace', 'Connect systems', 'Verify access', 'Auto-submit dispute', 'Monitor result']
-    const [step, setStep] = useState(0)
+    const [mode, setMode] = useState<'empty' | 'partial' | 'live'>('empty')
+    const state =
+      mode === 'live'
+        ? { access: liveAccess, test: 'passed' as const, autopilot: 'live' as const }
+        : mode === 'partial'
+          ? {
+              access: emptyAccess.map((item) =>
+                item.id === 'stripe' || item.id === 'database'
+                  ? { ...item, status: 'ready' as const }
+                  : item,
+              ),
+              test: 'not_run' as const,
+              autopilot: 'off' as const,
+            }
+          : initialState
+
     return (
       <Shell
-        title="Complete MVP flow map"
-        subtitle="The 10000 ft operator journey: set up read-only access, automate submission, monitor every case and result."
+        title="Home is the control room"
+        subtitle="A new user does not land in a separate onboarding product. They see the live operations room, empty until Riposte is configured."
       >
-        <div className="space-y-5">
-          <StepRail steps={steps} current={step} onSelect={setStep} />
-          <div className="grid gap-5 lg:grid-cols-[1fr_360px]">
-            <SketchPanel title={steps[step]}>
-              {step === 0 && (
-                <div className="grid gap-4 md:grid-cols-2">
-                  <WireBox label="Workspace form">
-                    <div className="space-y-2">
-                      <div className="h-8 border-2 border-zinc-950 bg-white px-2 py-1 text-xs">Acme AI</div>
-                      <div className="h-8 border-2 border-zinc-950 bg-white px-2 py-1 text-xs">Digital product / SaaS</div>
-                      <div className="h-20 border-2 border-zinc-950 bg-white p-2 text-xs text-zinc-600">
-                        Product context used by the agent when explaining what the customer received.
-                      </div>
+        <div className="mb-5 flex flex-wrap gap-2">
+          <Button active={mode === 'empty'} onClick={() => setMode('empty')}>
+            New account
+          </Button>
+          <Button active={mode === 'partial'} onClick={() => setMode('partial')}>
+            Half setup
+          </Button>
+          <Button active={mode === 'live'} onClick={() => setMode('live')}>
+            Autopilot live
+          </Button>
+        </div>
+        <div className="grid gap-5 lg:grid-cols-[1fr_360px]">
+          <div className="space-y-5">
+            <div className="grid gap-4 md:grid-cols-4">
+              <Panel title="Autopilot">
+                <div className="text-3xl font-semibold">
+                  {state.autopilot === 'live' ? 'ON' : 'OFF'}
+                </div>
+              </Panel>
+              <Panel title="Systems ready">
+                <div className="text-3xl font-semibold">
+                  {state.access.filter((item) => item.status === 'ready').length}/
+                  {state.access.length}
+                </div>
+              </Panel>
+              <Panel title="Open disputes">
+                <div className="text-3xl font-semibold">{mode === 'live' ? '2' : '0'}</div>
+              </Panel>
+              <Panel title="Recovered">
+                <div className="text-3xl font-semibold">{mode === 'live' ? '$1.8k' : '$0'}</div>
+              </Panel>
+            </div>
+            <Panel title={mode === 'live' ? 'Recent dispute activity' : 'Empty state'}>
+              {mode === 'live' ? (
+                <CaseTable selected="dp_3Qx9Kl2m" onSelect={() => undefined} />
+              ) : (
+                <div className="grid gap-4 md:grid-cols-[1fr_280px]">
+                  <Box label="Main message">
+                    <div className="text-lg font-semibold">
+                      Riposte is not protecting disputes yet.
                     </div>
-                  </WireBox>
-                  <WireBox label="Launch decision">
+                    <p className="mt-2 text-sm text-zinc-600">
+                      Connect Stripe, read-only app data, policies, and notifications. Then run a
+                      dry test and enable autopilot.
+                    </p>
+                    <div className="mt-4">
+                      <Button>Set up Riposte</Button>
+                    </div>
+                  </Box>
+                  <Box label="What happens after setup">
                     <div className="space-y-2 text-sm">
-                      <div className="border-2 border-zinc-950 bg-zinc-950 p-3 text-white">Hosted Riposte workspace</div>
-                      <div className="border-2 border-zinc-950 p-3">Self-hosted agent later</div>
+                      <div>1. Stripe webhook received</div>
+                      <div>2. Agent gathers usage proof</div>
+                      <div>3. Evidence submitted automatically</div>
+                      <div>4. Founder notified</div>
                     </div>
-                  </WireBox>
+                  </Box>
                 </div>
               )}
-              {step === 1 && (
-                <div className="grid gap-4 md:grid-cols-2">
-                  {initialConnectors.slice(0, 4).map((connector) => (
-                    <WireBox key={connector.id} label={connector.label}>
-                      <p className="text-xs text-zinc-600">{connector.scope}</p>
-                      <div className="mt-3 flex justify-between">
-                        <StatusPill status={connector.id === 'storage' ? 'not_connected' : 'connected'} />
-                        <SketchButton>{connector.id === 'storage' ? 'Connect' : 'Test'}</SketchButton>
-                      </div>
-                    </WireBox>
-                  ))}
-                </div>
-              )}
-              {step === 2 && (
-                <div className="space-y-3">
-                  {initialConnectors.map((connector) => (
-                    <ConnectorRow key={connector.id} connector={connector} />
-                  ))}
-                </div>
-              )}
-              {step === 3 && (
-                <div className="grid gap-4 lg:grid-cols-3">
-                  <WireBox label="Webhook">
-                    <div className="font-mono text-xs">charge.dispute.created</div>
-                    <div className="mt-2 text-sm">$249.00 / fraudulent / due May 12</div>
-                  </WireBox>
-                  <WireBox label="Agent run">
-                    <div className="space-y-2 text-xs">
-                      <div>1. Pull Stripe charge/customer</div>
-                      <div>2. Query customer usage</div>
-                      <div>3. Generate packet</div>
-                      <div>4. Submit evidence</div>
-                    </div>
-                  </WireBox>
-                  <WireBox label="Notification">
-                    <div className="text-sm">Slack: Evidence submitted for dp_3Qx9Kl2m.</div>
-                  </WireBox>
-                </div>
-              )}
-              {step === 4 && (
-                <div className="grid gap-4 lg:grid-cols-[1.3fr_1fr]">
-                  <CaseTable cases={initialCases} selectedId="dp_3Qx9Kl2m" onSelect={() => undefined} />
-                  <WireBox label="Outcome summary">
-                    <div className="grid grid-cols-2 gap-2 text-sm">
-                      <div className="border-2 border-zinc-950 p-3">$288 recovered</div>
-                      <div className="border-2 border-zinc-950 p-3">47 sec avg response</div>
-                      <div className="border-2 border-zinc-950 p-3">2 won</div>
-                      <div className="border-2 border-zinc-950 p-3">0 broken access</div>
-                    </div>
-                  </WireBox>
-                </div>
-              )}
-            </SketchPanel>
-
-            <SketchPanel title="What this screen must prove">
-              <ul className="space-y-3 text-sm">
-                <li className={step === 0 ? 'font-semibold' : ''}>Can the founder finish setup without docs?</li>
-                <li className={step === 1 ? 'font-semibold' : ''}>Are all accesses clearly scoped and read-only?</li>
-                <li className={step === 2 ? 'font-semibold' : ''}>Can expired/broken credentials be refreshed?</li>
-                <li className={step === 3 ? 'font-semibold' : ''}>Can the agent submit without human intervention?</li>
-                <li className={step === 4 ? 'font-semibold' : ''}>Can the user trust the dashboard as source of truth?</li>
-              </ul>
-            </SketchPanel>
+            </Panel>
           </div>
+          <AutopilotCard state={state} />
         </div>
       </Shell>
     )
   },
 }
 
-type ConnectorAction =
-  | { type: 'connect'; id: string }
-  | { type: 'validate'; id: string }
-  | { type: 'refresh'; id: string }
-  | { type: 'expire'; id: string }
-  | { type: 'fail'; id: string }
-
-function connectorReducer(connectors: Connector[], action: ConnectorAction) {
-  return connectors.map((connector) => {
-    if (connector.id !== action.id) return connector
-    if (action.type === 'connect' || action.type === 'refresh') {
-      return { ...connector, status: 'connected' as const, lastRefresh: 'just now', nextRefresh: 'in 60 min' }
-    }
-    if (action.type === 'validate') return { ...connector, status: 'validating' as const }
-    if (action.type === 'expire') return { ...connector, status: 'expired' as const, nextRefresh: 'now' }
-    return { ...connector, status: 'failed' as const, nextRefresh: 'blocked' }
-  })
-}
-
-export const AgentSetupAndAccessRefresh: Story = {
-  name: 'Agent Setup + Access Refresh',
+export const ConnectSystemsAndContext: Story = {
+  name: '2. Connect Systems + Context',
   render: () => {
-    const [connectors, dispatch] = useReducer(connectorReducer, initialConnectors)
-    const connectedCount = connectors.filter((item) => item.status === 'connected').length
-    const readiness = Math.round((connectedCount / connectors.length) * 100)
+    const [state, dispatch] = useReducer(setupReducer, initialState)
+    const readyRequired = state.access.filter(
+      (item) => item.required && item.status === 'ready',
+    ).length
+    const totalRequired = state.access.filter((item) => item.required).length
+
     return (
       <Shell
-        title="Agent setup and access refresh"
-        subtitle="Mocked onboarding for Stripe, read-only systems, policies, and Slack/Telegram notification access."
+        title="Connect everything Riposte needs"
+        subtitle="The setup flow is about trust: what access is required, why it exists, what scope it has, and whether it blocks autopilot."
       >
         <div className="grid gap-5 lg:grid-cols-[1fr_360px]">
-          <SketchPanel title="Access checklist">
-            {connectors.map((connector) => (
-              <div key={connector.id} className="grid gap-3 border-b border-zinc-300 py-3 last:border-b-0 md:grid-cols-[1fr_auto]">
-                <ConnectorRow
-                  connector={connector}
-                  onRefresh={() => dispatch({ type: 'refresh', id: connector.id })}
-                  onBreak={() => dispatch({ type: 'fail', id: connector.id })}
-                />
-                <div className="flex gap-2 md:justify-end">
-                  <SketchButton onClick={() => dispatch({ type: 'connect', id: connector.id })}>Connect</SketchButton>
-                  <SketchButton onClick={() => dispatch({ type: 'expire', id: connector.id })}>Expire</SketchButton>
-                </div>
-              </div>
+          <Panel title="Required setup checklist">
+            {state.access.map((item) => (
+              <AccessRow
+                key={item.id}
+                item={item}
+                onConnect={() => dispatch({ type: 'connect', id: item.id })}
+                onBreak={() => dispatch({ type: 'break', id: item.id })}
+              />
             ))}
-          </SketchPanel>
-
+          </Panel>
           <div className="space-y-5">
-            <SketchPanel title="Readiness">
-              <div className="text-4xl font-semibold">{readiness}%</div>
-              <div className="mt-3 h-5 border-2 border-zinc-950 bg-white">
-                <div className="h-full bg-zinc-950" style={{ width: `${readiness}%` }} />
+            <Panel title="Setup readiness">
+              <div className="text-4xl font-semibold">
+                {readyRequired}/{totalRequired}
               </div>
-              <p className="mt-3 text-sm text-zinc-600">
-                Release rule: automated submission can be enabled when Stripe, DB, and at least one notification channel are connected.
-              </p>
-            </SketchPanel>
-            <SketchPanel title="Policy/context capture">
-              <div className="space-y-3 text-xs">
-                <WireBox label="Product description">AI image generation workspace for paid subscribers.</WireBox>
-                <WireBox label="Refund policy">Refunds available within 7 days before heavy usage.</WireBox>
-                <WireBox label="Cancellation policy">Cancel anytime from account settings.</WireBox>
+              <p className="mt-2 text-sm text-zinc-600">Required systems connected.</p>
+              <div className="mt-4 h-5 border-2 border-zinc-950 bg-white">
+                <div
+                  className="h-full bg-zinc-950"
+                  style={{ width: `${Math.round((readyRequired / totalRequired) * 100)}%` }}
+                />
               </div>
-            </SketchPanel>
+            </Panel>
+            <Panel title="What we need to show">
+              <ul className="space-y-2 text-sm">
+                <li>Every credential is scoped and explainable.</li>
+                <li>Read-only access is explicit for customer systems.</li>
+                <li>Missing required items block the setup test.</li>
+                <li>Optional evidence storage can be skipped for launch.</li>
+              </ul>
+            </Panel>
           </div>
         </div>
       </Shell>
@@ -522,139 +568,175 @@ export const AgentSetupAndAccessRefresh: Story = {
   },
 }
 
-function nextCaseStatus(status: CaseStatus): CaseStatus {
-  if (status === 'received') return 'investigating'
-  if (status === 'investigating') return 'evidence_ready'
-  if (status === 'evidence_ready') return 'submitted'
-  if (status === 'submitted') return 'waiting'
-  if (status === 'waiting') return 'won'
-  return status
-}
-
-export const AutomatedSubmissionRun: Story = {
-  name: 'Automated Submission Run',
+export const SetupTestAndBillingGate: Story = {
+  name: '3. Test Run + Billing Gate',
   render: () => {
-    const [status, setStatus] = useState<CaseStatus>('received')
-    const timeline = timelineFor(status)
+    const [state, dispatch] = useReducer(setupReducer, {
+      access: liveAccess.map((item) =>
+        item.id === 'billing' ? { ...item, status: 'empty' } : item,
+      ),
+      test: 'not_run',
+      autopilot: 'off',
+    })
+    const paymentReady = state.access.find((item) => item.id === 'billing')?.status === 'ready'
+
     return (
       <Shell
-        title="Automated dispute submission"
-        subtitle="A single case lifecycle: webhook in, evidence out, status monitored until Stripe outcome."
+        title="Dry test before autopilot"
+        subtitle="The founder should see Riposte work before paying for live automation. Payment gates the final switch, not the proof."
       >
-        <div className="grid gap-5 lg:grid-cols-[420px_1fr]">
-          <SketchPanel title="Controls">
-            <div className="flex flex-wrap gap-2">
-              <SketchButton onClick={() => setStatus(nextCaseStatus(status))}>Advance run</SketchButton>
-              <SketchButton onClick={() => setStatus('failed')}>DB failure</SketchButton>
-              <SketchButton onClick={() => setStatus('lost')}>Mark lost</SketchButton>
-              <SketchButton onClick={() => setStatus('received')}>Reset</SketchButton>
+        <div className="grid gap-5 lg:grid-cols-[1fr_380px]">
+          <Panel title="Setup test run">
+            <div className="mb-4 flex flex-wrap gap-2">
+              <Button onClick={() => dispatch({ type: 'run-test' })}>Run test</Button>
+              <Button onClick={() => dispatch({ type: 'pass-test' })}>Pass test</Button>
+              <Button onClick={() => dispatch({ type: 'fail-test' })}>Fail test</Button>
             </div>
-            <div className="mt-5 border-2 border-zinc-950 p-4">
-              <div className="flex items-center justify-between">
-                <span className="font-mono text-sm">dp_3Qx9Kl2m</span>
-                <StatusPill status={status} />
-              </div>
-              <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-                <div className="border border-zinc-400 p-2">Amount: $249.00</div>
-                <div className="border border-zinc-400 p-2">Reason: fraudulent</div>
-                <div className="border border-zinc-400 p-2">Due: May 12</div>
-                <div className="border border-zinc-400 p-2">Policy: auto-submit</div>
-              </div>
+            <div className="mb-4 flex items-center gap-2">
+              <strong className="text-sm">Test status</strong>
+              <Pill status={state.test} />
             </div>
-          </SketchPanel>
-
-          <SketchPanel title="Agent timeline">
-            <div className="space-y-4">
-              {timeline.map((item) => (
-                <div key={item.title} className="grid grid-cols-[70px_24px_1fr] gap-3">
-                  <div className="font-mono text-xs text-zinc-500">{item.time}</div>
-                  <div
-                    className={`mt-1 h-5 w-5 border-2 border-zinc-950 ${
-                      item.state === 'done'
-                        ? 'bg-zinc-950'
-                        : item.state === 'active'
-                          ? 'bg-zinc-300'
-                          : item.state === 'blocked'
+            <div className="space-y-3">
+              {testSteps.map((step, index) => {
+                const active = state.test === 'running' && index < 3
+                const done = state.test === 'passed' || active
+                const blocked = state.test === 'failed' && index === 2
+                return (
+                  <div key={step} className="grid grid-cols-[28px_1fr] gap-3">
+                    <div
+                      className={`mt-0.5 h-5 w-5 border-2 border-zinc-950 ${
+                        done
+                          ? 'bg-zinc-950'
+                          : blocked
                             ? 'bg-white ring-2 ring-zinc-950'
                             : 'bg-white'
-                    }`}
-                  />
-                  <div>
-                    <div className="text-sm font-semibold">{item.title}</div>
-                    <p className="mt-1 text-xs text-zinc-600">{item.detail}</p>
+                      }`}
+                    />
+                    <div>
+                      <div className="text-sm font-semibold">{step}</div>
+                      <p className="text-xs text-zinc-600">
+                        {blocked
+                          ? 'Example failure: usage_events table mapping is missing.'
+                          : 'Mocked check with visible pass/fail result.'}
+                      </p>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </Panel>
+          <div className="space-y-5">
+            <Panel title="Sample evidence output">
+              <Box label="Packet preview">
+                <div className="h-64 border-2 border-zinc-950 bg-white p-4">
+                  <div className="h-5 w-44 bg-zinc-300" />
+                  <div className="mt-5 space-y-2">
+                    <div className="h-3 bg-zinc-200" />
+                    <div className="h-3 bg-zinc-200" />
+                    <div className="h-3 w-2/3 bg-zinc-200" />
+                  </div>
+                  <div className="mt-6 grid grid-cols-2 gap-2">
+                    <div className="h-16 bg-zinc-200" />
+                    <div className="h-16 bg-zinc-200" />
                   </div>
                 </div>
-              ))}
-            </div>
-          </SketchPanel>
+              </Box>
+            </Panel>
+            <Panel title="Billing gate">
+              <div className="flex items-center justify-between">
+                <strong className="text-sm">Payment method</strong>
+                <Pill status={paymentReady ? 'ready' : 'empty'} />
+              </div>
+              <p className="mt-3 text-sm text-zinc-600">
+                Show this after a passed test: “Autopilot is ready. Add billing to start protecting
+                live disputes.”
+              </p>
+              <div className="mt-4 flex gap-2">
+                <Button onClick={() => dispatch({ type: 'add-payment' })}>Add payment</Button>
+                <Button onClick={() => dispatch({ type: 'enable-autopilot' })}>
+                  Enable autopilot
+                </Button>
+              </div>
+              <div className="mt-4">
+                <AutopilotCard state={state} />
+              </div>
+            </Panel>
+          </div>
         </div>
       </Shell>
     )
   },
 }
 
-export const MonitoringDashboard: Story = {
-  name: 'Monitoring Dashboard',
+export const LiveAutopilotAndMonitoring: Story = {
+  name: '4. Live Autopilot + Metrics',
   render: () => {
-    const [selectedCaseId, setSelectedCaseId] = useState(initialCases[0].id)
-    const [showBrokenAccess, setShowBrokenAccess] = useState(false)
-    const selectedCase = initialCases.find((item) => item.id === selectedCaseId) ?? initialCases[0]
-    const connectors = showBrokenAccess
-      ? initialConnectors.map((item) => (item.id === 'database' ? { ...item, status: 'expired' as const } : item))
-      : initialConnectors
+    const [selected, setSelected] = useState(cases[0].id)
+    const [broken, setBroken] = useState(false)
+    const selectedCase = cases.find((item) => item.id === selected) ?? cases[0]
+    const state: SetupState = {
+      access: liveAccess.map((item) =>
+        broken && item.id === 'database' ? { ...item, status: 'broken' } : item,
+      ),
+      test: 'passed',
+      autopilot: broken ? 'paused' : 'live',
+    }
+
     return (
       <Shell
-        title="Monitoring dashboard"
-        subtitle="The daily operator view: access health, automation status, active disputes, outcomes, and notification history."
+        title="Live control room"
+        subtitle="After setup, the home page becomes the operational dashboard: autopilot state, health, active disputes, metrics, and recent outcomes."
       >
         <div className="grid gap-5 lg:grid-cols-[1fr_380px]">
           <div className="space-y-5">
             <div className="grid gap-4 md:grid-cols-4">
-              <SketchPanel title="Open cases">
-                <div className="text-3xl font-semibold">2</div>
-              </SketchPanel>
-              <SketchPanel title="Submitted">
+              <Panel title="Submitted">
                 <div className="text-3xl font-semibold">11</div>
-              </SketchPanel>
-              <SketchPanel title="Won">
+              </Panel>
+              <Panel title="Won">
                 <div className="text-3xl font-semibold">7</div>
-              </SketchPanel>
-              <SketchPanel title="Recovered">
+              </Panel>
+              <Panel title="Recovered">
                 <div className="text-3xl font-semibold">$1.8k</div>
-              </SketchPanel>
+              </Panel>
+              <Panel title="Avg response">
+                <div className="text-3xl font-semibold">47s</div>
+              </Panel>
             </div>
-            <SketchPanel title="Disputes">
-              <CaseTable cases={initialCases} selectedId={selectedCaseId} onSelect={setSelectedCaseId} />
-            </SketchPanel>
+            <Panel title="Cases">
+              <CaseTable selected={selected} onSelect={setSelected} />
+            </Panel>
           </div>
-
           <div className="space-y-5">
-            <SketchPanel title="Access health">
+            <AutopilotCard state={state} />
+            <Panel title="Health + alerts">
               <div className="mb-3">
-                <SketchButton onClick={() => setShowBrokenAccess(!showBrokenAccess)}>
-                  Toggle broken DB access
-                </SketchButton>
+                <Button onClick={() => setBroken(!broken)}>Toggle broken DB access</Button>
               </div>
-              {connectors.slice(0, 4).map((connector) => (
-                <div key={connector.id} className="flex items-center justify-between border-b border-zinc-300 py-2 text-xs last:border-b-0">
-                  <span>{connector.label}</span>
-                  <StatusPill status={connector.status} />
+              {state.access.slice(0, 5).map((item) => (
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between border-b border-zinc-300 py-2 text-xs last:border-b-0"
+                >
+                  <span>{item.title}</span>
+                  <Pill status={item.status} />
                 </div>
               ))}
-            </SketchPanel>
-            <SketchPanel title="Selected case">
+            </Panel>
+            <Panel title="Selected case">
               <div className="flex items-center justify-between">
                 <span className="font-mono text-sm">{selectedCase.id}</span>
-                <StatusPill status={selectedCase.status} />
+                <Pill status={selectedCase.status} />
               </div>
               <p className="mt-3 text-sm">{selectedCase.customer}</p>
               <p className="text-xs text-zinc-600">
                 {selectedCase.reason} / {selectedCase.amount} / due {selectedCase.due}
               </p>
               <div className="mt-4 border-2 border-dashed border-zinc-400 p-3 text-xs">
-                Click-through should open Case Detail with evidence, packet, submission request id, and notifications.
+                Click opens full case detail: actions, decisions, logs, evidence packet, Stripe
+                submission.
               </div>
-            </SketchPanel>
+            </Panel>
           </div>
         </div>
       </Shell>
@@ -662,57 +744,72 @@ export const MonitoringDashboard: Story = {
   },
 }
 
-export const CaseDetailAndEvidenceReview: Story = {
-  name: 'Case Detail + Evidence Review',
+export const CaseDetailEvidenceAndLogs: Story = {
+  name: '5. Case Detail Evidence + Logs',
   render: () => {
-    const [tab, setTab] = useState<'summary' | 'evidence' | 'submission' | 'notifications'>('summary')
-    const timeline = useMemo(() => timelineFor('submitted'), [])
+    const [tab, setTab] = useState<'summary' | 'evidence' | 'decision' | 'logs' | 'notifications'>(
+      'summary',
+    )
+    const timeline = useMemo(
+      () => [
+        ['00:00', 'Stripe webhook received', 'charge.dispute.created for $249 fraudulent dispute.'],
+        ['00:03', 'Customer matched', 'Stripe email matched app user id user_1842.'],
+        ['00:08', 'Usage queried', '37 sessions, 184 outputs, 16 downloads found.'],
+        ['00:22', 'Evidence generated', 'PDF and Stripe fields rendered.'],
+        ['00:41', 'Submitted', 'Stripe request req_9af2 accepted evidence.'],
+      ],
+      [],
+    )
+
     return (
       <Shell
-        title="Case detail and status"
-        subtitle="The trust screen: what happened, what evidence was used, what was submitted, and who was notified."
+        title="Case detail is the audit trail"
+        subtitle="The user can inspect what Riposte did: evidence, generated output, decisions, logs, and notifications."
       >
         <div className="grid gap-5 lg:grid-cols-[320px_1fr]">
-          <SketchPanel title="Case">
-            <div className="font-mono text-lg">dp_3Qx9Kl2m</div>
-            <div className="mt-2 flex gap-2">
-              <StatusPill status="submitted" />
-              <span className="border border-zinc-950 px-2 py-0.5 text-[11px]">92/100 evidence</span>
+          <Panel title="Case dp_3Qx9Kl2m">
+            <div className="flex items-center gap-2">
+              <Pill status="submitted" />
+              <span className="border border-zinc-950 px-2 py-0.5 text-[11px]">
+                92/100 evidence
+              </span>
             </div>
             <div className="mt-5 space-y-2 text-xs">
               <div>Customer: maria@acme.ai</div>
               <div>Amount: $249.00</div>
               <div>Reason: fraudulent</div>
               <div>Due: May 12</div>
-              <div>Submission id: req_9af2</div>
+              <div>Stripe request: req_9af2</div>
               <div>Packet hash: pdf_7c21</div>
             </div>
             <div className="mt-5 flex flex-col gap-2">
-              {(['summary', 'evidence', 'submission', 'notifications'] as const).map((item) => (
-                <SketchButton key={item} active={tab === item} onClick={() => setTab(item)}>
-                  {item}
-                </SketchButton>
-              ))}
+              {(['summary', 'evidence', 'decision', 'logs', 'notifications'] as const).map(
+                (item) => (
+                  <Button key={item} active={tab === item} onClick={() => setTab(item)}>
+                    {item}
+                  </Button>
+                ),
+              )}
             </div>
-          </SketchPanel>
-
-          <SketchPanel title={tab}>
+          </Panel>
+          <Panel title={tab}>
             {tab === 'summary' && (
               <div className="grid gap-5 lg:grid-cols-2">
-                <WireBox label="Agent summary">
+                <Box label="Agent summary">
                   <p className="text-sm">
-                    Riposte found strong proof that the cardholder received and used the product after purchase. Evidence was submitted automatically.
+                    Riposte submitted evidence because the user paid, created an account, actively
+                    used the product, downloaded outputs, and never requested a refund.
                   </p>
-                </WireBox>
-                <WireBox label="Timeline">
-                  <div className="space-y-3">
-                    {timeline.slice(0, 4).map((item) => (
-                      <div key={item.title} className="text-xs">
-                        <strong>{item.time}</strong> {item.title}
+                </Box>
+                <Box label="Timeline">
+                  <div className="space-y-2">
+                    {timeline.map(([time, title]) => (
+                      <div key={time} className="text-xs">
+                        <strong>{time}</strong> {title}
                       </div>
                     ))}
                   </div>
-                </WireBox>
+                </Box>
               </div>
             )}
             {tab === 'evidence' && (
@@ -724,114 +821,148 @@ export const CaseDetailAndEvidenceReview: Story = {
                     </div>
                   ))}
                 </div>
-                <WireBox label="PDF placeholder">
+                <Box label="PDF">
                   <div className="h-80 border-2 border-zinc-950 bg-white p-4">
-                    <div className="h-6 w-40 bg-zinc-300" />
-                    <div className="mt-6 space-y-2">
+                    <div className="h-5 w-40 bg-zinc-300" />
+                    <div className="mt-5 space-y-2">
                       <div className="h-3 bg-zinc-200" />
                       <div className="h-3 bg-zinc-200" />
                       <div className="h-3 w-2/3 bg-zinc-200" />
                     </div>
-                    <div className="mt-6 grid grid-cols-2 gap-2">
-                      <div className="h-20 bg-zinc-200" />
-                      <div className="h-20 bg-zinc-200" />
-                    </div>
+                    <div className="mt-6 h-28 bg-zinc-200" />
                   </div>
-                </WireBox>
+                </Box>
               </div>
             )}
-            {tab === 'submission' && (
+            {tab === 'decision' && (
               <div className="space-y-4">
-                {generatedStripeFields.map((field) => (
-                  <WireBox key={field.label} label={field.label}>
-                    <p className="text-sm">{field.value}</p>
-                  </WireBox>
+                <Box label="Contest decision">
+                  <p className="text-sm">
+                    Auto-submit policy was enabled. Evidence score was 92/100. No blocking access
+                    errors. Dispute reason was supported by configured evidence playbook.
+                  </p>
+                </Box>
+                <Box label="Generated Stripe fields">
+                  <div className="space-y-2 text-sm">
+                    <div>
+                      <strong>uncategorized_text:</strong> Customer received and used service after
+                      purchase.
+                    </div>
+                    <div>
+                      <strong>access_activity_log:</strong> Signup, sessions, outputs, downloads,
+                      last active date.
+                    </div>
+                    <div>
+                      <strong>refund_refusal_explanation:</strong> No refund request existed before
+                      dispute.
+                    </div>
+                  </div>
+                </Box>
+              </div>
+            )}
+            {tab === 'logs' && (
+              <div className="space-y-2">
+                {timeline.map(([time, title, detail]) => (
+                  <div
+                    key={time}
+                    className="grid grid-cols-[70px_1fr] gap-3 border-b border-zinc-300 py-2 text-xs last:border-b-0"
+                  >
+                    <span className="font-mono text-zinc-500">{time}</span>
+                    <span>
+                      <strong>{title}</strong> · {detail}
+                    </span>
+                  </div>
                 ))}
               </div>
             )}
             {tab === 'notifications' && (
               <div className="space-y-3">
-                <WireBox label="Slack">
-                  <p className="text-sm">#chargebacks: Evidence submitted for dp_3Qx9Kl2m. Stripe request req_9af2.</p>
-                </WireBox>
-                <WireBox label="Telegram">
-                  <p className="text-sm text-zinc-500">Not configured for this workspace.</p>
-                </WireBox>
-                <WireBox label="Email fallback">
-                  <p className="text-sm">Skipped. Slack delivery confirmed.</p>
-                </WireBox>
+                <Box label="Slack">
+                  #chargebacks: Evidence submitted for dp_3Qx9Kl2m. Stripe request req_9af2.
+                </Box>
+                <Box label="Telegram">Not configured for this workspace.</Box>
+                <Box label="Fallback">Email skipped because Slack delivery was confirmed.</Box>
               </div>
             )}
-          </SketchPanel>
+          </Panel>
         </div>
       </Shell>
     )
   },
 }
 
-export const FailureRecoveryFlow: Story = {
-  name: 'Failure + Recovery Flow',
+export const BreakageAndNotificationRecovery: Story = {
+  name: '6. Breakage + Notification Recovery',
   render: () => {
-    const [failure, setFailure] = useState<'db' | 'stripe' | 'slack' | 'weak_evidence'>('db')
-    const failureCopy = {
-      db: {
-        title: 'Database credential expired',
-        impact: 'Agent cannot gather app usage evidence. Auto-submit is paused for new cases.',
-        fix: 'Refresh read-only DB token and rerun access check.',
-      },
+    const [failure, setFailure] = useState<
+      'stripe' | 'database' | 'notification' | 'weak_evidence'
+    >('database')
+    const copy = {
       stripe: {
         title: 'Stripe write scope missing',
-        impact: 'Agent can build evidence but cannot submit it to Stripe.',
-        fix: 'Reconnect Stripe with disputes.write scope.',
+        impact: 'Riposte can detect disputes but cannot submit evidence.',
+        action: 'Reconnect Stripe with disputes.write and rerun setup test.',
       },
-      slack: {
-        title: 'Slack notification failed',
-        impact: 'Automation continues, but the founder may miss case updates.',
-        fix: 'Reconnect Slack or enable Telegram fallback.',
+      database: {
+        title: 'Read-only DB credential expired',
+        impact: 'Riposte cannot gather product usage evidence. Autopilot pauses new submissions.',
+        action: 'Refresh DB credential, verify table mappings, rerun setup test.',
+      },
+      notification: {
+        title: 'Slack delivery failed',
+        impact: 'Automation can continue, but the founder may miss important dispute updates.',
+        action: 'Reconnect Slack or enable Telegram fallback.',
       },
       weak_evidence: {
-        title: 'Evidence below release threshold',
-        impact: 'Agent found payment records but no product delivery proof.',
-        fix: 'Map activity table or storage source before enabling auto-submit.',
+        title: 'Evidence below threshold',
+        impact: 'Riposte found payment data but cannot prove product delivery.',
+        action: 'Map activity tables or connect evidence storage before enabling autopilot.',
       },
     }[failure]
+
     return (
       <Shell
-        title="Failure and recovery"
-        subtitle="Automation is only shippable if broken access, failed submissions, and weak evidence are visible and recoverable."
+        title="Breakage is a first-class flow"
+        subtitle="If automation breaks, the user gets notified, sees impact, and gets one repair action. No silent failure."
       >
         <div className="grid gap-5 lg:grid-cols-[320px_1fr]">
-          <SketchPanel title="Failure selector">
+          <Panel title="Failure selector">
             <div className="flex flex-col gap-2">
-              {(['db', 'stripe', 'slack', 'weak_evidence'] as const).map((item) => (
-                <SketchButton key={item} active={failure === item} onClick={() => setFailure(item)}>
+              {(['stripe', 'database', 'notification', 'weak_evidence'] as const).map((item) => (
+                <Button key={item} active={failure === item} onClick={() => setFailure(item)}>
                   {item.replaceAll('_', ' ')}
-                </SketchButton>
+                </Button>
               ))}
             </div>
-          </SketchPanel>
+          </Panel>
           <div className="grid gap-5 lg:grid-cols-2">
-            <SketchPanel title="User-facing alert">
+            <Panel title="Control-room alert">
               <div className="border-4 border-zinc-950 bg-white p-5">
-                <div className="text-lg font-semibold">{failureCopy.title}</div>
-                <p className="mt-2 text-sm text-zinc-700">{failureCopy.impact}</p>
+                <div className="text-lg font-semibold">{copy.title}</div>
+                <p className="mt-2 text-sm text-zinc-700">{copy.impact}</p>
                 <div className="mt-5 flex gap-2">
-                  <SketchButton>Fix now</SketchButton>
-                  <SketchButton>View affected cases</SketchButton>
+                  <Button>Fix now</Button>
+                  <Button>View affected cases</Button>
                 </div>
               </div>
-            </SketchPanel>
-            <SketchPanel title="Recovery checklist">
-              <div className="space-y-3 text-sm">
-                <div className="border-2 border-zinc-950 bg-zinc-950 p-3 text-white">1. Detect exact failed access or step</div>
-                <div className="border-2 border-zinc-950 p-3">2. Explain business impact</div>
-                <div className="border-2 border-zinc-950 p-3">3. Give one primary repair action</div>
-                <div className="border-2 border-zinc-950 p-3">4. Re-run agent check and unblock queue</div>
+            </Panel>
+            <Panel title="Notification + recovery">
+              <Box label="Slack / Telegram message">
+                <p className="text-sm">
+                  Riposte needs attention: {copy.title}. Impact: {copy.impact}
+                </p>
+              </Box>
+              <div className="mt-4 space-y-3 text-sm">
+                <div className="border-2 border-zinc-950 bg-zinc-950 p-3 text-white">
+                  1. Pause risky automation
+                </div>
+                <div className="border-2 border-zinc-950 p-3">2. Explain exact impact</div>
+                <div className="border-2 border-zinc-950 p-3">3. Show affected cases</div>
+                <div className="border-2 border-zinc-950 p-3">
+                  4. Run repair action: {copy.action}
+                </div>
               </div>
-              <WireBox label="Recommended fix">
-                <p className="text-sm">{failureCopy.fix}</p>
-              </WireBox>
-            </SketchPanel>
+            </Panel>
           </div>
         </div>
       </Shell>

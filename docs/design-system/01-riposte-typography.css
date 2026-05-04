@@ -1,0 +1,144 @@
+/* Riposte Typography
+   Inter explains. JetBrains Mono proves.
+*/
+
+.rp-display,
+.rp-h1,
+.rp-h2,
+.rp-h3,
+.rp-h4 {
+  font-family: var(--font-sans);
+  color: hsl(var(--foreground));
+  margin: 0;
+}
+
+.rp-display {
+  font-size: clamp(var(--text-3xl), 5vw, var(--text-4xl));
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  font-weight: 700;
+}
+
+.rp-h1 {
+  font-size: var(--text-3xl);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  font-weight: 700;
+}
+
+.rp-h2 {
+  font-size: var(--text-2xl);
+  line-height: var(--leading-snug);
+  letter-spacing: var(--tracking-snug);
+  font-weight: 650;
+}
+
+.rp-h3 {
+  font-size: var(--text-xl);
+  line-height: var(--leading-snug);
+  letter-spacing: var(--tracking-snug);
+  font-weight: 650;
+}
+
+.rp-h4 {
+  font-size: var(--text-lg);
+  line-height: var(--leading-snug);
+  letter-spacing: var(--tracking-normal);
+  font-weight: 600;
+}
+
+.rp-body {
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  color: hsl(var(--foreground));
+}
+
+.rp-body-muted {
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  color: hsl(var(--muted-foreground));
+}
+
+.rp-small {
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+}
+
+.rp-caption {
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  line-height: var(--leading-normal);
+  color: hsl(var(--muted-foreground));
+}
+
+.rp-label {
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  font-weight: 500;
+  color: hsl(var(--foreground));
+}
+
+.rp-label-subtle {
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  line-height: var(--leading-normal);
+  font-weight: 500;
+  letter-spacing: var(--tracking-wide);
+  color: hsl(var(--muted-foreground));
+}
+
+.rp-mono,
+.rp-case-id,
+.rp-timestamp,
+.rp-event-name,
+.rp-metadata,
+.rp-code {
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum" 1, "zero" 1;
+}
+
+.rp-case-id {
+  font-size: var(--text-2xl);
+  line-height: var(--leading-snug);
+  letter-spacing: var(--tracking-tight);
+  font-weight: 600;
+}
+
+.rp-timestamp,
+.rp-event-name,
+.rp-metadata {
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+}
+
+.rp-event-name {
+  color: hsl(var(--foreground));
+}
+
+.rp-metadata,
+.rp-timestamp {
+  color: hsl(var(--muted-foreground));
+}
+
+.rp-mono-label {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  line-height: var(--leading-normal);
+  letter-spacing: var(--tracking-mono-label);
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
+}
+
+.rp-prose {
+  max-width: 68ch;
+  font-size: var(--text-base);
+  line-height: var(--leading-relaxed);
+}
+
+.rp-prose > * + * {
+  margin-top: 1em;
+}

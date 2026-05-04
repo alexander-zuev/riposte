@@ -10,7 +10,7 @@ export interface IOutboxRepository {
   persistEvents: (events: DomainEvent[]) => Promise<Result<void, DatabaseError>>
   assertMessageNotProcessed: (
     msgId: string,
-  ) => Promise<Result<void, DatabaseError | DuplicateMessageError>>
+  ) => Promise<Result<{ id: string }[], DatabaseError | DuplicateMessageError>>
   retrievePending: (batchSize: number) => Promise<Result<DbOutbox[], DatabaseError>>
   publishPending: (pending: DbOutbox[]) => Promise<Result<UUIDv4[], DatabaseError>>
 }

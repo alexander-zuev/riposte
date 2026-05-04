@@ -1,0 +1,203 @@
+/* Riposte Product Patterns
+   Domain-specific layout and evidence/case review primitives.
+   Define the domain color vars in your color file, for example:
+   --rp-evidence, --rp-evidence-foreground, --rp-won, --rp-lost, --rp-warning.
+*/
+
+.rp-shell {
+  min-height: 100dvh;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+.rp-app-layout {
+  display: grid;
+  grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+  min-height: 100dvh;
+}
+
+.rp-sidebar {
+  border-right: 1px solid hsl(var(--border));
+  background: hsl(var(--background));
+  padding: var(--space-4);
+}
+
+.rp-main {
+  min-width: 0;
+  padding: var(--space-8);
+}
+
+.rp-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-6);
+  margin-bottom: var(--space-8);
+}
+
+.rp-page-kicker {
+  margin-bottom: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-mono-label);
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
+}
+
+.rp-dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+.rp-span-3 { grid-column: span 3; }
+.rp-span-4 { grid-column: span 4; }
+.rp-span-6 { grid-column: span 6; }
+.rp-span-8 { grid-column: span 8; }
+.rp-span-12 { grid-column: span 12; }
+
+.rp-case-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--case-sidebar-width);
+  gap: var(--space-6);
+  align-items: start;
+}
+
+.rp-case-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  color: hsl(var(--muted-foreground));
+  font-size: var(--text-sm);
+}
+
+.rp-agent-summary {
+  border-left: 3px solid hsl(var(--accent));
+  padding: var(--space-4);
+  background: hsl(var(--muted));
+  border-radius: var(--radius-sm);
+}
+
+.rp-timeline {
+  position: relative;
+  display: grid;
+  gap: var(--space-4);
+  padding-left: var(--space-6);
+}
+
+.rp-timeline::before {
+  content: "";
+  position: absolute;
+  left: 0.5rem;
+  top: 0.4rem;
+  bottom: 0.4rem;
+  width: 1px;
+  background: hsl(var(--border));
+}
+
+.rp-timeline-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 5.5rem minmax(0, 1fr) auto;
+  gap: var(--space-4);
+  align-items: baseline;
+}
+
+.rp-timeline-item::before {
+  content: "";
+  position: absolute;
+  left: calc(-1 * var(--space-6) + 0.275rem);
+  top: 0.45rem;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: hsl(var(--accent));
+  box-shadow: 0 0 0 3px hsl(var(--background));
+}
+
+.rp-timeline-time {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: hsl(var(--muted-foreground));
+  font-variant-numeric: tabular-nums;
+}
+
+.rp-timeline-event {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: hsl(var(--foreground));
+}
+
+.rp-source-chip-list {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.rp-source-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  height: 1.75rem;
+  padding: 0 var(--space-2);
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius-sm);
+  background: hsl(var(--background));
+  font-size: var(--text-xs);
+  color: hsl(var(--foreground));
+}
+
+.rp-evidence-packet {
+  max-width: 52rem;
+  margin-inline: auto;
+  padding: var(--space-10);
+  background: hsl(var(--card));
+  color: hsl(var(--card-foreground));
+  border: 1px solid hsl(var(--border));
+  box-shadow: var(--shadow-packet);
+}
+
+.rp-evidence-packet-title {
+  font-family: var(--font-sans);
+  font-size: var(--text-2xl);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-snug);
+  font-weight: 700;
+}
+
+.rp-evidence-section {
+  padding-block: var(--space-6);
+  border-top: 1px solid hsl(var(--border));
+}
+
+.rp-log-panel {
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  border-radius: var(--radius-sm);
+  padding: var(--space-4);
+  overflow: auto;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  line-height: var(--leading-relaxed);
+}
+
+@media (max-width: 960px) {
+  .rp-app-layout,
+  .rp-case-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .rp-sidebar {
+    border-right: 0;
+    border-bottom: 1px solid hsl(var(--border));
+  }
+
+  .rp-span-3,
+  .rp-span-4,
+  .rp-span-6,
+  .rp-span-8 {
+    grid-column: span 12;
+  }
+}

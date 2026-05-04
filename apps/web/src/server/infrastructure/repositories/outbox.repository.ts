@@ -24,7 +24,7 @@ export class OutboxRepository extends BaseRepository implements IOutboxRepositor
 
   async assertMessageNotProcessed(
     msgId: string,
-  ): Promise<Result<void, DatabaseError | DuplicateMessageError>> {
+  ): Promise<Result<{ id: string }[], DatabaseError | DuplicateMessageError>> {
     const inserted = await Result.tryPromise({
       try: () =>
         this.db
@@ -38,7 +38,7 @@ export class OutboxRepository extends BaseRepository implements IOutboxRepositor
     if (inserted.isErr()) return inserted
     if (inserted.value.length === 0)
       return Result.err(new DuplicateMessageError({ messageId: msgId }))
-    return Result.ok()
+    return inserted
   }
 
   async publishPending(pending: DbOutbox[]): Promise<Result<UUIDv4[], DatabaseError>> {
@@ -51,7 +51,8 @@ export class OutboxRepository extends BaseRepository implements IOutboxRepositor
           .where(inArray(messageOutbox.id, ids))
         return ids
       },
-      catch: (e) => new DatabaseError({ message: 'Failed to mark outbox messages published', cause: e }),
+      catch: (e) =>
+        new DatabaseError({ message: 'Failed to mark outbox messages published', cause: e }),
     })
   }
 
@@ -65,7 +66,8 @@ export class OutboxRepository extends BaseRepository implements IOutboxRepositor
           .orderBy(asc(messageOutbox.createdAt))
           .limit(batchSize)
           .for('update', { skipLocked: true }),
-      catch: (e) => new DatabaseError({ message: 'Failed to retrieve pending outbox messages', cause: e }),
+      catch: (e) =>
+        new DatabaseError({ message: 'Failed to retrieve pending outbox messages', cause: e }),
     })
   }
 }

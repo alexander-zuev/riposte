@@ -1,0 +1,91 @@
+/* Riposte Surfaces & Depth
+   Light theme rule: borders first, shadows only for real elevation.
+*/
+
+:root {
+  /* Shadow color is derived from foreground. No raw color tokens defined here. */
+  --shadow-color: hsl(var(--foreground));
+
+  --shadow-xs:
+    0 1px 1px color-mix(in srgb, var(--shadow-color) 6%, transparent);
+
+  --shadow-sm:
+    0 1px 2px color-mix(in srgb, var(--shadow-color) 6%, transparent),
+    0 1px 1px color-mix(in srgb, var(--shadow-color) 4%, transparent);
+
+  --shadow-md:
+    0 8px 24px color-mix(in srgb, var(--shadow-color) 7%, transparent),
+    0 2px 6px color-mix(in srgb, var(--shadow-color) 5%, transparent);
+
+  --shadow-lg:
+    0 18px 48px color-mix(in srgb, var(--shadow-color) 10%, transparent),
+    0 4px 12px color-mix(in srgb, var(--shadow-color) 7%, transparent);
+
+  --shadow-packet:
+    0 18px 50px color-mix(in srgb, var(--shadow-color) 8%, transparent),
+    0 2px 8px color-mix(in srgb, var(--shadow-color) 5%, transparent);
+}
+
+.rp-surface {
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+.rp-panel,
+.rp-card {
+  background: hsl(var(--card));
+  color: hsl(var(--card-foreground));
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
+}
+
+.rp-card {
+  padding: var(--space-5);
+}
+
+.rp-card-compact {
+  padding: var(--space-4);
+}
+
+.rp-card-spacious {
+  padding: var(--space-8);
+}
+
+.rp-elevated {
+  box-shadow: var(--shadow-md);
+}
+
+.rp-floating {
+  background: hsl(var(--popover));
+  color: hsl(var(--popover-foreground));
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+}
+
+.rp-packet-preview {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-packet);
+}
+
+.rp-divider {
+  height: 1px;
+  background: hsl(var(--border));
+  border: 0;
+}
+
+.rp-inset-section {
+  background: hsl(var(--muted));
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
+}
+
+.rp-accent-border-left {
+  border-left: 3px solid hsl(var(--accent));
+}
+
+.rp-muted-border {
+  border: 1px solid hsl(var(--border));
+}

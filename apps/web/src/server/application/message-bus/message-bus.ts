@@ -109,7 +109,7 @@ export class MessageBus implements IMessageBus {
       )
     } catch (error) {
       if (error instanceof DuplicateMessageError) {
-        logger.info('Duplicate command ignored', {
+        logger.warn('Duplicate command ignored', {
           command: command.name,
           id: command.id,
         })
@@ -135,7 +135,7 @@ export class MessageBus implements IMessageBus {
       )
     } catch (e) {
       if (e instanceof DuplicateMessageError) {
-        logger.info(`Duplicate event skipped: ${event.name}`, { id: event.id })
+        logger.warn(`Duplicate event skipped: ${event.name}`, { id: event.id })
         return
       }
       throw e

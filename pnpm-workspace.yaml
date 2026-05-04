@@ -18,8 +18,8 @@ allowBuilds:
 catalog:
   '@base-ui/react': ^1.4.1
   '@better-auth/stripe': ^1.6.9
-  '@cloudflare/vite-plugin': ^1.34.0
-  '@cloudflare/vitest-pool-workers': ^0.15.1
+  '@cloudflare/vite-plugin': ^1.35.0
+  '@cloudflare/vitest-pool-workers': ^0.15.2
   '@cloudflare/workers-types': ^4.20260426.1
   '@fontsource-variable/jetbrains-mono': ^5.2.8
   '@phosphor-icons/react': ^2.1.10
@@ -39,8 +39,8 @@ catalog:
   '@radix-ui/react-toggle-group': ^1.1.11
   '@radix-ui/react-tooltip': ^1.2.8
   '@rolldown/plugin-babel': ^0.2.3
-  '@sentry/cloudflare': ^10.50.0
-  '@sentry/tanstackstart-react': ^10.50.0
+  '@sentry/cloudflare': ^10.51.0
+  '@sentry/tanstackstart-react': ^10.51.0
   '@sentry/vite-plugin': ^5.2.1
   '@storybook/addon-themes': ^10.3.5
   '@storybook/builder-vite': ^10.3.4
@@ -48,7 +48,7 @@ catalog:
   '@tailwindcss/vite': ^4.2.4
   '@tanstack/react-query': ^5.100.6
   '@tanstack/react-query-devtools': ^5.100.6
-  '@tanstack/react-router': ^1.168.25
+  '@tanstack/react-router': ^1.169.1
   '@tanstack/react-router-devtools': ^1.166.13
   '@tanstack/react-router-ssr-query': ^1.166.12
   '@tanstack/react-start': ^1.167.50
@@ -98,7 +98,7 @@ catalog:
   vite: ^8.0.10
   vitest: ^4.1.5
   wrangler: ^4.86.0
-  zod: ^4.3.6
+  zod: ^4.4.2
   zustand: ^5.0.12
 
 engineStrict: true

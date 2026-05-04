@@ -20,15 +20,11 @@ function parseZodIssues(error: Error): ValidationIssue[] | null {
 }
 
 /**
- * Serialize errors to plain objects and throw. Plain objects survive TanStack's
- * seroval serialization (Error instances lose custom properties). rpc() catches
- * via isServerError() on the client.
+ * Single logging point for all server-side errors.
  *
- * Three paths:
- * 1. BaseError (handled) — serialize, no log
- * 2. TanStack-mangled ZodError — reconstruct as ValidationError, warn log
- *    (inputValidator only runs server-side; client middleware cannot intercept)
- * 3. Unknown — logger.error sends to Sentry via hook, serialize as INTERNAL_SERVER_ERROR
+ * Because this middleware wraps every server function and API route, code below
+ * it must NEVER log-and-throw — just throw. The only reason to log inside a
+ * handler is when you swallow the error (fire-and-forget, fallback).
  */
 function handleError(error: unknown): never {
   if (isNotFound(error) || isRedirect(error)) {
@@ -40,6 +36,7 @@ function handleError(error: unknown): never {
   }
 
   if (error instanceof BaseError) {
+    logger.error(error.message, { error })
     throw serializeError(error)
   }
 

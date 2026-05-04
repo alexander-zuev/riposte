@@ -22,8 +22,8 @@ export async function rpc<T>(fn: Promise<unknown>): Promise<T> {
         rawKeys:
           raw !== null && raw !== undefined && typeof raw === 'object'
             ? Object.keys(raw).join(',')
-            : null,
-        rawPreview: typeof raw === 'string' ? raw.slice(0, 200) : null,
+            : undefined,
+        rawPreview: typeof raw === 'string' ? raw.slice(0, 200) : undefined,
       })
       throw new Error('Server returned an unexpected response')
     }

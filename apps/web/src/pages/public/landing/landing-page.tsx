@@ -116,7 +116,7 @@ function WaitlistForm({ emailRef }: { emailRef: React.RefObject<HTMLInputElement
 
   const form = useForm({
     defaultValues: { email: '' },
-    validators: { onChange: joinWaitlistInput },
+    validators: { onSubmit: joinWaitlistInput },
     onSubmit: ({ value }) => mutation.mutate(value),
   })
 

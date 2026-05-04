@@ -35,7 +35,7 @@
   "dependencies": {
     "@base-ui/react": "catalog:",
     "@better-auth/stripe": "catalog:",
-    "@cloudflare/vite-plugin": "catalog:",
+    "@cloudflare/vite-plugin": "^1.35.0",
     "@fontsource-variable/inter": "^5.2.8",
     "@fontsource-variable/jetbrains-mono": "catalog:",
     "@phosphor-icons/react": "catalog:",
@@ -47,7 +47,7 @@
     "@tanstack/react-form": "^1.29.1",
     "@tanstack/react-query": "catalog:",
     "@tanstack/react-query-devtools": "catalog:",
-    "@tanstack/react-router": "catalog:",
+    "@tanstack/react-router": "^1.169.1",
     "@tanstack/react-router-devtools": "catalog:",
     "@tanstack/react-router-ssr-query": "catalog:",
     "@tanstack/react-start": "catalog:",
@@ -72,11 +72,11 @@
     "tailwind-merge": "catalog:",
     "tailwindcss": "catalog:",
     "tw-animate-css": "catalog:",
-    "zod": "catalog:",
+    "zod": "^4.4.2",
     "zustand": "catalog:"
   },
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "catalog:",
+    "@cloudflare/vitest-pool-workers": "^0.15.2",
     "@rolldown/plugin-babel": "catalog:",
     "@sentry/vite-plugin": "catalog:",
     "@storybook/addon-themes": "catalog:",

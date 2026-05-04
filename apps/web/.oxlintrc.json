@@ -36,7 +36,8 @@
     "react/only-export-components": "off",
     "jsx-a11y/no-autofocus": "off",
     "unicorn/no-instanceof-builtins": "off",
-    "no-optional-chaining": "off"
+    "no-optional-chaining": "off",
+    "no-undefined": "off"
   },
   "overrides": [
     {

@@ -3,7 +3,7 @@ import { z } from 'zod'
 
 const envSchema = z
   .object({
-    DRIZZLE_ENV: z.enum(['dev', 'prod']).default('dev'),
+    DRIZZLE_ENV: z.enum(['dev', 'staging', 'prod']).default('dev'),
     DATABASE_URL_DEV: z.string().min(1),
     DATABASE_URL_PROD: z.string().min(1),
   })

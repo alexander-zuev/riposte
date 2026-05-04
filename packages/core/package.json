@@ -25,8 +25,8 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "postgres": "^3.4.9",
-    "zod": "^4.4.2"
+    "postgres": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "catalog:",

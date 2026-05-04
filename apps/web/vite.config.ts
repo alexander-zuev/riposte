@@ -25,14 +25,18 @@ export default defineConfig(() => {
       react(),
       babel({ presets: [reactCompilerPreset({ target: '19' })] }),
       tailwindcss(),
-      sentryTanstackStart({
-        org: 'azcompany',
-        project: 'riposte',
-        authToken: process.env.SENTRY_AUTH_TOKEN,
-        sourcemaps: {
-          filesToDeleteAfterUpload: ['./dist/client/**/*.map'],
-        },
-      }),
+      ...(hasSentrySourcemapAuthToken
+        ? [
+            sentryTanstackStart({
+              org: 'azcompany',
+              project: 'riposte',
+              authToken: process.env.SENTRY_AUTH_TOKEN,
+              sourcemaps: {
+                filesToDeleteAfterUpload: ['./dist/client/**/*.map'],
+              },
+            }),
+          ]
+        : []),
     ],
     resolve: {
       tsconfigPaths: true,

@@ -6,12 +6,16 @@ import {
   userSignedUpSchema,
 } from '../auth/auth.messages'
 import { r2EventSchema, r2EventTransform } from '../storage/r2.messages'
+import { joinWaitlistSchema } from '../waitlist/waitlist.messages'
 
 /* -------------------------------------------------------------------------------------------------
  * Command Union & Map
  * ----------------------------------------------------------------------------------------------- */
 
-export const domainCommandSchema = z.discriminatedUnion('name', [sendWelcomeEmailSchema])
+export const domainCommandSchema = z.discriminatedUnion('name', [
+  sendWelcomeEmailSchema,
+  joinWaitlistSchema,
+])
 
 export type DomainCommand = z.infer<typeof domainCommandSchema>
 export type CommandName = DomainCommand['name']

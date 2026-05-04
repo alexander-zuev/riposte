@@ -1,6 +1,7 @@
 import { createLogger, createSentryOptions } from '@riposte/core'
 import * as Sentry from '@sentry/cloudflare'
 import { createDatabase } from '@server/infrastructure/db/connection'
+import { QueueClient } from '@server/infrastructure/queues/queue-client'
 import { OutboxRelay } from '@server/infrastructure/queues/outbox-relay'
 import { DurableObject } from 'cloudflare:workers'
 
@@ -28,27 +29,25 @@ class OutboxRelayDOBase extends DurableObject<Env> {
 
   /** Flush outbox, self-schedule next run. CF retries on throw. */
   async alarm(): Promise<void> {
-    try {
-      const db = createDatabase(this.env)
-      const outboxRelay = new OutboxRelay(db)
-      const published = await outboxRelay.flush(this.env, BATCH_SIZE)
+    const db = createDatabase(this.env)
+    const queueClient = new QueueClient(this.env)
+    const outboxRelay = new OutboxRelay(db, queueClient)
+    const result = await outboxRelay.flush(BATCH_SIZE)
+    if (result.isErr()) {
+      // DO alarms retry only when the alarm handler throws.
+      throw result.error
+    }
 
-      if (published === 0) {
-        logger.debug('Outbox relay complete - no messages to publish')
-      } else {
-        logger.info('Outbox relay complete', {
-          published,
-          batchSize: BATCH_SIZE,
-        })
-      }
+    const published = result.unwrap()
 
-      if (published >= BATCH_SIZE) {
-        await this.ctx.storage.setAlarm(Date.now())
-        logger.debug('More messages pending, scheduling next batch')
-      }
-    } catch (error) {
-      logger.error('Outbox relay failed', { error })
-      throw error
+    logger.debug('Outbox relay complete', {
+      published,
+      batchSize: BATCH_SIZE,
+    })
+
+    if (published >= BATCH_SIZE) {
+      await this.ctx.storage.setAlarm(Date.now())
+      logger.debug('More messages pending, scheduling next batch')
     }
   }
 }

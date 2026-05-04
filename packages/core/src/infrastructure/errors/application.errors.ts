@@ -27,4 +27,16 @@ export class NoHandlerError extends TaggedError('NoHandlerError')<{
   }
 }
 
-export type ApplicationError = UnknownMessageTypeError | NoHandlerError
+export class InternalServerError extends TaggedError('InternalServerError')<{
+  message: string
+  retryable: false
+}>() {
+  constructor(args?: { message?: string }) {
+    super({
+      message: args?.message ?? 'Something went wrong',
+      retryable: false,
+    })
+  }
+}
+
+export type ApplicationError = UnknownMessageTypeError | NoHandlerError | InternalServerError

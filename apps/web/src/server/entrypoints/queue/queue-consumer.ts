@@ -1,9 +1,9 @@
 import type { DomainMessage } from '@riposte/core'
-import { createLogger, queueMessageSchema } from '@riposte/core'
+import { createLogger, queueMessageSchema, ValidationError } from '@riposte/core'
 import * as Sentry from '@sentry/cloudflare'
 import { MessageBus } from '@server/application/message-bus/message-bus'
 import type { IMessageBus } from '@server/application/message-bus/message-bus'
-import { isTaggedError } from 'better-result'
+import { isTaggedError, Result } from 'better-result'
 
 const logger = createLogger('queue-consumer')
 
@@ -20,35 +20,47 @@ export class QueueConsumer {
   }
 
   private async processMessage(message: Message): Promise<void> {
-    const msg = await this.parseMessage(message.body)
-    if (!msg) {
-      message.ack()
-      return
-    }
+    let parsedMsg: DomainMessage | undefined
 
     await Sentry.withIsolationScope(async (scope) => {
-      if ('userId' in msg && msg.userId) scope.setUser({ id: msg.userId })
-
       try {
-        await this.messageBus.handle(msg)
+        const result = await Result.gen(async function* (this: QueueConsumer) {
+          const msg = yield* Result.await(this.parseMessage(message.body))
+          parsedMsg = msg
+          if ('userId' in msg && msg.userId) scope.setUser({ id: msg.userId })
+
+          yield* Result.await(this.messageBus.handle(msg))
+          return Result.ok(msg)
+        }, this)
+
+        if (result.isErr()) {
+          this.handleFailure(message, parsedMsg, result.error)
+          return
+        }
+
         message.ack()
-        logger.info('processed', { name: msg.name })
+        logger.info('processed', { name: result.value.name })
       } catch (error) {
-        this.handleError(message, msg, error)
+        this.handleFailure(message, parsedMsg, error)
       }
     })
   }
 
-  private async parseMessage(body: unknown): Promise<DomainMessage | null> {
-    const result = await queueMessageSchema.safeParseAsync(body)
-    if (!result.success) {
-      logger.error('Invalid message format', { error: result.error, body })
-      return null
+  private async parseMessage(body: unknown): Promise<Result<DomainMessage, ValidationError>> {
+    const parsed = await queueMessageSchema.safeParseAsync(body)
+    if (!parsed.success) {
+      return Result.err(
+        new ValidationError({
+          issues: parsed.error.issues,
+          message: 'Invalid queue message format',
+        }),
+      )
     }
-    return result.data
+
+    return Result.ok(parsed.data)
   }
 
-  private handleError(message: Message, msg: DomainMessage, error: unknown): void {
+  private handleFailure(message: Message, msg: DomainMessage | undefined, error: unknown): void {
     const retryable = isTaggedError(error) && 'retryable' in error && error.retryable === true
 
     if (!retryable || message.attempts >= QueueConsumer.MAX_ATTEMPTS) {

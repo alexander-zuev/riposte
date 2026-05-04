@@ -48,6 +48,96 @@ Commands, events, and queries defined in `packages/core/src/domain/messaging/`. 
 - **Production:** PlanetScale Postgres with `pg_cron` + `pg_strict` enabled
 - **Two connection users:** `postgres:postgres` for migrations (DDL), `riposte-app` for runtime (DML)
 
+## `better-result`
+
+Use `better-result` to make expected failures part of the function contract. Docs: `https://better-result.dev` / Source: `~/.opensrc/repos/github.com/dmmulroy/better-result/2.9.1/`
+
+### Mental model
+
+- `Result.err(...)` = an expected failure the caller can handle: validation, not found, duplicate message, authorization, DB/API/queue failure.
+- `throw` = a bug or framework control flow: impossible state, missing setup/env, invalid lifecycle usage, `redirect()`, `notFound()`.
+- Do not let expected throws travel upward through layers. Convert them at the boundary where they happen.
+- Group errors with union types, not inheritance: `type SaveUserError = ValidationError | DatabaseError`.
+
+### Layer rules
+
+- Domain methods return `Result` for business rejection; throw only for invariant/programmer bugs.
+- Repositories catch driver/Drizzle/postgres throws with `Result.tryPromise({ try, catch })` and return `Result.err(new DatabaseError(...))`.
+- Application handlers propagate `Result` from domain/services/repos. Do not catch expected errors there.
+- Entry points/server functions/queue consumers consume final Results with `match`, `isErr`, or error serialization.
+- Fire-and-forget post-commit work, like waking the outbox relay in `waitUntil`, should log and swallow. The transaction already committed and the outbox row is durable.
+
+### Composition rules
+
+For 1-2 fallible calls, explicit early return is preferred:
+
+```typescript
+const parsed = parseCommand(input)
+if (parsed.isErr()) return parsed
+
+const saved = await repo.save(parsed.value)
+if (saved.isErr()) return saved
+
+return Result.ok(saved.value)
+```
+
+For 3+ dependent fallible calls, use `Result.gen`:
+
+```typescript
+return await Result.gen(async function* () {
+  const command = yield* parseCommand(input)
+  const aggregate = yield* Aggregate.create(command)
+  const saved = yield* Result.await(repo.save(aggregate))
+
+  return Result.ok(saved.id)
+})
+```
+
+`yield* someResult` means: if Err, stop and return that Err; if Ok, unwrap the value. Use `Result.await(...)` for `Promise<Result<...>>`.
+
+Use `match` only when ending the Result flow, usually at an adapter boundary:
+
+```typescript
+return result.match({
+  ok: (value) => Response.json(value),
+  err: (error) => Response.json(serializeError(error), { status: 400 }),
+})
+```
+
+Avoid `unwrap()` in normal application code. It throws on Err. Use it only after an `isErr()` guard, in tests, or inside required bridges such as Drizzle transaction rollback.
+
+### Tagged errors
+
+Use `TaggedError` for typed errors with `_tag`, structured fields, `.is(...)`, and serialization:
+
+```typescript
+class DuplicateMessageError extends TaggedError("DuplicateMessageError")<{
+  messageId: string
+  message: string
+  retryable: false
+}>() {
+  constructor(args: { messageId: string }) {
+    super({
+      messageId: args.messageId,
+      message: `Duplicate message: ${args.messageId}`,
+      retryable: false,
+    })
+  }
+}
+```
+
+Use `matchError` / `matchErrorPartial` when choosing behavior by `_tag`. After `Result.deserialize`, errors are plain objects; match on `_tag`, not `.is()`.
+
+### UoW and retry
+
+Drizzle rolls back only by throwing, so `executeUoW` may contain a small throw bridge: store the `Result.err`, call `tx.rollback()`, catch `TransactionRollbackError`, and return the stored `Result.err`. This is an adapter detail; outside UoW the contract remains `Promise<Result<T, E>>`.
+
+Retry at the caller boundary, not inside repositories. Queue consumer / workflow step retry should retry the whole transaction/UoW, not individual SQL statements.
+
+### Logging and instrumentation
+
+Do not `logger.error(..., { error })` immediately before rethrowing inside Sentry-instrumented entrypoints (`withSentry`, `instrumentDurableObjectWithSentry`, queue/scheduled wrappers). `logger.error` already forwards to Sentry via the logger hook, and the instrumentation captures the rethrow too. Either let the throw be captured, or log at `warn`/`debug` if an operational breadcrumb is useful.
+
 ## Key Conventions
 
 - Path aliases: `@web/*` → `src/*`, `@server/*` → `src/server/*`

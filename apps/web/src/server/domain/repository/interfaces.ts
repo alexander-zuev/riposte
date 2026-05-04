@@ -1,16 +1,16 @@
-import type { DomainEvent, UUIDv4 } from '@riposte/core'
+import type { DatabaseError, DomainEvent, DuplicateMessageError, UUIDv4 } from '@riposte/core'
 import type { DbOutbox } from '@server/infrastructure/db'
+import type { Result } from 'better-result'
 
 /* -------------------------------------------------------------------------------------------------
  * Outbox Repository
  * ------------------------------------------------------------------------------------------------- */
 
 export interface IOutboxRepository {
-  persistEvents: (events: DomainEvent[]) => Promise<void>
-  /** Check if message was already processed. Throws DuplicateMessageError if yes. */
-  assertMessageNotProcessed: (msgId: UUIDv4) => Promise<void>
-  /** Retrieve pending outbox messages (unpublished, ordered by createdAt). */
-  retrievePending: (batchSize: number) => Promise<DbOutbox[]>
-  /** Mark messages as published. Returns published IDs. */
-  publishPending: (pending: DbOutbox[]) => Promise<UUIDv4[]>
+  persistEvents: (events: DomainEvent[]) => Promise<Result<void, DatabaseError>>
+  assertMessageNotProcessed: (
+    msgId: string,
+  ) => Promise<Result<void, DatabaseError | DuplicateMessageError>>
+  retrievePending: (batchSize: number) => Promise<Result<DbOutbox[], DatabaseError>>
+  publishPending: (pending: DbOutbox[]) => Promise<Result<UUIDv4[], DatabaseError>>
 }

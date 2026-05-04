@@ -217,6 +217,13 @@
     "test": {
       "name": "riposte-test",
       "compatibility_flags": ["nodejs_compat", "service_binding_extra_handlers"],
+      "hyperdrive": [
+        {
+          "binding": "HYPERDRIVE",
+          "id": "d734852c734e497985f9ec9afe2feb4e",
+          "localConnectionString": "postgres://riposte-app:riposte-app@localhost:5432/riposte_test",
+        },
+      ],
       "vars": {
         "ENV": "test",
         "APP_URL": "http://localhost:3000",

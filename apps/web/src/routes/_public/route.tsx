@@ -4,7 +4,8 @@ import { getSession } from '@web/server/entrypoints/functions/auth.fn'
 export const Route = createFileRoute('/_public')({
   beforeLoad: async () => {
     try {
-      const session = await getSession()
+      const result = await getSession()
+      const session = result.status === 'ok' ? result.value : null
       return { user: session?.user ?? null }
     } catch {
       return { user: null }

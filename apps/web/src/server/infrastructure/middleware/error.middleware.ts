@@ -1,9 +1,17 @@
 import type { ValidationIssue } from '@riposte/core'
-import { AuthenticationError, ValidationError, serializeError } from '@riposte/core'
+import {
+  AuthenticationError,
+  AuthorizationError,
+  EntityNotFoundError,
+  InternalServerError,
+  RateLimitError,
+  ValidationError,
+} from '@riposte/core'
 import { createLogger } from '@riposte/core'
+import { serializeForRpc } from '@server/entrypoints/functions/rpc-result'
 import { isNotFound, isRedirect, redirect } from '@tanstack/react-router'
 import { createMiddleware } from '@tanstack/react-start'
-import { isTaggedError } from 'better-result'
+import { isTaggedError, Result } from 'better-result'
 
 const logger = createLogger('error-middleware')
 
@@ -20,6 +28,15 @@ function parseZodIssues(error: Error): ValidationIssue[] | null {
   return null
 }
 
+function statusForTaggedError(error: unknown): number {
+  if (AuthenticationError.is(error)) return 401
+  if (AuthorizationError.is(error)) return 403
+  if (ValidationError.is(error)) return 400
+  if (EntityNotFoundError.is(error)) return 404
+  if (RateLimitError.is(error)) return 429
+  return 500
+}
+
 /**
  * Single logging point for all server-side errors.
  *
@@ -27,30 +44,60 @@ function parseZodIssues(error: Error): ValidationIssue[] | null {
  * it must NEVER log-and-throw — just throw. The only reason to log inside a
  * handler is when you swallow the error (fire-and-forget, fallback).
  */
-function handleError(error: unknown): never {
+function handleFunctionError(error: unknown): never {
   if (isNotFound(error) || isRedirect(error)) {
     throw error
   }
 
   if (AuthenticationError.is(error)) {
-    throw redirect({ to: '/' })
+    throw serializeForRpc(Result.err(error))
   }
 
   if (isTaggedError(error)) {
     logger.error(error.message, { error })
-    throw serializeError(error)
+    throw serializeForRpc(Result.err(error))
   }
 
   if (error instanceof Error) {
     const zodIssues = parseZodIssues(error)
     if (zodIssues) {
       logger.warn('Validation error', { issues: zodIssues, issueCount: zodIssues.length })
-      throw serializeError(new ValidationError({ issues: zodIssues }))
+      throw serializeForRpc(Result.err(new ValidationError({ issues: zodIssues })))
     }
   }
 
   logger.error('Unexpected error', { error })
-  throw serializeError(error)
+  throw serializeForRpc(Result.err(new InternalServerError()))
+}
+
+function handleRouteError(error: unknown): Response {
+  if (isNotFound(error) || isRedirect(error)) {
+    throw error
+  }
+
+  if (isTaggedError(error)) {
+    if (AuthenticationError.is(error)) {
+      return Response.json({ error: error.message }, { status: 401 })
+    }
+
+    logger.error(error.message, { error })
+    return Response.json({ error: error.message }, { status: statusForTaggedError(error) })
+  }
+
+  if (error instanceof Error) {
+    const zodIssues = parseZodIssues(error)
+    if (zodIssues) {
+      logger.warn('Validation error', { issues: zodIssues, issueCount: zodIssues.length })
+      const validationError = new ValidationError({ issues: zodIssues })
+      return Response.json(
+        { error: validationError.message, issues: validationError.issues },
+        { status: 400 },
+      )
+    }
+  }
+
+  logger.error('Unexpected error', { error })
+  return Response.json({ error: 'Internal server error' }, { status: 500 })
 }
 
 /** Global — registered in functionMiddleware in createStart(). */
@@ -58,7 +105,7 @@ export const errorMiddleware = createMiddleware({ type: 'function' }).server(asy
   try {
     return await next()
   } catch (error) {
-    handleError(error)
+    handleFunctionError(error)
   }
 })
 
@@ -68,7 +115,7 @@ export const routeErrorMiddleware = createMiddleware({ type: 'request' }).server
     try {
       return await next()
     } catch (error) {
-      handleError(error)
+      return handleRouteError(error)
     }
   },
 )

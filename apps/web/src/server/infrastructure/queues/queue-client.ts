@@ -1,9 +1,11 @@
 import type { DomainMessage } from '@riposte/core'
 import { createLogger } from '@riposte/core'
+import { QueueError } from '@riposte/core'
+import { Result } from 'better-result'
 
 export interface IQueueClient {
-  send: (message: DomainMessage) => Promise<void>
-  sendBatch: (messages: DomainMessage[]) => Promise<void>
+  send: (message: DomainMessage) => Promise<Result<void, QueueError>>
+  sendBatch: (messages: DomainMessage[]) => Promise<Result<void, QueueError>>
 }
 
 const logger = createLogger('queue-client')
@@ -18,13 +20,18 @@ const logger = createLogger('queue-client')
 export class QueueClient implements IQueueClient {
   constructor(private readonly env: Env) {}
 
-  async send(message: DomainMessage): Promise<void> {
+  async send(message: DomainMessage): Promise<Result<void, QueueError>> {
     const queue = this.getQueue(message.type)
     logger.debug('sending_message', { name: message.name, type: message.type })
-    await queue.send(message)
+    return Result.tryPromise({
+      try: async () => {
+        await queue.send(message)
+      },
+      catch: (cause) => new QueueError({ message: 'Failed to send queue message', cause }),
+    })
   }
 
-  async sendBatch(messages: DomainMessage[]): Promise<void> {
+  async sendBatch(messages: DomainMessage[]): Promise<Result<void, QueueError>> {
     const commands = messages.filter((m) => m.type === 'command')
     const events = messages.filter((m) => m.type === 'event')
 
@@ -34,10 +41,22 @@ export class QueueClient implements IQueueClient {
       events: events.map((e) => e.name),
     })
 
-    await Promise.all([
-      commands.length > 0 && this.env.CRITICAL_QUEUE.sendBatch(commands.map((body) => ({ body }))),
-      events.length > 0 && this.env.BACKGROUND_QUEUE.sendBatch(events.map((body) => ({ body }))),
-    ])
+    return Result.tryPromise({
+      try: async () => {
+        const sends: Promise<unknown>[] = []
+
+        if (commands.length > 0) {
+          sends.push(this.env.CRITICAL_QUEUE.sendBatch(commands.map((body) => ({ body }))))
+        }
+
+        if (events.length > 0) {
+          sends.push(this.env.BACKGROUND_QUEUE.sendBatch(events.map((body) => ({ body }))))
+        }
+
+        await Promise.all(sends)
+      },
+      catch: (cause) => new QueueError({ message: 'Failed to send queue batch', cause }),
+    })
   }
 
   private getQueue(type: DomainMessage['type']): Queue<DomainMessage> {

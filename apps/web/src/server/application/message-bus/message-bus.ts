@@ -1,16 +1,18 @@
 import type {
   CommandName,
   CommandMap,
-  DomainCommand,
-  DomainEvent,
   DomainMessage,
-  DomainQuery,
   EventMap,
   EventName,
   QueryMap,
   QueryName,
 } from '@riposte/core'
-import { createLogger, DuplicateMessageError, UnknownMessageTypeError } from '@riposte/core'
+import {
+  createLogger,
+  DuplicateMessageError,
+  NoHandlerError,
+  UnknownMessageTypeError,
+} from '@riposte/core'
 import { executeUoW } from '@server/application/message-bus/unit-of-work'
 import type { MessageResult } from '@server/application/registry/message-result'
 import {
@@ -18,42 +20,52 @@ import {
   EVENT_HANDLERS,
   QUERY_HANDLERS,
 } from '@server/application/registry/registry'
-import type { CommandHandler, EventHandler, QueryHandler } from '@server/application/registry/types'
+import type {
+  CommandHandler,
+  CommandRegistry,
+  EventHandlerRegistration,
+  QueryHandler,
+  QueryRegistry,
+} from '@server/application/registry/types'
 import type { DrizzleDb } from '@server/infrastructure/db'
+import { Result } from 'better-result'
 
 const logger = createLogger('message-bus')
 
-function getQueryHandler<TName extends QueryName>(
-  name: TName,
-): QueryHandler<QueryMap[TName], MessageResult<QueryMap[TName]>> {
-  return QUERY_HANDLERS[name] as unknown as QueryHandler<
-    QueryMap[TName],
-    MessageResult<QueryMap[TName]>
-  >
+type AnyCommandHandler = CommandHandler<any, unknown, unknown>
+type AnyQueryHandler = QueryHandler<any, unknown, unknown>
+
+function getQueryHandler(name: QueryName): Result<AnyQueryHandler, NoHandlerError> {
+  const queryHandlers = QUERY_HANDLERS as Partial<QueryRegistry>
+  const handler = queryHandlers[name] as AnyQueryHandler | undefined
+  if (!handler) {
+    return Result.err(new NoHandlerError({ kind: 'query', messageName: name }))
+  }
+
+  return Result.ok(handler)
 }
 
-function getCommandHandler<TName extends CommandName>(
-  name: TName,
-): CommandHandler<CommandMap[TName], MessageResult<CommandMap[TName]>> {
-  return COMMAND_HANDLERS[name] as unknown as CommandHandler<
-    CommandMap[TName],
-    MessageResult<CommandMap[TName]>
-  >
+function getCommandHandler(name: CommandName): Result<AnyCommandHandler, NoHandlerError> {
+  const commandHandlers = COMMAND_HANDLERS as Partial<CommandRegistry>
+  const handler = commandHandlers[name] as AnyCommandHandler | undefined
+  if (!handler) {
+    return Result.err(new NoHandlerError({ kind: 'command', messageName: name }))
+  }
+
+  return Result.ok(handler)
 }
 
-function getEventHandlers<TName extends EventName>(name: TName): EventHandler<EventMap[TName]>[] {
-  return (EVENT_HANDLERS[name] ?? []) as unknown as EventHandler<EventMap[TName]>[]
+function getEventHandlers<TName extends EventName>(
+  name: TName,
+): EventHandlerRegistration<EventMap[TName]>[] {
+  return (EVENT_HANDLERS[name] ?? []) as EventHandlerRegistration<EventMap[TName]>[]
 }
 
 /**
  * Interface for message bus - enables testing with mocks
  */
 export interface IMessageBus {
-  handle<TMessage extends DomainCommand | DomainQuery>(
-    message: TMessage,
-  ): Promise<MessageResult<TMessage>>
-  handle<TEvent extends DomainEvent>(message: TEvent): Promise<MessageResult<TEvent>>
-  handle(message: DomainMessage): Promise<unknown>
+  handle<TMessage extends DomainMessage>(message: TMessage): Promise<MessageResult<TMessage>>
 }
 
 /**
@@ -72,22 +84,22 @@ export class MessageBus implements IMessageBus {
   /**
    * Main entry point - routes message to appropriate handler
    */
-  handle<TMessage extends DomainCommand | DomainQuery>(
+  async handle<TMessage extends DomainMessage>(
     message: TMessage,
-  ): Promise<MessageResult<TMessage>>
-  handle<TEvent extends DomainEvent>(message: TEvent): Promise<MessageResult<TEvent>>
-  async handle(message: DomainMessage): Promise<unknown> {
+  ): Promise<MessageResult<TMessage>> {
     switch (message.type) {
       case 'command':
-        return this.handleCommand(message)
+        return this.handleCommand(message) as Promise<MessageResult<TMessage>>
       case 'event':
-        return this.handleEvent(message)
+        return this.handleEvent(message) as Promise<MessageResult<TMessage>>
       case 'query':
-        return this.handleQuery(message)
+        return this.handleQuery(message) as Promise<MessageResult<TMessage>>
       default:
-        throw new UnknownMessageTypeError({
-          messageType: String((message as DomainMessage).type ?? message),
-        })
+        return Result.err(
+          new UnknownMessageTypeError({
+            messageType: String((message as DomainMessage).type ?? message),
+          }),
+        ) as MessageResult<TMessage>
     }
   }
 
@@ -96,61 +108,82 @@ export class MessageBus implements IMessageBus {
    */
   private async handleCommand<TName extends CommandName>(
     command: CommandMap[TName],
-  ): Promise<unknown> {
-    const handler = getCommandHandler(command.name)
-
-    try {
-      logger.info('Handling command', { command: command.name, id: command.id })
-      return await executeUoW(
-        this.env,
-        this.ctx,
-        async (tx: DrizzleDb) => {
-          return handler(command, this.env, tx)
-        },
-        command.id,
+  ): Promise<MessageResult<CommandMap[TName]>> {
+    logger.info('Handling command', { command: command.name, id: command.id })
+    const env = this.env
+    const result = await Result.gen(async function* () {
+      const handler = yield* getCommandHandler(command.name)
+      const value = yield* Result.await(
+        executeUoW(async (tx: DrizzleDb) => handler(command, env, tx), command.id),
       )
-    } catch (error) {
-      if (DuplicateMessageError.is(error)) {
-        logger.warn('Duplicate command ignored', {
-          command: command.name,
-          id: command.id,
-        })
-        return // silent success - idempotent behavior
-      }
-      throw error
+      return Result.ok(value)
+    })
+
+    if (result.isErr() && DuplicateMessageError.is(result.error)) {
+      logger.warn('Duplicate command ignored', {
+        command: command.name,
+        id: command.id,
+      })
+      return Result.ok(undefined) as MessageResult<CommandMap[TName]>
     }
+
+    return result as MessageResult<CommandMap[TName]>
   }
 
   /**
    * Handle an event - all handlers run in a single UoW (atomic)
    */
-  private async handleEvent<TName extends EventName>(event: EventMap[TName]): Promise<void> {
+  private async handleEvent<TName extends EventName>(
+    event: EventMap[TName],
+  ): Promise<MessageResult<EventMap[TName]>> {
     const handlers = getEventHandlers(event.name)
-    if (handlers.length === 0) return
+    if (handlers.length === 0) return Result.ok(undefined) as MessageResult<EventMap[TName]>
 
-    try {
-      await executeUoW(
-        this.env,
-        this.ctx,
-        async (tx) => Promise.all(handlers.map(async (handler) => handler(event, this.env, tx))),
-        event.id,
-      )
-    } catch (e) {
-      if (DuplicateMessageError.is(e)) {
-        logger.warn(`Duplicate event skipped: ${event.name}`, { id: event.id })
-        return
-      }
-      throw e
+    const env = this.env
+    const results = await Promise.all(
+      handlers.map(async ({ id, handle }) => {
+        const receiptId = `${event.id}:${id}`
+        logger.debug('Handling event subscriber', { event: event.name, eventId: event.id, handlerId: id })
+        const result = await executeUoW(async (tx) => handle(event, env, tx), receiptId)
+
+        if (result.isErr() && DuplicateMessageError.is(result.error)) {
+          logger.warn('Duplicate event handler skipped', {
+            event: event.name,
+            eventId: event.id,
+            handlerId: id,
+          })
+          return Result.ok(undefined)
+        }
+
+        return result
+      }),
+    )
+
+    const failed = results.find((result) => result.isErr())
+    if (failed?.isErr()) {
+      logger.warn('Event handler failed', { event: event.name, eventId: event.id, error: failed.error })
+      return Result.err(failed.error) as MessageResult<EventMap[TName]>
     }
+
+    return Result.ok(undefined) as MessageResult<EventMap[TName]>
   }
 
   /**
    * Handle a query - read-only, no transaction
    */
-  private async handleQuery<TName extends QueryName>(query: QueryMap[TName]): Promise<unknown> {
-    const handler = getQueryHandler(query.name)
-
+  private async handleQuery<TName extends QueryName>(
+    query: QueryMap[TName],
+  ): Promise<MessageResult<QueryMap[TName]>> {
     logger.debug('Handling query', { query: query.name })
-    return await handler(query, this.env, this.ctx)
+    const env = this.env
+    const ctx = this.ctx
+
+    const result = await Result.gen(async function* () {
+      const handler = yield* getQueryHandler(query.name)
+      const value = yield* Result.await(handler(query, env, ctx))
+      return Result.ok(value)
+    })
+
+    return result as MessageResult<QueryMap[TName]>
   }
 }

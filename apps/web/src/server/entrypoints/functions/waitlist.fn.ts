@@ -1,8 +1,8 @@
-import { ok } from '@riposte/core'
-import { createDatabase } from '@server/infrastructure/db/connection'
-import { WaitlistRepository } from '@server/infrastructure/repositories/waitlist.repository'
+import { createCommand } from '@riposte/core'
+import { MessageBus } from '@server/application/message-bus/message-bus'
+import { serializeForRpc } from '@server/entrypoints/functions/rpc-result'
 import { createServerFn } from '@tanstack/react-start'
-import { env } from 'cloudflare:workers'
+import { env, waitUntil } from 'cloudflare:workers'
 import { z } from 'zod'
 
 export const joinWaitlistInput = z.object({
@@ -13,8 +13,9 @@ export type JoinWaitlistInput = z.infer<typeof joinWaitlistInput>
 export const joinWaitlist = createServerFn()
   .inputValidator(joinWaitlistInput)
   .handler(async ({ data }) => {
-    const db = createDatabase(env as Env)
-    const repo = new WaitlistRepository(db)
-    await repo.addEmail(data.email)
-    return ok(null)
+    const bus = new MessageBus(env as Env, { waitUntil })
+    const command = createCommand('JoinWaitlist', { email: data.email })
+    const result = await bus.handle(command)
+
+    return serializeForRpc(result)
   })

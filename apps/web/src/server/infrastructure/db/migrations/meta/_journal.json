@@ -22,6 +22,13 @@
       "when": 1777825508001,
       "tag": "0002_unknown_scarlet_witch",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1777923532071,
+      "tag": "0003_unusual_moira_mactaggert",
+      "breakpoints": true
     }
   ]
 }

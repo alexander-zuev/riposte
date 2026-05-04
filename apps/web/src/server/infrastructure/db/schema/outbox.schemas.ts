@@ -1,6 +1,6 @@
 import type { DomainMessage } from '@riposte/core'
 import { isNull } from 'drizzle-orm'
-import { index, jsonb, pgTable, timestamp, uuid } from 'drizzle-orm/pg-core'
+import { index, jsonb, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core'
 
 /* -------------------------------------------------------------------------------------------------
  * Message tracking tables for transactional outbox pattern
@@ -29,7 +29,7 @@ export const messageOutbox = pgTable(
 )
 
 export const messageReceipts = pgTable('message_receipts', {
-  messageId: uuid('message_id').primaryKey(), // id of the domain / external message processed
+  messageId: text('message_id').primaryKey(),
   processedAt: timestamp('processed_at', { withTimezone: true }).defaultNow().notNull(),
 })
 

@@ -1,4 +1,5 @@
 import { APP_ROUTES } from '@riposte/core/client'
+import { routeErrorMiddleware } from '@server/infrastructure/middleware'
 import { createFileRoute } from '@tanstack/react-router'
 import { waitUntil } from 'cloudflare:workers'
 
@@ -17,6 +18,7 @@ const ASSET_HOST = 'us-assets.i.posthog.com'
 
 export const Route = createFileRoute('/api/relay/$')({
   server: {
+    middleware: [routeErrorMiddleware],
     handlers: {
       GET: async ({ request }) => handleProxy(request),
       POST: async ({ request }) => handleProxy(request),

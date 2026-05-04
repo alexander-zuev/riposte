@@ -13,6 +13,7 @@
 export * from './domain/messaging'
 export * from './domain/primitives'
 export * from './domain/auth'
+export * from './domain/waitlist'
 export * from './infrastructure/errors/application.errors'
 export * from './infrastructure/errors/domain.errors'
 export * from './infrastructure/errors/types'

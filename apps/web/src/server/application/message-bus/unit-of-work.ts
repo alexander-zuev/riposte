@@ -1,4 +1,4 @@
-import type { UUIDv4 } from '@riposte/core'
+import type { DatabaseError, DuplicateMessageError } from '@riposte/core'
 import { createLogger } from '@riposte/core'
 import {
   getCollectedEvents,
@@ -8,68 +8,84 @@ import type { DrizzleDb } from '@server/infrastructure/db'
 import { createDatabase } from '@server/infrastructure/db'
 import { OUTBOX_RELAY_ID } from '@server/infrastructure/durable-objects/outbox-relay-do'
 import { OutboxRepository } from '@server/infrastructure/repositories/outbox.repository'
+import { Result } from 'better-result'
+import { env, waitUntil } from 'cloudflare:workers'
+import { is, TransactionRollbackError } from 'drizzle-orm'
 
 const logger = createLogger('unit-of-work')
 
 /**
- * Unit of Work - Wraps operation in a transaction, ensures idempotency, flushes events
+ * Unit of Work - Result ↔ throw bridge for Drizzle transactions
  *
- * Pattern:
- * 1. Execute work inside event context + DB transaction
- * 2. Repos register events via registerEvents()
- * 3. UoW persists collected events to outbox (same tx)
- * 4. After commit, trigger DO relay to flush outbox (coalesced)
+ * Handlers return Result<T, E>. Drizzle only rolls back on throw.
+ * Bridge: on Result.err(), store error + call tx.rollback() (throws),
+ * catch block converts back to Result.err().
  *
- * Atomicity: either both entity AND events persist, or neither.
+ * Repository failures also return Result.err(); UoW turns them into rollback,
+ * then converts the rollback back into Result.err().
  */
-export async function executeUoW<T>(
-  env: Env,
-  ctx: Pick<ExecutionContext, 'waitUntil'>,
-  work: (tx: DrizzleDb) => Promise<T>,
-  msgId?: UUIDv4, // optional for work done outside of message bus (cf workflows)
-): Promise<T> {
+export async function executeUoW<T, E>(
+  work: (tx: DrizzleDb) => Promise<Result<T, E>>,
+  msgId: string,
+): Promise<Result<T, E | DatabaseError | DuplicateMessageError>> {
+  // TODO: move createDatabase to entrypoint, pass db via async context
   const db = createDatabase(env)
+  let rollbackErr: E | DatabaseError | DuplicateMessageError | undefined
 
-  // Event context + transaction
-  const result = await runWithEventContext(async () =>
-    db.transaction(async (tx: DrizzleDb) => {
-      const outboxRepo = new OutboxRepository(tx)
+  try {
+    const value = await runWithEventContext(async () =>
+      db.transaction(async (tx) => {
+        const outboxRepo = new OutboxRepository(tx)
 
-      // Idempotency check
-      if (msgId) {
-        await outboxRepo.assertMessageNotProcessed(msgId)
-      }
+        const receipt = await outboxRepo.assertMessageNotProcessed(msgId)
+        if (receipt.isErr()) {
+          rollbackErr = receipt.error
+          tx.rollback()
+        }
 
-      // Execute work
-      const workResult = await work(tx)
+        const result = await work(tx)
 
-      // Persist collected events
-      const events = getCollectedEvents()
-      if (events.length > 0) {
-        logger.debug('persisting_events', {
-          count: events.length,
-          names: events.map((e) => e.name),
-        })
-        await outboxRepo.persistEvents(events)
-      }
+        if (result.isErr()) {
+          rollbackErr = result.error
+          tx.rollback()
+        }
 
-      return workResult
-    }),
-  )
+        const events = getCollectedEvents()
+        if (events.length > 0) {
+          logger.debug('persisting_events', {
+            count: events.length,
+            names: events.map((e) => e.name),
+          })
 
-  // Trigger publishing events to message queue from Outbox
-  // Wrapped in async IIFE so synchronous DO stub errors (e.g. miniflare
-  // invalidation) are caught — plain .catch() only handles async rejections.
-  ctx.waitUntil(
+          const persisted = await outboxRepo.persistEvents(events)
+          if (persisted.isErr()) {
+            rollbackErr = persisted.error
+            tx.rollback()
+          }
+        }
+
+        return result.unwrap()
+      }),
+    )
+
+    triggerRelay()
+    return Result.ok(value)
+  } catch (error) {
+    if (is(error, TransactionRollbackError) && rollbackErr !== undefined) {
+      return Result.err(rollbackErr)
+    }
+    throw error
+  }
+}
+
+function triggerRelay(): void {
+  waitUntil(
     (async () => {
       try {
         await env.OUTBOX_RELAY.get(env.OUTBOX_RELAY.idFromName(OUTBOX_RELAY_ID)).trigger()
       } catch (error: unknown) {
-        // Don't throw - relay failure shouldn't fail the request
-        // Cron is the safety net for missed events
         logger.error('Failed to trigger outbox relay', { error })
       }
     })(),
   )
-  return result
 }

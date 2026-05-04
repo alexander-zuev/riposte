@@ -3,6 +3,7 @@ import { createLogger, queueMessageSchema } from '@riposte/core'
 import * as Sentry from '@sentry/cloudflare'
 import { MessageBus } from '@server/application/message-bus/message-bus'
 import type { IMessageBus } from '@server/application/message-bus/message-bus'
+import { isTaggedError } from 'better-result'
 
 const logger = createLogger('queue-consumer')
 
@@ -48,7 +49,7 @@ export class QueueConsumer {
   }
 
   private handleError(message: Message, msg: DomainMessage, error: unknown): void {
-    const retryable = error instanceof Error && 'retryable' in error && error.retryable === true
+    const retryable = isTaggedError(error) && 'retryable' in error && error.retryable === true
 
     if (!retryable || message.attempts >= QueueConsumer.MAX_ATTEMPTS) {
       logger.error('dlq', {

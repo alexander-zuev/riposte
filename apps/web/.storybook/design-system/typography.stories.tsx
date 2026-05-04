@@ -23,7 +23,9 @@ export const HeadingScale: Story = {
       <div className="space-y-6 border bg-surface p-6">
         <div className="flex items-baseline justify-between border-b border-dashed pb-4">
           <h1>Disputes Overview</h1>
-          <code className="shrink-0 text-xs text-muted-foreground">h1 · 28px · bold · -0.025em</code>
+          <code className="shrink-0 text-xs text-muted-foreground">
+            h1 · 28px · bold · -0.025em
+          </code>
         </div>
         <div className="flex items-baseline justify-between border-b border-dashed pb-4">
           <h2>Recent Cases</h2>
@@ -31,11 +33,15 @@ export const HeadingScale: Story = {
         </div>
         <div className="flex items-baseline justify-between border-b border-dashed pb-4">
           <h3>Case dp_3Qx9Kl2m</h3>
-          <code className="shrink-0 text-xs text-muted-foreground">h3 · 20px · medium · -0.0075em</code>
+          <code className="shrink-0 text-xs text-muted-foreground">
+            h3 · 20px · medium · -0.0075em
+          </code>
         </div>
         <div className="flex items-baseline justify-between border-b border-dashed pb-4">
           <h4>Evidence Summary</h4>
-          <code className="shrink-0 text-xs text-muted-foreground">h4 · 18px · medium · -0.00625em</code>
+          <code className="shrink-0 text-xs text-muted-foreground">
+            h4 · 18px · medium · -0.00625em
+          </code>
         </div>
         <div className="flex items-baseline justify-between border-b border-dashed pb-4">
           <h5>Source Details</h5>
@@ -86,31 +92,38 @@ export const BodyText: Story = {
   render: () => (
     <div className="max-w-2xl space-y-6 p-8">
       <div className="space-y-1 border-b border-dashed pb-4">
-        <code className="text-xs text-muted-foreground">{'<p>'} · 16px · regular · 1.5 line-height</code>
+        <code className="text-xs text-muted-foreground">
+          {'<p>'} · 16px · regular · 1.5 line-height
+        </code>
         <p>
-          Riposte investigates what your user actually did, builds structured evidence from
-          Stripe data, application logs, and product context, then submits it before the
-          deadline.
+          Riposte investigates what your user actually did, builds structured evidence from Stripe
+          data, application logs, and product context, then submits it before the deadline.
         </p>
       </div>
 
       <div className="space-y-1 border-b border-dashed pb-4">
-        <code className="text-xs text-muted-foreground">{'<small>'} · 12px · timestamps, metadata, legal</code>
+        <code className="text-xs text-muted-foreground">
+          {'<small>'} · 12px · timestamps, metadata, legal
+        </code>
         <small className="block">
           Updated 2 hours ago · Case opened by Stripe webhook · Due May 15, 2026
         </small>
       </div>
 
       <div className="space-y-1 border-b border-dashed pb-4">
-        <code className="text-xs text-muted-foreground">{'<a>'} · medium weight, underline on hover</code>
+        <code className="text-xs text-muted-foreground">
+          {'<a>'} · medium weight, underline on hover
+        </code>
         <p>
-          View the <a href="#">evidence packet</a> or check the{' '}
-          <a href="#">Stripe dashboard</a> for the original dispute.
+          View the <a href="#">evidence packet</a> or check the <a href="#">Stripe dashboard</a> for
+          the original dispute.
         </p>
       </div>
 
       <div className="space-y-1 border-b border-dashed pb-4">
-        <code className="text-xs text-muted-foreground">{'<strong>'} · medium weight (500), not bold</code>
+        <code className="text-xs text-muted-foreground">
+          {'<strong>'} · medium weight (500), not bold
+        </code>
         <p>
           The agent found <strong>4 matching log entries</strong> and{' '}
           <strong>2 successful API calls</strong> confirming product delivery.
@@ -118,18 +131,22 @@ export const BodyText: Story = {
       </div>
 
       <div className="space-y-1 border-b border-dashed pb-4">
-        <code className="text-xs text-muted-foreground">{'<code>'} · JetBrains Mono, muted bg, 0.95em</code>
+        <code className="text-xs text-muted-foreground">
+          {'<code>'} · JetBrains Mono, muted bg, 0.95em
+        </code>
         <p>
-          Dispute <code>dp_3Qx9Kl2m</code> was triggered by charge{' '}
-          <code>ch_1NqHv2L...</code> on customer <code>cus_P4r5...</code>.
+          Dispute <code>dp_3Qx9Kl2m</code> was triggered by charge <code>ch_1NqHv2L...</code> on
+          customer <code>cus_P4r5...</code>.
         </p>
       </div>
 
       <div className="space-y-1">
-        <code className="text-xs text-muted-foreground">{'<blockquote>'} · italic, left border, indented</code>
+        <code className="text-xs text-muted-foreground">
+          {'<blockquote>'} · italic, left border, indented
+        </code>
         <blockquote>
-          Riposte found supporting usage evidence across 3 data sources and built an
-          evidence packet with a 92% confidence score.
+          Riposte found supporting usage evidence across 3 data sources and built an evidence packet
+          with a 92% confidence score.
         </blockquote>
       </div>
     </div>
@@ -157,13 +174,13 @@ export const TypographyInContext: Story = {
         </CardHeader>
         <CardContent className="space-y-3">
           <p>
-            Customer <code>cus_P4r5mN7q</code> completed signup on April 28, logged in
-            3 times over 2 days, and accessed the product dashboard before filing the
-            dispute. IP geolocation matches billing address.
+            Customer <code>cus_P4r5mN7q</code> completed signup on April 28, logged in 3 times over
+            2 days, and accessed the product dashboard before filing the dispute. IP geolocation
+            matches billing address.
           </p>
           <p className="text-muted-foreground">
-            Evidence score: <strong className="text-foreground">92/100</strong> — high
-            confidence based on 4 corroborating sources.
+            Evidence score: <strong className="text-foreground">92/100</strong> — high confidence
+            based on 4 corroborating sources.
           </p>
         </CardContent>
       </Card>
@@ -196,9 +213,21 @@ export const TypographyInContext: Story = {
             { time: '2026-04-28 09:12', event: 'Customer signed up' },
             { time: '2026-04-28 14:33', event: 'First product access' },
             { time: '2026-04-29 11:07', event: 'Dashboard viewed (3 pages)' },
-            { time: '2026-05-01 08:45', event: 'Dispute opened by cardholder', cls: 'text-warning-muted-foreground' },
-            { time: '2026-05-02 02:15', event: 'Evidence packet submitted', cls: 'text-success-muted-foreground' },
-            { time: '2026-05-10 16:00', event: 'Dispute resolved — won', cls: 'text-success-muted-foreground' },
+            {
+              time: '2026-05-01 08:45',
+              event: 'Dispute opened by cardholder',
+              cls: 'text-warning-muted-foreground',
+            },
+            {
+              time: '2026-05-02 02:15',
+              event: 'Evidence packet submitted',
+              cls: 'text-success-muted-foreground',
+            },
+            {
+              time: '2026-05-10 16:00',
+              event: 'Dispute resolved — won',
+              cls: 'text-success-muted-foreground',
+            },
           ].map((entry) => (
             <div key={entry.time} className="flex gap-4">
               <code className="shrink-0 text-xs text-muted-foreground">{entry.time}</code>
@@ -216,32 +245,59 @@ export const WeightScale: Story = {
   render: () => (
     <div className="space-y-10 p-8">
       <div>
-        <h6 className="mb-4 text-muted-foreground">Inter — default UI font (headings, body, labels, buttons)</h6>
+        <h6 className="mb-4 text-muted-foreground">
+          Inter — default UI font (headings, body, labels, buttons)
+        </h6>
         <div className="space-y-3 border bg-surface p-6">
-          <p className="font-regular">Regular 400 — Riposte investigates real user activity and builds structured evidence.</p>
-          <p className="font-medium">Medium 500 — Riposte investigates real user activity and builds structured evidence.</p>
-          <p className="font-semibold">Semibold 600 — Riposte investigates real user activity and builds structured evidence.</p>
-          <p className="font-bold">Bold 700 — Riposte investigates real user activity and builds structured evidence.</p>
+          <p className="font-regular">
+            Regular 400 — Riposte investigates real user activity and builds structured evidence.
+          </p>
+          <p className="font-medium">
+            Medium 500 — Riposte investigates real user activity and builds structured evidence.
+          </p>
+          <p className="font-semibold">
+            Semibold 600 — Riposte investigates real user activity and builds structured evidence.
+          </p>
+          <p className="font-bold">
+            Bold 700 — Riposte investigates real user activity and builds structured evidence.
+          </p>
         </div>
       </div>
 
       <div>
-        <h6 className="mb-4 text-muted-foreground">JetBrains Mono — system truth (IDs, timestamps, logs, metadata, code)</h6>
+        <h6 className="mb-4 text-muted-foreground">
+          JetBrains Mono — system truth (IDs, timestamps, logs, metadata, code)
+        </h6>
         <div className="space-y-3 border bg-surface p-6">
-          <p className="font-mono font-regular">Regular 400 — dp_3Qx9Kl2m · cus_P4r5mN7q · 2026-05-02 02:15</p>
-          <p className="font-mono font-medium">Medium 500 — dp_3Qx9Kl2m · cus_P4r5mN7q · 2026-05-02 02:15</p>
-          <p className="font-mono font-semibold">Semibold 600 — dp_3Qx9Kl2m · cus_P4r5mN7q · 2026-05-02 02:15</p>
-          <p className="font-mono font-bold">Bold 700 — dp_3Qx9Kl2m · cus_P4r5mN7q · 2026-05-02 02:15</p>
+          <p className="font-mono font-regular">
+            Regular 400 — dp_3Qx9Kl2m · cus_P4r5mN7q · 2026-05-02 02:15
+          </p>
+          <p className="font-mono font-medium">
+            Medium 500 — dp_3Qx9Kl2m · cus_P4r5mN7q · 2026-05-02 02:15
+          </p>
+          <p className="font-mono font-semibold">
+            Semibold 600 — dp_3Qx9Kl2m · cus_P4r5mN7q · 2026-05-02 02:15
+          </p>
+          <p className="font-mono font-bold">
+            Bold 700 — dp_3Qx9Kl2m · cus_P4r5mN7q · 2026-05-02 02:15
+          </p>
         </div>
       </div>
 
       <div>
-        <h6 className="mb-4 text-muted-foreground">Weights in context — how headings and body pair</h6>
+        <h6 className="mb-4 text-muted-foreground">
+          Weights in context — how headings and body pair
+        </h6>
         <div className="space-y-4 border bg-surface p-6">
           <h1>h1 Bold — Disputes Overview</h1>
-          <p>Body regular — The agent monitors incoming Stripe disputes and builds evidence packets automatically.</p>
+          <p>
+            Body regular — The agent monitors incoming Stripe disputes and builds evidence packets
+            automatically.
+          </p>
           <h3>h3 Medium — Case dp_3Qx9Kl2m</h3>
-          <p className="text-muted-foreground">Muted body — Opened May 1, 2026 via webhook. Due in 14 days.</p>
+          <p className="text-muted-foreground">
+            Muted body — Opened May 1, 2026 via webhook. Due in 14 days.
+          </p>
           <h6>h6 Medium — Evidence Sources</h6>
           <small>Small regular — Updated 2 hours ago · 4 sources matched</small>
         </div>
@@ -269,18 +325,24 @@ export const DisplayTypography: Story = {
       {/* Scale reference */}
       <div className="space-y-6">
         <div className="border-b border-dashed pb-4">
-          <code className="text-xs text-muted-foreground">.text-display-hero · 36→60px fluid · bold · -0.05em</code>
+          <code className="text-xs text-muted-foreground">
+            .text-display-hero · 36→60px fluid · bold · -0.05em
+          </code>
           <p className="text-display-hero mt-1">Stripe disputes, answered automatically.</p>
         </div>
         <div className="border-b border-dashed pb-4">
-          <code className="text-xs text-muted-foreground">.text-display · 28px · bold · -0.045em</code>
+          <code className="text-xs text-muted-foreground">
+            .text-display · 28px · bold · -0.045em
+          </code>
           <p className="text-display mt-1">Evidence that wins. Built by an AI agent.</p>
         </div>
         <div>
-          <code className="text-xs text-muted-foreground">.text-subtitle · 20px · regular · -0.02em</code>
+          <code className="text-xs text-muted-foreground">
+            .text-subtitle · 20px · regular · -0.02em
+          </code>
           <p className="text-subtitle mt-1 text-muted-foreground">
-            Riposte investigates real user activity, builds structured evidence, and submits
-            it to Stripe — before the deadline.
+            Riposte investigates real user activity, builds structured evidence, and submits it to
+            Stripe — before the deadline.
           </p>
         </div>
       </div>
@@ -296,8 +358,8 @@ export const DisplayTypography: Story = {
           answered automatically.
         </p>
         <p className="text-subtitle mx-auto mt-4 max-w-xl text-muted-foreground">
-          Riposte investigates what your user actually did, builds structured evidence, and
-          submits it to Stripe.
+          Riposte investigates what your user actually did, builds structured evidence, and submits
+          it to Stripe.
         </p>
         <div className="mt-8 flex justify-center gap-3">
           <Button>Get started</Button>

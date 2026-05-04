@@ -1,8 +1,9 @@
 import type { ValidationIssue } from '@riposte/core'
-import { AuthenticationError, ValidationError, isTaggedError, serializeError } from '@riposte/core'
+import { AuthenticationError, ValidationError, serializeError } from '@riposte/core'
 import { createLogger } from '@riposte/core'
 import { isNotFound, isRedirect, redirect } from '@tanstack/react-router'
 import { createMiddleware } from '@tanstack/react-start'
+import { isTaggedError } from 'better-result'
 
 const logger = createLogger('error-middleware')
 

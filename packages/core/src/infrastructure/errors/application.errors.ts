@@ -1,20 +1,30 @@
-import { ApplicationError } from './base.errors'
+import { TaggedError } from 'better-result'
 
-export class UnknownMessageTypeError extends ApplicationError {
-  override retryable: boolean = false
-
-  constructor(messageType: unknown) {
-    super('Unknown message type', { messageType })
+export class UnknownMessageTypeError extends TaggedError('UnknownMessageTypeError')<{
+  message: string
+  retryable: false
+}>() {
+  constructor(args: { messageType: string }) {
+    super({
+      message: `Unknown message type: ${args.messageType}`,
+      retryable: false,
+    })
   }
 }
 
-export class NoHandlerError extends ApplicationError {
-  override retryable: boolean = false
-
-  constructor(
-    public readonly kind: 'command' | 'query',
-    public readonly messageName: string,
-  ) {
-    super(`No handler for ${kind}: ${messageName}`, { kind, messageName })
+export class NoHandlerError extends TaggedError('NoHandlerError')<{
+  kind: string
+  messageName: string
+  message: string
+  retryable: false
+}>() {
+  constructor(args: { kind: string; messageName: string }) {
+    super({
+      ...args,
+      message: `No handler for ${args.kind}: ${args.messageName}`,
+      retryable: false,
+    })
   }
 }
+
+export type ApplicationError = UnknownMessageTypeError | NoHandlerError

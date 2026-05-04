@@ -11,9 +11,9 @@ export function throwServerError(error: ServerError): never {
     case 'NOT_FOUND':
       throw notFound()
     case 'RATE_LIMITED':
-      throw new RateLimitError(error.message)
+      throw new RateLimitError({ message: error.message })
     case 'VALIDATION_ERROR':
-      throw new ValidationError(error.issues, error.message)
+      throw new ValidationError({ issues: error.issues, message: error.message })
     case 'DOMAIN_ERROR':
     case 'INTERNAL_SERVER_ERROR':
       throw Object.assign(new Error(error.message), { code: error.code })

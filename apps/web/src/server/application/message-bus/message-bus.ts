@@ -85,7 +85,9 @@ export class MessageBus implements IMessageBus {
       case 'query':
         return this.handleQuery(message)
       default:
-        throw new UnknownMessageTypeError(message)
+        throw new UnknownMessageTypeError({
+          messageType: String((message as DomainMessage).type ?? message),
+        })
     }
   }
 

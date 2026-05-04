@@ -14,6 +14,8 @@ export type ValidationIssue = {
  * Plain objects survive TanStack Start's seroval serialization (Error instances
  * lose custom properties). The `code` discriminant lets the client do exhaustive
  * switch in deserializeError().
+ *
+ * @deprecated — Will be replaced by Result.serialize() in Stage 10
  */
 export type ServerError =
   | {
@@ -46,7 +48,6 @@ export function isServerError(value: unknown): value is ServerError {
   return SERVER_ERROR_CODES.has((value as Record<string, unknown>).code as string)
 }
 
-import { DomainError } from './base.errors'
 import {
   AuthenticationError,
   AuthorizationError,
@@ -55,8 +56,9 @@ import {
   ValidationError,
 } from './domain.errors'
 
+/** @deprecated — Will be replaced by Result.serialize() in Stage 6/7 */
 export function serializeError(error: unknown): ServerError {
-  if (error instanceof ValidationError) {
+  if (ValidationError.is(error)) {
     return {
       code: 'VALIDATION_ERROR',
       message: error.message,
@@ -65,24 +67,20 @@ export function serializeError(error: unknown): ServerError {
     }
   }
 
-  if (error instanceof EntityNotFoundError) {
+  if (EntityNotFoundError.is(error)) {
     return { code: 'NOT_FOUND', message: error.message, retryable: false }
   }
 
-  if (error instanceof AuthenticationError) {
+  if (AuthenticationError.is(error)) {
     return { code: 'UNAUTHENTICATED', message: error.message, retryable: false }
   }
 
-  if (error instanceof AuthorizationError) {
+  if (AuthorizationError.is(error)) {
     return { code: 'UNAUTHORIZED', message: error.message, retryable: false }
   }
 
-  if (error instanceof RateLimitError) {
+  if (RateLimitError.is(error)) {
     return { code: 'RATE_LIMITED', message: error.message, retryable: false }
-  }
-
-  if (error instanceof DomainError) {
-    return { code: 'DOMAIN_ERROR', message: error.message, retryable: error.retryable }
   }
 
   return { code: 'INTERNAL_SERVER_ERROR', message: 'Something went wrong', retryable: false }

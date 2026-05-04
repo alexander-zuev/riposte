@@ -1,19 +1,8 @@
+import { TaggedError } from 'better-result'
 import postgres from 'postgres'
-
-import { InfrastructureError } from './base.errors'
 
 type PostgresError = InstanceType<typeof postgres.PostgresError>
 const { PostgresError } = postgres
-
-/* -------------------------------------------------------------------------------------------------
- * Postgres error metadata
- *
- * Drizzle wraps postgres.js errors as DrizzleQueryError with the original
- * PostgresError in .cause. We extract structured SQLSTATE metadata from .cause
- * to enable smart retry decisions and structured logging.
- *
- * Reference: https://www.postgresql.org/docs/current/errcodes-appendix.html
- * ----------------------------------------------------------------------------------------------- */
 
 export interface PostgresErrorMeta {
   code: string
@@ -55,15 +44,16 @@ function extractPostgresMeta(cause: unknown): PostgresErrorMeta | undefined {
   }
 }
 
-export class DatabaseError extends InfrastructureError {
-  override retryable: boolean
-  readonly pg?: PostgresErrorMeta
+export class DatabaseError extends TaggedError('DatabaseError')<{
+  message: string
+  cause: unknown
+  retryable: boolean
+  pg?: PostgresErrorMeta
+}>() {
+  constructor(args: { message: string; cause: unknown }) {
+    const pg = extractPostgresMeta(args.cause)
+    const retryable = pg ? !NON_RETRYABLE_PG_CLASSES.has(pg.code.slice(0, 2)) : true
 
-  constructor(message: string, cause?: unknown) {
-    super(message)
-    if (cause !== undefined) this.cause = cause
-
-    this.pg = cause !== undefined ? extractPostgresMeta(cause) : undefined
-    this.retryable = this.pg ? !NON_RETRYABLE_PG_CLASSES.has(this.pg.code.slice(0, 2)) : true
+    super({ message: args.message, cause: args.cause, retryable, pg })
   }
 }

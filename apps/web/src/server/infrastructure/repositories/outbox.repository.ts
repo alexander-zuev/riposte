@@ -16,7 +16,7 @@ export class OutboxRepository extends BaseRepository implements IOutboxRepositor
       if (events.length === 0) return
       await this.db.insert(messageOutbox).values(events.map((e) => ({ id: e.id, payload: e })))
     } catch (e) {
-      throw new DatabaseError('Failed to persist events', e)
+      throw new DatabaseError({ message: 'Failed to persist events', cause: e })
     }
   }
 
@@ -29,10 +29,10 @@ export class OutboxRepository extends BaseRepository implements IOutboxRepositor
         .onConflictDoNothing()
         .returning({ id: messageReceipts.messageId })
     } catch (e) {
-      throw new DatabaseError(`Failed to insert message receipt ${msgId}`, e)
+      throw new DatabaseError({ message: `Failed to insert message receipt ${msgId}`, cause: e })
     }
     if (inserted.length === 0) {
-      throw new DuplicateMessageError(msgId)
+      throw new DuplicateMessageError({ messageId: msgId })
     }
   }
 
@@ -45,7 +45,7 @@ export class OutboxRepository extends BaseRepository implements IOutboxRepositor
         .where(inArray(messageOutbox.id, ids))
       return ids
     } catch (e) {
-      throw new DatabaseError('Failed to mark outbox messages published', e)
+      throw new DatabaseError({ message: 'Failed to mark outbox messages published', cause: e })
     }
   }
 
@@ -60,7 +60,7 @@ export class OutboxRepository extends BaseRepository implements IOutboxRepositor
         .for('update', { skipLocked: true })
       return pending
     } catch (e) {
-      throw new DatabaseError('Failed to retrieve pending outbox messages', e)
+      throw new DatabaseError({ message: 'Failed to retrieve pending outbox messages', cause: e })
     }
   }
 }

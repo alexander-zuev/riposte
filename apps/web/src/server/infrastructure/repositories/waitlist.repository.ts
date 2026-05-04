@@ -14,7 +14,7 @@ export class WaitlistRepository {
         .returning({ id: waitlist.id })
       return { alreadyExists: inserted.length === 0 }
     } catch (e) {
-      throw new DatabaseError('Failed to add email to waitlist', e)
+      throw new DatabaseError({ message: 'Failed to add email to waitlist', cause: e })
     }
   }
 }

@@ -1,5 +1,5 @@
 import type { ValidationIssue } from '@riposte/core'
-import { AuthenticationError, BaseError, ValidationError, serializeError } from '@riposte/core'
+import { AuthenticationError, ValidationError, isTaggedError, serializeError } from '@riposte/core'
 import { createLogger } from '@riposte/core'
 import { isNotFound, isRedirect, redirect } from '@tanstack/react-router'
 import { createMiddleware } from '@tanstack/react-start'
@@ -31,11 +31,11 @@ function handleError(error: unknown): never {
     throw error
   }
 
-  if (error instanceof AuthenticationError) {
+  if (AuthenticationError.is(error)) {
     throw redirect({ to: '/' })
   }
 
-  if (error instanceof BaseError) {
+  if (isTaggedError(error)) {
     logger.error(error.message, { error })
     throw serializeError(error)
   }
@@ -44,7 +44,7 @@ function handleError(error: unknown): never {
     const zodIssues = parseZodIssues(error)
     if (zodIssues) {
       logger.warn('Validation error', { issues: zodIssues, issueCount: zodIssues.length })
-      throw serializeError(new ValidationError(zodIssues))
+      throw serializeError(new ValidationError({ issues: zodIssues }))
     }
   }
 

@@ -6,7 +6,7 @@ import { env } from 'cloudflare:workers'
 import { z } from 'zod'
 
 export const joinWaitlistInput = z.object({
-  email: z.email(),
+  email: z.email({ error: 'Please enter a valid email address' }),
 })
 export type JoinWaitlistInput = z.infer<typeof joinWaitlistInput>
 

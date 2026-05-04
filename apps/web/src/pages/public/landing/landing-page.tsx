@@ -116,7 +116,7 @@ function WaitlistForm({ emailRef }: { emailRef: React.RefObject<HTMLInputElement
 
   const form = useForm({
     defaultValues: { email: '' },
-    validators: { onSubmit: joinWaitlistInput },
+    validators: { onBlur: joinWaitlistInput, onSubmit: joinWaitlistInput },
     onSubmit: ({ value }) => mutation.mutate(value),
   })
 
@@ -167,13 +167,17 @@ function WaitlistForm({ emailRef }: { emailRef: React.RefObject<HTMLInputElement
             <ArrowRightIcon size={18} />
           </Button>
         </div>
-        <div className="h-5">
+        <div className="h-5 w-full">
           <form.Subscribe selector={(state) => state.fieldMeta.email}>
             {(meta) => {
               if (mutation.isError)
-                return <p className="text-sm text-destructive">Something went wrong. Try again.</p>
+                return (
+                  <p className="text-left text-sm text-destructive">
+                    Something went wrong. Try again.
+                  </p>
+                )
               if (!meta?.isTouched || meta.isValid) return null
-              return <FieldError errors={meta.errors} />
+              return <FieldError className="text-left" errors={meta.errors} />
             }}
           </form.Subscribe>
         </div>

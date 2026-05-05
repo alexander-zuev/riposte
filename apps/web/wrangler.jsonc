@@ -2,7 +2,9 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "riposte",
   "compatibility_date": "2026-04-21",
-  "compatibility_flags": ["nodejs_compat"],
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
   "main": "./src/server.ts",
   "upload_source_maps": true,
   "observability": {
@@ -19,7 +21,9 @@
   "rules": [
     {
       "type": "Text",
-      "globs": ["**/*.sql"],
+      "globs": [
+        "**/*.sql"
+      ],
       "fallthrough": true,
     },
   ],
@@ -32,15 +36,21 @@
   "migrations": [
     {
       "tag": "v1",
-      "new_sqlite_classes": ["RateLimiterDO"],
+      "new_sqlite_classes": [
+        "RateLimiterDO"
+      ],
     },
     {
       "tag": "v2",
-      "new_classes": ["OutboxRelayDO"],
+      "new_classes": [
+        "OutboxRelayDO"
+      ],
     },
   ],
   "triggers": {
-    "crons": ["*/1 * * * *"],
+    "crons": [
+      "*/1 * * * *"
+    ],
   },
   "env": {
     "dev": {
@@ -218,7 +228,10 @@
     },
     "test": {
       "name": "riposte-test",
-      "compatibility_flags": ["nodejs_compat", "service_binding_extra_handlers"],
+      "compatibility_flags": [
+        "nodejs_compat",
+        "service_binding_extra_handlers"
+      ],
       "hyperdrive": [
         {
           "binding": "HYPERDRIVE",
@@ -331,13 +344,13 @@
             "max_batch_size": 1,
             "max_batch_timeout": 0,
             "max_retries": 5,
-            "dead_letter_queue": "riposte-dlq-prod",
+            "dead_letter_queue": "riposte-dlq-prod-v2",
           },
           {
             "queue": "riposte-background-prod",
             "max_batch_size": 10,
             "max_retries": 3,
-            "dead_letter_queue": "riposte-dlq-prod",
+            "dead_letter_queue": "riposte-dlq-prod-v2",
           },
         ],
       },

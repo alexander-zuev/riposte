@@ -1,6 +1,6 @@
-# CLAUDE.md
+# AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to coding agents when working with this repository. Codex reads root `AGENTS.md` natively; Claude Code reads `.claude/CLAUDE.md`, which is a symlink to this file.
 
 ## What is Riposte
 
@@ -148,16 +148,101 @@ Test independence is enforced by mechanics, not intent:
 - Clean up with targeted deletes by the IDs created by the test. Do not use broad table truncation/deletes as cross-file coordination.
 - A test must pass when run alone, repeated, or beside unrelated files in parallel. If that is not true, the test is depending on global state.
 
-### Durable Objects
+### Cloudflare binding tests
 
-Use Cloudflare's Vitest helpers from `cloudflare:test` for Durable Object integration tests:
+Use Cloudflare's Workers Vitest integration for Cloudflare binding integration tests. Current docs:
 
-- Use `runInDurableObject(stub, callback)` only to set up or inspect DO internals, including storage/alarm state.
-- Use `runDurableObjectAlarm(stub)` to execute an alarm. It removes the scheduled alarm before invoking `alarm()`, and returns `false` when no alarm is scheduled.
-- When testing alarm-driven flows that can self-schedule, drain with `runDurableObjectAlarm(stub)` until it returns `false`, then assert on observable state. Treat the drain loop as the no-alarm boundary; avoid a separate immediate `runDurableObjectAlarm(stub) === false` assertion because workerd may surface overdue alarms asynchronously.
+- Workers Vitest integration: `https://developers.cloudflare.com/workers/testing/vitest-integration/`
+- Test APIs: `https://developers.cloudflare.com/workers/testing/vitest-integration/test-apis/`
+- Isolation and concurrency: `https://developers.cloudflare.com/workers/testing/vitest-integration/isolation-and-concurrency/`
+- Durable Object testing: `https://developers.cloudflare.com/durable-objects/examples/testing-with-durable-objects/`
+- Remote/local bindings: `https://developers.cloudflare.com/workers/development-testing/`
+
+General pattern:
+
+- Import `env` and `exports` from `cloudflare:workers`; import event/test helpers from `cloudflare:test`.
+- Prefer testing exported handlers with `exports.default.fetch(...)`, or direct handler calls plus `createExecutionContext()` and `waitOnExecutionContext(ctx)` when `waitUntil` side effects matter.
+- Cloudflare storage isolation is per test file, not a license to share global names. Vitest still runs files concurrently and may reuse Workers/module caches. Use unique names/IDs/prefixes per test for every binding-backed resource.
+
+Hyperdrive/Postgres:
+
+- This is a real shared database via `localConnectionString`, not isolated Workers storage.
+- Use transaction-scoped assertions when possible.
+- Use unique test-owned IDs, emails, message IDs, aggregate IDs, and correlation IDs.
+- Clean up with targeted deletes by owned IDs.
+- Never assert on whole-table global state unless the test created and owns the whole table state.
+
+KV (`AUTH_KV`, `CACHE_KV`):
+
+- Use the real binding in integration tests: `env.AUTH_KV`, `env.CACHE_KV`.
+- Prefix every key with a per-test ID and clean up exact keys.
+- Do not rely on broad namespace emptiness or key listing order.
+- Keep remote KV disabled for routine tests unless explicitly testing a remote staging namespace.
+
+Queues (`BACKGROUND_QUEUE`, `CRITICAL_QUEUE`):
+
+- Unit-test producer routing with mocked `Queue.send` and `Queue.sendBatch`.
+- Integration-test queue consumers with `createMessageBatch(...)`, `createExecutionContext()`, and `getQueueResult(batch, ctx)` so ack/retry behavior is observable.
+- Use unique message IDs.
+- Do not depend on producer sends being delivered to a consumer unless the test explicitly drives the consumer.
+
+Scheduled handlers:
+
+- Call the handler with `createScheduledController({ cron, scheduledTime })`.
+- Use `createExecutionContext()` and `waitOnExecutionContext(ctx)`.
+- Assert the downstream observable effect or the exact DO/queue call owned by that cron test.
+
+Durable Objects (`AUTH_RATE_LIMITER`, `OUTBOX_RELAY`):
+
+- Prefer `env.DO_BINDING.newUniqueId()` for per-test objects.
+- Use `idFromName(name)` only when the stable singleton name is the behavior under test.
+- Use `runInDurableObject(stub, callback)` only to set up or inspect internals, including storage/alarm state.
+- Use `runDurableObjectAlarm(stub)` to execute a scheduled alarm; it removes the scheduled alarm before invoking `alarm()` and returns `false` when no alarm is scheduled.
+
+Durable Object alarms:
+
+- When alarm-driven code can self-schedule, drain with `runDurableObjectAlarm(stub)` until it returns `false`, then assert final observable state.
+- Treat the drain loop as the no-alarm boundary.
 - Do not call `instance.alarm()` directly in integration tests unless deliberately bypassing Cloudflare alarm semantics.
-- Do not assert exact alarm run counts unless that count is the behavior under test; batching, self-scheduling, and leftover local state can make counts brittle. Prefer asserting final persisted/observable state after the drain loop.
-- Use targeted cleanup for real DB rows. Avoid broad table deletes in parallel integration tests because another file may own rows in the same table.
+- Do not assert exact alarm run counts unless that count is the behavior under test.
+
+R2, when added:
+
+- Configure an `r2_buckets` binding in the test Wrangler env and use `env.BUCKET.put/get/delete` directly.
+- Use per-test object key prefixes and delete exact objects.
+- For R2 event logic, keep schema/dispatch tests as pure unit tests unless the test actually needs bucket semantics.
+
+Workflows, when added:
+
+- Use `introspectWorkflowInstance(env.MY_WORKFLOW, instanceId)` or `introspectWorkflow(env.MY_WORKFLOW)` from `cloudflare:test`.
+- Always dispose introspectors with `await using` or explicit `dispose()`; otherwise Workflow state can persist into later tests.
+- Use modifiers to disable sleeps or mock events.
+- Assert `waitForStatus`, step results, output, or error.
+
+Agents, when added:
+
+- Agents run on Workers and Durable Objects.
+- Test route behavior with `exports.default.fetch(...)` or direct `worker.fetch(request, env, ctx)` plus `waitOnExecutionContext(ctx)`.
+- For internal state, apply the same DO rules: unique IDs/names, `runInDurableObject` only for setup/inspection, and alarm draining when alarms are involved.
+
+Workers AI (`AI`):
+
+- Local simulation is not available; Cloudflare recommends `remote: true`.
+- Do not call real AI from normal unit/integration tests.
+- Wrap AI behind an adapter and mock it for routine tests.
+- Reserve remote AI checks for explicit opt-in smoke tests with separate credentials, costs, and nondeterministic assertions.
+
+D1, when added:
+
+- Read migrations in Vitest config with `readD1Migrations(...)`.
+- Expose migrations as a test binding and call `applyD1Migrations(env.DB, migrations)` from setup.
+- Keep D1 data owned by the test just like KV/R2.
+
+Service bindings/assets/browser/vectorize/images:
+
+- Use local simulated bindings when available.
+- If a binding must be `remote: true`, make tests opt-in and use staging resources only.
+- Never point automated tests at production remote bindings.
 
 ## Key Conventions
 

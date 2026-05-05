@@ -1,8 +1,8 @@
 import type { ValidationIssue } from '@riposte/core'
-import { InternalServerError, ValidationError } from '@riposte/core'
+import { AuthenticationError, InternalServerError, ValidationError } from '@riposte/core'
 import { createLogger } from '@riposte/core'
 import { toServerFnRpc } from '@server/infrastructure/rpc/rpc-result'
-import { isNotFound, isRedirect } from '@tanstack/react-router'
+import { isNotFound, isRedirect, redirect } from '@tanstack/react-router'
 import { createMiddleware } from '@tanstack/react-start'
 import { Result } from 'better-result'
 
@@ -29,6 +29,7 @@ function tryParseZodError(error: unknown): ValidationError | null {
 // This only catches: platform primitives (redirect/notFound), Zod validation, and bugs.
 function handleFunctionError(error: unknown): never {
   if (isNotFound(error) || isRedirect(error)) throw error
+  if (AuthenticationError.is(error)) throw redirect({ to: '/sign-in' })
 
   const validation = tryParseZodError(error)
   if (validation) throw toServerFnRpc(Result.err(validation))
@@ -40,6 +41,9 @@ function handleFunctionError(error: unknown): never {
 // Safety net for API routes. Same scope: platform primitives, Zod, bugs.
 function handleRouteError(error: unknown): Response {
   if (isNotFound(error) || isRedirect(error)) throw error
+  if (AuthenticationError.is(error)) {
+    return Response.json({ error: 'Unauthenticated' }, { status: 401 })
+  }
 
   const validation = tryParseZodError(error)
   if (validation) {

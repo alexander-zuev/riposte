@@ -1,8 +1,9 @@
-import { AuthenticationError } from '@riposte/core'
+import { AuthenticationError, InternalServerError } from '@riposte/core'
 import { createLogger } from '@riposte/core'
 import * as Sentry from '@sentry/cloudflare'
 import { createMiddleware } from '@tanstack/react-start'
 import { getRequestHeaders } from '@tanstack/react-start/server'
+import { Result } from 'better-result'
 
 import { getAuthInstance } from '../auth'
 import type { Session, User } from '../auth/types'
@@ -20,22 +21,29 @@ export interface RequiredAuthContext {
 }
 
 export const extractAuth = createMiddleware({ type: 'function' }).server(async ({ next }) => {
-  let user: User | undefined
-  let session: Session | undefined
+  const headers = getRequestHeaders()
+  const auth = getAuthInstance()
 
-  try {
-    const headers = getRequestHeaders()
-    const auth = getAuthInstance()
-    const result = await auth.api.getSession({ headers })
-    user = result?.user
-    session = result?.session
-  } catch (error) {
-    logger.error('Failed to get session', { error })
-  }
+  const session = await Result.tryPromise<
+    { user: User; session: Session } | null,
+    InternalServerError
+  >({
+    try: async () => auth.api.getSession({ headers }),
+    catch: (e) => {
+      logger.error('Failed to get session', { error: e })
+      return new InternalServerError()
+    },
+  })
 
+  const user = session.isOk() ? session.value?.user : undefined
   if (user) Sentry.setUser({ id: user.id })
 
-  return next({ context: { user, session } })
+  return next({
+    context: {
+      user,
+      session: session.isOk() ? session.value?.session : undefined,
+    },
+  })
 })
 
 export const requireAuth = createMiddleware({ type: 'function' })

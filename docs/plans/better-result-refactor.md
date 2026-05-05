@@ -12,6 +12,7 @@ The deciding question is: **is the caller expected to reason about this outcome?
 
 **What throws (never Result):**
 - **Panics** — bugs in code, null derefs, better-result Panic from buggy callbacks. Fix the code.
+- **Raw/unknown thrown errors** — unmodeled bugs or dependency/runtime failures. Edges log/capture them and return generic failure outward.
 - **TanStack control flow** — `notFound()`, `redirect()`. Framework machinery, not errors.
 - **Cloudflare retry/rollback signals at platform edges** — Durable Object alarms, Workflows steps, and Drizzle/storage transactions throw only when the platform contract requires throw for retry or rollback. This is a bridge at the boundary, not a domain/application pattern.
 - **Missing internal wiring where the message type is known but no implementation exists** — panic. Unknown external input is still `Err`.
@@ -33,6 +34,19 @@ The codebase should keep three layers distinct:
 3. **Edges consume Results.** Server functions serialize, route handlers return HTTP responses, queue/scheduled/DO/workflow entrypoints decide ack/retry/throw, and UI call sites decide inline rendering vs redirects.
 
 Shared error classes live in `@riposte/core` so Workers and TanStack Start use the same `_tag` contract. Backend code can use `.is()` and `matchError` on real TaggedError instances. Client code must assume deserialized errors are plain data and switch on `_tag`.
+
+## Edge thrown-value policy
+
+Every entrypoint boundary classifies thrown values in this order:
+
+1. **Framework/platform control flow:** preserve and rethrow. Examples: TanStack `redirect()` / `notFound()`, platform retry/rollback throws.
+2. **Panic:** bug/invariant failure. Log/capture, return generic failure outward if there is a client, and do not retry by default.
+3. **TaggedError:** modeled expected failure that escaped by being thrown. Translate to the edge's modeled response (`Result.err` wire value, HTTP status JSON, queue ack/retry from `retryable`, etc.).
+4. **Raw `Error` / unknown thrown value:** unmodeled bug or dependency/runtime failure. Log/capture and return generic failure outward. Do not expose details. Retry only when that edge has an explicit platform reason to retry unknown infrastructure failure.
+
+Check `isPanic(error)` before generic tagged-error checks. `Panic` has `_tag = "Panic"` and must never be serialized to clients as a recoverable/domain error.
+
+This policy also applies when consuming a `Result.err` at an edge: panic-like or unknown values become generic internal failures; modeled `TaggedError`s become modeled responses. In normal application code, panics should throw rather than travel inside `Result.err`.
 
 ## Plan adjustments from the Cloudflare/TanStack guide
 
@@ -205,159 +219,89 @@ Currently only stub handlers exist — minimal change. As real handlers are buil
 
 **Follow-up from guide:** convert missing command/query handlers from typed `NoHandlerError` to panic. A declared internal message with no registered handler is registry misconfiguration, not a caller-recoverable outcome. Keep `UnknownMessageTypeError` as `Err` for untrusted or version-skewed messages.
 
-## Stage 6: Server functions return serialized Results ✅ IN PROGRESS
+## Stage 6: Server functions return serialized Results ✅ DONE
 
 **Scope:** `apps/web/src/server/entrypoints/functions/`
 
-**Rule:** server functions are adapters. They receive TanStack input, call application/message-bus code, then return a serialized Result wire object.
+All server functions return `toServerFnRpc(result)` which produces `RpcResult<T, E>` — a plain-object wire format that survives TanStack Start's seroval serialization.
 
-We are intentionally not using a generic `resultHandler` wrapper yet. The one extra line is clearer while the pattern is still new:
+**Two problems solved:**
+1. **Type-level:** TanStack Start's `ValidateSerializableMapped` rejects `[Symbol.iterator]` (from TaggedError's `Result.gen` support) and `cause: unknown` on Error. Fix: `Serializable<E>` mapped type strips methods and maps `unknown` → `JsonValue`.
+2. **Runtime-level:** seroval's `ShallowErrorPlugin` catches any `value instanceof Error` and reconstructs as bare `new Error(message)`, destroying `_tag` and custom fields. Fix: spread error into plain object to break prototype chain.
 
-```typescript
-export const joinWaitlist = createServerFn()
-  .inputValidator(joinWaitlistInput)
-  .handler(async ({ data }) => {
-    const bus = new MessageBus(env, { waitUntil })
-    const command = createCommand('JoinWaitlist', { email: data.email })
-    const result = await bus.handle(command)
+Upstream issues filed: better-result [#79](https://github.com/dmmulroy/better-result/issues/79), TanStack Router [#7339](https://github.com/TanStack/router/issues/7339).
 
-    return serializeForRpc(result)
-  })
-```
+**Implementation:** `apps/web/src/server/infrastructure/rpc/rpc-result.ts` — `toServerFnRpc()`, `toRpc()`, `fromRpc()`, `RpcResult<T, E>`, `Serializable<E>`.
 
-`serializeForRpc()` is a TanStack Start type bridge:
+**`inputValidator` note:** runs before handler — it's TanStack's code. When it fails, TanStack throws a mangled `Error(JSON.stringify(zodIssues))`. These errors still throw → caught by middleware (Stage 7) → serialized there.
 
-```typescript
-type RpcWireResult<T> =
-  | { status: 'ok'; value: T }
-  | { status: 'error'; error: JsonValue }
-
-function serializeForRpc<T, E>(result: Result<T, E>): RpcWireResult<T> {
-  return Result.serialize(result) as RpcWireResult<T>
-}
-```
-
-Why this exists: `Result.serialize(result)` is runtime-correct, and TaggedErrors serialize through `toJSON()`, but TanStack Start's static serializability checker rejects class error types (`DatabaseError`, `ValidationError`, etc.) because they have methods like `[Symbol.iterator]`. We opened upstream issue: https://github.com/TanStack/router/issues/7339.
-
-The bridge preserves the success type and deliberately erases the error side to JSON wire data. Stage 8 client `rpc()` rehydrates with `Result.deserialize<T, E>()`.
-
-**Implemented:**
-- Added `JoinWaitlist` command to core message registry.
-- Added waitlist command handler.
-- `WaitlistRepository.addEmail()` returns `Result`.
-- `joinWaitlist` server function dispatches command through `MessageBus` and returns `serializeForRpc(result)`.
-- `getSession` returns serialized `Result<AuthSession | null, InternalServerError>`.
-- `ensureSession` returns serialized `Result<AuthSession, AuthenticationError | InternalServerError>`.
-
-**`inputValidator` note:** runs before handler — it's TanStack's code. When it fails, TanStack throws a mangled `Error(JSON.stringify(zodIssues))`. `resultHandler` doesn't wrap this. These errors still throw → caught by middleware (Stage 7) → serialized there. Client `rpc()` catch block handles them.
-
-**Status:** app typecheck passing. Client call sites are temporarily bridging raw wire shape until Stage 8 updates `rpc()`.
-
-## Stage 7: Middleware → boundary safety nets ✅ IN PROGRESS
+## Stage 7: Middleware → boundary safety nets ✅ DONE
 
 **Scope:** `apps/web/src/server/infrastructure/middleware/error.middleware.ts`
 
-Middleware no longer uses the old `ServerError` wire format. It adapts thrown errors to the current boundary:
+Middleware is now a pure safety net. With Result pattern, expected errors are returned as values — they never reach middleware. Middleware only catches:
 
-- `errorMiddleware` (`type: 'function'`) wraps server functions and throws `serializeForRpc(Result.err(error))`.
-- `routeErrorMiddleware` (`type: 'request'`) is explicitly registered on API routes and returns `Response.json(...)`.
+1. **Platform primitives** (`redirect`, `notFound`) → rethrow
+2. **Zod validation** (TanStack's `inputValidator` mangles ZodError into `Error(JSON.stringify(issues))`) → parse and serialize as `ValidationError`
+3. **Panics/bugs** → log, return generic `InternalServerError`
 
-They intentionally duplicate the small classification flow instead of hiding it behind an abstraction.
+Two handlers, intentionally not abstracted:
+- `handleFunctionError` → throws `toServerFnRpc(Result.err(...))` for server fns
+- `handleRouteError` → returns `Response.json(...)` for API routes
 
-- TanStack router throws (`notFound`, `redirect`) → rethrow
-- Function middleware:
-  - `AuthenticationError` → serialized auth Result, no redirect
-  - Tagged errors → serialized Result
-  - Zod parse errors from TanStack's inputValidator → serialized `ValidationError`
-  - Unknown panic → log real cause, serialized `InternalServerError`
-- Route middleware:
-  - `AuthenticationError` → `401 Response.json`
-  - `ValidationError` → `400 Response.json`
-  - Other tagged errors → mapped status where obvious, otherwise 500
-  - Unknown panic → log real cause, `500 Response.json`
+**Tests (pending):**
+- Panic → logged, generic error serialized
+- `notFound()`/`redirect()` → rethrown
+- Zod-mangled error → parsed into `ValidationError`, serialized
 
-API route handlers should still pattern-match expected `Result.err` values themselves. Route middleware is only the outer safety net for leaked thrown errors/panics/framework weirdness.
+## Stage 8: Client RPC deserialization ✅ DONE
 
-**Implemented:**
-- Added `InternalServerError`.
-- Split function vs route error handling.
-- Registered `routeErrorMiddleware` on current API routes.
+**Scope:** `apps/web/src/lib/clients/rpc.ts`, `apps/web/src/lib/errors/client.errors.ts`
 
-**Tests:**
-- Panic thrown → logged, generic error serialized as Result
-- `notFound()` thrown → rethrown as-is
-- `redirect()` thrown → rethrown as-is
-- `AuthenticationError` in function middleware → serialized auth Result
-- `AuthenticationError` in route middleware → HTTP 401
-- Zod-mangled error → parsed into ValidationError, serialized as Result
+Replaced by `fromRpc()` in `@server/infrastructure/rpc/rpc-result.ts`. Route loaders call `fromRpc` directly and handle Results inline — no wrapper needed.
 
-## Stage 8: Client `rpc()` → `Result.deserialize()` ✅ REVIEWED
+**Deleted:**
+- `apps/web/src/lib/clients/rpc.ts` — old `rpc()` using `ServerError`/`isServerError`/`throwServerError`. Zero imports.
+- `apps/web/src/lib/errors/client.errors.ts` — old `throwServerError()`. Zero imports.
 
-**Scope:** `apps/web/src/lib/clients/rpc.ts`
-
+**Pattern for loaders:**
 ```typescript
-export async function rpc<T, E>(fn: Promise<unknown>): Promise<Result<T, E>> {
-  try {
-    const raw = await fn
-    const result = Result.deserialize<T, E>(raw)
-    if (result.isErr() && result.error._tag === 'AuthenticationError') throw redirect({ to: '/' })
-    return result
-  } catch (error) {
-    if (isNotFound(error) || isRedirect(error)) throw error
-    // Middleware throws land here (inputValidator Zod errors, panics)
-    // They're also Result.serialize'd, so try deserializing
-    try { return Result.deserialize<T, E>(error) } catch {}
-    return Result.err(error as E)
-  }
-}
+const wire = await ensureSession()
+const result = fromRpc(wire)
+if (result.isErr()) throw redirect({ to: '/sign-in' })
+return { session: result.value }
 ```
 
-**Two paths into `rpc()`:**
-1. Server fn returns serialized Result → `try` block deserializes it
-2. Middleware throws serialized Result (inputValidator Zod errors, panics) → `catch` block deserializes it
+**Note:** `Result.deserialize()` produces plain objects, not TaggedError instances. Use `_tag` string matching on client, not `.is()`. Future mutations will use `fromRpc` inside `useMutation`'s `mutationFn`.
 
-**TanStack Query integration:** `rpc()` returns `Result<T, E>`, never throws for expected errors. TanStack Query's `onSuccess` receives the Result — check `isErr()` there for typed error handling. `onError` only fires for panics/network failures (promise rejections). This correctly separates domain errors (typed, in resolved path) from infrastructure failures (rejected path).
+**Open question:** middleware throw path (inputValidator Zod failures reject the promise on client). Currently no call site handles this — revisit when mutations are added. May need a thin `rpc()` wrapper then, or handle per-mutation.
 
-**Note:** `Result.deserialize()` produces plain objects, not TaggedError instances. Use `_tag` string matching on client, not `.is()`. `switch (result.error._tag)` with exhaustive `never` default gives the same compile-time safety as `matchError`.
+## Stage 9: Client error handling → per-call-site ✅ DONE
 
-**Tests:** (ref: `https://better-result.dev/advanced/serialization#testing-serialization`)
-- Serialized `Result.ok(val)` → deserializes to `Result.ok(val)`
-- Serialized `Result.err(AuthenticationError)` → throws redirect
-- Serialized `Result.err(SomeOtherError)` → returns `Result.err(...)` to caller
-- Middleware-thrown serialized Result → deserialized in catch block
-- Non-Result thrown (network failure) → returns `Result.err(...)`
-- `notFound()` / `redirect()` → rethrown, not wrapped
-
-## Stage 9: Client error handling → per-call-site ✅ REVIEWED
-
-**Scope:** `apps/web/src/lib/errors/client.errors.ts`, call sites
-
-Delete centralized `throwServerError()`. Each call site handles its own errors:
+Centralized `throwServerError()` deleted. Each call site handles its own `Result` from `fromRpc`:
 
 ```typescript
-const result = await rpc<Dispute, NotFoundError | StripeApiError>(getDispute({ data: { id } }))
-
-if (result.isErr()) {
-  switch (result.error._tag) {
-    case 'NotFoundError': throw notFound()
-    case 'StripeApiError': toast.error('Stripe issue, retrying...')
-    default: { const _: never = result.error; throw new Error(_.message) }
-  }
-}
+const result = fromRpc(wire)
+if (result.isErr()) throw redirect({ to: '/sign-in' })
+return { session: result.value }
 ```
 
-Backend uses `matchError` on real TaggedError instances. Client uses `switch (error._tag)` with exhaustive `never` default. Two patterns, each simplest for its context.
+Backend uses `matchError` on real TaggedError instances. Client uses `_tag` string matching. Two patterns, each simplest for its context. Future feature call sites will use `switch (result.error._tag)` with exhaustive `never` default.
 
-No dedicated tests — tested as part of each feature's component/integration tests.
+## Stage 10: Delete dead code ✅ DONE
 
-## Stage 10: Delete dead code ✅ REVIEWED
+**Deleted:**
+- `types.ts` — `ServerError`, `serializeError()`, `isServerError()`, `SERVER_ERROR_CODES`
+- `api/result.ts` — old `Result<T>` type, `ok()`
+- `lib/clients/rpc.ts` — old `rpc()` wrapper
+- `lib/errors/client.errors.ts` — `throwServerError()`
+- `base.errors.ts` — hierarchy classes (deleted in Stage 1)
 
-- `base.errors.ts` — entire file (hierarchy classes)
-- `types.ts` — `ServerError`, `serializeError()`, `isServerError()` (wire format replaced by `Result.serialize`)
-- `api/result.ts` — `Result<T>` type, `ok()` (replaced by better-result's `Result`)
-- `client.errors.ts` — `throwServerError()` (replaced by per-call-site handling)
+**Moved:** `ValidationIssue` type → `domain.errors.ts` (co-located with `ValidationError`)
 
-**Tests:** typecheck + existing tests pass. No dead imports remaining (`grep` for removed symbols).
+**Cleaned up:** re-exports in `index.ts`, `client.ts`, `errors/index.ts`.
+
+Typecheck passes, zero dead imports remaining.
 
 ## Stage 11: Boundary adapter audit
 
@@ -386,7 +330,7 @@ The codebase should have one safety-net wrapper per entrypoint category, not sca
 **Targets:**
 - Server functions: current function middleware is the safety net.
 - HTTP routes: current route middleware is the safety net.
-- Queue consumer: catch panics only; typed `Err` controls ack/retry/dead-letter behavior.
+- Queue consumer: classify panics/raw unknown errors separately from typed `Err`; panics should be logged/DLQ'd, not retried by default.
 - Scheduled handler: covered by worker-level `Sentry.withSentry`; no local try/catch needed unless future code must translate `Result` into throw/return. ✅ DONE
 - Durable Object methods: add a method/RPC wrapper when DO RPC starts returning serialized Results.
 - Durable Object alarms: translate transient Result errors to throw for Cloudflare retry; log and swallow permanent failures when retry would be wrong.
@@ -396,12 +340,21 @@ The codebase should have one safety-net wrapper per entrypoint category, not sca
 - Panic becomes generic 500/logged result/failed queue handling depending on edge.
 - TanStack `redirect()` / `notFound()` still rethrow through route/function wrappers.
 - Scheduled outbox relay trigger failure is not swallowed and propagates to the worker-level Sentry boundary. ✅ DONE
+- Server-function middleware checks `isPanic()` before `isTaggedError()` and returns generic `InternalServerError`.
+- Route middleware checks `isPanic()` before `isTaggedError()` and returns generic 500 JSON.
+- Queue consumer does not retry panics by default.
 
 ## Stage 13: Panic audit and missing-handler migration
 
 **Scope:** `apps/web/src/server/application/message-bus/message-bus.ts`, registry lookup helpers, core application errors/tests
 
-Some current typed errors model bugs instead of caller-recoverable outcomes. Convert those to panics so misconfiguration fails loudly and is caught by edge safety nets/Sentry.
+Some current typed errors model bugs instead of caller-recoverable outcomes. Convert those to panics only after the edge policies from Stage 12 classify panics/raw errors correctly.
+
+**Required first:** server-function middleware, route middleware, and queue consumer must treat panics as bug signals:
+- log/capture internally;
+- return generic failure outward if there is a client;
+- do not expose panic message/stack/details;
+- do not retry queue panics by default.
 
 **Keep as `Err`:**
 - `UnknownMessageTypeError` for untrusted or version-skewed external input.
@@ -444,7 +397,7 @@ function getQueryHandlerOrPanic(name: QueryName): AnyQueryHandler {
 - unknown external message type returns `Result.err(UnknownMessageTypeError)`;
 - known command with missing registry entry throws panic;
 - known query with missing registry entry throws panic;
-- queue consumer catches missing-handler panic through its safety net;
+- queue consumer catches missing-handler panic through its safety net and does not retry by default;
 - no-handler typed error tests are deleted or moved to registry-audit tooling if retained.
 
 ## Stage 14: Shared Result wire primitives

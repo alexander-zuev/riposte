@@ -1,6 +1,10 @@
 import { TaggedError } from 'better-result'
 
-import type { ValidationIssue } from './types'
+export type ValidationIssue = {
+  code: string
+  path: (string | number)[]
+  message: string
+}
 
 export class AuthenticationError extends TaggedError('AuthenticationError')<{
   message: string

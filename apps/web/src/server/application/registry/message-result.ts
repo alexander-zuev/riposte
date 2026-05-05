@@ -5,7 +5,6 @@ import type {
   DomainMessage,
   DomainQuery,
   DuplicateMessageError,
-  NoHandlerError,
   UnknownMessageTypeError,
 } from '@riposte/core'
 import type { COMMAND_HANDLERS, QUERY_HANDLERS } from '@server/application/registry/registry'
@@ -46,7 +45,6 @@ export type MessageBusError<TMessage extends DomainMessage> =
   | MessageError<TMessage>
   | DatabaseError
   | DuplicateMessageError
-  | NoHandlerError
   | UnknownMessageTypeError
 
 export type MessageResult<TMessage extends DomainMessage> = Result<

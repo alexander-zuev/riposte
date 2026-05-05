@@ -84,13 +84,13 @@ Drop the 3-tier class hierarchy (`BaseError` → `DomainError`/`InfrastructureEr
 | `DatabaseError(message, cause?)` | `TaggedError("DatabaseError")<{message: string; cause?: unknown; retryable: boolean; pg?: PostgresErrorMeta}>()` — custom constructor extracts pg meta + computes retryable |
 | `DuplicateMessageError(messageId)` | `TaggedError("DuplicateMessageError")<{messageId: string; message: string; retryable: false}>()` — computed message in constructor |
 | `UnknownMessageTypeError(messageType)` | `TaggedError("UnknownMessageTypeError")<{message: string; retryable: false}>()` — computed message in constructor |
-| `NoHandlerError(kind, messageName)` | `TaggedError("NoHandlerError")<{kind: string; messageName: string; retryable: false}>()` — transitional only; target runtime dispatch panics on missing internal handlers |
+| `NoHandlerError(kind, messageName)` | Deleted in Stage 13 — missing internal handlers now panic |
 
 Union types for grouping (same files):
 ```typescript
 type DomainError = AuthenticationError | AuthorizationError | ValidationError | EntityNotFoundError | RateLimitError
 type InfrastructureError = DatabaseError | DuplicateMessageError
-type ApplicationError = UnknownMessageTypeError | NoHandlerError // remove NoHandlerError after Stage 13 if no tooling path needs it
+type ApplicationError = UnknownMessageTypeError | InternalServerError
 ```
 
 Delete `base.errors.ts`.
@@ -195,7 +195,7 @@ type CommandHandler<TCmd, TResult, TError> = (
 ) => Promise<Result<TResult, TError>>
 ```
 
-Message bus returns Result for expected routing failures. Unknown external input (`UnknownMessageTypeError`) is a typed `Result.err()`. A declared message with no registered internal handler is a wiring bug; keep `NoHandlerError` available for transitional/audit paths, but the target behavior is panic at the registry edge unless the caller is intentionally probing registry completeness.
+Message bus returns Result for expected routing failures. Unknown external input (`UnknownMessageTypeError`) is a typed `Result.err()`. A declared message with no registered internal command/query handler is a wiring bug and panics at the registry edge.
 
 `DuplicateMessageError` from UoW is converted by message bus to `Result.ok()` (silent success, idempotent).
 
@@ -217,7 +217,7 @@ Currently only stub handlers exist — minimal change. As real handlers are buil
 
 **Status:** complete for current message-bus/queue-consumer path. Unit tests passing (`54/54`).
 
-**Follow-up from guide:** convert missing command/query handlers from typed `NoHandlerError` to panic. A declared internal message with no registered handler is registry misconfiguration, not a caller-recoverable outcome. Keep `UnknownMessageTypeError` as `Err` for untrusted or version-skewed messages.
+**Stage 13 update:** missing command/query handlers now panic. `NoHandlerError` was deleted. Keep `UnknownMessageTypeError` as `Err` for untrusted or version-skewed messages.
 
 ## Stage 6: Server functions return serialized Results ✅ DONE
 
@@ -350,11 +350,11 @@ The codebase should have one safety-net wrapper per entrypoint category, not sca
 
 Some current typed errors model bugs instead of caller-recoverable outcomes. Convert those to panics only after the edge policies from Stage 12 classify panics/raw errors correctly.
 
-**Required first:** server-function middleware, route middleware, and queue consumer must treat panics as bug signals:
+**Required first:** server-function middleware, route middleware, and queue consumer must treat panics/raw errors as bug signals:
 - log/capture internally;
 - return generic failure outward if there is a client;
 - do not expose panic message/stack/details;
-- do not retry queue panics by default.
+- let retryable queue failures reach Cloudflare's native DLQ at max attempts.
 
 **Keep as `Err`:**
 - `UnknownMessageTypeError` for untrusted or version-skewed external input.
@@ -388,17 +388,14 @@ function getQueryHandlerOrPanic(name: QueryName): AnyQueryHandler {
 
 **Event policy:** zero subscribers can be valid. Keep `EVENT_HANDLERS[event.name] ?? []` returning ok/no-op unless a specific event requires at least one subscriber by invariant.
 
-**`NoHandlerError` outcome:**
-- delete it after migration if no production caller needs it;
-- otherwise keep it only for explicit registry-audit/tooling paths, not normal runtime dispatch;
-- remove it from `ApplicationError` once runtime dispatch no longer returns it.
+**`NoHandlerError` outcome:** deleted. Runtime dispatch no longer returns it.
 
 **Tests:**
 - unknown external message type returns `Result.err(UnknownMessageTypeError)`;
 - known command with missing registry entry throws panic;
 - known query with missing registry entry throws panic;
-- queue consumer catches missing-handler panic through its safety net and does not retry by default;
-- no-handler typed error tests are deleted or moved to registry-audit tooling if retained.
+- queue consumer retries panic/raw failures and lets Cloudflare's native DLQ receive them at max attempts;
+- no-handler typed error tests are deleted.
 
 ## Stage 14: Shared Result wire primitives
 

@@ -1,7 +1,8 @@
 # Riposte Product Spec
 
 Status: draft  
-Goal: define the smallest real product worth building before polishing UI or backend internals.
+Goal: earn money fast by shipping the smallest thing someone will pay for: Riposte turns one Stripe dispute + app usage data into submitted evidence.
+Key assumption: Stripe merchants with painful disputes will pay for an automated evidence responder because recovered money/time saved is worth more than Riposte's price.
 
 ## Product Thesis
 
@@ -177,15 +178,7 @@ The offer is not broad "chargeback automation." It is a concrete packet for a co
 
 ## Distribution
 
-Distribution loops:
-
-- Search public pain daily: Reddit, X, Indie Hackers, Hacker News, founder Slack/Discord groups.
-- Track exact keywords: `Stripe dispute`, `chargeback`, `lost dispute`, `unfair dispute`, `Stripe held funds`, `friendly fraud`, `customer disputed`, `Stripe evidence`.
-- Reply where public help is allowed with a tactical answer, then offer to build the evidence packet.
-- DM founders who posted recent dispute pain with a concrete, low-friction ask: one dispute, one customer, one packet.
-- Post teardown content: "I rebuilt the Levels/Tibo Stripe dispute responder as a reusable agent" plus real packet screenshots.
-- Build a small list of Stripe-heavy SaaS/AI tools and contact founders/operators directly.
-- Use each completed packet as proof: before/after evidence, time saved, submitted/won/lost outcome.
+Distribution plan lives in [launch-plan.md](../marketing/launch-plan.md). The key idea: combine direct outbound, Reddit/X pain search, open-source launch credibility, and a small paid test around a real product demo video.
 
 ## Positioning
 

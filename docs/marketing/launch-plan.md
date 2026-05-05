@@ -1,4 +1,66 @@
-# Launch Thread
+# Launch Plan
+
+Goal: get first paying users with active/recent Stripe disputes.
+
+## Core Offer
+
+> Fighting a Stripe dispute? Send Riposte the dispute + app usage data. It turns them into submitted Stripe evidence.
+
+Lead with one concrete outcome, not a broad automation platform.
+
+## Launch Assets
+
+- Product demo video: dispute arrives -> app evidence found -> packet generated -> submitted/escalated.
+- Simple landing page with one CTA: get one dispute packet.
+- Stripe Payment Link / Checkout for one-off packet or plan.
+- Open-source repo angle: inspectable, self-hostable, no 25% recovery tax.
+
+## Primary Channels
+
+1. **Direct outbound**
+   - List SaaS/AI tools with Stripe checkout.
+   - Target founders/operators.
+   - Message around active pain: "If you get disputes, I can turn usage logs into Stripe-ready evidence."
+
+2. **Reddit pain search**
+   - Search `r/stripe`, `r/SaaS`, `r/ecommerce`, `r/smallbusiness`.
+   - Keywords: `Stripe dispute`, `chargeback`, `lost dispute`, `Stripe held funds`, `unfair dispute`.
+   - Reply with useful tactical advice, then offer one packet.
+
+3. **X / Twitter**
+   - Launch thread around Levels/Tibo -> open-source reusable agent.
+   - Reply under Levels/Tibo threads and quote tweets.
+   - Search for founders complaining about Stripe disputes and DM a one-dispute offer.
+
+4. **HN / open-source launch**
+   - `Show HN: Open-source agent that builds Stripe dispute evidence from your app data`.
+   - Use for credibility and developer trust, not as the only sales channel.
+
+5. **SEO content**
+   - "How to win a Stripe dispute with app usage logs"
+   - "Stripe dispute evidence template for SaaS"
+   - "How to respond to product_not_received disputes for digital goods"
+   - "Levels.io Stripe dispute responder, generalized"
+
+## Paid Test
+
+Run minimal X + Reddit ads after the demo video exists.
+
+- Budget: small daily cap per channel.
+- Use anon/clean Riposte accounts.
+- Creative: Remotion video showing the real product flow, not abstract AI graphics.
+- Target message: "Your app already has the evidence Stripe needs."
+- Measure: CTR, email/demo conversion, uploaded dispute, paid packet.
+
+## Lower Priority
+
+- Product Hunt: awareness, not first buyers.
+- Betalist: likely low buyer intent.
+- Broad AI directories: only after the core demo and paid offer are live.
+
+---
+
+# Draft Launch Thread
 
 ## Post 1 — Hook
 

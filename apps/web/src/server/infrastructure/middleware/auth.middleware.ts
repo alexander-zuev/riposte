@@ -35,14 +35,11 @@ export const extractAuth = createMiddleware({ type: 'function' }).server(async (
     },
   })
 
-  const user = session.isOk() ? session.value?.user : undefined
-  if (user) Sentry.setUser({ id: user.id })
+  const resolved = session.isOk() ? session.value : null
+  if (resolved) Sentry.setUser({ id: resolved.user.id })
 
   return next({
-    context: {
-      user,
-      session: session.isOk() ? session.value?.session : undefined,
-    },
+    context: { user: resolved?.user, session: resolved?.session },
   })
 })
 

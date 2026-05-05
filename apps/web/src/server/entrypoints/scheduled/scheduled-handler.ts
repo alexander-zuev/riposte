@@ -1,4 +1,5 @@
 import { createLogger } from '@riposte/core'
+import { callDo } from '@server/infrastructure/durable-objects/call-do'
 import { OUTBOX_RELAY_ID } from '@server/infrastructure/durable-objects/outbox-relay-do'
 
 const logger = createLogger('scheduled')
@@ -17,7 +18,8 @@ export async function scheduled(
 
   if (controller.cron === OUTBOX_RELAY_CRON) {
     const relayStub = env.OUTBOX_RELAY.get(env.OUTBOX_RELAY.idFromName(OUTBOX_RELAY_ID))
-    await relayStub.trigger()
+    const result = await callDo(() => relayStub.trigger())
+    if (result.isErr()) throw result.error
     return
   }
 

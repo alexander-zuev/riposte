@@ -9,7 +9,11 @@ import {
 type Serializable<T> = T extends (...args: unknown[]) => unknown
   ? never
   : T extends object
-    ? { [K in keyof T as T[K] extends (...args: unknown[]) => unknown ? never : K]: Serializable<T[K]> }
+    ? {
+        [K in keyof T as T[K] extends (...args: unknown[]) => unknown ? never : K]: Serializable<
+          T[K]
+        >
+      }
     : unknown extends T
       ? JsonValue
       : T
@@ -29,14 +33,22 @@ export function toRpc<T, E>(result: BetterResult<T, E>): SerializedResult<T, E> 
 // ShallowErrorPlugin doesn't intercept and strip custom fields (see TanStack/router#7339).
 export function toServerFnRpc<T, E>(result: BetterResult<T, E>): RpcResult<T, E> {
   const serialized = Result.serialize(result)
-  if (serialized.status === 'error' && typeof serialized.error === 'object' && serialized.error !== null) {
-    const { stack: _, ...plain } = serialized.error as Record<string, unknown>
+  if (
+    serialized.status === 'error' &&
+    typeof serialized.error === 'object' &&
+    serialized.error !== null
+  ) {
+    const plain = JSON.parse(JSON.stringify(serialized.error)) as Record<string, unknown>
+    delete plain.stack
+
     return { status: 'error', error: plain } as RpcResult<T, E>
   }
   return serialized as RpcResult<T, E>
 }
 
 // Client-side: reconstruct Result from wire data. T and E inferred from input.
-export function fromRpc<T, E>(data: RpcResult<T, E>): BetterResult<T, E | ResultDeserializationError> {
+export function fromRpc<T, E>(
+  data: RpcResult<T, E> | SerializedResult<T, E>,
+): BetterResult<T, E | ResultDeserializationError> {
   return Result.deserialize<T, E>(data)
 }

@@ -1,6 +1,5 @@
-import { createCommand } from '@riposte/core'
+import { createCommand, toServerFnRpc } from '@riposte/core'
 import { MessageBus } from '@server/application/message-bus/message-bus'
-import { toServerFnRpc } from '@server/infrastructure/rpc/rpc-result'
 import { createServerFn } from '@tanstack/react-start'
 import { env, waitUntil } from 'cloudflare:workers'
 import { z } from 'zod'

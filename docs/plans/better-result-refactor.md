@@ -303,16 +303,17 @@ Backend uses `matchError` on real TaggedError instances. Client uses `_tag` stri
 
 Typecheck passes, zero dead imports remaining.
 
-## Stage 11: Boundary adapter audit
+## Stage 11: Boundary adapter audit ✅ DONE (current adapters)
 
 **Scope:** `apps/web/src/server/infrastructure/**`, future Stripe/dispute integrations
 
 Every file that talks to a platform binding, SDK, driver, or external API should expose Result-returning functions and contain the throwing boundary locally.
 
 **Checklist:**
-- Repositories wrap Drizzle/postgres throws with `Result.tryPromise` and map to `DatabaseError`.
-- Queue client wraps Cloudflare Queue sends and maps to `QueueError`.
-- Outbox relay wakeups use `waitUntil` only as best-effort notification; the durable source of truth remains the outbox row.
+- Repositories wrap Drizzle/postgres throws with `Result.tryPromise` and map to `DatabaseError`. ✅
+- Queue client wraps Cloudflare Queue sends and maps to `QueueError`. ✅
+- Outbox relay wakeups use `waitUntil` only as best-effort notification; the durable source of truth remains the outbox row. ✅
+- Auth middleware wraps `better-auth` session lookup with `Result.tryPromise`. ✅
 - Future Stripe adapter maps SDK-specific errors (`card`, `api`, rate limit, auth, network `TypeError`, unknown) into explicit TaggedErrors. Start with `UnhandledException` only where the boundary is not modeled yet.
 - Future R2/KV/D1 adapters get one file per binding and never leak platform throws into application/domain code.
 
@@ -321,122 +322,80 @@ Every file that talks to a platform binding, SDK, driver, or external API should
 - Unknown thrown value maps to `UnhandledException` or the boundary's explicit unknown error.
 - Success path preserves the driver/SDK result shape.
 
-## Stage 12: Edge safety net helpers
+## Stage 12: Edge safety net helpers ✅ DONE (current entrypoints)
 
 **Scope:** `apps/web/src/server/entrypoints/**`, `apps/web/src/server/infrastructure/middleware/**`, Durable Objects
 
 The codebase should have one safety-net wrapper per entrypoint category, not scattered ad hoc `try/catch`.
 
 **Targets:**
-- Server functions: current function middleware is the safety net.
-- HTTP routes: current route middleware is the safety net.
-- Queue consumer: classify panics/raw unknown errors separately from typed `Err`; panics should be logged/DLQ'd, not retried by default.
-- Scheduled handler: covered by worker-level `Sentry.withSentry`; no local try/catch needed unless future code must translate `Result` into throw/return. ✅ DONE
+- Server functions: function middleware catches framework control flow (redirect/notFound), Zod mangles, and runtime bugs. No TaggedError or Panic can reach this path — handlers return `Result.err()`, server fns serialize via `toServerFnRpc()`. ✅
+- HTTP routes: route middleware, same reasoning. ✅
+- Queue consumer: classifies panics/tagged/unknown via `isPanic()` and `isTaggedError()`. Panics DLQ'd, tagged errors checked for `retryable`, unknown errors retried. ✅
+- Scheduled handler: covered by worker-level `Sentry.withSentry`. ✅
 - Durable Object methods: add a method/RPC wrapper when DO RPC starts returning serialized Results.
 - Durable Object alarms: translate transient Result errors to throw for Cloudflare retry; log and swallow permanent failures when retry would be wrong.
 - Workflow steps: catch only to add context before rethrowing, or to convert Result to the platform's return-vs-throw retry contract.
 
-**Tests:**
-- Panic becomes generic 500/logged result/failed queue handling depending on edge.
-- TanStack `redirect()` / `notFound()` still rethrow through route/function wrappers.
-- Scheduled outbox relay trigger failure is not swallowed and propagates to the worker-level Sentry boundary. ✅ DONE
-- Server-function middleware checks `isPanic()` before `isTaggedError()` and returns generic `InternalServerError`.
-- Route middleware checks `isPanic()` before `isTaggedError()` and returns generic 500 JSON.
-- Queue consumer does not retry panics by default.
+**Note on middleware and isPanic/isTaggedError:** The plan originally called for middleware to check `isPanic()` before `isTaggedError()`. This is unnecessary — no TaggedError or Panic reaches middleware through any code path. The Result pattern ensures expected errors are values (returned via `Result.err()`), not throws. Panics occur in the queue consumer path (message bus), not the server function path. The queue consumer already has correct isPanic/isTaggedError classification.
 
-## Stage 13: Panic audit and missing-handler migration
+**Tests:**
+- Panic becomes generic 500/logged result/failed queue handling depending on edge. ✅
+- TanStack `redirect()` / `notFound()` still rethrow through route/function wrappers. ✅
+- Scheduled outbox relay trigger failure is not swallowed and propagates to the worker-level Sentry boundary. ✅
+- Queue consumer checks `isPanic()` before `isTaggedError()` and classifies accordingly. ✅
+- Queue consumer does not retry panics by default. ✅
+
+## Stage 13: Panic audit and missing-handler migration ✅ DONE
 
 **Scope:** `apps/web/src/server/application/message-bus/message-bus.ts`, registry lookup helpers, core application errors/tests
 
-Some current typed errors model bugs instead of caller-recoverable outcomes. Convert those to panics only after the edge policies from Stage 12 classify panics/raw errors correctly.
+`NoHandlerError` deleted. Missing command/query handlers now `panic()`. `UnknownMessageTypeError` kept as `Err` for untrusted external input. Event handlers default to `[]` (zero subscribers valid). Queue consumer classifies panics via `isPanic()` and routes to DLQ.
 
-**Required first:** server-function middleware, route middleware, and queue consumer must treat panics/raw errors as bug signals:
-- log/capture internally;
-- return generic failure outward if there is a client;
-- do not expose panic message/stack/details;
-- let retryable queue failures reach Cloudflare's native DLQ at max attempts.
+## Stage 14: Shared Result wire primitives ✅ DONE
 
-**Keep as `Err`:**
-- `UnknownMessageTypeError` for untrusted or version-skewed external input.
-- `DuplicateMessageError` for idempotency.
-- validation, auth, not-found, rate-limit, DB, queue, and other infrastructure/domain failures the caller can reason about.
+**Scope:** `packages/core/src/rpc/result-wire.ts`, TanStack server function call sites
 
-**Convert to panic/throw:**
-- missing command handler for a declared `CommandName`;
-- missing query handler for a declared `QueryName`;
-- impossible message kinds after message validation;
-- missing required env bindings/config at runtime;
-- malformed internal commands/events built by our own code;
-- failed exhaustive-switch defaults for internal unions.
+Result wire helpers now live in `@riposte/core` and `@riposte/core/client` so both server and browser code can share the same boundary contract.
 
-**Target message-bus change:**
+**Implemented helpers:**
+- `toRpc(result)` — generic `Result.serialize(result)` wrapper for non-TanStack boundaries.
+- `toServerFnRpc(result)` — TanStack Start server-function adapter. Converts `Err` errors to plain JSON-shaped objects so seroval does not treat TaggedErrors as `Error` instances and strip custom fields. It preserves `_tag`, `name`, `message`, `cause`, `retryable`, and domain fields, while stripping `stack`.
+- `fromRpc(data)` — client/shared deserializer. Accepts both `RpcResult<T, E>` and `SerializedResult<T, E>` because DO/workflow-style boundaries may use plain `Result.serialize`, while TanStack server functions use `toServerFnRpc`.
+
+**Current shape:**
 ```typescript
-function getCommandHandlerOrPanic(name: CommandName): AnyCommandHandler {
-  const handler = COMMAND_HANDLERS[name]
-  if (!handler) throw panic('Missing command handler', { name })
-  return handler
-}
-
-function getQueryHandlerOrPanic(name: QueryName): AnyQueryHandler {
-  const handler = QUERY_HANDLERS[name]
-  if (!handler) throw panic('Missing query handler', { name })
-  return handler
-}
-```
-
-`handleCommand()` and `handleQuery()` should no longer `yield*` handler lookup as a `Result`. They should panic during lookup only when the registry is internally miswired, then compose the handler/UoW `Result` normally.
-
-**Event policy:** zero subscribers can be valid. Keep `EVENT_HANDLERS[event.name] ?? []` returning ok/no-op unless a specific event requires at least one subscriber by invariant.
-
-**`NoHandlerError` outcome:** deleted. Runtime dispatch no longer returns it.
-
-**Tests:**
-- unknown external message type returns `Result.err(UnknownMessageTypeError)`;
-- known command with missing registry entry throws panic;
-- known query with missing registry entry throws panic;
-- queue consumer retries panic/raw failures and lets Cloudflare's native DLQ receive them at max attempts;
-- no-handler typed error tests are deleted.
-
-## Stage 14: Shared Result wire primitives
-
-**Scope:** current `apps/web/src/server/entrypoints/functions/rpc-result.ts`, shared core/app RPC utilities
-
-The current server-function `rpcResult()` is close to the generic primitive, but it lives under TanStack server functions and has a boundary-specific name. Extract the generic parts so every structured-clone/network boundary uses the same wire shape.
-
-**Target responsibility:**
-- serialize a live `Result<T, E>` into plain data;
-- deserialize unknown wire data into `Result<T, E | ResultDeserializationError>`;
-- strip methods from static error types so `TaggedError` classes become wire-shaped error data;
-- avoid catching panics. A panic before a `Result` exists must still throw.
-
-**Target shape:**
-```typescript
-type WireResult<T, E> =
+type RpcResult<T, E> =
   | { status: 'ok'; value: T }
-  | { status: 'error'; error: StripMethods<E> }
+  | { status: 'error'; error: Serializable<E> }
 
-function serializeResultForWire<T, E>(result: Result<T, E>): WireResult<T, E> {
-  return Result.serialize(result) as WireResult<T, E>
+function toRpc<T, E>(result: Result<T, E>): SerializedResult<T, E> {
+  return Result.serialize(result)
 }
 
-function deserializeResultFromWire<T, E>(
-  wire: unknown,
+function toServerFnRpc<T, E>(result: Result<T, E>): RpcResult<T, E> {
+  // Result.serialize + JSON plain-object conversion for Err + stack removal
+}
+
+function fromRpc<T, E>(
+  wire: RpcResult<T, E> | SerializedResult<T, E>,
 ): Result<T, E | ResultDeserializationError> {
   return Result.deserialize<T, E>(wire)
 }
 ```
 
-**Placement decision:** prefer `packages/core` if browser-safe exports can carry the types cleanly; otherwise keep it app-local in a neutral path such as `apps/web/src/lib/rpc/result-wire.ts`. Do not keep the generic primitive under `server/entrypoints/functions/`.
+**Placement decision:** implemented in `packages/core`; exported from both `@riposte/core` and `@riposte/core/client`. The old app-local `apps/web/src/server/infrastructure/rpc/rpc-result.ts` is removed.
 
-**Server-function adapter after extraction:**
-- `apps/web/src/server/entrypoints/functions/rpc-result.ts` becomes a thin TanStack-specific wrapper or re-export.
-- TanStack-specific concerns stay there: Start serializability workaround, inputValidator/middleware behavior, redirect/notFound preservation on the client.
+**TanStack finding:** raw `Result.serialize(result)` across `createServerFn` lets seroval's `ShallowErrorPlugin` turn TaggedErrors into plain `Error` objects. That preserves `message` but loses `_tag` and domain fields. `toServerFnRpc()` prevents that by converting the serialized error through its JSON representation before seroval sees it, then deleting `stack`.
+
+**DO / Workflow scope rule:** these helpers are only needed when a boundary intentionally returns `Result` as data. A DO method or workflow step that returns a plain success value and throws for failures does not need `Result.serialize` / `fromRpc`. Use serialization when downstream code must branch on an expected domain `Err`.
 
 **Tests:**
-- serialized ok round-trips;
-- serialized tagged err round-trips as plain `_tag` data;
-- malformed input returns `Result.err(ResultDeserializationError)`;
-- serializer does not swallow a thrown panic from caller-provided work.
+- generic ok wire round-trips;
+- generic tagged error wire preserves `_tag` and `message`;
+- malformed wire returns `Result.err(ResultDeserializationError)`;
+- TanStack server-function wire strips `stack`;
+- TanStack server-function wire preserves `_tag` and `message` through `fromRpc()`.
 
 ## Stage 15: Durable Object RPC Result bridge
 
@@ -505,26 +464,20 @@ Workflow `step.do()` checkpoints returned values and retries thrown failures. Us
 - Infrastructure failure throws and is visible to Workflow retry policy.
 - Deserialized prior step Result is matched exhaustively.
 
-## Stage 17: Loader and TanStack Query call-site policy
+## Stage 17: Loader and TanStack Query call-site policy ✅ DONE
 
-**Scope:** `apps/web/src/routes/**`, `apps/web/src/lib/clients/rpc.ts`, feature hooks/components
+**Scope:** `apps/web/src/routes/**`, feature hooks/components
 
-Loader policy:
-- Do not wrap whole loader bodies in `Result.try`.
-- Call Result-returning domain/RPC code inside the loader.
-- Translate `EntityNotFoundError` to `throw notFound()` and auth/navigation cases to `throw redirect(...)` at the loader edge.
-- Throw unexpected tagged errors to the route `errorComponent` only after expected cases are handled.
+Loader policy (established):
+- Do not wrap whole loader bodies in `Result.try`. ✅
+- Call Result-returning server fns inside loaders, `fromRpc()` the wire data, handle Results inline. ✅
+- `_authed/route.tsx`: `fromRpc(ensureSession())` → `isErr()` → `throw redirect()`. ✅
+- `_public/route.tsx`: `fromRpc(getSession())` → `isOk() ? value : null`. ✅
 
-Query policy:
-- Default server-function mutations to resolved `Result` data so validation/domain errors can render inline.
-- For query functions, choose per call site:
-  - throw on `Err` when Query error state/error boundaries are the intended UI;
-  - return `Result` as data when both branches are meaningful inline.
-
-**Tests:**
-- Loader not-found/auth paths preserve TanStack Router behavior.
-- Mutation validation error resolves as `Result.err` and renders field errors.
-- Network/panic rejection still reaches Query `onError`.
+Mutation policy (established):
+- `mutationFn` calls server fn, `fromRpc()` the wire data, throws on `Err` so `mutation.isError` works. ✅
+- Validation handled client-side by TanStack Form + Zod `inputValidator`. Server-side validation errors (Zod mangles from `inputValidator`) reject the promise and reach `mutation.isError`. ✅
+- Future mutations with server-side domain errors (e.g. dispute submission) should switch on `result.error._tag` for inline error rendering instead of throwing.
 
 ## Queue consumer update (part of Stage 5)
 

@@ -1,5 +1,5 @@
+import { fromRpc } from '@riposte/core/client'
 import { createFileRoute, Outlet } from '@tanstack/react-router'
-import { fromRpc } from '@web/server/infrastructure/rpc/rpc-result'
 import { getSession } from '@web/server/entrypoints/functions/auth.fn'
 
 export const Route = createFileRoute('/_public')({

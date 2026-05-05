@@ -6,6 +6,7 @@ import {
 } from '@server/infrastructure/context/event-context'
 import type { DrizzleDb } from '@server/infrastructure/db'
 import { createDatabase } from '@server/infrastructure/db'
+import { callDo } from '@server/infrastructure/durable-objects/call-do'
 import { OUTBOX_RELAY_ID } from '@server/infrastructure/durable-objects/outbox-relay-do'
 import { OutboxRepository } from '@server/infrastructure/repositories/outbox.repository'
 import { Result } from 'better-result'
@@ -81,11 +82,9 @@ export async function executeUoW<T, E>(
 function triggerRelay(): void {
   waitUntil(
     (async () => {
-      try {
-        await env.OUTBOX_RELAY.get(env.OUTBOX_RELAY.idFromName(OUTBOX_RELAY_ID)).trigger()
-      } catch (error: unknown) {
-        logger.error('Failed to trigger outbox relay', { error })
-      }
+      const relayStub = env.OUTBOX_RELAY.get(env.OUTBOX_RELAY.idFromName(OUTBOX_RELAY_ID))
+      const result = await callDo(() => relayStub.trigger())
+      if (result.isErr()) logger.error('Failed to trigger outbox relay', { error: result.error })
     })(),
   )
 }

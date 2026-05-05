@@ -1,7 +1,11 @@
 import type { ValidationIssue } from '@riposte/core'
-import { AuthenticationError, InternalServerError, ValidationError } from '@riposte/core'
+import {
+  AuthenticationError,
+  InternalServerError,
+  ValidationError,
+  toServerFnRpc,
+} from '@riposte/core'
 import { createLogger } from '@riposte/core'
-import { toServerFnRpc } from '@server/infrastructure/rpc/rpc-result'
 import { isNotFound, isRedirect, redirect } from '@tanstack/react-router'
 import { createMiddleware } from '@tanstack/react-start'
 import { Result } from 'better-result'

@@ -17,15 +17,31 @@ export class DuplicateMessageError extends TaggedError('DuplicateMessageError')<
 export class QueueError extends TaggedError('QueueError')<{
   message: string
   cause: unknown
-  retryable: true
+  retryable: boolean
 }>() {
-  constructor(args: { message: string; cause: unknown }) {
-    // Cloudflare Queue producer errors do not expose a stable retry taxonomy.
-    // Treat as retryable for outer relay retry; validate with production telemetry.
-    super({ message: args.message, cause: args.cause, retryable: true })
+  constructor(args: { message: string; cause: unknown; retryable: boolean }) {
+    super({ message: args.message, cause: args.cause, retryable: args.retryable })
   }
 }
 
-export type InfrastructureError = DatabaseError | DuplicateMessageError | QueueError
+export class DOUnreachableError extends TaggedError('DOUnreachableError')<{
+  message: string
+  cause: unknown
+  retryable: boolean
+}>() {
+  constructor(args: { cause: unknown; retryable: boolean }) {
+    super({
+      message: 'Failed to reach Durable Object',
+      cause: args.cause,
+      retryable: args.retryable,
+    })
+  }
+}
+
+export type InfrastructureError =
+  | DatabaseError
+  | DuplicateMessageError
+  | QueueError
+  | DOUnreachableError
 
 import { DatabaseError } from './database.errors'

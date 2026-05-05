@@ -1,4 +1,5 @@
 import { ArrowRightIcon, CaretRightIcon, CheckIcon } from '@phosphor-icons/react'
+import { fromRpc } from '@riposte/core/client'
 import { useForm } from '@tanstack/react-form'
 import { useMutation } from '@tanstack/react-query'
 import { joinWaitlist, joinWaitlistInput } from '@web/server/entrypoints/functions/waitlist.fn'
@@ -110,7 +111,12 @@ export function LandingPage() {
 
 function WaitlistForm({ emailRef }: { emailRef: React.RefObject<HTMLInputElement | null> }) {
   const mutation = useMutation({
-    mutationFn: (data: { email: string }) => joinWaitlist({ data }),
+    mutationFn: async (data: { email: string }) => {
+      const wire = await joinWaitlist({ data })
+      const result = fromRpc(wire)
+      if (result.isErr()) throw result.error
+      return result.value
+    },
   })
 
   const form = useForm({

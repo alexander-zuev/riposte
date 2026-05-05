@@ -138,6 +138,19 @@ Retry at the caller boundary, not inside repositories. Queue consumer / workflow
 
 Do not `logger.error(..., { error })` immediately before rethrowing inside Sentry-instrumented entrypoints (`withSentry`, `instrumentDurableObjectWithSentry`, queue/scheduled wrappers). `logger.error` already forwards to Sentry via the logger hook, and the instrumentation captures the rethrow too. Either let the throw be captured, or log at `warn`/`debug` if an operational breadcrumb is useful.
 
+## Testing
+
+### Durable Objects
+
+Use Cloudflare's Vitest helpers from `cloudflare:test` for Durable Object integration tests:
+
+- Use `runInDurableObject(stub, callback)` only to set up or inspect DO internals, including storage/alarm state.
+- Use `runDurableObjectAlarm(stub)` to execute an alarm. It removes the scheduled alarm before invoking `alarm()`, and returns `false` when no alarm is scheduled.
+- When testing alarm-driven flows that can self-schedule, drain with `runDurableObjectAlarm(stub)` until it returns `false`, then assert on observable state. Treat the drain loop as the no-alarm boundary; avoid a separate immediate `runDurableObjectAlarm(stub) === false` assertion because workerd may surface overdue alarms asynchronously.
+- Do not call `instance.alarm()` directly in integration tests unless deliberately bypassing Cloudflare alarm semantics.
+- Do not assert exact alarm run counts unless that count is the behavior under test; batching, self-scheduling, and leftover local state can make counts brittle. Prefer asserting final persisted/observable state after the drain loop.
+- Use targeted cleanup for real DB rows. Avoid broad table deletes in parallel integration tests because another file may own rows in the same table.
+
 ## Key Conventions
 
 - Path aliases: `@web/*` → `src/*`, `@server/*` → `src/server/*`

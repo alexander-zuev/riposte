@@ -1,6 +1,7 @@
 import type { DomainMessage } from '@riposte/core'
 import { createLogger } from '@riposte/core'
 import { QueueError } from '@riposte/core'
+import { isTransientError, RETRY } from '@server/infrastructure/resilience/retry'
 import { Result } from 'better-result'
 
 export interface IQueueClient {
@@ -23,12 +24,20 @@ export class QueueClient implements IQueueClient {
   async send(message: DomainMessage): Promise<Result<void, QueueError>> {
     const queue = this.getQueue(message.type)
     logger.debug('sending_message', { name: message.name, type: message.type })
-    return Result.tryPromise({
-      try: async () => {
-        await queue.send(message)
+    return Result.tryPromise(
+      {
+        try: async () => {
+          await queue.send(message)
+        },
+        catch: (cause) =>
+          new QueueError({
+            message: 'Failed to send queue message',
+            cause,
+            retryable: isTransientError(cause),
+          }),
       },
-      catch: (cause) => new QueueError({ message: 'Failed to send queue message', cause }),
-    })
+      RETRY.transient,
+    )
   }
 
   async sendBatch(messages: DomainMessage[]): Promise<Result<void, QueueError>> {
@@ -55,7 +64,12 @@ export class QueueClient implements IQueueClient {
 
         await Promise.all(sends)
       },
-      catch: (cause) => new QueueError({ message: 'Failed to send queue batch', cause }),
+      catch: (cause) =>
+        new QueueError({
+          message: 'Failed to send queue batch',
+          cause,
+          retryable: isTransientError(cause),
+        }),
     })
   }
 

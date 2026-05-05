@@ -1,5 +1,9 @@
-import { AuthenticationError, InternalServerError, createLogger } from '@riposte/core'
-import { toServerFnRpc } from '@server/infrastructure/rpc/rpc-result'
+import {
+  AuthenticationError,
+  InternalServerError,
+  createLogger,
+  toServerFnRpc,
+} from '@riposte/core'
 
 const logger = createLogger('auth.fn')
 import { getAuthInstance } from '@server/infrastructure/auth/auth'

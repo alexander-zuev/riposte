@@ -1,4 +1,6 @@
-import type { RateLimit } from './types'
+import { callDo } from '@server/infrastructure/durable-objects/call-do'
+
+import type { RateLimit, RateLimiterStub } from './types'
 
 export interface SecondaryStorage {
   get: (key: string) => Promise<string | null>
@@ -43,8 +45,15 @@ export function createRateLimitStorage(
 
       try {
         const doId = doNamespace.idFromName(key)
-        const stub = doNamespace.get(doId) as any
-        const data = await stub.getRateLimit()
+        const stub = doNamespace.get(doId) as unknown as RateLimiterStub
+        const result = await callDo(() => stub.getRateLimit())
+
+        if (result.isErr()) {
+          if (debug) console.error(`[RateLimit] GET ${key} ERROR:`, result.error)
+          return undefined
+        }
+
+        const data = result.value
 
         if (debug && data) {
           console.log(`[RateLimit] GET ${key}: count=${data.count} (${Date.now() - start}ms)`)
@@ -62,8 +71,9 @@ export function createRateLimitStorage(
 
       try {
         const doId = doNamespace.idFromName(key)
-        const stub = doNamespace.get(doId) as any
-        await stub.setRateLimit(value)
+        const stub = doNamespace.get(doId) as unknown as RateLimiterStub
+        const result = await callDo(() => stub.setRateLimit(value))
+        if (result.isErr()) throw result.error
 
         if (debug) {
           console.log(`[RateLimit] SET ${key}: count=${value.count} (${Date.now() - start}ms)`)

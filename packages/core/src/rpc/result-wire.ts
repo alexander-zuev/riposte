@@ -52,3 +52,13 @@ export function fromRpc<T, E>(
 ): BetterResult<T, E | ResultDeserializationError> {
   return Result.deserialize<T, E>(data)
 }
+
+// Client-side: deserialize and unwrap in one step. Returns T or throws the
+// deserialized error directly (not a Panic wrapper like Result.unwrap does).
+// Use in useMutation/useQuery where the caller wants T and mutation.error
+// should be the tagged error object, not a Panic.
+export function unwrapRpc<T, E>(data: RpcResult<T, E> | SerializedResult<T, E>): T {
+  const result = fromRpc<T, E>(data)
+  if (result.isErr()) throw result.error
+  return result.value
+}

@@ -397,53 +397,55 @@ function fromRpc<T, E>(
 - TanStack server-function wire strips `stack`;
 - TanStack server-function wire preserves `_tag` and `message` through `fromRpc()`.
 
-## Stage 15: Durable Object RPC Result bridge
+## Stage 15: Durable Object transport wrapper ✅ DONE (current DOs)
 
-**Scope:** future DO callers and `apps/web/src/server/infrastructure/durable-objects/**`
+**Scope:** `apps/web/src/server/infrastructure/durable-objects/call-do.ts`, current DO callers
 
-Structured cloning strips prototypes, so DO methods must not return live `Result` instances or TaggedError instances across RPC. DOs should reuse the shared wire primitives from Stage 14, but the caller transport wrapper is DO-specific.
+Current DO methods do not need to return `Result` as data. They are plain-value/void APIs where callers only need to know whether the DO RPC call itself was reachable. Stage 15 therefore implemented the transport wrapper only, not a serialized-Result DO contract.
 
-**DO-side helper:**
+**Implemented helper:**
 ```typescript
-export async function durableObjectResult<T, E>(
-  work: () => Promise<Result<T, E>>,
-): Promise<WireResult<T, E>> {
-  return serializeResultForWire(await work())
+export async function callDo<T>(
+  call: () => Promise<T>,
+): Promise<Result<T, DOUnreachableError>> {
+  return Result.tryPromise(
+    {
+      try: call,
+      catch: (cause) =>
+        new DOUnreachableError({
+          cause,
+          retryable: isTransientError(cause),
+        }),
+    },
+    RETRY.transient,
+  )
 }
 ```
 
-This helper does not catch. If `work()` panics, the DO method throws and the platform/instrumentation sees the bug.
+`RETRY.transient` is the shared short retry policy for internal/runtime I/O blips: 3 retries, 25ms base delay, exponential backoff, retry only when the mapped error has `retryable === true`. `isTransientError()` uses explicit runtime/SDK signals first (`overloaded`, `retryable`, `AbortError`) and then network/timeout/connection message patterns.
 
-**Caller-side helper:**
-```typescript
-export async function callDurableObjectResult<T, E>(
-  call: () => Promise<unknown>,
-): Promise<Result<T, E | DOUnreachableError | ResultDeserializationError>> {
-  const transport = await Result.tryPromise({
-    try: call,
-    catch: (cause) => new DOUnreachableError({ cause }),
-  })
+**Current call-site policy:**
+- `scheduled-handler.ts`: `callDo(() => relayStub.trigger())`; throw `DOUnreachableError` on `Err` so the scheduled edge/Sentry sees the failure.
+- `unit-of-work.ts`: fire-and-forget relay trigger runs inside `waitUntil`; log `DOUnreachableError` on `Err`, never roll back an already committed UoW.
+- `auth/storage.ts`: rate-limit `get` keeps existing fallback behavior (`undefined` on failure); rate-limit `set` keeps existing throw behavior, but now after retry and with typed `DOUnreachableError`.
 
-  if (transport.isErr()) return transport
-  return deserializeResultFromWire<T, E>(transport.value)
-}
-```
+**Deferred serialized-Result DO bridge:** when a future DO method needs to return expected/domain failure as data, add a second helper such as `callDoResult(() => stub.methodReturningSerializedResult())` that composes:
+- transport failure → `DOUnreachableError`;
+- returned serialized domain `Err` → domain error via `fromRpc`;
+- malformed wire → `ResultDeserializationError`.
 
-**Use policy:**
-- Use this only for DO methods that are part of our typed application/RPC boundary.
-- Do not force every DO method to return `Result`. `OutboxRelayDO.trigger()` can remain `Promise<void>` if it is only a best-effort signal.
-- Keep `OutboxRelayDO.alarm()` throwing transient relay failures because alarm retry depends on throw.
-- Be careful with third-party-owned DO contracts such as better-auth rate limiting; do not change their method shapes unless we own every call site.
+Do not serialize every DO response by default. Use `toRpc/fromRpc` only when downstream code must branch on an expected domain `Err`.
 
 **DO transaction/alarm rules:**
 - Returning `Err` inside a DO storage transaction commits. Throw at that storage boundary to roll back, then convert back to `Result` outside.
 - Returning from `alarm()` means no retry. Throw transient/infrastructure failures out of `alarm()` when retry is desired.
 
 **Tests:**
-- DO application method returns serialized ok/err.
-- Caller helper maps unreachable DO to `DOUnreachableError`.
-- Caller helper maps malformed serialized data to `ResultDeserializationError`.
-- Storage transaction Err path rolls back.
+- `callDo()` returns ok when the DO call succeeds;
+- `callDo()` retries transient failures through `RETRY.transient`;
+- `callDo()` returns `DOUnreachableError` for non-transient/final failures;
+- scheduled relay trigger throws typed `DOUnreachableError` on failure;
+- retry classifier and policy are unit-tested.
 
 ## Stage 16: Workflow Result contract
 

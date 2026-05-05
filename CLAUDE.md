@@ -140,6 +140,14 @@ Do not `logger.error(..., { error })` immediately before rethrowing inside Sentr
 
 ## Testing
 
+Test independence is enforced by mechanics, not intent:
+
+- Generate unique IDs/prefixes per test and assert only on rows/resources owned by that test.
+- Query by owned IDs, aggregate IDs, message IDs, or correlation IDs. Do not assert on "all pending rows" in a shared table unless the rows are isolated inside that test's transaction.
+- Prefer transaction-scoped setup/assertions when another worker, Durable Object, queue, or alarm could observe and mutate committed rows before the assertion.
+- Clean up with targeted deletes by the IDs created by the test. Do not use broad table truncation/deletes as cross-file coordination.
+- A test must pass when run alone, repeated, or beside unrelated files in parallel. If that is not true, the test is depending on global state.
+
 ### Durable Objects
 
 Use Cloudflare's Vitest helpers from `cloudflare:test` for Durable Object integration tests:

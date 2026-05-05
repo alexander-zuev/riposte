@@ -7,12 +7,7 @@ import type {
   QueryMap,
   QueryName,
 } from '@riposte/core'
-import {
-  createLogger,
-  DuplicateMessageError,
-  NoHandlerError,
-  UnknownMessageTypeError,
-} from '@riposte/core'
+import { createLogger, DuplicateMessageError, UnknownMessageTypeError } from '@riposte/core'
 import { executeUoW } from '@server/application/message-bus/unit-of-work'
 import type { MessageResult } from '@server/application/registry/message-result'
 import {
@@ -28,31 +23,31 @@ import type {
   QueryRegistry,
 } from '@server/application/registry/types'
 import type { DrizzleDb } from '@server/infrastructure/db'
-import { Result } from 'better-result'
+import { Result, panic } from 'better-result'
 
 const logger = createLogger('message-bus')
 
 type AnyCommandHandler = CommandHandler<any, unknown, unknown>
 type AnyQueryHandler = QueryHandler<any, unknown, unknown>
 
-function getQueryHandler(name: QueryName): Result<AnyQueryHandler, NoHandlerError> {
+function getQueryHandler(name: QueryName): AnyQueryHandler {
   const queryHandlers = QUERY_HANDLERS as Partial<QueryRegistry>
   const handler = queryHandlers[name] as AnyQueryHandler | undefined
   if (!handler) {
-    return Result.err(new NoHandlerError({ kind: 'query', messageName: name }))
+    return panic(`Missing query handler: ${name}`)
   }
 
-  return Result.ok(handler)
+  return handler
 }
 
-function getCommandHandler(name: CommandName): Result<AnyCommandHandler, NoHandlerError> {
+function getCommandHandler(name: CommandName): AnyCommandHandler {
   const commandHandlers = COMMAND_HANDLERS as Partial<CommandRegistry>
   const handler = commandHandlers[name] as AnyCommandHandler | undefined
   if (!handler) {
-    return Result.err(new NoHandlerError({ kind: 'command', messageName: name }))
+    return panic(`Missing command handler: ${name}`)
   }
 
-  return Result.ok(handler)
+  return handler
 }
 
 function getEventHandlers<TName extends EventName>(
@@ -111,8 +106,8 @@ export class MessageBus implements IMessageBus {
   ): Promise<MessageResult<CommandMap[TName]>> {
     logger.info('Handling command', { command: command.name, id: command.id })
     const env = this.env
+    const handler = getCommandHandler(command.name)
     const result = await Result.gen(async function* () {
-      const handler = yield* getCommandHandler(command.name)
       const value = yield* Result.await(
         executeUoW(async (tx: DrizzleDb) => handler(command, env, tx), command.id),
       )
@@ -143,7 +138,11 @@ export class MessageBus implements IMessageBus {
     const results = await Promise.all(
       handlers.map(async ({ id, handle }) => {
         const receiptId = `${event.id}:${id}`
-        logger.debug('Handling event subscriber', { event: event.name, eventId: event.id, handlerId: id })
+        logger.debug('Handling event subscriber', {
+          event: event.name,
+          eventId: event.id,
+          handlerId: id,
+        })
         const result = await executeUoW(async (tx) => handle(event, env, tx), receiptId)
 
         if (result.isErr() && DuplicateMessageError.is(result.error)) {
@@ -161,7 +160,11 @@ export class MessageBus implements IMessageBus {
 
     const failed = results.find((result) => result.isErr())
     if (failed?.isErr()) {
-      logger.warn('Event handler failed', { event: event.name, eventId: event.id, error: failed.error })
+      logger.warn('Event handler failed', {
+        event: event.name,
+        eventId: event.id,
+        error: failed.error,
+      })
       return Result.err(failed.error) as MessageResult<EventMap[TName]>
     }
 
@@ -177,9 +180,9 @@ export class MessageBus implements IMessageBus {
     logger.debug('Handling query', { query: query.name })
     const env = this.env
     const ctx = this.ctx
+    const handler = getQueryHandler(query.name)
 
     const result = await Result.gen(async function* () {
-      const handler = yield* getQueryHandler(query.name)
       const value = yield* Result.await(handler(query, env, ctx))
       return Result.ok(value)
     })

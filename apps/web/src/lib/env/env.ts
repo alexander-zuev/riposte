@@ -43,7 +43,7 @@ export const settings = {
 
   posthog: {
     apiKey: env.VITE_PUBLIC_POSTHOG_KEY,
-    apiHost: '/api/relay',
+    apiHost: 'https://relay.riposte.sh',
     uiHost: 'https://us.posthog.com',
     enabled: env.MODE !== 'development',
   },

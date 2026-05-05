@@ -9,7 +9,4 @@ export const APP_ROUTES = {
   auth: {
     basePath: '/api/auth',
   },
-  relay: {
-    path: '/api/relay',
-  },
 } as const

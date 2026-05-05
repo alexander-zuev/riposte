@@ -1,5 +1,7 @@
-import { AuthenticationError, InternalServerError } from '@riposte/core'
-import { serializeForRpc } from '@server/entrypoints/functions/rpc-result'
+import { AuthenticationError, InternalServerError, createLogger } from '@riposte/core'
+import { toServerFnRpc } from '@server/infrastructure/rpc/rpc-result'
+
+const logger = createLogger('auth.fn')
 import { getAuthInstance } from '@server/infrastructure/auth/auth'
 import type { Session, User } from '@server/infrastructure/auth/types'
 import { createServerFn } from '@tanstack/react-start'
@@ -14,10 +16,13 @@ export const getSession = createServerFn({ method: 'GET' }).handler(async () => 
 
   const result = await Result.tryPromise<AuthSession, InternalServerError>({
     try: async () => auth.api.getSession({ headers }),
-    catch: () => new InternalServerError(),
+    catch: (e) => {
+      logger.error('Failed to get session', { error: e })
+      return new InternalServerError()
+    },
   })
 
-  return serializeForRpc(result)
+  return toServerFnRpc(result)
 })
 
 export const ensureSession = createServerFn({ method: 'GET' }).handler(async () => {
@@ -26,11 +31,14 @@ export const ensureSession = createServerFn({ method: 'GET' }).handler(async () 
 
   const sessionResult = await Result.tryPromise<AuthSession, InternalServerError>({
     try: async () => auth.api.getSession({ headers }),
-    catch: () => new InternalServerError(),
+    catch: (e) => {
+      logger.error('Failed to ensure session', { error: e })
+      return new InternalServerError()
+    },
   })
   const result = sessionResult.andThen((session) =>
     session ? Result.ok(session) : Result.err(new AuthenticationError()),
   )
 
-  return serializeForRpc(result)
+  return toServerFnRpc(result)
 })

@@ -1,6 +1,6 @@
 import { createCommand } from '@riposte/core'
 import { MessageBus } from '@server/application/message-bus/message-bus'
-import { rpcResult } from '@server/entrypoints/functions/rpc-result'
+import { toServerFnRpc } from '@server/infrastructure/rpc/rpc-result'
 import { createServerFn } from '@tanstack/react-start'
 import { env, waitUntil } from 'cloudflare:workers'
 import { z } from 'zod'
@@ -17,5 +17,5 @@ export const joinWaitlist = createServerFn()
     const command = createCommand('JoinWaitlist', { email: data.email })
     const result = await bus.handle(command)
 
-    return rpcResult(result)
+    return toServerFnRpc(result)
   })

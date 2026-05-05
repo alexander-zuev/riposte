@@ -1,7 +1,6 @@
 import { ArrowRightIcon, CaretRightIcon, CheckIcon } from '@phosphor-icons/react'
 import { useForm } from '@tanstack/react-form'
 import { useMutation } from '@tanstack/react-query'
-import { rpc } from '@web/lib/clients/rpc'
 import { joinWaitlist, joinWaitlistInput } from '@web/server/entrypoints/functions/waitlist.fn'
 import { Button } from '@web/ui/components/ui/button'
 import { FieldError } from '@web/ui/components/ui/field'
@@ -111,7 +110,7 @@ export function LandingPage() {
 
 function WaitlistForm({ emailRef }: { emailRef: React.RefObject<HTMLInputElement | null> }) {
   const mutation = useMutation({
-    mutationFn: (data: { email: string }) => rpc<null>(joinWaitlist({ data })),
+    mutationFn: (data: { email: string }) => joinWaitlist({ data }),
   })
 
   const form = useForm({

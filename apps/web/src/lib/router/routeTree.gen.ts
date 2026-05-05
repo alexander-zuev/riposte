@@ -10,11 +10,12 @@
 
 import { Route as rootRouteImport } from './../../routes/__root'
 import { Route as PublicRouteRouteImport } from './../../routes/_public/route'
+import { Route as AuthedRouteRouteImport } from './../../routes/_authed/route'
 import { Route as PublicIndexRouteImport } from './../../routes/_public/index'
-import { Route as PublicTestRouteImport } from './../../routes/_public/test'
 import { Route as PublicTermsRouteImport } from './../../routes/_public/terms'
 import { Route as PublicSignInRouteImport } from './../../routes/_public/sign-in'
 import { Route as PublicPrivacyRouteImport } from './../../routes/_public/privacy'
+import { Route as AuthedDashboardRouteImport } from './../../routes/_authed/dashboard'
 import { Route as ApiRelaySplatRouteImport } from './../../routes/api/relay/$'
 import { Route as ApiAuthSplatRouteImport } from './../../routes/api/auth/$'
 
@@ -22,14 +23,13 @@ const PublicRouteRoute = PublicRouteRouteImport.update({
   id: '/_public',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthedRouteRoute = AuthedRouteRouteImport.update({
+  id: '/_authed',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PublicIndexRoute = PublicIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => PublicRouteRoute,
-} as any)
-const PublicTestRoute = PublicTestRouteImport.update({
-  id: '/test',
-  path: '/test',
   getParentRoute: () => PublicRouteRoute,
 } as any)
 const PublicTermsRoute = PublicTermsRouteImport.update({
@@ -47,6 +47,11 @@ const PublicPrivacyRoute = PublicPrivacyRouteImport.update({
   path: '/privacy',
   getParentRoute: () => PublicRouteRoute,
 } as any)
+const AuthedDashboardRoute = AuthedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthedRouteRoute,
+} as any)
 const ApiRelaySplatRoute = ApiRelaySplatRouteImport.update({
   id: '/api/relay/$',
   path: '/api/relay/$',
@@ -60,29 +65,30 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof PublicIndexRoute
+  '/dashboard': typeof AuthedDashboardRoute
   '/privacy': typeof PublicPrivacyRoute
   '/sign-in': typeof PublicSignInRoute
   '/terms': typeof PublicTermsRoute
-  '/test': typeof PublicTestRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/relay/$': typeof ApiRelaySplatRoute
 }
 export interface FileRoutesByTo {
+  '/': typeof PublicIndexRoute
+  '/dashboard': typeof AuthedDashboardRoute
   '/privacy': typeof PublicPrivacyRoute
   '/sign-in': typeof PublicSignInRoute
   '/terms': typeof PublicTermsRoute
-  '/test': typeof PublicTestRoute
-  '/': typeof PublicIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/relay/$': typeof ApiRelaySplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/_authed': typeof AuthedRouteRouteWithChildren
   '/_public': typeof PublicRouteRouteWithChildren
+  '/_authed/dashboard': typeof AuthedDashboardRoute
   '/_public/privacy': typeof PublicPrivacyRoute
   '/_public/sign-in': typeof PublicSignInRoute
   '/_public/terms': typeof PublicTermsRoute
-  '/_public/test': typeof PublicTestRoute
   '/_public/': typeof PublicIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/relay/$': typeof ApiRelaySplatRoute
@@ -91,34 +97,36 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/dashboard'
     | '/privacy'
     | '/sign-in'
     | '/terms'
-    | '/test'
     | '/api/auth/$'
     | '/api/relay/$'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/'
+    | '/dashboard'
     | '/privacy'
     | '/sign-in'
     | '/terms'
-    | '/test'
-    | '/'
     | '/api/auth/$'
     | '/api/relay/$'
   id:
     | '__root__'
+    | '/_authed'
     | '/_public'
+    | '/_authed/dashboard'
     | '/_public/privacy'
     | '/_public/sign-in'
     | '/_public/terms'
-    | '/_public/test'
     | '/_public/'
     | '/api/auth/$'
     | '/api/relay/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  AuthedRouteRoute: typeof AuthedRouteRouteWithChildren
   PublicRouteRoute: typeof PublicRouteRouteWithChildren
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiRelaySplatRoute: typeof ApiRelaySplatRoute
@@ -133,18 +141,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authed': {
+      id: '/_authed'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_public/': {
       id: '/_public/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof PublicIndexRouteImport
-      parentRoute: typeof PublicRouteRoute
-    }
-    '/_public/test': {
-      id: '/_public/test'
-      path: '/test'
-      fullPath: '/test'
-      preLoaderRoute: typeof PublicTestRouteImport
       parentRoute: typeof PublicRouteRoute
     }
     '/_public/terms': {
@@ -168,6 +176,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicPrivacyRouteImport
       parentRoute: typeof PublicRouteRoute
     }
+    '/_authed/dashboard': {
+      id: '/_authed/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthedDashboardRouteImport
+      parentRoute: typeof AuthedRouteRoute
+    }
     '/api/relay/$': {
       id: '/api/relay/$'
       path: '/api/relay/$'
@@ -185,11 +200,22 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthedRouteRouteChildren {
+  AuthedDashboardRoute: typeof AuthedDashboardRoute
+}
+
+const AuthedRouteRouteChildren: AuthedRouteRouteChildren = {
+  AuthedDashboardRoute: AuthedDashboardRoute,
+}
+
+const AuthedRouteRouteWithChildren = AuthedRouteRoute._addFileChildren(
+  AuthedRouteRouteChildren,
+)
+
 interface PublicRouteRouteChildren {
   PublicPrivacyRoute: typeof PublicPrivacyRoute
   PublicSignInRoute: typeof PublicSignInRoute
   PublicTermsRoute: typeof PublicTermsRoute
-  PublicTestRoute: typeof PublicTestRoute
   PublicIndexRoute: typeof PublicIndexRoute
 }
 
@@ -197,7 +223,6 @@ const PublicRouteRouteChildren: PublicRouteRouteChildren = {
   PublicPrivacyRoute: PublicPrivacyRoute,
   PublicSignInRoute: PublicSignInRoute,
   PublicTermsRoute: PublicTermsRoute,
-  PublicTestRoute: PublicTestRoute,
   PublicIndexRoute: PublicIndexRoute,
 }
 
@@ -206,6 +231,7 @@ const PublicRouteRouteWithChildren = PublicRouteRoute._addFileChildren(
 )
 
 const rootRouteChildren: RootRouteChildren = {
+  AuthedRouteRoute: AuthedRouteRouteWithChildren,
   PublicRouteRoute: PublicRouteRouteWithChildren,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiRelaySplatRoute: ApiRelaySplatRoute,

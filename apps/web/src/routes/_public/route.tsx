@@ -1,15 +1,13 @@
 import { createFileRoute, Outlet } from '@tanstack/react-router'
+import { fromRpc } from '@web/server/infrastructure/rpc/rpc-result'
 import { getSession } from '@web/server/entrypoints/functions/auth.fn'
 
 export const Route = createFileRoute('/_public')({
   beforeLoad: async () => {
-    try {
-      const result = await getSession()
-      const session = result.status === 'ok' ? result.value : null
-      return { user: session?.user ?? null }
-    } catch {
-      return { user: null }
-    }
+    const wire = await getSession()
+    const result = fromRpc(wire)
+    const session = result.isOk() ? result.value : null
+    return { user: session?.user ?? null }
   },
   staleTime: 30_000,
   component: PublicRouteComponent,

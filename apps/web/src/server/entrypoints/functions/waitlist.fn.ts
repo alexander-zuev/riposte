@@ -1,6 +1,6 @@
 import { createCommand } from '@riposte/core'
 import { MessageBus } from '@server/application/message-bus/message-bus'
-import { serializeForRpc } from '@server/entrypoints/functions/rpc-result'
+import { rpcResult } from '@server/entrypoints/functions/rpc-result'
 import { createServerFn } from '@tanstack/react-start'
 import { env, waitUntil } from 'cloudflare:workers'
 import { z } from 'zod'
@@ -13,9 +13,9 @@ export type JoinWaitlistInput = z.infer<typeof joinWaitlistInput>
 export const joinWaitlist = createServerFn()
   .inputValidator(joinWaitlistInput)
   .handler(async ({ data }) => {
-    const bus = new MessageBus(env as Env, { waitUntil })
+    const bus = new MessageBus(env, { waitUntil })
     const command = createCommand('JoinWaitlist', { email: data.email })
     const result = await bus.handle(command)
 
-    return serializeForRpc(result)
+    return rpcResult(result)
   })

@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './../../routes/__root'
 import { Route as PublicRouteRouteImport } from './../../routes/_public/route'
 import { Route as PublicIndexRouteImport } from './../../routes/_public/index'
+import { Route as PublicTestRouteImport } from './../../routes/_public/test'
 import { Route as PublicTermsRouteImport } from './../../routes/_public/terms'
 import { Route as PublicSignInRouteImport } from './../../routes/_public/sign-in'
 import { Route as PublicPrivacyRouteImport } from './../../routes/_public/privacy'
@@ -24,6 +25,11 @@ const PublicRouteRoute = PublicRouteRouteImport.update({
 const PublicIndexRoute = PublicIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => PublicRouteRoute,
+} as any)
+const PublicTestRoute = PublicTestRouteImport.update({
+  id: '/test',
+  path: '/test',
   getParentRoute: () => PublicRouteRoute,
 } as any)
 const PublicTermsRoute = PublicTermsRouteImport.update({
@@ -57,6 +63,7 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PublicPrivacyRoute
   '/sign-in': typeof PublicSignInRoute
   '/terms': typeof PublicTermsRoute
+  '/test': typeof PublicTestRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/relay/$': typeof ApiRelaySplatRoute
 }
@@ -64,6 +71,7 @@ export interface FileRoutesByTo {
   '/privacy': typeof PublicPrivacyRoute
   '/sign-in': typeof PublicSignInRoute
   '/terms': typeof PublicTermsRoute
+  '/test': typeof PublicTestRoute
   '/': typeof PublicIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/relay/$': typeof ApiRelaySplatRoute
@@ -74,6 +82,7 @@ export interface FileRoutesById {
   '/_public/privacy': typeof PublicPrivacyRoute
   '/_public/sign-in': typeof PublicSignInRoute
   '/_public/terms': typeof PublicTermsRoute
+  '/_public/test': typeof PublicTestRoute
   '/_public/': typeof PublicIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/relay/$': typeof ApiRelaySplatRoute
@@ -85,16 +94,25 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/sign-in'
     | '/terms'
+    | '/test'
     | '/api/auth/$'
     | '/api/relay/$'
   fileRoutesByTo: FileRoutesByTo
-  to: '/privacy' | '/sign-in' | '/terms' | '/' | '/api/auth/$' | '/api/relay/$'
+  to:
+    | '/privacy'
+    | '/sign-in'
+    | '/terms'
+    | '/test'
+    | '/'
+    | '/api/auth/$'
+    | '/api/relay/$'
   id:
     | '__root__'
     | '/_public'
     | '/_public/privacy'
     | '/_public/sign-in'
     | '/_public/terms'
+    | '/_public/test'
     | '/_public/'
     | '/api/auth/$'
     | '/api/relay/$'
@@ -120,6 +138,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof PublicIndexRouteImport
+      parentRoute: typeof PublicRouteRoute
+    }
+    '/_public/test': {
+      id: '/_public/test'
+      path: '/test'
+      fullPath: '/test'
+      preLoaderRoute: typeof PublicTestRouteImport
       parentRoute: typeof PublicRouteRoute
     }
     '/_public/terms': {
@@ -164,6 +189,7 @@ interface PublicRouteRouteChildren {
   PublicPrivacyRoute: typeof PublicPrivacyRoute
   PublicSignInRoute: typeof PublicSignInRoute
   PublicTermsRoute: typeof PublicTermsRoute
+  PublicTestRoute: typeof PublicTestRoute
   PublicIndexRoute: typeof PublicIndexRoute
 }
 
@@ -171,6 +197,7 @@ const PublicRouteRouteChildren: PublicRouteRouteChildren = {
   PublicPrivacyRoute: PublicPrivacyRoute,
   PublicSignInRoute: PublicSignInRoute,
   PublicTermsRoute: PublicTermsRoute,
+  PublicTestRoute: PublicTestRoute,
   PublicIndexRoute: PublicIndexRoute,
 }
 

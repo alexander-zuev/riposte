@@ -16,7 +16,7 @@ export class QueueConsumer {
 
   async processBatch(batch: MessageBatch): Promise<void> {
     logger.debug('batch_received', { count: batch.messages.length })
-    await Promise.allSettled(batch.messages.map(async (message) => this.processMessage(message)))
+    await Promise.all(batch.messages.map(async (message) => this.processMessage(message)))
   }
 
   private async processMessage(message: Message): Promise<void> {
@@ -77,8 +77,8 @@ export class QueueConsumer {
     const unknownRetryable = options?.retryUnknown === true && !isTaggedError(error)
     const retryable = panicRetryable || taggedRetryable || unknownRetryable
 
-    if (!retryable || message.attempts >= QueueConsumer.MAX_ATTEMPTS) {
-      logger.error('dlq', {
+    if (!retryable) {
+      logger.error('message_discarded', {
         error,
         msg,
         attempt: message.attempts,
@@ -86,6 +86,16 @@ export class QueueConsumer {
       })
       message.ack()
       return
+    }
+
+    if (message.attempts >= QueueConsumer.MAX_ATTEMPTS) {
+      logger.error('dlq', {
+        error,
+        msg,
+        attempt: message.attempts,
+        retryable,
+      })
+      throw toThrowable(error)
     }
 
     const delay = Math.min(
@@ -100,6 +110,11 @@ export class QueueConsumer {
     })
     message.retry({ delaySeconds: delay })
   }
+}
+
+function toThrowable(error: unknown): Error {
+  if (error instanceof Error) return error
+  return new Error('Queue message failed', { cause: error })
 }
 
 export async function queue(batch: MessageBatch, env: Env, ctx: ExecutionContext): Promise<void> {

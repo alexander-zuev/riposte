@@ -4,6 +4,7 @@ import handler, { createServerEntry } from '@tanstack/react-start/server-entry'
 import { queue } from '@web/server/entrypoints/queue'
 import { scheduled } from '@web/server/entrypoints/scheduled'
 import type { Session, User } from '@web/server/infrastructure/auth/types'
+import { waitUntil } from 'cloudflare:workers'
 export { OutboxRelayDO, RateLimiterDO } from '@web/server/infrastructure/durable-objects'
 
 declare module '@tanstack/react-start' {
@@ -24,7 +25,7 @@ setLoggerErrorHook((entry: ErrorCaptureEntry) => {
   if (entry.distinctId) {
     Object.assign(hint, { user: { id: entry.distinctId } })
   }
-  Sentry.captureException(entry.error, hint)
+  waitUntil(Promise.resolve(Sentry.captureException(entry.error, hint)))
 })
 
 const serverEntry = createServerEntry(handler)

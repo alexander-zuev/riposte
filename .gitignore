@@ -64,6 +64,7 @@ CLAUDE.local.md
 .vitest/
 
 # Playwright CLI
+.playwright/
 .playwright-cli/
 
 # Build output

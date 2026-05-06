@@ -3,7 +3,7 @@ import { tanstackStartPlugin } from 'storybook-addon-tanstack-start/plugin'
 import { mergeConfig } from 'vite'
 
 const config: StorybookConfig = {
-  stories: ['./**/*.stories.@(js|jsx|mjs|ts|tsx)', '../src/**/*.stories.@(js|jsx|mjs|ts|tsx)'],
+  stories: ['./**/*.stories.@(js|jsx|mjs|ts|tsx)'],
   addons: ['@storybook/addon-themes'],
   staticDirs: ['../public', './public'],
   framework: {

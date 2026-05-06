@@ -389,6 +389,10 @@
           "pattern": "riposte.sh",
           "custom_domain": true,
         },
+        {
+          "pattern": "www.riposte.sh",
+          "custom_domain": true,
+        },
       ],
     },
   },

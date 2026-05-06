@@ -1,7 +1,7 @@
 import type { DatabaseError, QueueError } from '@riposte/core'
 import { createLogger } from '@riposte/core'
+import type { IOutboxRepository } from '@server/domain/repository/interfaces'
 import type { DrizzleDb } from '@server/infrastructure/db'
-import { OutboxRepository } from '@server/infrastructure/repositories/outbox.repository'
 import { Result } from 'better-result'
 import { is, TransactionRollbackError } from 'drizzle-orm'
 
@@ -10,6 +10,10 @@ import type { IQueueClient } from './queue-client'
 const logger = createLogger('outbox-relay')
 
 type OutboxRelayError = DatabaseError | QueueError
+
+export interface IOutboxRelay {
+  flush: (batchSize?: number) => Promise<Result<number, OutboxRelayError>>
+}
 
 /**
  * OutboxRelay - Reads pending events from DB outbox and relays to Queue
@@ -22,10 +26,11 @@ type OutboxRelayError = DatabaseError | QueueError
  * This is the "relay" component - it bridges DB → Queue.
  * Called by OutboxRelayDO (for coalesced processing) and cron (safety net).
  */
-export class OutboxRelay {
+export class OutboxRelay implements IOutboxRelay {
   constructor(
     private readonly db: DrizzleDb,
     private readonly queueClient: IQueueClient,
+    private readonly outboxRepo: (tx: DrizzleDb) => IOutboxRepository,
   ) {}
 
   /**
@@ -45,7 +50,7 @@ export class OutboxRelay {
 
     try {
       const published = await this.db.transaction(async (tx) => {
-        const repo = new OutboxRepository(tx)
+        const repo = this.outboxRepo(tx)
         // 1. SELECT: Lock oldest pending events for this transaction
         // SKIP LOCKED ensures concurrent flushes don't block each other
         const pendingResult = await repo.retrievePending(batchSize)

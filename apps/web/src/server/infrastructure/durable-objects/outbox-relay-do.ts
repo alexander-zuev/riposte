@@ -1,8 +1,7 @@
 import { createLogger, createSentryOptions } from '@riposte/core'
 import * as Sentry from '@sentry/cloudflare'
-import { createDatabase } from '@server/infrastructure/db/connection'
-import { QueueClient } from '@server/infrastructure/queues/queue-client'
-import { OutboxRelay } from '@server/infrastructure/queues/outbox-relay'
+import { createAppDeps } from '@server/infrastructure/app-deps'
+import type { AppDeps } from '@server/infrastructure/app-deps'
 import { DurableObject } from 'cloudflare:workers'
 
 const logger = createLogger('outbox-relay-do')
@@ -14,6 +13,13 @@ const BATCH_SIZE = 50
  * UoW calls trigger() → coalesces into one alarm → self-schedules.
  */
 class OutboxRelayDOBase extends DurableObject<Env> {
+  private readonly deps: AppDeps
+
+  constructor(ctx: DurableObjectState, env: Env) {
+    super(ctx, env)
+    this.deps = createAppDeps(env, ctx)
+  }
+
   /** Signal work exists. Multiple calls coalesce into one alarm. */
   async trigger(): Promise<void> {
     const currentAlarm = await this.ctx.storage.getAlarm()
@@ -29,9 +35,7 @@ class OutboxRelayDOBase extends DurableObject<Env> {
 
   /** Flush outbox, self-schedule next run. CF retries on throw. */
   async alarm(): Promise<void> {
-    const db = createDatabase(this.env)
-    const queueClient = new QueueClient(this.env)
-    const outboxRelay = new OutboxRelay(db, queueClient)
+    const outboxRelay = this.deps.services.outboxRelay()
     const result = await outboxRelay.flush(BATCH_SIZE)
     if (result.isErr()) {
       // DO alarms retry only when the alarm handler throws.

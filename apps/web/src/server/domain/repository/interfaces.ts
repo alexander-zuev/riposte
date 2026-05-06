@@ -3,6 +3,14 @@ import type { DbOutbox } from '@server/infrastructure/db'
 import type { Result } from 'better-result'
 
 /* -------------------------------------------------------------------------------------------------
+ * Waitlist Repository
+ * ------------------------------------------------------------------------------------------------- */
+
+export interface IWaitlistRepository {
+  addEmail: (email: string) => Promise<Result<{ alreadyExists: boolean }, DatabaseError>>
+}
+
+/* -------------------------------------------------------------------------------------------------
  * Outbox Repository
  * ------------------------------------------------------------------------------------------------- */
 

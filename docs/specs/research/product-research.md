@@ -70,6 +70,59 @@ Merchants either don't contest, fight manually, or use tools that only access pa
 
 **The gap:** For SaaS, AI tools, courses, digital products — the winning evidence is user activity in your database (sessions, usage, generated content). None of them can access it.
 
+## Field Signals From Outreach
+
+### Reddit: chargeback ops pain
+
+Source: [r/payments](https://www.reddit.com/r/payments/comments/1t3cxfs/chargebacks_are_stealing_hours_and_our_team_cant/)
+
+Signals:
+
+- Merchant reports 10-15 chargebacks/week.
+- Each case takes 1-2 hours.
+- Work spans Stripe, PayPal, receipts, response writing, and bank portals.
+- Commenters independently confirm the same manual Stripe-data collection pain.
+- Commenters mention Chargeflow and generic AI/Claude as possible solutions.
+
+Interpretation:
+
+- The pain is evidence reconstruction across systems, not just writing.
+- Existing automation tools validate willingness to use/pay, but leave room for a SaaS/app-data wedge.
+- Generic AI is already in the buyer's imagination; Riposte must package it into a reliable workflow with connected data, source-backed facts, and submission states.
+
+### Reddit: SaaS proof of value
+
+Source: [r/SaaS](https://www.reddit.com/r/SaaS/comments/1s6m6gw/let_a_customer_prepay_for_a_year_at_a_discount/)
+
+Signals:
+
+- Annual SaaS customer disputed a $2,900 prepayment after 10-11 months.
+- Merchant had regular usage data, but still lost because the claim was "service not as described."
+- The evidence burden was not just "customer logged in." It was proving the service was delivered as described and that the customer received value over time.
+- Merchant response after losing: clearer annual contract, lawyer-reviewed ToS, annual commitment acknowledgment email, and automated monthly usage/value summary emails for annual customers.
+
+Interpretation:
+
+- SaaS disputes need proof of value, not only receipts or access logs.
+- Evidence packets should translate raw app activity into a concise story: what was promised, what was delivered, how the customer used it, and whether they complained or asked to cancel/refund.
+- For annual SaaS, the strongest evidence may be created before any dispute: recurring value summaries, explicit commitment acknowledgment, clearer service descriptions, and preserved customer communications.
+- V2 engine implication: Riposte should audit whether the merchant's ToS/product promise is defensible. Vague terms make usage logs weaker because login activity alone may not prove the service was delivered as described.
+
+### Reddit: early fraud warnings
+
+Source: [r/stripe](https://www.reddit.com/r/stripe/comments/1t4fgym/the_purpose_of_early_fraud_warnings_if/)
+
+Signals:
+
+- Merchants report refunding immediately after an EFW and still receiving a dispute plus fee.
+- Another merchant says refund evidence can still win the dispute or recover fees.
+- The useful response is a timeline: EFW time, refund time/status, dispute timing, customer/payment identity, and delivery/usage proof.
+
+Interpretation:
+
+- EFWs are an early-response wedge, not only a prevention feature.
+- Riposte should be able to prepare timestamped evidence before or during dispute escalation.
+
 ## The Insight
 
 The bank reviewer asks one question: **"Did this person get what they paid for?"**

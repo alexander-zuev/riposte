@@ -1,16 +1,12 @@
 import type { DatabaseError, DuplicateMessageError } from '@riposte/core'
 import { createLogger } from '@riposte/core'
+import type { AppDeps } from '@server/infrastructure/app-deps'
 import {
   getCollectedEvents,
   runWithEventContext,
 } from '@server/infrastructure/context/event-context'
 import type { DrizzleDb } from '@server/infrastructure/db'
-import { createDatabase } from '@server/infrastructure/db'
-import { callDo } from '@server/infrastructure/durable-objects/call-do'
-import { OUTBOX_RELAY_ID } from '@server/infrastructure/durable-objects/outbox-relay-do'
-import { OutboxRepository } from '@server/infrastructure/repositories/outbox.repository'
 import { Result } from 'better-result'
-import { env, waitUntil } from 'cloudflare:workers'
 import { is, TransactionRollbackError } from 'drizzle-orm'
 
 const logger = createLogger('unit-of-work')
@@ -26,17 +22,18 @@ const logger = createLogger('unit-of-work')
  * then converts the rollback back into Result.err().
  */
 export async function executeUoW<T, E>(
+  deps: AppDeps,
   work: (tx: DrizzleDb) => Promise<Result<T, E>>,
   msgId: string,
 ): Promise<Result<T, E | DatabaseError | DuplicateMessageError>> {
-  // TODO: move createDatabase to entrypoint, pass db via async context
-  const db = createDatabase(env)
+  const db = deps.db()
   let rollbackErr: E | DatabaseError | DuplicateMessageError | undefined
+  let eventsPersisted = false
 
   try {
     const value = await runWithEventContext(async () =>
       db.transaction(async (tx) => {
-        const outboxRepo = new OutboxRepository(tx)
+        const outboxRepo = deps.repos.outbox(tx)
 
         const receipt = await outboxRepo.assertMessageNotProcessed(msgId)
         if (receipt.isErr()) {
@@ -63,13 +60,14 @@ export async function executeUoW<T, E>(
             rollbackErr = persisted.error
             tx.rollback()
           }
+          eventsPersisted = true
         }
 
         return result.unwrap()
       }),
     )
 
-    triggerRelay()
+    if (eventsPersisted) deps.hooks.onEventsCommitted()
     return Result.ok(value)
   } catch (error) {
     if (is(error, TransactionRollbackError) && rollbackErr !== undefined) {
@@ -77,14 +75,4 @@ export async function executeUoW<T, E>(
     }
     throw error
   }
-}
-
-function triggerRelay(): void {
-  waitUntil(
-    (async () => {
-      const relayStub = env.OUTBOX_RELAY.get(env.OUTBOX_RELAY.idFromName(OUTBOX_RELAY_ID))
-      const result = await callDo(() => relayStub.trigger())
-      if (result.isErr()) logger.error('Failed to trigger outbox relay', { error: result.error })
-    })(),
-  )
 }

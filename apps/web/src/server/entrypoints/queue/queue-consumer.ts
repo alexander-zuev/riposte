@@ -1,8 +1,8 @@
 import type { DomainMessage } from '@riposte/core'
 import { createLogger, queueMessageSchema, ValidationError } from '@riposte/core'
 import * as Sentry from '@sentry/cloudflare'
-import { MessageBus } from '@server/application/message-bus/message-bus'
 import type { IMessageBus } from '@server/application/message-bus/message-bus'
+import { createAppDeps } from '@server/infrastructure/app-deps'
 import { isPanic, isTaggedError, Result } from 'better-result'
 
 const logger = createLogger('queue-consumer')
@@ -118,6 +118,7 @@ function toThrowable(error: unknown): Error {
 }
 
 export async function queue(batch: MessageBatch, env: Env, ctx: ExecutionContext): Promise<void> {
-  const processor = new QueueConsumer(new MessageBus(env, ctx))
+  const deps = createAppDeps(env, ctx)
+  const processor = new QueueConsumer(deps.services.messageBus())
   await processor.processBatch(batch)
 }

@@ -1,9 +1,10 @@
 import { DatabaseError } from '@riposte/core'
+import type { IWaitlistRepository } from '@server/domain/repository/interfaces'
 import type { DrizzleDb } from '@server/infrastructure/db'
 import { waitlist } from '@server/infrastructure/db'
 import { Result } from 'better-result'
 
-export class WaitlistRepository {
+export class WaitlistRepository implements IWaitlistRepository {
   constructor(private readonly db: DrizzleDb) {}
 
   async addEmail(email: string): Promise<Result<{ alreadyExists: boolean }, DatabaseError>> {

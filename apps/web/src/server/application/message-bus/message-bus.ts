@@ -8,20 +8,15 @@ import type {
   QueryName,
 } from '@riposte/core'
 import { createLogger, DuplicateMessageError, UnknownMessageTypeError } from '@riposte/core'
-import { executeUoW } from '@server/application/message-bus/unit-of-work'
 import type { MessageResult } from '@server/application/registry/message-result'
-import {
-  COMMAND_HANDLERS,
-  EVENT_HANDLERS,
-  QUERY_HANDLERS,
-} from '@server/application/registry/registry'
+import { defaultRegistry } from '@server/application/registry/registry'
 import type {
   CommandHandler,
-  CommandRegistry,
   EventHandlerRegistration,
+  MessageRegistry,
   QueryHandler,
-  QueryRegistry,
 } from '@server/application/registry/types'
+import type { AppDeps } from '@server/infrastructure/app-deps'
 import type { DrizzleDb } from '@server/infrastructure/db'
 import { Result, panic } from 'better-result'
 
@@ -29,32 +24,6 @@ const logger = createLogger('message-bus')
 
 type AnyCommandHandler = CommandHandler<any, unknown, unknown>
 type AnyQueryHandler = QueryHandler<any, unknown, unknown>
-
-function getQueryHandler(name: QueryName): AnyQueryHandler {
-  const queryHandlers = QUERY_HANDLERS as Partial<QueryRegistry>
-  const handler = queryHandlers[name] as AnyQueryHandler | undefined
-  if (!handler) {
-    return panic(`Missing query handler: ${name}`)
-  }
-
-  return handler
-}
-
-function getCommandHandler(name: CommandName): AnyCommandHandler {
-  const commandHandlers = COMMAND_HANDLERS as Partial<CommandRegistry>
-  const handler = commandHandlers[name] as AnyCommandHandler | undefined
-  if (!handler) {
-    return panic(`Missing command handler: ${name}`)
-  }
-
-  return handler
-}
-
-function getEventHandlers<TName extends EventName>(
-  name: TName,
-): EventHandlerRegistration<EventMap[TName]>[] {
-  return (EVENT_HANDLERS[name] ?? []) as EventHandlerRegistration<EventMap[TName]>[]
-}
 
 /**
  * Interface for message bus - enables testing with mocks
@@ -72,8 +41,8 @@ export interface IMessageBus {
  */
 export class MessageBus implements IMessageBus {
   constructor(
-    private readonly env: Env,
-    private readonly ctx: Pick<ExecutionContext, 'waitUntil'>,
+    private readonly deps: AppDeps,
+    private readonly registry: MessageRegistry = defaultRegistry,
   ) {}
 
   /**
@@ -105,14 +74,16 @@ export class MessageBus implements IMessageBus {
     command: CommandMap[TName],
   ): Promise<MessageResult<CommandMap[TName]>> {
     logger.info('Handling command', { command: command.name, id: command.id })
-    const env = this.env
-    const handler = getCommandHandler(command.name)
+    const handler = this.getCommandHandler(command.name)
     const result = await Result.gen(async function* () {
       const value = yield* Result.await(
-        executeUoW(async (tx: DrizzleDb) => handler(command, env, tx), command.id),
+        this.deps.uow.execute(
+          async (tx: DrizzleDb) => handler(command, { deps: this.deps, tx }),
+          command.id,
+        ),
       )
       return Result.ok(value)
-    })
+    }, this)
 
     if (result.isErr() && DuplicateMessageError.is(result.error)) {
       logger.warn('Duplicate command ignored', {
@@ -131,10 +102,9 @@ export class MessageBus implements IMessageBus {
   private async handleEvent<TName extends EventName>(
     event: EventMap[TName],
   ): Promise<MessageResult<EventMap[TName]>> {
-    const handlers = getEventHandlers(event.name)
+    const handlers = this.getEventHandlers(event.name)
     if (handlers.length === 0) return Result.ok(undefined) as MessageResult<EventMap[TName]>
 
-    const env = this.env
     const results = await Promise.all(
       handlers.map(async ({ id, handle }) => {
         const receiptId = `${event.id}:${id}`
@@ -143,7 +113,10 @@ export class MessageBus implements IMessageBus {
           eventId: event.id,
           handlerId: id,
         })
-        const result = await executeUoW(async (tx) => handle(event, env, tx), receiptId)
+        const result = await this.deps.uow.execute(
+          async (tx) => handle(event, { deps: this.deps, tx }),
+          receiptId,
+        )
 
         if (result.isErr() && DuplicateMessageError.is(result.error)) {
           logger.warn('Duplicate event handler skipped', {
@@ -178,15 +151,37 @@ export class MessageBus implements IMessageBus {
     query: QueryMap[TName],
   ): Promise<MessageResult<QueryMap[TName]>> {
     logger.debug('Handling query', { query: query.name })
-    const env = this.env
-    const ctx = this.ctx
-    const handler = getQueryHandler(query.name)
+    const handler = this.getQueryHandler(query.name)
 
     const result = await Result.gen(async function* () {
-      const value = yield* Result.await(handler(query, env, ctx))
+      const value = yield* Result.await(handler(query, { deps: this.deps }))
       return Result.ok(value)
-    })
+    }, this)
 
     return result as MessageResult<QueryMap[TName]>
+  }
+
+  private getQueryHandler(name: QueryName): AnyQueryHandler {
+    const handler = this.registry.queries[name] as AnyQueryHandler | undefined
+    if (!handler) {
+      return panic(`Missing query handler: ${name}`)
+    }
+
+    return handler
+  }
+
+  private getCommandHandler(name: CommandName): AnyCommandHandler {
+    const handler = this.registry.commands[name] as AnyCommandHandler | undefined
+    if (!handler) {
+      return panic(`Missing command handler: ${name}`)
+    }
+
+    return handler
+  }
+
+  private getEventHandlers<TName extends EventName>(
+    name: TName,
+  ): EventHandlerRegistration<EventMap[TName]>[] {
+    return (this.registry.events[name] ?? []) as EventHandlerRegistration<EventMap[TName]>[]
   }
 }

@@ -1,5 +1,5 @@
 import { createCommand, toServerFnRpc } from '@riposte/core'
-import { MessageBus } from '@server/application/message-bus/message-bus'
+import { createAppDeps } from '@server/infrastructure/app-deps'
 import { createServerFn } from '@tanstack/react-start'
 import { env, waitUntil } from 'cloudflare:workers'
 import { z } from 'zod'
@@ -12,9 +12,9 @@ export type JoinWaitlistInput = z.infer<typeof joinWaitlistInput>
 export const joinWaitlist = createServerFn()
   .inputValidator(joinWaitlistInput)
   .handler(async ({ data }) => {
-    const bus = new MessageBus(env, { waitUntil })
+    const deps = createAppDeps(env, { waitUntil })
     const command = createCommand('JoinWaitlist', { email: data.email })
-    const result = await bus.handle(command)
+    const result = await deps.services.messageBus().handle(command)
 
     return toServerFnRpc(result)
   })

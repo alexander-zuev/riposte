@@ -31,6 +31,34 @@ Levels.io and Tibo proved the workflow with hardcoded systems for their own apps
 
 Riposte should industrialize this pattern: keep ingestion, storage, templates, PDF generation, submission, dashboard, and notifications deterministic; use the agent to replace hardcoded app-specific evidence collection by filling prebuilt evidence templates from approved sources.
 
+## Connector Strategy
+
+The agent should not receive raw uncontrolled access. Riposte stores credentials securely, exposes narrow tested tools, and logs what the agent read.
+
+- **Stripe:** use Stripe API/OAuth or restricted key with Riposte-owned tools. Backend owns webhooks, sync/backfill, file uploads, evidence submission, and outcome tracking. Agent only reads summarized Stripe context.
+- **Postgres app data:** first database connector. User provides a read-only connection string. Riposte exposes schema inspection and read-only evidence query tools to the agent.
+- **Cloudflare D1 / provider APIs:** support via user-provided provider API credentials, not a DB connection string. Example: user Cloudflare account ID + D1 database ID + API token with D1 read/query permission.
+- **MCP:** expansion path for providers with good hosted MCPs. Cloudflare Agents SDK persists MCP connections and refreshes OAuth on use, but Riposte still needs scheduled health checks, connector state, and reauth notifications because disputes can arrive weeks after setup.
+
+Default MVP path: Stripe API + read-only Postgres. D1/provider APIs and MCP follow only when needed by buyers.
+
+## Project Context
+
+Project context answers the core evidence question:
+
+> What proves this customer received the service, and where can Riposte find that proof?
+
+MVP setup produces a concise evidence map:
+
+- product description and delivery model
+- proof of delivery for this specific product
+- strongest available evidence
+- weak/missing evidence
+- where customer identity, usage, outputs, refunds, cancellations, support, and policy data live
+- first-pass query labels or SQL for evidence collection
+
+Inputs can be website URL, repo read access, DB schema introspection, and founder notes. MVP does not self-heal mappings. If a mapping fails at runtime, Riposte marks the case `blocked` or `needs_human_input` with a precise missing-input prompt.
+
 ## MVP Scope
 
 Build a bounded autopilot for Stripe disputes, modeled after the Levels/Tibo systems but reusable across Stripe-native SaaS and digital products.
@@ -47,6 +75,7 @@ MVP features:
    - `FE+BE` Connect Stripe.
    - `FE+BE` Connect one app database, starting with Postgres/read-only SQL.
    - `FE+BE` Add product, refund, cancellation, and policy context.
+   - `BE` Generate project proof model and evidence map.
    - `FE+BE` Configure notifications.
    - `BE` Connector health checks.
 
@@ -82,6 +111,9 @@ Excluded for MVP:
 - PayPal/Klarna/local payment methods.
 - Shopify/e-commerce/physical goods workflows.
 - Fully dynamic evidence template generation.
+- Self-healing evidence mappings.
+- ToS/product-promise defensibility scoring.
+- Proactive annual-SaaS evidence readiness: commitment acknowledgments, monthly value summaries, and ToS/contract hardening.
 - Multi-tenant enterprise controls.
 - Win-rate optimization or learning loop.
 
@@ -181,6 +213,12 @@ The offer is not broad "chargeback automation." It is a concrete packet for a co
 Distribution plan lives in [launch-plan.md](../marketing/launch-plan.md). The key idea: combine direct outbound, Reddit/X pain search, open-source launch credibility, and a small paid test around a real product demo video.
 
 ## Positioning
+
+Recent outreach sharpened the wedge: Riposte is not "AI writes chargeback letters." The core product is evidence reconstruction across Stripe + app/customer systems, then packaging that proof into a Stripe-ready submission.
+
+Landing-page spine:
+
+> Stripe disputes are built for receipts and shipping labels. SaaS disputes need proof the customer received value. Riposte turns Stripe + app data into the evidence packet that proves it.
 
 Positioning:
 

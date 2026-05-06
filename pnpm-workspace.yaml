@@ -84,7 +84,6 @@ catalog:
   postgres: ^3.4.9
   posthog-js: ^1.372.6
   posthog-node: ^5.33.0
-  radix-ui: ^1.4.3
   react: ^19.2.5
   react-dom: ^19.2.5
   react-error-boundary: ^6.1.1

@@ -251,3 +251,20 @@ Service bindings/assets/browser/vectorize/images:
 - Formatting: oxfmt. Linting: oxlint. No ESLint/Prettier.
 - Secrets: dotenvx-encrypted `.env` files committed to repo. Private keys in `.env.keys` (gitignored).
 - All deployments target Cloudflare Workers, never Pages.
+
+## Browser Automation
+
+For project-related browser automation, especially Reddit/outreach research, use Playwright CLI with a named persistent session and an explicit profile path. Do not rely on Playwright's auto-generated daemon profile path because it can change between daemon/cache instances and lose browser state.
+
+Local private setup:
+
+- Session name: `riposte`
+- Stable Chrome profile: `/home/alexander/.cache/riposte/playwright/chrome`
+- Local proxy config: `.playwright/riposte-decodo.json`
+- Launch command:
+
+```bash
+playwright-cli -s=riposte open https://www.reddit.com --browser=chrome --headed --config=.playwright/riposte-decodo.json --profile=/home/alexander/.cache/riposte/playwright/chrome
+```
+
+Do not commit `.playwright/`; it contains local proxy credentials.

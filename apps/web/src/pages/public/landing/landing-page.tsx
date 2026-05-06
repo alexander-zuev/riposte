@@ -3,6 +3,7 @@ import { unwrapRpc } from '@riposte/core/client'
 import { useForm } from '@tanstack/react-form'
 import { useMutation } from '@tanstack/react-query'
 import { joinWaitlist, joinWaitlistInput } from '@web/server/entrypoints/functions/waitlist.fn'
+import { PageShell } from '@web/ui/components/layout/page/page-shell'
 import { Button } from '@web/ui/components/ui/button'
 import { FieldError } from '@web/ui/components/ui/field'
 import { Input } from '@web/ui/components/ui/input'
@@ -41,8 +42,8 @@ export function LandingPage() {
   const emailRef = useRef<HTMLInputElement>(null)
 
   return (
-    <div className="flex h-dvh flex-col bg-background p-4 md:p-8">
-      <div className="relative flex flex-1 flex-col p-6 md:p-10">
+    <PageShell width="none" frame="full" mainClassName="p-4 md:p-8">
+      <div className="relative flex w-full min-w-0 flex-col p-6 md:h-[calc(100svh-4rem)] md:p-10">
         <CornerBrackets />
 
         <header className="relative z-10 flex items-center justify-between px-4 py-4 md:px-6">
@@ -57,7 +58,7 @@ export function LandingPage() {
           </Button>
         </header>
 
-        <main className="flex flex-1 flex-col items-center justify-center gap-8 px-6">
+        <main className="flex flex-col items-center justify-start gap-8 px-6 pt-12 pb-8 md:flex-1 md:justify-center md:pt-0 md:pb-0">
           <div className="flex flex-col items-center">
             <h1 className="text-display-hero max-w-3xl text-center">
               Fight and win Stripe chargebacks,
@@ -105,7 +106,7 @@ export function LandingPage() {
           </div>
         </main>
       </div>
-    </div>
+    </PageShell>
   )
 }
 
@@ -137,9 +138,9 @@ function WaitlistForm({ emailRef }: { emailRef: React.RefObject<HTMLInputElement
           form.handleSubmit()
         }}
         noValidate
-        className="flex flex-col items-center gap-2"
+        className="flex w-full max-w-sm flex-col items-center gap-2"
       >
-        <div className="flex items-center gap-3">
+        <div className="flex w-full items-center gap-3">
           <form.Field name="email">
             {(field) => (
               <Input
@@ -147,7 +148,7 @@ function WaitlistForm({ emailRef }: { emailRef: React.RefObject<HTMLInputElement
                 name={field.name}
                 type="email"
                 placeholder="Enter your email"
-                className="h-9 w-72 text-sm"
+                className="h-9 min-w-0 flex-1 text-sm"
                 value={field.state.value}
                 onBlur={field.handleBlur}
                 onChange={(e) => field.handleChange(e.target.value)}

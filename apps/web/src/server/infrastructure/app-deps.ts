@@ -1,4 +1,4 @@
-import type { DatabaseError, DuplicateMessageError } from '@riposte/core'
+import type { DatabaseError, DOUnreachableError, DuplicateMessageError } from '@riposte/core'
 import type { IMessageBus } from '@server/application/message-bus/message-bus'
 import { MessageBus } from '@server/application/message-bus/message-bus'
 import { executeUoW } from '@server/application/message-bus/unit-of-work'
@@ -7,7 +7,10 @@ import type { DrizzleDb } from '@server/infrastructure/db'
 import { createDatabase } from '@server/infrastructure/db'
 import type { IOutboxRelay } from '@server/infrastructure/queues/outbox-relay'
 import { OutboxRelay } from '@server/infrastructure/queues/outbox-relay'
-import { wakeOutboxRelay } from '@server/infrastructure/queues/outbox-relay-wakeup'
+import {
+  triggerOutboxRelay,
+  wakeOutboxRelay,
+} from '@server/infrastructure/queues/outbox-relay-wakeup'
 import type { IQueueClient } from '@server/infrastructure/queues/queue-client'
 import { QueueClient } from '@server/infrastructure/queues/queue-client'
 import { OutboxRepository } from '@server/infrastructure/repositories/outbox.repository'
@@ -42,6 +45,7 @@ export type AppDeps = {
 
   hooks: {
     onEventsCommitted: () => void
+    triggerOutboxRelay: () => Promise<Result<void, DOUnreachableError>>
   }
 }
 
@@ -68,6 +72,7 @@ export function createAppDeps(env: Env, ctx: WaitUntilContext): AppDeps {
       onEventsCommitted: () => {
         ctx.waitUntil(wakeOutboxRelay(env))
       },
+      triggerOutboxRelay: () => triggerOutboxRelay(env),
     },
   }
 

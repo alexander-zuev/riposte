@@ -1,5 +1,4 @@
 import { cn } from '@web/lib/utils'
-import { useLayoutEffect } from 'react'
 
 import { SiteFrame, SiteFrameCorners } from './site-frame'
 
@@ -20,11 +19,6 @@ export function PageShell({
   frame = 'none',
   mainClassName,
 }: PageShellProps) {
-  useLayoutEffect(() => {
-    document.documentElement.classList.add('scrollbar-gutter-stable')
-    return () => document.documentElement.classList.remove('scrollbar-gutter-stable')
-  }, [])
-
   const containerClass =
     width === 'none'
       ? undefined

@@ -32,7 +32,9 @@ html.landing-lenis {
   html {
     @apply scroll-smooth;
     box-sizing: border-box;
-    scrollbar-gutter: stable;
+    @media (min-width: 768px) {
+      scrollbar-gutter: stable;
+    }
   }
 
   *,

@@ -1,6 +1,5 @@
 import { createLogger } from '@riposte/core'
-import { callDo } from '@server/infrastructure/durable-objects/call-do'
-import { OUTBOX_RELAY_ID } from '@server/infrastructure/durable-objects/outbox-relay-do'
+import { createAppDeps } from '@server/infrastructure/app-deps'
 
 const logger = createLogger('scheduled')
 
@@ -9,7 +8,7 @@ const OUTBOX_RELAY_CRON = '*/1 * * * *'
 export async function scheduled(
   controller: ScheduledController,
   env: Env,
-  _ctx: ExecutionContext,
+  ctx: ExecutionContext,
 ): Promise<void> {
   logger.info('cron_triggered', {
     cron: controller.cron,
@@ -17,8 +16,8 @@ export async function scheduled(
   })
 
   if (controller.cron === OUTBOX_RELAY_CRON) {
-    const relayStub = env.OUTBOX_RELAY.get(env.OUTBOX_RELAY.idFromName(OUTBOX_RELAY_ID))
-    const result = await callDo(() => relayStub.trigger())
+    const deps = createAppDeps(env, ctx)
+    const result = await deps.hooks.triggerOutboxRelay()
     if (result.isErr()) throw result.error
     return
   }

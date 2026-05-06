@@ -135,18 +135,3 @@ JetBrains Mono for IDs, timestamps, logs, events, metadata
 @utility animate-slide-up {
   animation: slide-up 100ms ease-out;
 }
-
-/**
- * scrollbar-gutter-stable
- *
- * Reserves space for the scrollbar in the layout at all times, even when
- * the scrollbar is not currently visible. Prevents horizontal layout shift
- * when Radix scroll-lock components (Select, Dialog, DropdownMenu, etc.)
- * temporarily hide the page scrollbar.
- *
- * Used by PageShell's useLayoutEffect to opt the html element into stable
- * gutter behavior, and by sidebar inset for scrollable side panels.
- */
-@utility scrollbar-gutter-stable {
-  scrollbar-gutter: stable;
-}

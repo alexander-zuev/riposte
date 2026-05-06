@@ -1,4 +1,4 @@
-import type { authClient } from '@web/lib/clients/auth.client'
+import type { authClient } from '@web/lib/clients/auth-client'
 
 type User = (typeof authClient)['$Infer']['Session']['user']
 

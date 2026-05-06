@@ -1,4 +1,4 @@
-import { authClient } from '@web/lib/clients/auth.client'
+import { authClient } from '@web/lib/clients/auth-client'
 
 import { AuthUser } from '../entities/auth-user'
 

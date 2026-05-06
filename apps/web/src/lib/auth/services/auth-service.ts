@@ -1,6 +1,6 @@
 import { createLogger } from '@riposte/core/client'
-import { authClient } from '@web/lib/clients/auth.client'
-import { Sentry } from '@web/lib/clients/sentry.client'
+import { authClient } from '@web/lib/clients/auth-client'
+import { Sentry } from '@web/lib/clients/sentry-client'
 import posthog from 'posthog-js'
 
 const logger = createLogger('auth-service')

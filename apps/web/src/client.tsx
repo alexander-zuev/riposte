@@ -1,5 +1,5 @@
 import { StartClient } from '@tanstack/react-start/client'
-import { ErrorBoundary, initializeSentry } from '@web/lib/clients/sentry.client'
+import { ErrorBoundary, initializeSentry } from '@web/lib/clients/sentry-client'
 import { getRouter } from '@web/lib/router/router'
 import { StrictMode } from 'react'
 import { hydrateRoot } from 'react-dom/client'

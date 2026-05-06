@@ -1,4 +1,4 @@
-import { authClient } from '@web/lib/clients/auth.client'
+import { authClient } from '@web/lib/clients/auth-client'
 
 export default function BetterAuthHeader() {
   const { data: session, isPending } = authClient.useSession()

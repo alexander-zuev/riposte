@@ -3,7 +3,7 @@ import * as Sentry from '@sentry/tanstackstart-react'
 import type { AnyRouter } from '@tanstack/react-router'
 import { settings } from '@web/lib/env/env'
 
-// Register logger.error → Sentry hook (client-side)
+// Register logger.error -> Sentry hook (client-side)
 if (typeof window !== 'undefined') {
   setLoggerErrorHook((entry) => {
     const error =

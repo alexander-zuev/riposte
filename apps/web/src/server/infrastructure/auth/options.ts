@@ -1,10 +1,10 @@
 import { stripe } from '@better-auth/stripe'
 import { createLogger } from '@riposte/core/client'
 import type { BetterAuthOptions } from 'better-auth'
-import { captcha, lastLoginMethod, openAPI } from 'better-auth/plugins'
+import { captcha, lastLoginMethod, magicLink, openAPI } from 'better-auth/plugins'
 import Stripe from 'stripe'
 
-import { createDatabaseHooks, createStripeCustomerHooks } from './hooks'
+import { createDatabaseHooks, createMagicLinkHooks, createStripeCustomerHooks } from './hooks'
 import { createKVStorage, createRateLimitStorage } from './storage'
 import type { AuthConfig } from './types'
 
@@ -24,6 +24,7 @@ export function createBetterAuthOptions(
   const isCliMode = !config
 
   const databaseHooks = isCliMode ? undefined : createDatabaseHooks(config.queue)
+  const magicLinkHooks = isCliMode ? undefined : createMagicLinkHooks(config.queue)
   const stripeCustomerHooks = isCliMode ? undefined : createStripeCustomerHooks(config.queue)
   const kvStorage = isCliMode ? undefined : createKVStorage(config.kvStorage)
   const rateLimitStorage = isCliMode ? undefined : createRateLimitStorage(config.rateLimiter)
@@ -119,6 +120,11 @@ export function createBetterAuthOptions(
       lastLoginMethod({ storeInDatabase: true }),
 
       openAPI(),
+
+      magicLink({
+        sendMagicLink: magicLinkHooks?.sendMagicLink ?? (async () => {}),
+        expiresIn: 300,
+      }),
 
       stripe({
         stripeClient: config

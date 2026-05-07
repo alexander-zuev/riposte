@@ -1,20 +1,20 @@
-import { createEvent } from '@riposte/core'
+import { createCommand, createEvent } from '@riposte/core'
 import { createLogger } from '@riposte/core/client'
 import type { User } from 'better-auth'
 import type { Stripe } from 'stripe'
 
 const logger = createLogger('auth')
 
-type SignupMethod = 'google' | 'github' | 'email_password'
+type SignupMethod = 'google' | 'github' | 'magic_link'
 
 /**
  * Maps Better Auth's lastLoginMethod to our domain signup method.
  * Better Auth plugin stores: 'google', 'github', 'email' (from auth endpoint path).
- * We normalize 'email' to 'email_password' for clarity.
+ * We normalize 'email' to 'magic_link' for clarity.
  */
 function normalizeAuthMethod(method: string | undefined): SignupMethod {
   if (!method) return 'google'
-  if (method === 'email') return 'email_password'
+  if (method === 'email') return 'magic_link'
   if (method === 'google' || method === 'github') {
     return method
   }
@@ -45,6 +45,27 @@ export function createDatabaseHooks(queue?: Queue) {
           })
         },
       },
+    },
+  }
+}
+
+export function createMagicLinkHooks(queue?: Queue) {
+  return {
+    sendMagicLink: async ({ email, token, url }: { email: string; token: string; url: string }) => {
+      if (!queue) {
+        logger.warn('No queue configured, magic link not sent')
+        return
+      }
+
+      await queue.send(
+        createCommand('SendMagicLink', {
+          email,
+          magicLinkUrl: url,
+          token,
+        }),
+      )
+
+      logger.info('Magic link queued', { email })
     },
   }
 }

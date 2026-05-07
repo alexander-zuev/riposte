@@ -73,6 +73,7 @@ Use `better-result` to make expected failures part of the function contract. Doc
 - Repositories catch driver/Drizzle/postgres throws with `Result.tryPromise({ try, catch })` and return `Result.err(new DatabaseError(...))`.
 - Application handlers propagate `Result` from domain/services/repos. Do not catch expected errors there.
 - Entry points/server functions/queue consumers consume final Results with `match`, `isErr`, or error serialization.
+- TanStack Query query/mutation functions should preserve Query semantics: consume `Result` at the query boundary and throw the typed `TaggedError` on `Err`, so `onError`, retries, error boundaries, and devtools continue to work. Prefer throwing `result.error` over wrapping it in a generic `Error`.
 - Fire-and-forget post-commit work, like waking the outbox relay in `waitUntil`, should log and swallow. The transaction already committed and the outbox row is durable.
 
 ### Composition rules
@@ -257,6 +258,13 @@ Service bindings/assets/browser/vectorize/images:
 - Path aliases: `@web/*` → `src/*`, `@server/*` → `src/server/*`
 - Package imports: `@riposte/core` (server), `@riposte/core/client` (browser-safe)
 - Formatting: oxfmt. Linting: oxlint. No ESLint/Prettier.
+- UI primitives: default to components in `apps/web/src/ui/components` instead of raw HTML controls. Use raw elements only when there is a clear exception.
+- Styling: for colors, design tokens, typography, and reusable visual rules, reach for `apps/web/src/ui/stylesheets` first. If a needed token or utility is missing, ask why before adding one-off classes.
+- UI copy: do not end short interface labels, helper text, validation messages, button text, badges, or table cells with periods. Full prose paragraphs can use normal punctuation.
+- Layout spacing: prefer flex/grid `gap-*` utilities. Do not add new Tailwind `space-x-*` or `space-y-*` layout utilities.
+- Layout sizing: do not use arbitrary pixel Tailwind values like `min-h-[89px]` for normal layout. Use design tokens, semantic sizing, responsive constraints, or component variants. Arbitrary values are only acceptable for real external constraints such as a fixed third-party widget or asset, and the reason should be obvious from context.
+- Forms: use TanStack Form for all forms, including small forms. Prefer `apps/web/src/ui/components/ui/field.tsx` primitives (`Field`, `FieldLabel`, `FieldError`, etc.) or build reusable wrappers around them.
+- Server state: use TanStack Query for all queries and mutations. Do not hand-roll loading/error state for async server interactions when a query or mutation fits.
 - Secrets: dotenvx-encrypted `.env` files committed to repo. Private keys in `.env.keys` (gitignored).
 - All deployments target Cloudflare Workers, never Pages.
 

@@ -1,54 +1,66 @@
 import { createLogger } from '@riposte/core/client'
 import { authClient } from '@web/lib/clients/auth-client'
 import { Sentry } from '@web/lib/clients/sentry-client'
-import posthog from 'posthog-js'
+import { Result } from 'better-result'
+import { posthog } from 'posthog-js'
 
 const logger = createLogger('auth-service')
+const DEFAULT_AUTH_REDIRECT = '/dashboard'
+
+export type AuthServiceValue = { message?: string }
+export type AuthServiceError = {
+  status: number
+  statusText: string
+  code?: string
+  message?: string
+}
+export type AuthServiceResult = Result<AuthServiceValue, AuthServiceError>
+
+function buildFetchOptions(captchaToken?: string) {
+  return captchaToken ? { headers: { 'x-captcha-response': captchaToken } } : undefined
+}
 
 export function authService() {
-  const buildFetchOptions = (captchaToken?: string) => {
-    return captchaToken ? { headers: { 'x-captcha-response': captchaToken } } : undefined
-  }
-
   const signInWithOAuth = async (
     provider: 'google' | 'github',
-    options?: { redirectTo?: string },
-  ) => {
-    const redirectTo = options?.redirectTo ?? '/dashboard'
+    options: { redirectTo?: string; captchaToken: string },
+  ): Promise<AuthServiceResult> => {
+    const redirectTo = options?.redirectTo ?? DEFAULT_AUTH_REDIRECT
 
-    try {
-      await authClient.signIn.social({ provider, callbackURL: redirectTo })
-      logger.info('oauth_sign_in_initiated', { provider })
-      return { success: true }
-    } catch (error) {
+    const { error } = await authClient.signIn.social({
+      provider,
+      callbackURL: redirectTo,
+      fetchOptions: buildFetchOptions(options?.captchaToken),
+    })
+
+    if (error) {
       logger.error('oauth_sign_in_failed', { provider, error })
-      return { success: false, message: 'Sign-in failed. Please try again.' }
+      return Result.err(error)
     }
+
+    logger.info('oauth_sign_in_initiated', { provider })
+    return Result.ok({})
   }
 
-  const signInWithEmail = async (
+  const signInWithMagicLink = async (
     email: string,
-    password: string,
     options?: { redirectTo?: string; captchaToken?: string },
-  ) => {
-    const redirectTo = options?.redirectTo ?? '/dashboard'
+  ): Promise<AuthServiceResult> => {
+    const redirectTo = options?.redirectTo ?? DEFAULT_AUTH_REDIRECT
 
-    try {
-      const { error } = await authClient.signIn.email({
-        email,
-        password,
-        callbackURL: redirectTo,
-        fetchOptions: buildFetchOptions(options?.captchaToken),
-      })
+    const { error } = await authClient.signIn.magicLink({
+      email,
+      callbackURL: redirectTo,
+      fetchOptions: buildFetchOptions(options?.captchaToken),
+    })
 
-      if (error) throw error
-
-      logger.info('email_sign_in')
-      return { success: true }
-    } catch (error) {
-      logger.error('email_sign_in_failed', { error })
-      return { success: false, message: 'Invalid email or password.' }
+    if (error) {
+      logger.error('magic_link_failed', { error })
+      return Result.err(error)
     }
+
+    logger.info('magic_link_sent')
+    return Result.ok({ message: 'Check your email for the sign-in link' })
   }
 
   const signUpWithEmail = async (
@@ -56,40 +68,38 @@ export function authService() {
     password: string,
     name: string,
     options?: { redirectTo?: string; captchaToken?: string },
-  ) => {
-    const redirectTo = options?.redirectTo ?? '/dashboard'
+  ): Promise<AuthServiceResult> => {
+    const redirectTo = options?.redirectTo ?? DEFAULT_AUTH_REDIRECT
 
-    try {
-      const { error } = await authClient.signUp.email({
-        email,
-        password,
-        name,
-        callbackURL: redirectTo,
-        fetchOptions: buildFetchOptions(options?.captchaToken),
-      })
+    const { error } = await authClient.signUp.email({
+      email,
+      password,
+      name,
+      callbackURL: redirectTo,
+      fetchOptions: buildFetchOptions(options?.captchaToken),
+    })
 
-      if (error) throw error
-
-      logger.info('email_sign_up')
-      return { success: true }
-    } catch (error) {
+    if (error) {
       logger.error('email_sign_up_failed', { error })
-      return { success: false, message: 'Sign-up failed. Please try again.' }
+      return Result.err(error)
     }
+
+    logger.info('email_sign_up')
+    return Result.ok({})
   }
 
-  const signOut = async () => {
-    try {
-      await authClient.signOut()
-      Sentry.setUser(null)
-      posthog.reset()
-      logger.info('signed_out')
-      return { success: true }
-    } catch (error) {
+  const signOut = async (): Promise<AuthServiceResult> => {
+    const { error } = await authClient.signOut()
+    if (error) {
       logger.error('sign_out_failed', { error })
-      return { success: false, message: 'Sign out failed. Please try again.' }
+      return Result.err(error)
     }
+
+    Sentry.setUser(null)
+    posthog.reset()
+    logger.info('signed_out')
+    return Result.ok({})
   }
 
-  return { signInWithOAuth, signInWithEmail, signUpWithEmail, signOut }
+  return { signInWithOAuth, signInWithMagicLink, signUpWithEmail, signOut }
 }

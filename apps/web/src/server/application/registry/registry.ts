@@ -1,6 +1,7 @@
 import {
   getSessionStatus,
   handleUserSignedUp,
+  sendMagicLink,
   sendWelcomeEmail,
 } from '@server/application/handlers/auth-handler'
 import { joinWaitlist } from '@server/application/handlers/waitlist-handler'
@@ -9,6 +10,7 @@ import type { CommandRegistry, EventRegistry, MessageRegistry, QueryRegistry } f
 
 export const COMMAND_HANDLERS = {
   JoinWaitlist: joinWaitlist,
+  SendMagicLink: sendMagicLink,
   SendWelcomeEmail: sendWelcomeEmail,
 } satisfies CommandRegistry
 

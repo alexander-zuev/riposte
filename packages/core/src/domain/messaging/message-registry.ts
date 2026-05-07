@@ -2,6 +2,7 @@ import { z } from 'zod'
 
 import {
   getSessionStatusSchema,
+  sendMagicLinkSchema,
   sendWelcomeEmailSchema,
   userSignedUpSchema,
 } from '../auth/auth.messages'
@@ -13,6 +14,7 @@ import { joinWaitlistSchema } from '../waitlist/waitlist.messages'
  * ----------------------------------------------------------------------------------------------- */
 
 export const domainCommandSchema = z.discriminatedUnion('name', [
+  sendMagicLinkSchema,
   sendWelcomeEmailSchema,
   joinWaitlistSchema,
 ])
@@ -27,10 +29,7 @@ export type CommandMap = {
  * Event Union & Map
  * ----------------------------------------------------------------------------------------------- */
 
-export const domainEventSchema = z.discriminatedUnion('name', [
-  userSignedUpSchema,
-  r2EventSchema,
-])
+export const domainEventSchema = z.discriminatedUnion('name', [userSignedUpSchema, r2EventSchema])
 
 export type DomainEvent = z.infer<typeof domainEventSchema>
 export type EventName = DomainEvent['name']

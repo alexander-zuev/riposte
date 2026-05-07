@@ -1,5 +1,10 @@
-import { useNavigate } from '@tanstack/react-router'
-import { authService } from '@web/lib/auth'
+import { Turnstile } from '@marsidev/react-turnstile'
+import { useForm } from '@tanstack/react-form'
+import { useMutation } from '@tanstack/react-query'
+import { authService, type AuthServiceError, type AuthServiceValue } from '@web/lib/auth'
+import { authClient } from '@web/lib/clients/auth-client'
+import { settings } from '@web/lib/env/env'
+import { Badge } from '@web/ui/components/ui/badge'
 import { Button } from '@web/ui/components/ui/button'
 import {
   Card,
@@ -8,108 +13,169 @@ import {
   CardHeader,
   CardTitle,
 } from '@web/ui/components/ui/card'
+import { Field, FieldError, FieldGroup, FieldLabel } from '@web/ui/components/ui/field'
+import { Input } from '@web/ui/components/ui/input'
 import { Logo } from '@web/ui/components/ui/logo'
-import { useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import { FaGithub } from 'react-icons/fa'
+import { FcGoogle } from 'react-icons/fc'
+import { toast } from 'sonner'
+import { z } from 'zod'
 
-function GitHubIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden="true">
-      <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
-    </svg>
-  )
-}
+type OAuthProvider = 'github' | 'google'
+type OAuthSignInInput = { provider: OAuthProvider; captchaToken: string }
+type MagicLinkInput = { email: string }
 
-function GoogleIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
-      <path
-        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
-        fill="#4285F4"
-      />
-      <path
-        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-        fill="#34A853"
-      />
-      <path
-        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-        fill="#FBBC05"
-      />
-      <path
-        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-        fill="#EA4335"
-      />
-    </svg>
-  )
-}
+const emailSignInSchema = z.object({
+  email: z.email('Enter a valid email'),
+})
+
+const turnstileOptions = {
+  action: 'sign-in',
+  size: 'normal',
+  theme: 'light',
+  refreshExpired: 'auto',
+} as const
 
 export function SignInPage() {
-  const navigate = useNavigate()
   const auth = authService()
-  const [loading, setLoading] = useState<'github' | 'google' | 'email' | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const [lastLoginMethod, setLastLoginMethod] = useState<string | null>(null)
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
+  const [turnstileError, setTurnstileError] = useState<string | null>(null)
+  const [authLocked, setAuthLocked] = useState(false)
 
-  const handleOAuth = async (provider: 'github' | 'google') => {
-    setLoading(provider)
-    setError(null)
-    const result = await auth.signInWithOAuth(provider, { redirectTo: '/dashboard' })
-    if (!result.success) {
-      setError(result.message ?? 'Sign-in failed.')
-      setLoading(null)
-    }
-  }
+  useEffect(() => {
+    setLastLoginMethod(authClient.getLastUsedLoginMethod())
+  }, [])
 
-  const handleEmail = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setLoading('email')
-    setError(null)
+  const resetTurnstile = useCallback((message?: string) => {
+    setTurnstileToken(null)
+    setTurnstileError(message ?? null)
+  }, [])
 
-    const form = new FormData(e.currentTarget)
-    const email = form.get('email') as string
-    const password = form.get('password') as string
+  const oauthMutation = useMutation<AuthServiceValue, AuthServiceError, OAuthSignInInput>({
+    mutationFn: async (input: OAuthSignInInput) => {
+      const result = await auth.signInWithOAuth(input.provider, {
+        captchaToken: input.captchaToken,
+      })
+      if (result.isErr()) throw result.error
+      return result.value
+    },
+    onMutate: () => setAuthLocked(true),
+    onError: (error) => {
+      setAuthLocked(false)
+      toast.error(error.message ?? 'Sign-in failed. Please try again')
+    },
+  })
 
-    const result = await auth.signInWithEmail(email, password, { redirectTo: '/dashboard' })
-    if (result.success) {
-      navigate({ to: '/dashboard' })
-    } else {
-      setError(result.message ?? 'Sign-in failed.')
-      setLoading(null)
-    }
-  }
+  const emailMutation = useMutation<AuthServiceValue, AuthServiceError, MagicLinkInput>({
+    mutationFn: async (input: MagicLinkInput) => {
+      const result = await auth.signInWithMagicLink(input.email, {
+        captchaToken: turnstileToken ?? undefined,
+      })
+
+      if (result.isErr()) throw result.error
+      return result.value
+    },
+    onMutate: () => setAuthLocked(true),
+    onSuccess: (result, input) => {
+      setAuthLocked(false)
+      toast.info(result.message ?? `Check your email for a sign-in link to ${input.email}`)
+      resetTurnstile()
+    },
+    onError: (error) => {
+      setAuthLocked(false)
+      toast.error(error.message ?? 'Failed to send sign-in link. Please try again')
+    },
+  })
+
+  const form = useForm({
+    defaultValues: { email: '' },
+    validators: {
+      onSubmit: emailSignInSchema,
+    },
+    onSubmit: ({ value }) => emailMutation.mutate(value),
+  })
+
+  const isAuthDisabled = authLocked || oauthMutation.isPending || emailMutation.isPending
+  const canSubmitOAuth = !isAuthDisabled && !!turnstileToken
+  const canSubmitEmail = !isAuthDisabled && !!turnstileToken
+
+  const handleOAuth = useCallback(
+    (provider: OAuthProvider) => {
+      if (!turnstileToken) {
+        toast.error('Complete verification to continue')
+        return
+      }
+
+      oauthMutation.mutate({ provider, captchaToken: turnstileToken })
+    },
+    [oauthMutation, turnstileToken],
+  )
+
+  const handleTurnstileSuccess = useCallback((token: string) => {
+    setTurnstileToken(token)
+    setTurnstileError(null)
+  }, [])
+
+  const handleTurnstileExpire = useCallback(() => {
+    resetTurnstile()
+  }, [resetTurnstile])
+
+  const handleTurnstileFailure = useCallback(() => {
+    resetTurnstile('Verification failed. Reload the page and try again')
+  }, [resetTurnstile])
+
+  const handleTurnstileUnsupported = useCallback(() => {
+    resetTurnstile('Verification is not supported in this browser')
+  }, [resetTurnstile])
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
-      <div className="w-full max-w-sm space-y-6">
+      <div className="flex w-full max-w-sm flex-col gap-6">
         <div className="flex justify-center">
           <Logo variant="full" size="lg" href="/" />
         </div>
 
-        <Card>
+        <Card className="shadow-md">
           <CardHeader>
-            <CardTitle>Sign in</CardTitle>
-            <CardDescription>Continue with a provider or use your email.</CardDescription>
+            <CardTitle className="flex justify-center">Sign in</CardTitle>
+            <CardDescription className="flex justify-center">
+              Continue with a provider or get a sign-in link
+            </CardDescription>
           </CardHeader>
 
-          <CardContent className="space-y-4">
-            {error && <p className="text-xs text-destructive">{error}</p>}
-
-            <div className="grid grid-cols-2 gap-2">
+          <CardContent className="flex flex-col gap-5">
+            <div className="flex flex-col gap-2">
               <Button
                 variant="secondary"
                 size="lg"
-                disabled={loading !== null}
+                className="w-full"
+                disabled={!canSubmitOAuth}
                 onClick={() => handleOAuth('github')}
               >
-                <GitHubIcon className="size-4" />
+                <FaGithub className="size-4" aria-hidden="true" />
                 GitHub
+                {lastLoginMethod === 'github' ? (
+                  <Badge variant="secondary" className="ml-auto">
+                    Last used
+                  </Badge>
+                ) : null}
               </Button>
               <Button
                 variant="secondary"
                 size="lg"
-                disabled={loading !== null}
+                className="w-full"
+                disabled={!canSubmitOAuth}
                 onClick={() => handleOAuth('google')}
               >
-                <GoogleIcon className="size-4" />
+                <FcGoogle className="size-4" aria-hidden="true" />
                 Google
+                {lastLoginMethod === 'google' ? (
+                  <Badge variant="secondary" className="ml-auto">
+                    Last used
+                  </Badge>
+                ) : null}
               </Button>
             </div>
 
@@ -122,27 +188,91 @@ export function SignInPage() {
               </div>
             </div>
 
-            <form onSubmit={handleEmail} className="space-y-3">
-              <input
-                name="email"
-                type="email"
-                placeholder="Email"
-                required
-                className="h-9 w-full border bg-background px-3 text-xs outline-none placeholder:text-muted-foreground focus:ring-1 focus:ring-ring"
-              />
-              <input
-                name="password"
-                type="password"
-                placeholder="Password"
-                required
-                className="h-9 w-full border bg-background px-3 text-xs outline-none placeholder:text-muted-foreground focus:ring-1 focus:ring-ring"
-              />
-              <Button type="submit" size="lg" className="w-full" disabled={loading !== null}>
-                {loading === 'email' ? 'Signing in...' : 'Sign in with email'}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault()
+                form.handleSubmit()
+              }}
+              noValidate
+              className="flex flex-col gap-4"
+            >
+              <FieldGroup className="gap-3">
+                <form.Field name="email">
+                  {(field) => (
+                    <Field
+                      className="gap-1.5"
+                      data-invalid={field.state.meta.isTouched && !field.state.meta.isValid}
+                    >
+                      <FieldLabel htmlFor={field.name} className="font-medium">
+                        Email
+                      </FieldLabel>
+                      <Input
+                        id={field.name}
+                        name={field.name}
+                        type="email"
+                        autoComplete="email"
+                        placeholder="Email"
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        disabled={isAuthDisabled}
+                        aria-invalid={field.state.meta.isTouched && !field.state.meta.isValid}
+                      />
+                      <div className="h-4">
+                        {field.state.meta.isTouched && !field.state.meta.isValid && (
+                          <FieldError errors={field.state.meta.errors} />
+                        )}
+                      </div>
+                    </Field>
+                  )}
+                </form.Field>
+
+                {lastLoginMethod === 'email' ? (
+                  <Badge variant="secondary" className="self-start">
+                    Email was last used
+                  </Badge>
+                ) : null}
+              </FieldGroup>
+
+              <Button type="submit" size="lg" className="w-full" disabled={!canSubmitEmail}>
+                Send sign-in link
               </Button>
             </form>
+
+            <p className="text-center text-sm text-muted-foreground">
+              Don&apos;t have an account?{' '}
+              <a
+                href="/"
+                className="font-medium text-foreground underline-offset-4 hover:underline"
+              >
+                Join waitlist
+              </a>
+            </p>
           </CardContent>
         </Card>
+
+        <div className="flex min-h-20 flex-col items-center">
+          <Turnstile
+            siteKey={settings.turnstile.siteKey}
+            options={turnstileOptions}
+            onSuccess={handleTurnstileSuccess}
+            onExpire={handleTurnstileExpire}
+            onError={handleTurnstileFailure}
+            onTimeout={handleTurnstileFailure}
+            onUnsupported={handleTurnstileUnsupported}
+          />
+        </div>
+
+        <small className="text-center text-muted-foreground">
+          {turnstileError ? (
+            <FieldError>{turnstileError}</FieldError>
+          ) : (
+            <>
+              By continuing, you agree to Riposte&apos;s <a href="/terms">terms</a> and{' '}
+              <a href="/privacy">privacy policy</a>
+            </>
+          )}
+        </small>
       </div>
     </div>
   )

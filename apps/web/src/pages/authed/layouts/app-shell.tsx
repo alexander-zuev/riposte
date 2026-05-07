@@ -1,11 +1,11 @@
-import type { User } from '@server/infrastructure/auth/types'
+import type { AuthUser } from '@web/entities/auth/auth-user'
 import { AppHeader } from '@web/pages/authed/shared/app-header'
 import { AppSidebar } from '@web/pages/authed/shared/app-sidebar'
 import { MobileSidebar } from '@web/pages/authed/shared/mobile-sidebar'
 import { SidebarInset, SidebarProvider } from '@web/ui/components/ui/sidebar'
 
 interface AppShellProps {
-  user: User
+  user: AuthUser
   children: React.ReactNode
 }
 

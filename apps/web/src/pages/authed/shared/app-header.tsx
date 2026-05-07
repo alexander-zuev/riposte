@@ -1,21 +1,34 @@
 import { CaretRightIcon } from '@phosphor-icons/react'
-import type { User } from '@server/infrastructure/auth/types'
-import { useRouterState } from '@tanstack/react-router'
+import { useRouter, useRouterState } from '@tanstack/react-router'
+import type { AuthUser } from '@web/entities/auth/auth-user'
+import { authService } from '@web/lib/auth'
 import type { NavItem } from '@web/pages/authed/shared/nav-config'
 import { primaryNavItems } from '@web/pages/authed/shared/nav-config'
+import { UserDropdown } from '@web/pages/authed/shared/user-dropdown'
 import { Logo } from '@web/ui/components/ui/logo'
+import { toast } from 'sonner'
 
 const SIDEBAR_HEADER_WIDTH = '16rem'
 
 interface AppHeaderProps {
-  user: User
+  user: AuthUser
 }
 
 export function AppHeader({ user }: AppHeaderProps) {
-  const displayName = user.name ?? user.email
-  const initials = getInitials(displayName)
+  const router = useRouter()
   const pathname = useRouterState().location.pathname
   const breadcrumb = getBreadcrumb(pathname)
+
+  const handleSignOut = async () => {
+    const result = await authService().signOut()
+    if (result.isErr()) {
+      toast.error(result.error.message ?? 'Failed to log out. Please try again')
+      return
+    }
+
+    await router.invalidate()
+    await router.navigate({ to: '/' })
+  }
 
   return (
     <header className="hidden h-14 shrink-0 items-center border-b border-border bg-background md:flex">
@@ -27,19 +40,7 @@ export function AppHeader({ user }: AppHeaderProps) {
       </div>
       <div className="flex flex-1 items-center justify-between gap-4 px-4">
         <div>{breadcrumb ? <Breadcrumb {...breadcrumb} /> : null}</div>
-        <div className="flex min-w-0 items-center gap-3">
-          {user.image ? (
-            <img src={user.image} alt="" className="size-8 shrink-0 bg-muted" />
-          ) : (
-            <div className="grid size-8 shrink-0 place-items-center bg-muted text-xs font-medium text-foreground">
-              {initials}
-            </div>
-          )}
-          <div className="min-w-0 text-right">
-            <p className="truncate text-xs font-medium text-foreground">{displayName}</p>
-            <p className="truncate text-xs text-muted-foreground">{user.email}</p>
-          </div>
-        </div>
+        <UserDropdown user={user} onLogOut={handleSignOut} />
       </div>
     </header>
   )
@@ -83,13 +84,4 @@ function formatSegment(segment: string) {
     .filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(' ')
-}
-
-function getInitials(value: string) {
-  return value
-    .split(/\s|@/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join('')
 }

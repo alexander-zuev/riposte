@@ -20,6 +20,8 @@ import { Route as AuthedSettingsRouteImport } from './../../routes/_authed/setti
 import { Route as AuthedDisputesRouteImport } from './../../routes/_authed/disputes'
 import { Route as AuthedDashboardRouteImport } from './../../routes/_authed/dashboard'
 import { Route as AuthedBillingRouteImport } from './../../routes/_authed/billing'
+import { Route as AuthedAccountRouteImport } from './../../routes/_authed/account'
+import { Route as ApiCacheImagesRouteImport } from './../../routes/api/cache/images'
 import { Route as ApiAuthSplatRouteImport } from './../../routes/api/auth/$'
 import { Route as AuthedDisputesDisputeIdRouteImport } from './../../routes/_authed/disputes.$disputeId'
 
@@ -76,6 +78,16 @@ const AuthedBillingRoute = AuthedBillingRouteImport.update({
   path: '/billing',
   getParentRoute: () => AuthedRouteRoute,
 } as any)
+const AuthedAccountRoute = AuthedAccountRouteImport.update({
+  id: '/account',
+  path: '/account',
+  getParentRoute: () => AuthedRouteRoute,
+} as any)
+const ApiCacheImagesRoute = ApiCacheImagesRouteImport.update({
+  id: '/api/cache/images',
+  path: '/api/cache/images',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
@@ -89,6 +101,7 @@ const AuthedDisputesDisputeIdRoute = AuthedDisputesDisputeIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof PublicIndexRoute
+  '/account': typeof AuthedAccountRoute
   '/billing': typeof AuthedBillingRoute
   '/dashboard': typeof AuthedDashboardRoute
   '/disputes': typeof AuthedDisputesRouteWithChildren
@@ -99,9 +112,11 @@ export interface FileRoutesByFullPath {
   '/terms': typeof PublicTermsRoute
   '/disputes/$disputeId': typeof AuthedDisputesDisputeIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/cache/images': typeof ApiCacheImagesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof PublicIndexRoute
+  '/account': typeof AuthedAccountRoute
   '/billing': typeof AuthedBillingRoute
   '/dashboard': typeof AuthedDashboardRoute
   '/disputes': typeof AuthedDisputesRouteWithChildren
@@ -112,11 +127,13 @@ export interface FileRoutesByTo {
   '/terms': typeof PublicTermsRoute
   '/disputes/$disputeId': typeof AuthedDisputesDisputeIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/cache/images': typeof ApiCacheImagesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authed': typeof AuthedRouteRouteWithChildren
   '/_public': typeof PublicRouteRouteWithChildren
+  '/_authed/account': typeof AuthedAccountRoute
   '/_authed/billing': typeof AuthedBillingRoute
   '/_authed/dashboard': typeof AuthedDashboardRoute
   '/_authed/disputes': typeof AuthedDisputesRouteWithChildren
@@ -128,11 +145,13 @@ export interface FileRoutesById {
   '/_public/': typeof PublicIndexRoute
   '/_authed/disputes/$disputeId': typeof AuthedDisputesDisputeIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/cache/images': typeof ApiCacheImagesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/account'
     | '/billing'
     | '/dashboard'
     | '/disputes'
@@ -143,9 +162,11 @@ export interface FileRouteTypes {
     | '/terms'
     | '/disputes/$disputeId'
     | '/api/auth/$'
+    | '/api/cache/images'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/account'
     | '/billing'
     | '/dashboard'
     | '/disputes'
@@ -156,10 +177,12 @@ export interface FileRouteTypes {
     | '/terms'
     | '/disputes/$disputeId'
     | '/api/auth/$'
+    | '/api/cache/images'
   id:
     | '__root__'
     | '/_authed'
     | '/_public'
+    | '/_authed/account'
     | '/_authed/billing'
     | '/_authed/dashboard'
     | '/_authed/disputes'
@@ -171,12 +194,14 @@ export interface FileRouteTypes {
     | '/_public/'
     | '/_authed/disputes/$disputeId'
     | '/api/auth/$'
+    | '/api/cache/images'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   AuthedRouteRoute: typeof AuthedRouteRouteWithChildren
   PublicRouteRoute: typeof PublicRouteRouteWithChildren
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiCacheImagesRoute: typeof ApiCacheImagesRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -258,6 +283,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedBillingRouteImport
       parentRoute: typeof AuthedRouteRoute
     }
+    '/_authed/account': {
+      id: '/_authed/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof AuthedAccountRouteImport
+      parentRoute: typeof AuthedRouteRoute
+    }
+    '/api/cache/images': {
+      id: '/api/cache/images'
+      path: '/api/cache/images'
+      fullPath: '/api/cache/images'
+      preLoaderRoute: typeof ApiCacheImagesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
@@ -288,6 +327,7 @@ const AuthedDisputesRouteWithChildren = AuthedDisputesRoute._addFileChildren(
 )
 
 interface AuthedRouteRouteChildren {
+  AuthedAccountRoute: typeof AuthedAccountRoute
   AuthedBillingRoute: typeof AuthedBillingRoute
   AuthedDashboardRoute: typeof AuthedDashboardRoute
   AuthedDisputesRoute: typeof AuthedDisputesRouteWithChildren
@@ -296,6 +336,7 @@ interface AuthedRouteRouteChildren {
 }
 
 const AuthedRouteRouteChildren: AuthedRouteRouteChildren = {
+  AuthedAccountRoute: AuthedAccountRoute,
   AuthedBillingRoute: AuthedBillingRoute,
   AuthedDashboardRoute: AuthedDashboardRoute,
   AuthedDisputesRoute: AuthedDisputesRouteWithChildren,
@@ -329,6 +370,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthedRouteRoute: AuthedRouteRouteWithChildren,
   PublicRouteRoute: PublicRouteRouteWithChildren,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiCacheImagesRoute: ApiCacheImagesRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

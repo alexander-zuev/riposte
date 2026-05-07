@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './../../routes/__root'
 import { Route as PublicRouteRouteImport } from './../../routes/_public/route'
 import { Route as AuthedRouteRouteImport } from './../../routes/_authed/route'
 import { Route as PublicIndexRouteImport } from './../../routes/_public/index'
+import { Route as DevEmailsRouteImport } from './../../routes/dev/emails'
 import { Route as PublicTermsRouteImport } from './../../routes/_public/terms'
 import { Route as PublicSignInRouteImport } from './../../routes/_public/sign-in'
 import { Route as PublicPrivacyRouteImport } from './../../routes/_public/privacy'
@@ -37,6 +38,11 @@ const PublicIndexRoute = PublicIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => PublicRouteRoute,
+} as any)
+const DevEmailsRoute = DevEmailsRouteImport.update({
+  id: '/dev/emails',
+  path: '/dev/emails',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const PublicTermsRoute = PublicTermsRouteImport.update({
   id: '/terms',
@@ -110,6 +116,7 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PublicPrivacyRoute
   '/sign-in': typeof PublicSignInRoute
   '/terms': typeof PublicTermsRoute
+  '/dev/emails': typeof DevEmailsRoute
   '/disputes/$disputeId': typeof AuthedDisputesDisputeIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/cache/images': typeof ApiCacheImagesRoute
@@ -125,6 +132,7 @@ export interface FileRoutesByTo {
   '/privacy': typeof PublicPrivacyRoute
   '/sign-in': typeof PublicSignInRoute
   '/terms': typeof PublicTermsRoute
+  '/dev/emails': typeof DevEmailsRoute
   '/disputes/$disputeId': typeof AuthedDisputesDisputeIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/cache/images': typeof ApiCacheImagesRoute
@@ -142,6 +150,7 @@ export interface FileRoutesById {
   '/_public/privacy': typeof PublicPrivacyRoute
   '/_public/sign-in': typeof PublicSignInRoute
   '/_public/terms': typeof PublicTermsRoute
+  '/dev/emails': typeof DevEmailsRoute
   '/_public/': typeof PublicIndexRoute
   '/_authed/disputes/$disputeId': typeof AuthedDisputesDisputeIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -160,6 +169,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/sign-in'
     | '/terms'
+    | '/dev/emails'
     | '/disputes/$disputeId'
     | '/api/auth/$'
     | '/api/cache/images'
@@ -175,6 +185,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/sign-in'
     | '/terms'
+    | '/dev/emails'
     | '/disputes/$disputeId'
     | '/api/auth/$'
     | '/api/cache/images'
@@ -191,6 +202,7 @@ export interface FileRouteTypes {
     | '/_public/privacy'
     | '/_public/sign-in'
     | '/_public/terms'
+    | '/dev/emails'
     | '/_public/'
     | '/_authed/disputes/$disputeId'
     | '/api/auth/$'
@@ -200,6 +212,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   AuthedRouteRoute: typeof AuthedRouteRouteWithChildren
   PublicRouteRoute: typeof PublicRouteRouteWithChildren
+  DevEmailsRoute: typeof DevEmailsRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiCacheImagesRoute: typeof ApiCacheImagesRoute
 }
@@ -226,6 +239,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof PublicIndexRouteImport
       parentRoute: typeof PublicRouteRoute
+    }
+    '/dev/emails': {
+      id: '/dev/emails'
+      path: '/dev/emails'
+      fullPath: '/dev/emails'
+      preLoaderRoute: typeof DevEmailsRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_public/terms': {
       id: '/_public/terms'
@@ -369,6 +389,7 @@ const PublicRouteRouteWithChildren = PublicRouteRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   AuthedRouteRoute: AuthedRouteRouteWithChildren,
   PublicRouteRoute: PublicRouteRouteWithChildren,
+  DevEmailsRoute: DevEmailsRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiCacheImagesRoute: ApiCacheImagesRoute,
 }

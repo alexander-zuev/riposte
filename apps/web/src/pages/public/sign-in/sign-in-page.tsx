@@ -139,7 +139,7 @@ export function SignInPage() {
           <Logo variant="full" size="lg" href="/" />
         </div>
 
-        <Card className="shadow-md">
+        <Card className="rounded-lg shadow-md">
           <CardHeader>
             <CardTitle className="flex justify-center">Sign in</CardTitle>
             <CardDescription className="flex justify-center">
@@ -152,7 +152,7 @@ export function SignInPage() {
               <Button
                 variant="secondary"
                 size="lg"
-                className="relative w-full"
+                className="relative w-full rounded-md"
                 disabled={!canSubmitOAuth}
                 onClick={() => handleOAuth('github')}
               >
@@ -170,7 +170,7 @@ export function SignInPage() {
               <Button
                 variant="secondary"
                 size="lg"
-                className="relative w-full"
+                className="relative w-full rounded-md"
                 disabled={!canSubmitOAuth}
                 onClick={() => handleOAuth('google')}
               >
@@ -227,6 +227,7 @@ export function SignInPage() {
                         type="email"
                         autoComplete="email"
                         placeholder="Email"
+                        className="rounded-md"
                         value={field.state.value}
                         onBlur={field.handleBlur}
                         onChange={(e) => field.handleChange(e.target.value)}
@@ -243,14 +244,26 @@ export function SignInPage() {
                 </form.Field>
               </FieldGroup>
 
-              <Button type="submit" size="lg" className="w-full" disabled={!canSubmitEmail}>
+              <Button
+                type="submit"
+                size="lg"
+                className="w-full rounded-md"
+                disabled={!canSubmitEmail}
+              >
                 Send sign-in link
               </Button>
             </form>
           </CardContent>
         </Card>
 
-        <div className="flex min-h-20 flex-col items-center">
+        <small className="text-center text-muted-foreground">
+          By continuing, you agree to Riposte&apos;s <a href="/terms">terms</a> and{' '}
+          <a href="/privacy" className="font-medium">
+            privacy policy
+          </a>
+        </small>
+
+        <div className="flex flex-col items-center gap-2">
           <Turnstile
             siteKey={settings.turnstile.siteKey}
             options={turnstileOptions}
@@ -260,20 +273,11 @@ export function SignInPage() {
             onTimeout={handleTurnstileFailure}
             onUnsupported={handleTurnstileUnsupported}
           />
-        </div>
 
-        <small className="text-center text-muted-foreground">
-          {turnstileError ? (
-            <FieldError>{turnstileError}</FieldError>
-          ) : (
-            <>
-              By continuing, you agree to Riposte&apos;s <a href="/terms">terms</a> and{' '}
-              <a href="/privacy" className="font-medium">
-                privacy policy
-              </a>
-            </>
-          )}
-        </small>
+          <div className="min-h-4 text-center">
+            {turnstileError ? <FieldError>{turnstileError}</FieldError> : null}
+          </div>
+        </div>
       </div>
     </div>
   )

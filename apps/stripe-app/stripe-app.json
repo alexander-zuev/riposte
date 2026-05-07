@@ -1,0 +1,57 @@
+{
+  "$schema": "https://stripe.com/stripe-app.schema.json",
+  "id": "app.riposte.sh",
+  "name": "Riposte",
+  "version": "0.0.1",
+  "icon": "./riposte_icon_512.png",
+  "extensions": null,
+  "permissions": [
+    {
+      "permission": "event_read",
+      "purpose": "Receive dispute webhook events so Riposte can start and update dispute workflows"
+    },
+    {
+      "permission": "dispute_read",
+      "purpose": "Read dispute details, evidence deadlines, reasons, and outcomes"
+    },
+    {
+      "permission": "dispute_write",
+      "purpose": "Submit approved evidence responses for disputes"
+    },
+    {
+      "permission": "charge_read",
+      "purpose": "Read disputed charge details including receipt, billing details, payment method checks, and refund state"
+    },
+    {
+      "permission": "payment_intent_read",
+      "purpose": "Read payment context connected to disputed charges"
+    },
+    {
+      "permission": "customer_read",
+      "purpose": "Read Stripe customer identity and contact details linked to disputed payments"
+    },
+    {
+      "permission": "invoice_read",
+      "purpose": "Read invoice and receipt context when a disputed payment came from a subscription or invoice"
+    },
+    {
+      "permission": "file_write",
+      "purpose": "Upload evidence files that Stripe requires for dispute responses"
+    },
+    {
+      "permission": "file_read",
+      "purpose": "Confirm uploaded evidence files and reference them in dispute response records"
+    },
+    {
+      "permission": "subscription_read",
+      "purpose": "Read subscription plan, interval, and cancellation status to prove active service in SaaS dispute evidence"
+    }
+  ],
+  "allowed_redirect_uris": [
+    "https://tunnel.riposte.sh/api/stripe/oauth/callback",
+    "https://riposte.sh/api/stripe/oauth/callback"
+  ],
+  "distribution_type": "public",
+  "stripe_api_access_type": "oauth",
+  "sandbox_install_compatible": true
+}

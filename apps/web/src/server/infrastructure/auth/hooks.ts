@@ -93,6 +93,22 @@ export function createStripeCustomerHooks(queueClient?: IQueueClient) {
       if (!queueClient) return
 
       switch (event.type) {
+        case 'charge.dispute.created': {
+          const dispute = event.data.object
+          logger.info('stripe_dispute_created', {
+            eventId: event.id,
+            disputeId: dispute.id,
+            chargeId: dispute.charge,
+            paymentIntentId: dispute.payment_intent,
+            amount: dispute.amount,
+            currency: dispute.currency,
+            reason: dispute.reason,
+            status: dispute.status,
+            evidenceDueBy: dispute.evidence_details.due_by,
+            apiVersion: event.api_version,
+          })
+          break
+        }
         case 'checkout.session.completed': {
           const session = event.data.object
           logger.info('checkout_session_completed', {

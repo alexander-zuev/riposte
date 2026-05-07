@@ -25,6 +25,7 @@ import { Route as AuthedAccountRouteImport } from './../../routes/_authed/accoun
 import { Route as ApiCacheImagesRouteImport } from './../../routes/api/cache/images'
 import { Route as ApiAuthSplatRouteImport } from './../../routes/api/auth/$'
 import { Route as AuthedDisputesDisputeIdRouteImport } from './../../routes/_authed/disputes.$disputeId'
+import { Route as ApiStripeOauthCallbackRouteImport } from './../../routes/api/stripe/oauth/callback'
 
 const PublicRouteRoute = PublicRouteRouteImport.update({
   id: '/_public',
@@ -104,6 +105,11 @@ const AuthedDisputesDisputeIdRoute = AuthedDisputesDisputeIdRouteImport.update({
   path: '/$disputeId',
   getParentRoute: () => AuthedDisputesRoute,
 } as any)
+const ApiStripeOauthCallbackRoute = ApiStripeOauthCallbackRouteImport.update({
+  id: '/api/stripe/oauth/callback',
+  path: '/api/stripe/oauth/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof PublicIndexRoute
@@ -120,6 +126,7 @@ export interface FileRoutesByFullPath {
   '/disputes/$disputeId': typeof AuthedDisputesDisputeIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/cache/images': typeof ApiCacheImagesRoute
+  '/api/stripe/oauth/callback': typeof ApiStripeOauthCallbackRoute
 }
 export interface FileRoutesByTo {
   '/': typeof PublicIndexRoute
@@ -136,6 +143,7 @@ export interface FileRoutesByTo {
   '/disputes/$disputeId': typeof AuthedDisputesDisputeIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/cache/images': typeof ApiCacheImagesRoute
+  '/api/stripe/oauth/callback': typeof ApiStripeOauthCallbackRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -155,6 +163,7 @@ export interface FileRoutesById {
   '/_authed/disputes/$disputeId': typeof AuthedDisputesDisputeIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/cache/images': typeof ApiCacheImagesRoute
+  '/api/stripe/oauth/callback': typeof ApiStripeOauthCallbackRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -173,6 +182,7 @@ export interface FileRouteTypes {
     | '/disputes/$disputeId'
     | '/api/auth/$'
     | '/api/cache/images'
+    | '/api/stripe/oauth/callback'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -189,6 +199,7 @@ export interface FileRouteTypes {
     | '/disputes/$disputeId'
     | '/api/auth/$'
     | '/api/cache/images'
+    | '/api/stripe/oauth/callback'
   id:
     | '__root__'
     | '/_authed'
@@ -207,6 +218,7 @@ export interface FileRouteTypes {
     | '/_authed/disputes/$disputeId'
     | '/api/auth/$'
     | '/api/cache/images'
+    | '/api/stripe/oauth/callback'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -215,6 +227,7 @@ export interface RootRouteChildren {
   DevEmailsRoute: typeof DevEmailsRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiCacheImagesRoute: typeof ApiCacheImagesRoute
+  ApiStripeOauthCallbackRoute: typeof ApiStripeOauthCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -331,6 +344,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedDisputesDisputeIdRouteImport
       parentRoute: typeof AuthedDisputesRoute
     }
+    '/api/stripe/oauth/callback': {
+      id: '/api/stripe/oauth/callback'
+      path: '/api/stripe/oauth/callback'
+      fullPath: '/api/stripe/oauth/callback'
+      preLoaderRoute: typeof ApiStripeOauthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -392,6 +412,7 @@ const rootRouteChildren: RootRouteChildren = {
   DevEmailsRoute: DevEmailsRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiCacheImagesRoute: ApiCacheImagesRoute,
+  ApiStripeOauthCallbackRoute: ApiStripeOauthCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

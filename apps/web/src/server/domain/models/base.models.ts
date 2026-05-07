@@ -6,37 +6,37 @@ import type { DomainEvent, UUIDv4 } from '@riposte/core'
  * Concrete implementations must:
  * - Use private constructor
  * - Provide static create() for new entities
- * - Provide static fromPersistence() for DB reconstitution
- * - Provide toData() for serialization
+ * - Provide static deserialize() for DB/API edge reconstitution
+ * - Provide serialize() for persistence
  */
-export abstract class Entity<TData> {
+export abstract class Entity<TSerialized> {
   abstract readonly id: UUIDv4
 
-  private _events: DomainEvent[] = []
+  private pendingEvents: DomainEvent[] = []
 
   protected addEvent(event: DomainEvent): void {
-    this._events.push(event)
+    this.pendingEvents.push(event)
   }
 
   collectEvents(): DomainEvent[] {
-    return [...this._events]
+    return [...this.pendingEvents]
   }
 
   clearEvents(): void {
-    this._events = []
+    this.pendingEvents = []
   }
 
-  abstract toData(): TData
+  abstract serialize(): TSerialized
 }
 
 /**
  * Base class for value objects - immutable objects compared by value
  *
  * Concrete implementations must:
- * - Provide static fromPersistence() for DB reconstitution
- * - Provide toData() for serialization
+ * - Provide static deserialize() for DB/API edge reconstitution
+ * - Provide serialize() for persistence
  */
-export abstract class ValueObject<TData> {
-  abstract equals(other: ValueObject<TData>): boolean
-  abstract toData(): TData
+export abstract class ValueObject<TSerialized> {
+  abstract equals(other: unknown): boolean
+  abstract serialize(): TSerialized
 }

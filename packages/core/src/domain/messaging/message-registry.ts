@@ -6,6 +6,7 @@ import {
   sendWelcomeEmailSchema,
   userSignedUpSchema,
 } from '../auth/auth.messages'
+import { disputeCaseReceivedSchema } from '../disputes/dispute.events'
 import { r2EventSchema, r2EventTransform } from '../storage/r2.messages'
 import { joinWaitlistSchema } from '../waitlist/waitlist.messages'
 
@@ -29,7 +30,11 @@ export type CommandMap = {
  * Event Union & Map
  * ----------------------------------------------------------------------------------------------- */
 
-export const domainEventSchema = z.discriminatedUnion('name', [userSignedUpSchema, r2EventSchema])
+export const domainEventSchema = z.discriminatedUnion('name', [
+  userSignedUpSchema,
+  disputeCaseReceivedSchema,
+  r2EventSchema,
+])
 
 export type DomainEvent = z.infer<typeof domainEventSchema>
 export type EventName = DomainEvent['name']

@@ -1,0 +1,17 @@
+{
+  "name": "@riposte/stripe-app",
+  "version": "0.0.1",
+  "description": "Riposte Stripe App manifest",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "prepare-package": "npm install --package-lock-only --ignore-scripts",
+    "upload": "npm install --package-lock-only --ignore-scripts && stripe apps upload",
+    "start": "stripe apps start"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

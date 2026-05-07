@@ -64,6 +64,6 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    include: ['@tanstack/react-router', 'use-sync-external-store/shim/with-selector'],
+    include: ['@tanstack/react-router'],
   },
 })

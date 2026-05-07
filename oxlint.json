@@ -63,8 +63,7 @@
     "**/*.gen.tsx",
     "**/worker-configuration.d.ts",
     "docs/**",
-    "scripts/**",
-    "apps/web/.storybook/**"
+    "scripts/**"
   ],
   "overrides": [
     {

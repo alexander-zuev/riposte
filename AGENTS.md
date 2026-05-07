@@ -26,6 +26,14 @@ TanStack Start with TanStack Router. No RSC — traditional SSR + hydration.
 - `ui/components/` — Pure presentation components (Shadcn + Radix + Tailwind v4)
 - `lib/` — Client utilities (auth, hooks, env, router)
 
+### Storybook (`apps/web/.storybook/`)
+
+Storybook is configured under `apps/web/.storybook`, not at the repo root.
+
+- Run it with `pnpm --filter @riposte/web run storybook` or root `pnpm run storybook`.
+- `apps/web/.storybook/main.ts` uses `stories: ['./**/*.stories.@(js|jsx|mjs|ts|tsx)']`, so story files are discovered relative to `apps/web/.storybook`.
+- Shared Storybook title constants live in `apps/web/.storybook/story-paths.ts`.
+
 ### Backend (`apps/web/src/server/`)
 
 DDD-inspired structure running on Cloudflare Workers:

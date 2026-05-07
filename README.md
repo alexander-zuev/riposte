@@ -50,6 +50,12 @@ Both use the same agent. 90% deterministic, 10% AI.
 | Evidence submission | Stripe Disputes API                                        |
 | Notifications       | Slack / Telegram / Discord / Email                         |
 
+### Docs
+
+Public docs live in `docs/public`. Internal working docs live in `docs/private` and are encrypted with git-crypt because they may contain product research, launch planning, private screenshots, draft specs, security assumptions, and operational notes.
+
+The code is open for inspection and self-hosting. Internal strategy and private research are not part of the public distribution.
+
 ### License
 
 AGPLv3 — free to use, modify, and self-host. Hosted version coming soon.

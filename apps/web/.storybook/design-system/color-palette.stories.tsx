@@ -139,9 +139,9 @@ export const SemanticColors: Story = {
       <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
         <div className="space-y-3">
           <div className="grid grid-cols-3 gap-2">
-            <Token name="Solid" token="green-9" className="bg-success" />
-            <Token name="Muted" token="green-3" className="bg-success-muted" />
-            <Token name="Hover" token="green-4" className="bg-success-muted-hover" />
+            <Token name="Solid" token="jade-9" className="bg-success" />
+            <Token name="Muted" token="jade-3" className="bg-success-muted" />
+            <Token name="Hover" token="jade-4" className="bg-success-muted-hover" />
           </div>
           <div className="border bg-success-muted p-3">
             <small className="font-medium text-success-muted-foreground">Won</small>
@@ -151,9 +151,9 @@ export const SemanticColors: Story = {
 
         <div className="space-y-3">
           <div className="grid grid-cols-3 gap-2">
-            <Token name="Solid" token="amber-9" className="bg-warning" />
-            <Token name="Muted" token="amber-3" className="bg-warning-muted" />
-            <Token name="Hover" token="amber-4" className="bg-warning-muted-hover" />
+            <Token name="Solid" token="orange-9" className="bg-warning" />
+            <Token name="Muted" token="orange-3" className="bg-warning-muted" />
+            <Token name="Hover" token="orange-4" className="bg-warning-muted-hover" />
           </div>
           <div className="border bg-warning-muted p-3">
             <small className="font-medium text-warning-muted-foreground">Due in 3 days</small>
@@ -163,9 +163,9 @@ export const SemanticColors: Story = {
 
         <div className="space-y-3">
           <div className="grid grid-cols-3 gap-2">
-            <Token name="Solid" token="red-9" className="bg-destructive" />
-            <Token name="Muted" token="red-3" className="bg-destructive-muted" />
-            <Token name="Hover" token="red-4" className="bg-destructive-muted-hover" />
+            <Token name="Solid" token="crimson-9" className="bg-destructive" />
+            <Token name="Muted" token="crimson-3" className="bg-destructive-muted" />
+            <Token name="Hover" token="crimson-4" className="bg-destructive-muted-hover" />
           </div>
           <div className="border bg-destructive-muted p-3">
             <small className="font-medium text-destructive-muted-foreground">Lost</small>
@@ -175,9 +175,9 @@ export const SemanticColors: Story = {
 
         <div className="space-y-3">
           <div className="grid grid-cols-3 gap-2">
-            <Token name="Solid" token="blue-9" className="bg-info" />
-            <Token name="Muted" token="blue-3" className="bg-info-muted" />
-            <Token name="Hover" token="blue-4" className="bg-info-muted-hover" />
+            <Token name="Solid" token="iris-9" className="bg-info" />
+            <Token name="Muted" token="iris-3" className="bg-info-muted" />
+            <Token name="Hover" token="iris-4" className="bg-info-muted-hover" />
           </div>
           <div className="border bg-info-muted p-3">
             <small className="font-medium text-info-muted-foreground">New</small>
@@ -207,10 +207,10 @@ export const SemanticColors: Story = {
         <div className="flex gap-2">
           {[
             { name: 'lime-9', cls: 'bg-chart-1' },
-            { name: 'amber-9', cls: 'bg-chart-2' },
-            { name: 'green-9', cls: 'bg-chart-3' },
+            { name: 'orange-9', cls: 'bg-chart-2' },
+            { name: 'jade-9', cls: 'bg-chart-3' },
             { name: 'gray-9', cls: 'bg-chart-4' },
-            { name: 'red-9', cls: 'bg-chart-5' },
+            { name: 'crimson-9', cls: 'bg-chart-5' },
           ].map((c) => (
             <div key={c.name} className="flex flex-col items-center gap-1">
               <div className={`h-8 w-12 border border-border ${c.cls}`} />
@@ -258,15 +258,15 @@ export const BordersAndStates: Story = {
         <div className="grid grid-cols-3 gap-6">
           <div className="space-y-2">
             <div className="h-12 border-2 border-border-destructive-non-interactive bg-background" />
-            <code className="text-xs">red-6</code>
+            <code className="text-xs">crimson-6</code>
           </div>
           <div className="space-y-2">
             <div className="h-12 border-2 border-border-destructive-interactive bg-background" />
-            <code className="text-xs">red-7</code>
+            <code className="text-xs">crimson-7</code>
           </div>
           <div className="space-y-2">
             <div className="h-12 border-2 border-border-destructive-interactive-strong bg-background" />
-            <code className="text-xs">red-8</code>
+            <code className="text-xs">crimson-8</code>
           </div>
         </div>
       </div>
@@ -283,13 +283,13 @@ export const BordersAndStates: Story = {
           <div className="space-y-1">
             <label className="text-xs font-medium">Webhook secret</label>
             <Input placeholder="whsec_..." className="border-ring ring-1 ring-ring" />
-            <small className="text-muted-foreground">ring-ring (lime-a8) · focus state</small>
+            <small className="text-muted-foreground">ring-ring (lime-a5) · focus state</small>
           </div>
           <div className="space-y-1">
             <label className="text-xs font-medium">Invalid key</label>
             <Input placeholder="sk_test_expired..." aria-invalid="true" />
             <small className="text-destructive-muted-foreground">
-              red destructive border + ring
+              crimson destructive border + ring
             </small>
           </div>
           <div className="space-y-1">
@@ -356,15 +356,15 @@ export const TextForegrounds: Story = {
           </div>
           <div className="bg-success p-4">
             <h6 className="text-success-foreground">Success</h6>
-            <small className="text-success-foreground-low-contrast">gray-1 on green-9</small>
+            <small className="text-success-foreground-low-contrast">gray-1 on jade-9</small>
           </div>
           <div className="bg-destructive p-4">
             <h6 className="text-destructive-foreground">Destructive</h6>
-            <small className="text-destructive-foreground-low-contrast">gray-1 on red-9</small>
+            <small className="text-destructive-foreground-low-contrast">gray-1 on crimson-9</small>
           </div>
           <div className="bg-info p-4">
             <h6 className="text-info-foreground">Info</h6>
-            <small className="text-info-foreground-low-contrast">gray-1 on blue-9</small>
+            <small className="text-info-foreground-low-contrast">gray-1 on iris-9</small>
           </div>
         </div>
       </div>

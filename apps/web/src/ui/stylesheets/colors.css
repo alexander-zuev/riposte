@@ -1,4 +1,4 @@
-/* Neutral: gray. Accent: lime. Semantics: jade, iris, crimson, orange.
+/* Neutral: gray. Accent: lime. Semantics: jade, iris, red, orange.
  * Light-only. No dark mode. */
 @import '@radix-ui/colors/gray.css';
 @import '@radix-ui/colors/gray-alpha.css';
@@ -9,8 +9,8 @@
 @import '@radix-ui/colors/jade-alpha.css';
 @import '@radix-ui/colors/iris.css';
 @import '@radix-ui/colors/iris-alpha.css';
-@import '@radix-ui/colors/crimson.css';
-@import '@radix-ui/colors/crimson-alpha.css';
+@import '@radix-ui/colors/red.css';
+@import '@radix-ui/colors/red-alpha.css';
 @import '@radix-ui/colors/orange.css';
 @import '@radix-ui/colors/orange-alpha.css';
 
@@ -29,19 +29,19 @@
 
   /* SEMANTIC */
   --success: var(--jade-9);
-  --destructive: var(--crimson-9);
+  --destructive: var(--red-9);
   --info: var(--iris-9);
   --warning: var(--orange-9);
 
   /* TEXT FOREGROUND — gray-12 default, override only for contrast on solid */
   --foreground: var(--gray-12);
   --accent-foreground: var(--gray-12); /* dark text on light lime-9 */
-  --destructive-foreground: var(--gray-1); /* white on crimson-9 */
+  --destructive-foreground: var(--gray-1); /* white on red-9 */
   --success-foreground: var(--gray-1); /* white on jade-9 */
   --info-foreground: var(--gray-1); /* white on iris-9 */
 
   /* LOW CONTRAST ON COLOR BACKGROUND */
-  --destructive-foreground-low-contrast: var(--crimson-5);
+  --destructive-foreground-low-contrast: var(--red-5);
   --accent-foreground-low-contrast: var(--lime-5);
   --success-foreground-low-contrast: var(--jade-5);
   --warning-foreground-low-contrast: var(--orange-5);
@@ -51,7 +51,7 @@
   --muted-foreground: var(--gray-11);
   --secondary-foreground-muted: var(--muted-foreground);
   --success-muted-foreground: var(--jade-11);
-  --destructive-muted-foreground: var(--crimson-11);
+  --destructive-muted-foreground: var(--red-11);
   --info-muted-foreground: var(--iris-11);
   --warning-muted-foreground: var(--orange-11);
   --accent-muted-foreground: var(--lime-11);
@@ -64,35 +64,35 @@
 
   /* SOLID HOVER — step 10 (1 above step 9 solid) */
   --accent-hover: var(--lime-10);
-  --destructive-hover: var(--crimson-10);
+  --destructive-hover: var(--red-10);
   --success-hover: var(--jade-10);
   --warning-hover: var(--orange-10);
   --info-hover: var(--iris-10);
 
   /* SOLID ACTIVE — step 7 */
   --accent-active: var(--lime-7);
-  --destructive-active: var(--crimson-7);
+  --destructive-active: var(--red-7);
   --success-active: var(--jade-7);
 
   /* MUTED COMPONENT BG — Radix steps 3/4/5 on semantic scales */
   --muted: var(--gray-3);
   --accent-muted: var(--lime-3);
   --success-muted: var(--jade-3);
-  --destructive-muted: var(--crimson-3);
+  --destructive-muted: var(--red-3);
   --info-muted: var(--iris-3);
   --warning-muted: var(--orange-3);
 
   /* MUTED HOVER — step 4 */
   --accent-muted-hover: var(--lime-4);
   --success-muted-hover: var(--jade-4);
-  --destructive-muted-hover: var(--crimson-4);
+  --destructive-muted-hover: var(--red-4);
   --info-muted-hover: var(--iris-4);
   --warning-muted-hover: var(--orange-4);
 
   /* MUTED ACTIVE — step 5 */
   --accent-muted-active: var(--lime-5);
   --success-muted-active: var(--jade-5);
-  --destructive-muted-active: var(--crimson-5);
+  --destructive-muted-active: var(--red-5);
   --info-muted-active: var(--iris-5);
   --warning-muted-active: var(--orange-5);
 
@@ -102,9 +102,9 @@
   --border-interactive-strong: var(--gray-8);
   --border: var(--border-non-interactive);
 
-  --border-destructive-non-interactive: var(--crimson-6);
-  --border-destructive-interactive: var(--crimson-7);
-  --border-destructive-interactive-strong: var(--crimson-8);
+  --border-destructive-non-interactive: var(--red-6);
+  --border-destructive-interactive: var(--red-7);
+  --border-destructive-interactive-strong: var(--red-8);
 
   /* UI MAPPINGS */
   --primary: var(--foreground);
@@ -117,7 +117,7 @@
   --sidebar-accent: var(--accent);
   --sidebar-accent-foreground: var(--foreground);
   --ring: var(--lime-a5);
-  --ring-destructive: var(--crimson-a5);
+  --ring-destructive: var(--red-a5);
   --sidebar-ring: var(--ring);
   --sidebar-border: var(--border-non-interactive);
   --input: var(--border-interactive);
@@ -127,7 +127,7 @@
   --chart-2: var(--orange-9);
   --chart-3: var(--jade-9);
   --chart-4: var(--gray-9);
-  --chart-5: var(--crimson-9);
+  --chart-5: var(--red-9);
 }
 
 /* ⚠️ SHADCN REQUIRED — do not rename --color-* tokens */
@@ -220,21 +220,21 @@
   --color-gray-a6: var(--gray-a6);
   --color-jade-a6: var(--jade-a6);
   --color-orange-a6: var(--orange-a6);
-  --color-crimson-a6: var(--crimson-a6);
+  --color-red-a6: var(--red-a6);
   --color-iris-a6: var(--iris-a6);
 
   /* Badge borders — step 6 */
   --color-gray-6: var(--gray-6);
   --color-jade-6: var(--jade-6);
   --color-orange-6: var(--orange-6);
-  --color-crimson-6: var(--crimson-6);
+  --color-red-6: var(--red-6);
   --color-iris-6: var(--iris-6);
 
   /* Badge text — step 12 */
   --color-gray-12: var(--gray-12);
   --color-jade-12: var(--jade-12);
   --color-orange-12: var(--orange-12);
-  --color-crimson-12: var(--crimson-12);
+  --color-red-12: var(--red-12);
   --color-iris-12: var(--iris-12);
 
   /* Overlay and translucent */

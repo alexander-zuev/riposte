@@ -1,11 +1,26 @@
+import {
+  ArrowClockwiseIcon,
+  HouseIcon,
+  QuestionIcon,
+  WarningOctagonIcon,
+} from '@phosphor-icons/react'
 /// <reference types="vite/client" />
 import * as Sentry from '@sentry/tanstackstart-react'
 import type { QueryClient } from '@tanstack/react-query'
-import { createRootRouteWithContext, HeadContent, Outlet, Scripts } from '@tanstack/react-router'
+import {
+  createRootRouteWithContext,
+  HeadContent,
+  Link,
+  Outlet,
+  Scripts,
+} from '@tanstack/react-router'
+import { useIdentifyUser } from '@web/lib/analytics'
 import { ThemeProvider } from '@web/lib/hooks/use-theme'
 import { AnalyticsProvider } from '@web/lib/providers/posthog-provider'
 import { defaultHead } from '@web/lib/seo/seo'
 import { getThemeServerFn } from '@web/server/entrypoints/functions/theme.fn'
+import { FullPageStatus } from '@web/ui/components/layout/full-page-status'
+import { Button } from '@web/ui/components/ui/button'
 import { Toaster } from '@web/ui/components/ui/sonner'
 import { TooltipProvider } from '@web/ui/components/ui/tooltip'
 import { useEffect } from 'react'
@@ -24,22 +39,33 @@ export const Route = createRootRouteWithContext<{
     }, [error])
 
     return (
-      <div className="flex min-h-screen items-center justify-center p-8">
-        <div className="text-center">
-          <h1>Something went wrong</h1>
-          <button onClick={reset} className="mt-4 underline">
+      <FullPageStatus
+        icon={WarningOctagonIcon}
+        tone="destructive"
+        role="alert"
+        title="Something went wrong"
+        subtitle="The page could not finish loading"
+        actions={
+          <Button type="button" onClick={reset}>
+            <ArrowClockwiseIcon data-icon="inline-start" />
             Try again
-          </button>
-        </div>
-      </div>
+          </Button>
+        }
+      />
     )
   },
   notFoundComponent: () => (
-    <div className="flex min-h-screen items-center justify-center p-8">
-      <div className="text-center">
-        <h1>404 — Not found</h1>
-      </div>
-    </div>
+    <FullPageStatus
+      icon={QuestionIcon}
+      title="Page not found"
+      subtitle="This page does not exist or has moved"
+      actions={
+        <Button render={<Link to="/" />} className="no-underline hover:no-underline">
+          <HouseIcon data-icon="inline-start" />
+          Go home
+        </Button>
+      }
+    />
   ),
   component: RootComponent,
 })
@@ -52,6 +78,11 @@ function RootComponent() {
   )
 }
 
+function AnalyticsIdentifier() {
+  useIdentifyUser()
+  return null
+}
+
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="light" suppressHydrationWarning>
@@ -60,6 +91,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         <AnalyticsProvider>
+          <AnalyticsIdentifier />
           <ThemeProvider>
             <Toaster />
             <TooltipProvider>{children}</TooltipProvider>

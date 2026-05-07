@@ -1,6 +1,9 @@
+import { ArrowClockwiseIcon, WarningOctagonIcon } from '@phosphor-icons/react'
 import { StartClient } from '@tanstack/react-start/client'
 import { ErrorBoundary, initializeSentry } from '@web/lib/clients/sentry-client'
 import { getRouter } from '@web/lib/router/router'
+import { FullPageStatus } from '@web/ui/components/layout/full-page-status'
+import { Button } from '@web/ui/components/ui/button'
 import { StrictMode } from 'react'
 import { hydrateRoot } from 'react-dom/client'
 
@@ -28,14 +31,19 @@ hydrateRoot(
   <StrictMode>
     <ErrorBoundary
       fallback={
-        <div className="flex min-h-screen items-center justify-center p-8">
-          <div className="text-center">
-            <h1>Something went wrong</h1>
-            <button onClick={() => window.location.reload()} className="mt-4 underline">
-              Try again
-            </button>
-          </div>
-        </div>
+        <FullPageStatus
+          icon={WarningOctagonIcon}
+          tone="destructive"
+          role="alert"
+          title="Something went wrong"
+          subtitle="The app hit an unrecoverable error"
+          actions={
+            <Button type="button" onClick={() => window.location.reload()}>
+              <ArrowClockwiseIcon data-icon="inline-start" />
+              Reload
+            </Button>
+          }
+        />
       }
     >
       <StartClient />

@@ -10,6 +10,13 @@ Open-source AI agent that wins Stripe disputes on autopilot. Deploys to Cloudfla
 
 Check `package.json` (root) and `apps/web/package.json` for available scripts before running anything.
 
+## Generated Files
+
+Do not manually edit generated files. In particular, never hand-edit
+`apps/web/worker-configuration.d.ts`; update Cloudflare bindings/types only by changing the
+source config and running the appropriate generation command, such as
+`pnpm --filter @riposte/web run cf-typegen`.
+
 ## Architecture
 
 Monorepo with pnpm workspaces + Turborepo:

@@ -1,0 +1,15 @@
+{
+  "extends": "stripe-app.json",
+  "ui_extension": {
+    "content_security_policy": {
+      "connect-src": [
+        "https://tunnel.riposte.sh/api/stripe/app/settings",
+        "https://tunnel.riposte.sh/api/stripe/app/sync"
+      ],
+      "purpose": "Allow local development settings to call the Riposte tunnel backend"
+    }
+  },
+  "constants": {
+    "API_BASE": "https://tunnel.riposte.sh"
+  }
+}

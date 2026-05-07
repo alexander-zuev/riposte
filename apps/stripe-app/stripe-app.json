@@ -2,8 +2,25 @@
   "$schema": "https://stripe.com/stripe-app.schema.json",
   "id": "app.riposte.sh",
   "name": "Riposte",
-  "version": "0.0.1",
+  "version": "0.0.4",
   "icon": "./riposte_icon_512.png",
+  "ui_extension": {
+    "views": [
+      {
+        "viewport": "settings",
+        "component": "AppSettings"
+      }
+    ],
+    "content_security_policy": {
+      "connect-src": [
+        "https://riposte.sh/api/stripe/app/settings",
+        "https://riposte.sh/api/stripe/app/sync",
+        "https://tunnel.riposte.sh/api/stripe/app/settings",
+        "https://tunnel.riposte.sh/api/stripe/app/sync"
+      ],
+      "purpose": "Allow Riposte settings to read sync status and start dispute sync jobs"
+    }
+  },
   "extensions": null,
   "permissions": [
     {
@@ -47,6 +64,9 @@
       "purpose": "Read subscription plan, interval, and cancellation status to prove active service in SaaS dispute evidence"
     }
   ],
+  "constants": {
+    "API_BASE": "https://riposte.sh"
+  },
   "allowed_redirect_uris": [
     "https://tunnel.riposte.sh/api/stripe/oauth/callback",
     "https://riposte.sh/api/stripe/oauth/callback"

@@ -9,9 +9,15 @@
   },
   "scripts": {
     "prepare-package": "npm install --package-lock-only --ignore-scripts",
+    "typecheck": "tsc --noEmit",
     "upload": "npm install --package-lock-only --ignore-scripts && stripe apps upload",
-    "start": "stripe apps start"
+    "start": "stripe apps start --manifest stripe-app.dev.json"
   },
-  "dependencies": {},
-  "devDependencies": {}
+  "dependencies": {
+    "@stripe/ui-extension-sdk": "9.1.0",
+    "react": "18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "18.3.28"
+  }
 }

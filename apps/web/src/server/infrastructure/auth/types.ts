@@ -2,6 +2,7 @@ import type { IQueueClient } from '@server/infrastructure/queues/queue-client'
 
 import type { Mode } from '../config'
 import type { auth } from './auth-gen'
+import type { SecondaryStorage } from './storage'
 
 /** Inferred from auth-gen instance which includes additionalFields + plugins */
 export type AuthSession = (typeof auth)['$Infer']['Session']
@@ -37,7 +38,7 @@ export interface AuthConfig {
   stripeSecretKey: string
   stripeWebhookSecret: string
 
-  kvStorage: KVNamespace
+  kvStorage: SecondaryStorage
   rateLimiter: DurableObjectNamespace
   queueClient: IQueueClient
 

@@ -62,11 +62,35 @@ export class EmailServiceError extends TaggedError('EmailServiceError')<{
   }
 }
 
+export class KVError extends TaggedError('KVError')<{
+  message: string
+  operation: 'get' | 'put' | 'delete' | 'list'
+  key: string
+  cause: unknown
+  retryable: boolean
+}>() {
+  constructor(args: {
+    operation: 'get' | 'put' | 'delete' | 'list'
+    key: string
+    cause: unknown
+    retryable: boolean
+  }) {
+    super({
+      message: `KV ${args.operation} failed for key "${args.key}"`,
+      operation: args.operation,
+      key: args.key,
+      cause: args.cause,
+      retryable: args.retryable,
+    })
+  }
+}
+
 export type InfrastructureError =
   | DatabaseError
   | DuplicateMessageError
   | QueueError
   | DOUnreachableError
   | EmailServiceError
+  | KVError
 
 import { DatabaseError } from './database.errors'

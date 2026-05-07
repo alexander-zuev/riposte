@@ -2,11 +2,16 @@ import type { DatabaseError, DOUnreachableError, DuplicateMessageError } from '@
 import type { IMessageBus } from '@server/application/message-bus/message-bus'
 import { MessageBus } from '@server/application/message-bus/message-bus'
 import { executeUoW } from '@server/application/message-bus/unit-of-work'
-import type { IOutboxRepository, IWaitlistRepository } from '@server/domain/repository/interfaces'
+import type {
+  IOutboxRepository,
+  IStripeConnectionRepository,
+  IWaitlistRepository,
+} from '@server/domain/repository/interfaces'
 import type { DrizzleDb } from '@server/infrastructure/db'
 import { createDatabase } from '@server/infrastructure/db'
 import type { IEmailService } from '@server/infrastructure/email/interfaces'
 import { ResendEmailService } from '@server/infrastructure/email/resend-email-service'
+import { KVClient } from '@server/infrastructure/kv/kv-client'
 import type { IOutboxRelay } from '@server/infrastructure/queues/outbox-relay'
 import { OutboxRelay } from '@server/infrastructure/queues/outbox-relay'
 import {
@@ -16,6 +21,7 @@ import {
 import type { IQueueClient } from '@server/infrastructure/queues/queue-client'
 import { QueueClient } from '@server/infrastructure/queues/queue-client'
 import { OutboxRepository } from '@server/infrastructure/repositories/outbox.repository'
+import { StripeConnectionRepository } from '@server/infrastructure/repositories/stripe-connection.repository'
 import { WaitlistRepository } from '@server/infrastructure/repositories/waitlist.repository'
 import type { Result } from 'better-result'
 
@@ -27,8 +33,14 @@ export type AppDeps = {
 
   db: () => DrizzleDb
 
+  kv: {
+    auth: KVClient
+    cache: KVClient
+  }
+
   repos: {
     outbox: (tx: DrizzleDb) => IOutboxRepository
+    stripeConnections: (tx: DrizzleDb) => IStripeConnectionRepository
     waitlist: (tx: DrizzleDb) => IWaitlistRepository
   }
 
@@ -57,12 +69,17 @@ export function createAppDeps(env: Env, ctx: WaitUntilContext): AppDeps {
     env,
     ctx,
     db: once(() => createDatabase(env)),
+    kv: {
+      auth: new KVClient(env.AUTH_KV),
+      cache: new KVClient(env.CACHE_KV),
+    },
     repos: {
       outbox: (tx) => new OutboxRepository(tx),
+      stripeConnections: (tx) => new StripeConnectionRepository(tx),
       waitlist: (tx) => new WaitlistRepository(tx),
     },
     uow: {
-      execute: (work, msgId) => executeUoW(deps, work, msgId),
+      execute: async (work, msgId) => executeUoW(deps, work, msgId),
     },
     services: {
       messageBus: once<IMessageBus>(() => new MessageBus(deps)),
@@ -76,7 +93,7 @@ export function createAppDeps(env: Env, ctx: WaitUntilContext): AppDeps {
       onEventsCommitted: () => {
         ctx.waitUntil(wakeOutboxRelay(env))
       },
-      triggerOutboxRelay: () => triggerOutboxRelay(env),
+      triggerOutboxRelay: async () => triggerOutboxRelay(env),
     },
   }
 

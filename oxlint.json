@@ -43,6 +43,7 @@
     "no-useless-call": "error",
     "no-use-before-define": "off",
     "typescript/no-floating-promises": "warn",
+    "typescript/explicit-function-return-type": "off",
     "complexity": ["warn", 30],
     "class-methods-use-this": "off",
     "no-console": "off",

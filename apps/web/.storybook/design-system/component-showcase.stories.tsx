@@ -179,6 +179,29 @@ const meta: Meta = {
 export default meta
 type Story = StoryObj
 
+function LegacyPrimarySwitch({ size = 'default' }: { size?: 'sm' | 'default' }): React.JSX.Element {
+  const [checked, setChecked] = useState(true)
+
+  return (
+    <button
+      aria-checked={checked}
+      className="relative inline-flex shrink-0 cursor-pointer items-center rounded-full border border-transparent transition-all outline-none focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring data-[size=default]:h-[18.4px] data-[size=default]:w-[32px] data-[size=sm]:h-[14px] data-[size=sm]:w-[24px] data-[state=checked]:bg-primary data-[state=unchecked]:bg-input"
+      data-size={size}
+      data-slot="legacy-primary-switch"
+      data-state={checked ? 'checked' : 'unchecked'}
+      onClick={() => setChecked((value) => !value)}
+      role="switch"
+      type="button"
+    >
+      <span
+        className="block rounded-full bg-background transition-transform data-[size=default]:size-4 data-[size=sm]:size-3 data-[size=default]:data-[state=checked]:translate-x-[calc(100%-2px)] data-[size=sm]:data-[state=checked]:translate-x-[calc(100%-2px)] data-[state=unchecked]:translate-x-0"
+        data-size={size}
+        data-state={checked ? 'checked' : 'unchecked'}
+      />
+    </button>
+  )
+}
+
 export const InteractiveElements: Story = {
   name: 'Interactive Elements',
   render: () => (
@@ -286,6 +309,10 @@ export const InteractiveElements: Story = {
             <div className="flex items-center gap-2">
               <Switch defaultChecked />
               <Label>Auto-submit evidence</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <LegacyPrimarySwitch />
+              <Label>Original primary</Label>
             </div>
             <div className="flex items-center gap-2">
               <Switch />

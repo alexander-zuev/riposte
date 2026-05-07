@@ -30,6 +30,9 @@ catalogs:
     '@fontsource-variable/jetbrains-mono':
       specifier: ^5.2.8
       version: 5.2.8
+    '@marsidev/react-turnstile':
+      specifier: ^1.5.2
+      version: 1.5.2
     '@phosphor-icons/react':
       specifier: ^2.1.10
       version: 2.1.10
@@ -168,6 +171,9 @@ catalogs:
     react-error-boundary:
       specifier: ^6.1.1
       version: 6.1.1
+    react-icons:
+      specifier: ^5.5.0
+      version: 5.6.0
     shadcn:
       specifier: ^4.6.0
       version: 4.6.0
@@ -266,6 +272,9 @@ importers:
       '@fontsource-variable/jetbrains-mono':
         specifier: 'catalog:'
         version: 5.2.8
+      '@marsidev/react-turnstile':
+        specifier: 'catalog:'
+        version: 1.5.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@phosphor-icons/react':
         specifier: 'catalog:'
         version: 2.1.10(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
@@ -350,6 +359,9 @@ importers:
       react-error-boundary:
         specifier: 'catalog:'
         version: 6.1.1(react@19.2.5)
+      react-icons:
+        specifier: 'catalog:'
+        version: 5.6.0(react@19.2.5)
       shadcn:
         specifier: 'catalog:'
         version: 4.6.0(@types/node@25.6.0)(typescript@5.9.3)
@@ -1757,6 +1769,12 @@ packages:
 
   '@jridgewell/trace-mapping@0.3.9':
     resolution: {integrity: sha512-3Belt6tdc8bPgAtbcmdtNJlirVoTmEb5e2gC94PnkwEW9jI6CAHUeoG85tjWP5WquqfavoMtMwiG4P926ZKKuQ==}
+
+  '@marsidev/react-turnstile@1.5.2':
+    resolution: {integrity: sha512-+3aBPxp86JzSC0ZmgyonoGoUEENcUkH3LGahXSpkV87ArvD2DzRCmPgh0FyQk6PQRmJwQJDAfwNavFsxUxMQWA==}
+    peerDependencies:
+      react: ^17.0.2 || ^18.0.0 || ^19.0
+      react-dom: ^17.0.2 || ^18.0.0 || ^19.0
 
   '@modelcontextprotocol/sdk@1.29.0':
     resolution: {integrity: sha512-zo37mZA9hJWpULgkRpowewez1y6ML5GsXJPY8FI0tBBCd77HEvza4jDqRKOXgHNn867PVGCyTdzqpz0izu5ZjQ==}
@@ -5319,6 +5337,11 @@ packages:
     peerDependencies:
       react: ^18.0.0 || ^19.0.0
 
+  react-icons@5.6.0:
+    resolution: {integrity: sha512-RH93p5ki6LfOiIt0UtDyNg/cee+HLVR6cHHtW3wALfo+eOHTp8RnU2kRkI6E+H19zMIs03DyxUG/GfZMOGvmiA==}
+    peerDependencies:
+      react: '*'
+
   react-is@17.0.2:
     resolution: {integrity: sha512-w2GsyukL62IJnlaff/nRegPQR94C/XXamvMWmSHRJ4y7Ts/4ocGRmTHvOs8PSE6pB3dWOrD/nueuU5sduBsQ4w==}
 
@@ -7191,6 +7214,11 @@ snapshots:
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
+
+  '@marsidev/react-turnstile@1.5.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
+    dependencies:
+      react: 19.2.5
+      react-dom: 19.2.5(react@19.2.5)
 
   '@modelcontextprotocol/sdk@1.29.0(zod@3.25.76)':
     dependencies:
@@ -10597,6 +10625,10 @@ snapshots:
       scheduler: 0.27.0
 
   react-error-boundary@6.1.1(react@19.2.5):
+    dependencies:
+      react: 19.2.5
+
+  react-icons@5.6.0(react@19.2.5):
     dependencies:
       react: 19.2.5
 

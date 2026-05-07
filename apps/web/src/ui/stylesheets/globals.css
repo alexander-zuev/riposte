@@ -10,8 +10,9 @@
 
 @tailwind utilities;
 
-/* Light-only. Uncomment + restore dark Radix imports in colors.css to re-enable. */
-/* @custom-variant dark (&:is(.dark *)); */
+/* Dark utilities are class-gated so OS/browser preference cannot activate them accidentally.
+ * Restore dark Radix imports in colors.css before enabling a real dark theme. */
+@custom-variant dark (&:is(.dark *));
 
 :root {
   color-scheme: light;

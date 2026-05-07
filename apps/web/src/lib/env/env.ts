@@ -5,6 +5,7 @@ const envSchema = z.object({
   VITE_APP_URL: z.url(),
   VITE_SENTRY_DSN: z.string(),
   VITE_PUBLIC_POSTHOG_KEY: z.string(),
+  VITE_TURNSTILE_SITE_KEY: z.string(),
 })
 
 function parseEnv() {
@@ -46,5 +47,9 @@ export const settings = {
     apiHost: 'https://relay.riposte.sh',
     uiHost: 'https://us.posthog.com',
     enabled: env.MODE !== 'development',
+  },
+
+  turnstile: {
+    siteKey: env.VITE_TURNSTILE_SITE_KEY,
   },
 }

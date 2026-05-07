@@ -1,5 +1,6 @@
-import { fromRpc } from '@riposte/core/client'
-import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
+import { AuthenticationError, fromRpc } from '@riposte/core/client'
+import { createFileRoute, redirect } from '@tanstack/react-router'
+import { AuthedLayout } from '@web/pages/authed/layouts/authed-layout'
 import { ensureSession } from '@web/server/entrypoints/functions/auth.fn'
 
 export const Route = createFileRoute('/_authed')({
@@ -8,14 +9,14 @@ export const Route = createFileRoute('/_authed')({
     const result = fromRpc(wire)
 
     if (result.isErr()) {
-      throw redirect({ to: '/sign-in' })
+      if (AuthenticationError.is(result.error)) {
+        throw redirect({ to: '/sign-in' })
+      }
+
+      throw result.error
     }
 
     return { session: result.value }
   },
   component: AuthedLayout,
 })
-
-function AuthedLayout() {
-  return <Outlet />
-}

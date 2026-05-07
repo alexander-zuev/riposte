@@ -15,8 +15,13 @@ import { Route as PublicIndexRouteImport } from './../../routes/_public/index'
 import { Route as PublicTermsRouteImport } from './../../routes/_public/terms'
 import { Route as PublicSignInRouteImport } from './../../routes/_public/sign-in'
 import { Route as PublicPrivacyRouteImport } from './../../routes/_public/privacy'
+import { Route as AuthedSetupRouteImport } from './../../routes/_authed/setup'
+import { Route as AuthedSettingsRouteImport } from './../../routes/_authed/settings'
+import { Route as AuthedDisputesRouteImport } from './../../routes/_authed/disputes'
 import { Route as AuthedDashboardRouteImport } from './../../routes/_authed/dashboard'
+import { Route as AuthedBillingRouteImport } from './../../routes/_authed/billing'
 import { Route as ApiAuthSplatRouteImport } from './../../routes/api/auth/$'
+import { Route as AuthedDisputesDisputeIdRouteImport } from './../../routes/_authed/disputes.$disputeId'
 
 const PublicRouteRoute = PublicRouteRouteImport.update({
   id: '/_public',
@@ -46,9 +51,29 @@ const PublicPrivacyRoute = PublicPrivacyRouteImport.update({
   path: '/privacy',
   getParentRoute: () => PublicRouteRoute,
 } as any)
+const AuthedSetupRoute = AuthedSetupRouteImport.update({
+  id: '/setup',
+  path: '/setup',
+  getParentRoute: () => AuthedRouteRoute,
+} as any)
+const AuthedSettingsRoute = AuthedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthedRouteRoute,
+} as any)
+const AuthedDisputesRoute = AuthedDisputesRouteImport.update({
+  id: '/disputes',
+  path: '/disputes',
+  getParentRoute: () => AuthedRouteRoute,
+} as any)
 const AuthedDashboardRoute = AuthedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => AuthedRouteRoute,
+} as any)
+const AuthedBillingRoute = AuthedBillingRouteImport.update({
+  id: '/billing',
+  path: '/billing',
   getParentRoute: () => AuthedRouteRoute,
 } as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
@@ -56,54 +81,95 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthedDisputesDisputeIdRoute = AuthedDisputesDisputeIdRouteImport.update({
+  id: '/$disputeId',
+  path: '/$disputeId',
+  getParentRoute: () => AuthedDisputesRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof PublicIndexRoute
+  '/billing': typeof AuthedBillingRoute
   '/dashboard': typeof AuthedDashboardRoute
+  '/disputes': typeof AuthedDisputesRouteWithChildren
+  '/settings': typeof AuthedSettingsRoute
+  '/setup': typeof AuthedSetupRoute
   '/privacy': typeof PublicPrivacyRoute
   '/sign-in': typeof PublicSignInRoute
   '/terms': typeof PublicTermsRoute
+  '/disputes/$disputeId': typeof AuthedDisputesDisputeIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof PublicIndexRoute
+  '/billing': typeof AuthedBillingRoute
   '/dashboard': typeof AuthedDashboardRoute
+  '/disputes': typeof AuthedDisputesRouteWithChildren
+  '/settings': typeof AuthedSettingsRoute
+  '/setup': typeof AuthedSetupRoute
   '/privacy': typeof PublicPrivacyRoute
   '/sign-in': typeof PublicSignInRoute
   '/terms': typeof PublicTermsRoute
+  '/disputes/$disputeId': typeof AuthedDisputesDisputeIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authed': typeof AuthedRouteRouteWithChildren
   '/_public': typeof PublicRouteRouteWithChildren
+  '/_authed/billing': typeof AuthedBillingRoute
   '/_authed/dashboard': typeof AuthedDashboardRoute
+  '/_authed/disputes': typeof AuthedDisputesRouteWithChildren
+  '/_authed/settings': typeof AuthedSettingsRoute
+  '/_authed/setup': typeof AuthedSetupRoute
   '/_public/privacy': typeof PublicPrivacyRoute
   '/_public/sign-in': typeof PublicSignInRoute
   '/_public/terms': typeof PublicTermsRoute
   '/_public/': typeof PublicIndexRoute
+  '/_authed/disputes/$disputeId': typeof AuthedDisputesDisputeIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/billing'
     | '/dashboard'
+    | '/disputes'
+    | '/settings'
+    | '/setup'
     | '/privacy'
     | '/sign-in'
     | '/terms'
+    | '/disputes/$disputeId'
     | '/api/auth/$'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/privacy' | '/sign-in' | '/terms' | '/api/auth/$'
+  to:
+    | '/'
+    | '/billing'
+    | '/dashboard'
+    | '/disputes'
+    | '/settings'
+    | '/setup'
+    | '/privacy'
+    | '/sign-in'
+    | '/terms'
+    | '/disputes/$disputeId'
+    | '/api/auth/$'
   id:
     | '__root__'
     | '/_authed'
     | '/_public'
+    | '/_authed/billing'
     | '/_authed/dashboard'
+    | '/_authed/disputes'
+    | '/_authed/settings'
+    | '/_authed/setup'
     | '/_public/privacy'
     | '/_public/sign-in'
     | '/_public/terms'
     | '/_public/'
+    | '/_authed/disputes/$disputeId'
     | '/api/auth/$'
   fileRoutesById: FileRoutesById
 }
@@ -157,11 +223,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicPrivacyRouteImport
       parentRoute: typeof PublicRouteRoute
     }
+    '/_authed/setup': {
+      id: '/_authed/setup'
+      path: '/setup'
+      fullPath: '/setup'
+      preLoaderRoute: typeof AuthedSetupRouteImport
+      parentRoute: typeof AuthedRouteRoute
+    }
+    '/_authed/settings': {
+      id: '/_authed/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthedSettingsRouteImport
+      parentRoute: typeof AuthedRouteRoute
+    }
+    '/_authed/disputes': {
+      id: '/_authed/disputes'
+      path: '/disputes'
+      fullPath: '/disputes'
+      preLoaderRoute: typeof AuthedDisputesRouteImport
+      parentRoute: typeof AuthedRouteRoute
+    }
     '/_authed/dashboard': {
       id: '/_authed/dashboard'
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthedDashboardRouteImport
+      parentRoute: typeof AuthedRouteRoute
+    }
+    '/_authed/billing': {
+      id: '/_authed/billing'
+      path: '/billing'
+      fullPath: '/billing'
+      preLoaderRoute: typeof AuthedBillingRouteImport
       parentRoute: typeof AuthedRouteRoute
     }
     '/api/auth/$': {
@@ -171,15 +265,42 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authed/disputes/$disputeId': {
+      id: '/_authed/disputes/$disputeId'
+      path: '/$disputeId'
+      fullPath: '/disputes/$disputeId'
+      preLoaderRoute: typeof AuthedDisputesDisputeIdRouteImport
+      parentRoute: typeof AuthedDisputesRoute
+    }
   }
 }
 
+interface AuthedDisputesRouteChildren {
+  AuthedDisputesDisputeIdRoute: typeof AuthedDisputesDisputeIdRoute
+}
+
+const AuthedDisputesRouteChildren: AuthedDisputesRouteChildren = {
+  AuthedDisputesDisputeIdRoute: AuthedDisputesDisputeIdRoute,
+}
+
+const AuthedDisputesRouteWithChildren = AuthedDisputesRoute._addFileChildren(
+  AuthedDisputesRouteChildren,
+)
+
 interface AuthedRouteRouteChildren {
+  AuthedBillingRoute: typeof AuthedBillingRoute
   AuthedDashboardRoute: typeof AuthedDashboardRoute
+  AuthedDisputesRoute: typeof AuthedDisputesRouteWithChildren
+  AuthedSettingsRoute: typeof AuthedSettingsRoute
+  AuthedSetupRoute: typeof AuthedSetupRoute
 }
 
 const AuthedRouteRouteChildren: AuthedRouteRouteChildren = {
+  AuthedBillingRoute: AuthedBillingRoute,
   AuthedDashboardRoute: AuthedDashboardRoute,
+  AuthedDisputesRoute: AuthedDisputesRouteWithChildren,
+  AuthedSettingsRoute: AuthedSettingsRoute,
+  AuthedSetupRoute: AuthedSetupRoute,
 }
 
 const AuthedRouteRouteWithChildren = AuthedRouteRoute._addFileChildren(

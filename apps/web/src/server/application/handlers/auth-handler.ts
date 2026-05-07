@@ -1,19 +1,56 @@
-import type { GetSessionStatus, SendMagicLink, SendWelcomeEmail, UserSignedUp } from '@riposte/core'
+import type {
+  EmailServiceError,
+  GetSessionStatus,
+  SendMagicLink,
+  SendWelcomeEmail,
+  UserSignedUp,
+} from '@riposte/core'
 import { createLogger } from '@riposte/core'
 import type { CommandHandler, EventHandler, QueryHandler } from '@server/application/registry/types'
+import { magicLinkEmailTemplate } from '@server/infrastructure/email/templates/magic-link.template'
+import { welcomeEmailTemplate } from '@server/infrastructure/email/templates/welcome.template'
 import { Result } from 'better-result'
 
 const logger = createLogger('auth-handler')
 
-export const sendWelcomeEmail: CommandHandler<SendWelcomeEmail> = async (command, _ctx) => {
+export const sendWelcomeEmail: CommandHandler<SendWelcomeEmail, void, EmailServiceError> = async (
+  command,
+  ctx,
+) => {
   logger.info('SendWelcomeEmail', { email: command.email })
-  // TODO: implement email sending via Resend
+  const template = welcomeEmailTemplate({
+    appUrl: ctx.deps.env.APP_URL,
+    userName: command.userName,
+  })
+
+  const sent = await ctx.deps.services.email().sendEmail({
+    to: command.email,
+    subject: template.subject,
+    html: template.html,
+    text: template.text,
+    tags: template.tags,
+  })
+  if (sent.isErr()) return sent
+
   return Result.ok()
 }
 
-export const sendMagicLink: CommandHandler<SendMagicLink> = async (command, _ctx) => {
+export const sendMagicLink: CommandHandler<SendMagicLink, void, EmailServiceError> = async (
+  command,
+  ctx,
+) => {
   logger.info('SendMagicLink', { email: command.email })
-  // TODO: implement email sending via Resend
+  const template = magicLinkEmailTemplate(command.magicLinkUrl)
+
+  const sent = await ctx.deps.services.email().sendEmail({
+    to: command.email,
+    subject: template.subject,
+    html: template.html,
+    text: template.text,
+    tags: template.tags,
+  })
+  if (sent.isErr()) return sent
+
   return Result.ok()
 }
 

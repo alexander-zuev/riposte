@@ -27,7 +27,6 @@ export function AppHeader({ user }: AppHeaderProps) {
     }
 
     await router.invalidate()
-    await router.navigate({ to: '/' })
   }
 
   return (

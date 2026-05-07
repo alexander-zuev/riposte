@@ -1,4 +1,4 @@
-import type { DomainMessage } from '@riposte/core'
+import type { IQueueClient } from '@server/infrastructure/queues/queue-client'
 
 import type { Mode } from '../config'
 import type { auth } from './auth-gen'
@@ -39,7 +39,7 @@ export interface AuthConfig {
 
   kvStorage: KVNamespace
   rateLimiter: DurableObjectNamespace
-  queue: Queue<DomainMessage>
+  queueClient: IQueueClient
 
   waitUntil: (promise: Promise<unknown>) => void
 }

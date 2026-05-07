@@ -288,16 +288,38 @@ function SidebarRail({ className, ...props }: React.ComponentProps<'button'>) {
   )
 }
 
-function SidebarInset({ className, ...props }: React.ComponentProps<'main'>) {
+function SidebarInset({
+  className,
+  padding = true,
+  background,
+  children,
+  ...props
+}: React.ComponentProps<'main'> & {
+  padding?: boolean
+  background?: React.ReactNode
+}) {
   return (
     <main
       data-slot="sidebar-inset"
       className={cn(
-        'relative flex w-full flex-1 flex-col bg-background md:peer-data-[variant=inset]:m-2 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:rounded-none md:peer-data-[variant=inset]:shadow-sm md:peer-data-[variant=inset]:peer-data-[state=collapsed]:ml-2',
+        'relative flex w-full flex-1 flex-col overflow-auto bg-background',
+        padding && 'p-6',
+        'md:peer-data-[variant=inset]:m-2 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:rounded-none md:peer-data-[variant=inset]:shadow-sm md:peer-data-[variant=inset]:peer-data-[state=collapsed]:ml-2',
         className,
       )}
       {...props}
-    />
+    >
+      {background ? (
+        <>
+          <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden opacity-30">
+            {background}
+          </div>
+          <div className="relative z-10 flex flex-1 flex-col">{children}</div>
+        </>
+      ) : (
+        children
+      )}
+    </main>
   )
 }
 

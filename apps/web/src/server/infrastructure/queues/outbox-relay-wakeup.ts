@@ -1,6 +1,6 @@
 import { createLogger, type DOUnreachableError } from '@riposte/core'
 import { callDo } from '@server/infrastructure/durable-objects/call-do'
-import { OUTBOX_RELAY_ID } from '@server/infrastructure/durable-objects/outbox-relay-do'
+import { OUTBOX_RELAY_ID } from '@server/infrastructure/durable-objects/outbox-relay-id'
 import type { Result } from 'better-result'
 
 const logger = createLogger('outbox-relay-wakeup')

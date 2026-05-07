@@ -4,6 +4,8 @@ import { createAppDeps } from '@server/infrastructure/app-deps'
 import type { AppDeps } from '@server/infrastructure/app-deps'
 import { DurableObject } from 'cloudflare:workers'
 
+export { OUTBOX_RELAY_ID } from './outbox-relay-id'
+
 const logger = createLogger('outbox-relay-do')
 
 const BATCH_SIZE = 50
@@ -60,6 +62,3 @@ export const OutboxRelayDO = Sentry.instrumentDurableObjectWithSentry(
   (env: Env) => createSentryOptions(env),
   OutboxRelayDOBase,
 )
-
-/** Singleton ID - all workers route to same DO instance */
-export const OUTBOX_RELAY_ID = 'relay'

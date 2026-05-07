@@ -9,10 +9,11 @@ const logger = createLogger('auth.fn')
 import { getAuthInstance } from '@server/infrastructure/auth/auth'
 import type { Session, User } from '@server/infrastructure/auth/types'
 import { createServerFn } from '@tanstack/react-start'
-import { getRequestHeaders } from '@tanstack/react-start/server'
+import { getCookie, getRequestHeaders } from '@tanstack/react-start/server'
 import { Result } from 'better-result'
 
 type AuthSession = { session: Session; user: User } | null
+const LAST_LOGIN_METHOD_COOKIE = 'better-auth.last_used_login_method'
 
 export const getSession = createServerFn({ method: 'GET' }).handler(async () => {
   const headers = getRequestHeaders()
@@ -45,4 +46,8 @@ export const ensureSession = createServerFn({ method: 'GET' }).handler(async () 
   )
 
   return toServerFnRpc(result)
+})
+
+export const getLastLoginMethod = createServerFn({ method: 'GET' }).handler(async () => {
+  return getCookie(LAST_LOGIN_METHOD_COOKIE) ?? null
 })

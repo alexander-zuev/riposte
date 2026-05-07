@@ -44,7 +44,7 @@
     "no-use-before-define": "off",
     "typescript/no-floating-promises": "warn",
     "typescript/explicit-function-return-type": "off",
-    "complexity": ["warn", 30],
+    "complexity": "off",
     "class-methods-use-this": "off",
     "no-console": "off",
     "import/no-default-export": "off",

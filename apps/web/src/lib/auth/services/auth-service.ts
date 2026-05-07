@@ -23,14 +23,13 @@ function buildFetchOptions(captchaToken?: string) {
 export function authService() {
   const signInWithOAuth = async (
     provider: 'google' | 'github',
-    options: { redirectTo?: string; captchaToken: string },
+    options?: { redirectTo?: string },
   ): Promise<AuthServiceResult> => {
     const redirectTo = options?.redirectTo ?? DEFAULT_AUTH_REDIRECT
 
     const { error } = await authClient.signIn.social({
       provider,
       callbackURL: redirectTo,
-      fetchOptions: buildFetchOptions(options?.captchaToken),
     })
 
     if (error) {

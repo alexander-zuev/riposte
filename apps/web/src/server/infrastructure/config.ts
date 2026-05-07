@@ -28,6 +28,8 @@ export function getServerConfig() {
       webhookSecret: env.STRIPE_WEBHOOK_SECRET,
     },
 
+    resendApiKey: env.RESEND_API_KEY,
+
     kvStorage: env.AUTH_KV,
     rateLimiter: env.AUTH_RATE_LIMITER as DurableObjectNamespace,
     queue: env.BACKGROUND_QUEUE as Queue<DomainMessage>,

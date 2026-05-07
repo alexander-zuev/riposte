@@ -1,5 +1,6 @@
 import { createCommand, createEvent } from '@riposte/core'
 import { createLogger } from '@riposte/core/client'
+import type { IQueueClient } from '@server/infrastructure/queues/queue-client'
 import type { User } from 'better-auth'
 import type { Stripe } from 'stripe'
 
@@ -9,20 +10,20 @@ type SignupMethod = 'google' | 'github' | 'magic_link'
 
 /**
  * Maps Better Auth's lastLoginMethod to our domain signup method.
- * Better Auth plugin stores: 'google', 'github', 'email' (from auth endpoint path).
- * We normalize 'email' to 'magic_link' for clarity.
+ * Better Auth plugin stores: 'google', 'github', 'magic-link'.
+ * We normalize 'magic-link' to 'magic_link' for the domain event.
  */
 function normalizeAuthMethod(method: string | undefined): SignupMethod {
   if (!method) return 'google'
-  if (method === 'email') return 'magic_link'
+  if (method === 'magic-link') return 'magic_link'
   if (method === 'google' || method === 'github') {
     return method
   }
   return 'google'
 }
 
-export function createDatabaseHooks(queue?: Queue) {
-  if (!queue) return undefined
+export function createDatabaseHooks(queueClient?: IQueueClient) {
+  if (!queueClient) return undefined
 
   return {
     user: {
@@ -30,13 +31,14 @@ export function createDatabaseHooks(queue?: Queue) {
         after: async (user: User & { lastLoginMethod?: string }) => {
           const signupMethod = normalizeAuthMethod(user.lastLoginMethod)
 
-          await queue.send(
+          const result = await queueClient.send(
             createEvent('UserSignedUp', {
               userId: user.id,
               email: user.email,
               signupMethod,
             }),
           )
+          if (result.isErr()) throw result.error
 
           logger.info('User created, queued onboarding flow', {
             userId: user.id,
@@ -49,28 +51,29 @@ export function createDatabaseHooks(queue?: Queue) {
   }
 }
 
-export function createMagicLinkHooks(queue?: Queue) {
+export function createMagicLinkHooks(queueClient?: IQueueClient) {
   return {
     sendMagicLink: async ({ email, token, url }: { email: string; token: string; url: string }) => {
-      if (!queue) {
+      if (!queueClient) {
         logger.warn('No queue configured, magic link not sent')
         return
       }
 
-      await queue.send(
+      const result = await queueClient.send(
         createCommand('SendMagicLink', {
           email,
           magicLinkUrl: url,
           token,
         }),
       )
+      if (result.isErr()) throw result.error
 
       logger.info('Magic link queued', { email })
     },
   }
 }
 
-export function createStripeCustomerHooks(queue?: Queue) {
+export function createStripeCustomerHooks(queueClient?: IQueueClient) {
   return {
     onCustomerCreate: async ({
       stripeCustomer,
@@ -87,7 +90,7 @@ export function createStripeCustomerHooks(queue?: Queue) {
 
     onEvent: async (event: Stripe.Event) => {
       logger.info('stripe_event', { type: event.type, id: event.id })
-      if (!queue) return
+      if (!queueClient) return
 
       switch (event.type) {
         case 'checkout.session.completed': {

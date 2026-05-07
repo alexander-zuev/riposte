@@ -2,9 +2,7 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "riposte",
   "compatibility_date": "2026-04-21",
-  "compatibility_flags": [
-    "nodejs_compat"
-  ],
+  "compatibility_flags": ["nodejs_compat"],
   "main": "./src/server.ts",
   "upload_source_maps": true,
   "observability": {
@@ -21,9 +19,7 @@
   "rules": [
     {
       "type": "Text",
-      "globs": [
-        "**/*.sql"
-      ],
+      "globs": ["**/*.sql"],
       "fallthrough": true,
     },
   ],
@@ -36,21 +32,15 @@
   "migrations": [
     {
       "tag": "v1",
-      "new_sqlite_classes": [
-        "RateLimiterDO"
-      ],
+      "new_sqlite_classes": ["RateLimiterDO"],
     },
     {
       "tag": "v2",
-      "new_classes": [
-        "OutboxRelayDO"
-      ],
+      "new_classes": ["OutboxRelayDO"],
     },
   ],
   "triggers": {
-    "crons": [
-      "*/1 * * * *"
-    ],
+    "crons": ["*/1 * * * *"],
   },
   "env": {
     "dev": {
@@ -134,6 +124,7 @@
           "TURNSTILE_SECRET_KEY",
           "STRIPE_SECRET_KEY",
           "STRIPE_WEBHOOK_SECRET",
+          "RESEND_API_KEY",
         ],
       },
     },
@@ -217,6 +208,7 @@
           "TURNSTILE_SECRET_KEY",
           "STRIPE_SECRET_KEY",
           "STRIPE_WEBHOOK_SECRET",
+          "RESEND_API_KEY",
         ],
       },
       "routes": [
@@ -228,10 +220,7 @@
     },
     "test": {
       "name": "riposte-test",
-      "compatibility_flags": [
-        "nodejs_compat",
-        "service_binding_extra_handlers"
-      ],
+      "compatibility_flags": ["nodejs_compat", "service_binding_extra_handlers"],
       "hyperdrive": [
         {
           "binding": "HYPERDRIVE",
@@ -252,6 +241,7 @@
         "TURNSTILE_SECRET_KEY": "test",
         "STRIPE_SECRET_KEY": "test",
         "STRIPE_WEBHOOK_SECRET": "test",
+        "RESEND_API_KEY": "test",
       },
       "kv_namespaces": [
         {
@@ -382,6 +372,7 @@
           "TURNSTILE_SECRET_KEY",
           "STRIPE_SECRET_KEY",
           "STRIPE_WEBHOOK_SECRET",
+          "RESEND_API_KEY",
         ],
       },
       "routes": [

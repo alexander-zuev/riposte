@@ -1,6 +1,5 @@
+import { AuthUser } from '@web/entities/auth'
 import { authClient } from '@web/lib/clients/auth-client'
-
-import { AuthUser } from '../entities/auth-user'
 
 type UseAuthReturn = {
   isLoading: boolean

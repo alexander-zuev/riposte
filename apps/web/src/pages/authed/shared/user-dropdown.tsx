@@ -17,7 +17,7 @@ import {
   DropdownMenuTrigger,
 } from '@web/ui/components/ui/dropdown-menu'
 import type * as React from 'react'
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 
 interface UserDropdownLink {
   label: string
@@ -58,7 +58,7 @@ export function UserDropdown({ user, links = defaultLinks, onLogOut }: UserDropd
           />
         }
       >
-        <UserAvatarImage user={user} />
+        <UserAvatar user={user} />
         <div className="min-w-0 text-right">
           <p className="truncate text-xs font-medium text-foreground">{displayName}</p>
           <p className="truncate text-xs text-muted-foreground">{user.email}</p>
@@ -89,15 +89,17 @@ export function UserDropdown({ user, links = defaultLinks, onLogOut }: UserDropd
   )
 }
 
-function UserAvatarImage({ user }: { user: AuthUser }) {
+export function UserAvatar({ user, className }: { user: AuthUser; className?: string }) {
   const imageUrl = buildImageProxyUrl('', user.avatarUrl)
   const [imageLoaded, setImageLoaded] = useState(false)
   const [imageError, setImageError] = useState(false)
+  const handleImageLoad = useCallback(() => setImageLoaded(true), [])
+  const handleImageError = useCallback(() => setImageError(true), [])
 
   const backgroundColor = useMemo(() => {
     const source = user.id || user.email
     let hash = 0
-    for (let index = 0; index < source.length; index++) {
+    for (let index = 0; index < source.length; index += 1) {
       hash = source.charCodeAt(index) + hash * 31
     }
 
@@ -106,7 +108,12 @@ function UserAvatarImage({ user }: { user: AuthUser }) {
   }, [user.id, user.email])
 
   return (
-    <div className="relative size-8 shrink-0 overflow-hidden rounded-full after:absolute after:inset-0 after:rounded-full after:border after:border-border after:mix-blend-darken dark:after:mix-blend-lighten">
+    <div
+      className={cn(
+        'relative size-8 shrink-0 overflow-hidden rounded-full after:absolute after:inset-0 after:rounded-full after:border after:border-border after:mix-blend-darken dark:after:mix-blend-lighten',
+        className,
+      )}
+    >
       {(!imageUrl || imageError || !imageLoaded) && (
         <div
           className={cn(
@@ -124,8 +131,8 @@ function UserAvatarImage({ user }: { user: AuthUser }) {
           src={imageUrl}
           alt=""
           className="absolute inset-0 size-full object-cover"
-          onLoad={() => setImageLoaded(true)}
-          onError={() => setImageError(true)}
+          onLoad={handleImageLoad}
+          onError={handleImageError}
         />
       )}
     </div>

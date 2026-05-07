@@ -1,8 +1,13 @@
 import { Turnstile } from '@marsidev/react-turnstile'
 import { useForm } from '@tanstack/react-form'
 import { useMutation } from '@tanstack/react-query'
-import { authService, type AuthServiceError, type AuthServiceValue } from '@web/lib/auth'
-import { authClient } from '@web/lib/clients/auth-client'
+import { useSearch } from '@tanstack/react-router'
+import {
+  authService,
+  type AuthServiceError,
+  type AuthServiceValue,
+  useLastLoginMethod,
+} from '@web/lib/auth'
 import { settings } from '@web/lib/env/env'
 import { Badge } from '@web/ui/components/ui/badge'
 import { Button } from '@web/ui/components/ui/button'
@@ -16,14 +21,14 @@ import {
 import { Field, FieldError, FieldGroup, FieldLabel } from '@web/ui/components/ui/field'
 import { Input } from '@web/ui/components/ui/input'
 import { Logo } from '@web/ui/components/ui/logo'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { FaGithub } from 'react-icons/fa'
 import { FcGoogle } from 'react-icons/fc'
 import { toast } from 'sonner'
 import { z } from 'zod'
 
 type OAuthProvider = 'github' | 'google'
-type OAuthSignInInput = { provider: OAuthProvider; captchaToken: string }
+type OAuthSignInInput = { provider: OAuthProvider }
 type MagicLinkInput = { email: string }
 
 const emailSignInSchema = z.object({
@@ -37,16 +42,17 @@ const turnstileOptions = {
   refreshExpired: 'auto',
 } as const
 
+function isEmailLoginMethod(method: string | null) {
+  return method === 'magic-link'
+}
+
 export function SignInPage() {
   const auth = authService()
-  const [lastLoginMethod, setLastLoginMethod] = useState<string | null>(null)
+  const { redirectTo } = useSearch({ from: '/_public/sign-in' })
+  const lastLoginMethod = useLastLoginMethod()
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
   const [turnstileError, setTurnstileError] = useState<string | null>(null)
   const [authLocked, setAuthLocked] = useState(false)
-
-  useEffect(() => {
-    setLastLoginMethod(authClient.getLastUsedLoginMethod())
-  }, [])
 
   const resetTurnstile = useCallback((message?: string) => {
     setTurnstileToken(null)
@@ -56,7 +62,7 @@ export function SignInPage() {
   const oauthMutation = useMutation<AuthServiceValue, AuthServiceError, OAuthSignInInput>({
     mutationFn: async (input: OAuthSignInInput) => {
       const result = await auth.signInWithOAuth(input.provider, {
-        captchaToken: input.captchaToken,
+        redirectTo,
       })
       if (result.isErr()) throw result.error
       return result.value
@@ -72,6 +78,7 @@ export function SignInPage() {
     mutationFn: async (input: MagicLinkInput) => {
       const result = await auth.signInWithMagicLink(input.email, {
         captchaToken: turnstileToken ?? undefined,
+        redirectTo,
       })
 
       if (result.isErr()) throw result.error
@@ -98,19 +105,14 @@ export function SignInPage() {
   })
 
   const isAuthDisabled = authLocked || oauthMutation.isPending || emailMutation.isPending
-  const canSubmitOAuth = !isAuthDisabled && !!turnstileToken
+  const canSubmitOAuth = !isAuthDisabled
   const canSubmitEmail = !isAuthDisabled && !!turnstileToken
 
   const handleOAuth = useCallback(
     (provider: OAuthProvider) => {
-      if (!turnstileToken) {
-        toast.error('Complete verification to continue')
-        return
-      }
-
-      oauthMutation.mutate({ provider, captchaToken: turnstileToken })
+      oauthMutation.mutate({ provider })
     },
-    [oauthMutation, turnstileToken],
+    [oauthMutation],
   )
 
   const handleTurnstileSuccess = useCallback((token: string) => {
@@ -150,14 +152,17 @@ export function SignInPage() {
               <Button
                 variant="secondary"
                 size="lg"
-                className="w-full"
+                className="relative w-full"
                 disabled={!canSubmitOAuth}
                 onClick={() => handleOAuth('github')}
               >
                 <FaGithub className="size-4" aria-hidden="true" />
                 GitHub
                 {lastLoginMethod === 'github' ? (
-                  <Badge variant="secondary" className="ml-auto">
+                  <Badge
+                    variant="secondary"
+                    className="absolute -top-2 -right-1 animate-in duration-200 fade-in-0"
+                  >
                     Last used
                   </Badge>
                 ) : null}
@@ -165,14 +170,17 @@ export function SignInPage() {
               <Button
                 variant="secondary"
                 size="lg"
-                className="w-full"
+                className="relative w-full"
                 disabled={!canSubmitOAuth}
                 onClick={() => handleOAuth('google')}
               >
                 <FcGoogle className="size-4" aria-hidden="true" />
                 Google
                 {lastLoginMethod === 'google' ? (
-                  <Badge variant="secondary" className="ml-auto">
+                  <Badge
+                    variant="secondary"
+                    className="absolute -top-2 -right-1 animate-in duration-200 fade-in-0"
+                  >
                     Last used
                   </Badge>
                 ) : null}
@@ -203,9 +211,16 @@ export function SignInPage() {
                       className="gap-1.5"
                       data-invalid={field.state.meta.isTouched && !field.state.meta.isValid}
                     >
-                      <FieldLabel htmlFor={field.name} className="font-medium">
-                        Email
-                      </FieldLabel>
+                      <div className="flex min-h-5 items-center justify-between gap-2">
+                        <FieldLabel htmlFor={field.name} className="font-medium">
+                          Email
+                        </FieldLabel>
+                        {isEmailLoginMethod(lastLoginMethod) ? (
+                          <Badge variant="secondary" className="animate-in duration-200 fade-in-0">
+                            Last used
+                          </Badge>
+                        ) : null}
+                      </div>
                       <Input
                         id={field.name}
                         name={field.name}
@@ -226,28 +241,12 @@ export function SignInPage() {
                     </Field>
                   )}
                 </form.Field>
-
-                {lastLoginMethod === 'email' ? (
-                  <Badge variant="secondary" className="self-start">
-                    Email was last used
-                  </Badge>
-                ) : null}
               </FieldGroup>
 
               <Button type="submit" size="lg" className="w-full" disabled={!canSubmitEmail}>
                 Send sign-in link
               </Button>
             </form>
-
-            <p className="text-center text-sm text-muted-foreground">
-              Don&apos;t have an account?{' '}
-              <a
-                href="/"
-                className="font-medium text-foreground underline-offset-4 hover:underline"
-              >
-                Join waitlist
-              </a>
-            </p>
           </CardContent>
         </Card>
 
@@ -269,7 +268,9 @@ export function SignInPage() {
           ) : (
             <>
               By continuing, you agree to Riposte&apos;s <a href="/terms">terms</a> and{' '}
-              <a href="/privacy">privacy policy</a>
+              <a href="/privacy" className="font-medium">
+                privacy policy
+              </a>
             </>
           )}
         </small>

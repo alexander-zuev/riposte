@@ -33,7 +33,9 @@ function tryParseZodError(error: unknown): ValidationError | null {
 // This only catches: platform primitives (redirect/notFound), Zod validation, and bugs.
 function handleFunctionError(error: unknown): never {
   if (isNotFound(error) || isRedirect(error)) throw error
-  if (AuthenticationError.is(error)) throw redirect({ to: '/sign-in' })
+  if (AuthenticationError.is(error)) {
+    throw redirect({ to: '/sign-in', search: { redirectTo: undefined } })
+  }
 
   const validation = tryParseZodError(error)
   if (validation) throw toServerFnRpc(Result.err(validation))

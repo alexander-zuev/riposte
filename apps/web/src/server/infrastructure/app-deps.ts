@@ -5,6 +5,8 @@ import { executeUoW } from '@server/application/message-bus/unit-of-work'
 import type { IOutboxRepository, IWaitlistRepository } from '@server/domain/repository/interfaces'
 import type { DrizzleDb } from '@server/infrastructure/db'
 import { createDatabase } from '@server/infrastructure/db'
+import type { IEmailService } from '@server/infrastructure/email/interfaces'
+import { ResendEmailService } from '@server/infrastructure/email/resend-email-service'
 import type { IOutboxRelay } from '@server/infrastructure/queues/outbox-relay'
 import { OutboxRelay } from '@server/infrastructure/queues/outbox-relay'
 import {
@@ -40,6 +42,7 @@ export type AppDeps = {
   services: {
     messageBus: () => IMessageBus
     queueClient: () => IQueueClient
+    email: () => IEmailService
     outboxRelay: () => IOutboxRelay
   }
 
@@ -64,6 +67,7 @@ export function createAppDeps(env: Env, ctx: WaitUntilContext): AppDeps {
     services: {
       messageBus: once<IMessageBus>(() => new MessageBus(deps)),
       queueClient: once<IQueueClient>(() => new QueueClient(env)),
+      email: once<IEmailService>(() => new ResendEmailService(env.RESEND_API_KEY)),
       outboxRelay: once<IOutboxRelay>(
         () => new OutboxRelay(deps.db(), deps.services.queueClient(), deps.repos.outbox),
       ),

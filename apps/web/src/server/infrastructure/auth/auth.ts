@@ -5,6 +5,7 @@ import { env } from 'cloudflare:workers'
 
 import { getServerConfig } from '../config'
 import { createDatabase } from '../db/connection'
+import { QueueClient } from '../queues/queue-client'
 import { createBetterAuthOptions } from './options'
 import type { AuthConfig } from './types'
 
@@ -25,7 +26,7 @@ export function getAuthInstance(plugins?: BetterAuthOptions['plugins']) {
     stripeWebhookSecret: cfg.stripe.webhookSecret,
     kvStorage: cfg.kvStorage,
     rateLimiter: cfg.rateLimiter,
-    queue: cfg.queue,
+    queueClient: new QueueClient(env),
     waitUntil: cfg.waitUntil,
   }
 

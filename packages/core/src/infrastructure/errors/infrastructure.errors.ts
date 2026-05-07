@@ -38,10 +38,35 @@ export class DOUnreachableError extends TaggedError('DOUnreachableError')<{
   }
 }
 
+export class EmailServiceError extends TaggedError('EmailServiceError')<{
+  message: string
+  operation: 'configuration' | 'send'
+  provider: string
+  cause?: unknown
+  retryable: boolean
+}>() {
+  constructor(args: {
+    message: string
+    operation: 'configuration' | 'send'
+    provider: string
+    cause?: unknown
+    retryable?: boolean
+  }) {
+    super({
+      message: args.message,
+      operation: args.operation,
+      provider: args.provider,
+      cause: args.cause,
+      retryable: args.retryable ?? args.operation === 'send',
+    })
+  }
+}
+
 export type InfrastructureError =
   | DatabaseError
   | DuplicateMessageError
   | QueueError
   | DOUnreachableError
+  | EmailServiceError
 
 import { DatabaseError } from './database.errors'

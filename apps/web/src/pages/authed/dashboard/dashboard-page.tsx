@@ -146,8 +146,8 @@ const metrics = [
 
 export function DashboardPage() {
   return (
-    <div className="min-h-svh bg-background text-foreground">
-      <div className="mx-auto grid w-full max-w-7xl gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+    <div className="text-foreground">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
         <section className="space-y-6">
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             {metrics.map((metric) => (

@@ -23,9 +23,9 @@ export function createBetterAuthOptions(
 ) {
   const isCliMode = !config
 
-  const databaseHooks = isCliMode ? undefined : createDatabaseHooks(config.queue)
-  const magicLinkHooks = isCliMode ? undefined : createMagicLinkHooks(config.queue)
-  const stripeCustomerHooks = isCliMode ? undefined : createStripeCustomerHooks(config.queue)
+  const databaseHooks = isCliMode ? undefined : createDatabaseHooks(config.queueClient)
+  const magicLinkHooks = isCliMode ? undefined : createMagicLinkHooks(config.queueClient)
+  const stripeCustomerHooks = isCliMode ? undefined : createStripeCustomerHooks(config.queueClient)
   const kvStorage = isCliMode ? undefined : createKVStorage(config.kvStorage)
   const rateLimitStorage = isCliMode ? undefined : createRateLimitStorage(config.rateLimiter)
 

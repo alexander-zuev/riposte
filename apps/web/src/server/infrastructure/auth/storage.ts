@@ -46,7 +46,7 @@ export function createRateLimitStorage(
       try {
         const doId = doNamespace.idFromName(key)
         const stub = doNamespace.get(doId) as unknown as RateLimiterStub
-        const result = await callDo(() => stub.getRateLimit())
+        const result = await callDo(async () => stub.getRateLimit())
 
         if (result.isErr()) {
           if (debug) console.error(`[RateLimit] GET ${key} ERROR:`, result.error)
@@ -72,7 +72,7 @@ export function createRateLimitStorage(
       try {
         const doId = doNamespace.idFromName(key)
         const stub = doNamespace.get(doId) as unknown as RateLimiterStub
-        const result = await callDo(() => stub.setRateLimit(value))
+        const result = await callDo(async () => stub.setRateLimit(value))
         if (result.isErr()) throw result.error
 
         if (debug) {

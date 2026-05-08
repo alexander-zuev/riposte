@@ -2,6 +2,7 @@ import type { DatabaseError, DOUnreachableError, DuplicateMessageError } from '@
 import type { IMessageBus } from '@server/application/message-bus/message-bus'
 import { MessageBus } from '@server/application/message-bus/message-bus'
 import { executeUoW } from '@server/application/message-bus/unit-of-work'
+import { ConnectionManager, type IConnectionManager } from '@server/domain/connections'
 import type {
   IOutboxRepository,
   IStripeConnectionRepository,
@@ -55,6 +56,7 @@ export type AppDeps = {
 
   services: {
     messageBus: () => IMessageBus
+    connectionManager: () => IConnectionManager
     queueClient: () => IQueueClient
     credentialEncryption: () => ICredentialEncryptionService
     email: () => IEmailService
@@ -87,6 +89,9 @@ export function createAppDeps(env: Env, ctx: WaitUntilContext): AppDeps {
     },
     services: {
       messageBus: once<IMessageBus>(() => new MessageBus(deps)),
+      connectionManager: once<IConnectionManager>(
+        () => new ConnectionManager(deps.repos.stripeConnections(deps.db())),
+      ),
       queueClient: once<IQueueClient>(() => new QueueClient(env)),
       credentialEncryption: once<ICredentialEncryptionService>(
         () =>

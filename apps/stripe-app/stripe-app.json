@@ -2,7 +2,7 @@
   "$schema": "https://stripe.com/stripe-app.schema.json",
   "id": "app.riposte.sh",
   "name": "Riposte",
-  "version": "0.0.4",
+  "version": "0.0.6",
   "icon": "./riposte_icon_512.png",
   "ui_extension": {
     "views": [
@@ -26,6 +26,10 @@
     {
       "permission": "event_read",
       "purpose": "Receive dispute webhook events so Riposte can start and update dispute workflows"
+    },
+    {
+      "permission": "connected_account_read",
+      "purpose": "Read the connected account business name shown in Riposte settings"
     },
     {
       "permission": "dispute_read",
@@ -73,5 +77,9 @@
   ],
   "distribution_type": "public",
   "stripe_api_access_type": "oauth",
-  "sandbox_install_compatible": true
+  "sandbox_install_compatible": true,
+  "post_install_action": {
+    "type": "external",
+    "url": "https://riposte.sh/settings"
+  }
 }

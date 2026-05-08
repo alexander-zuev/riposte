@@ -5,7 +5,7 @@ export const authQueries = {
   lastLoginMethod: () =>
     queryOptions({
       queryKey: ['auth', 'last-login-method'] as const,
-      queryFn: () => getLastLoginMethod(),
+      queryFn: async () => getLastLoginMethod(),
       retry: false,
     }),
 }

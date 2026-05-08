@@ -12,7 +12,7 @@ export interface NavItem {
 export const primaryNavItems = [
   { label: 'Dashboard', href: '/dashboard', icon: GaugeIcon, exact: true },
   { label: 'Disputes', href: '/disputes', icon: ListChecksIcon, badge: '3' },
-  { label: 'Configuration', href: '/settings', icon: GearSixIcon },
+  { label: 'Settings', href: '/settings', icon: GearSixIcon },
 ] satisfies NavItem[]
 
 export function isNavItemActive(item: Pick<NavItem, 'href' | 'exact'>, pathname: string) {

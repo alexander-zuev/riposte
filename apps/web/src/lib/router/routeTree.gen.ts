@@ -9,11 +9,13 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './../../routes/__root'
+import { Route as TestQueryRouteImport } from './../../routes/test-query'
 import { Route as PublicRouteRouteImport } from './../../routes/_public/route'
 import { Route as AuthedRouteRouteImport } from './../../routes/_authed/route'
 import { Route as PublicIndexRouteImport } from './../../routes/_public/index'
 import { Route as DevEmailsRouteImport } from './../../routes/dev/emails'
 import { Route as PublicTermsRouteImport } from './../../routes/_public/terms'
+import { Route as PublicSubProcessorsRouteImport } from './../../routes/_public/sub-processors'
 import { Route as PublicSignInRouteImport } from './../../routes/_public/sign-in'
 import { Route as PublicPrivacyRouteImport } from './../../routes/_public/privacy'
 import { Route as AuthedSetupRouteImport } from './../../routes/_authed/setup'
@@ -22,11 +24,17 @@ import { Route as AuthedDisputesRouteImport } from './../../routes/_authed/dispu
 import { Route as AuthedDashboardRouteImport } from './../../routes/_authed/dashboard'
 import { Route as AuthedBillingRouteImport } from './../../routes/_authed/billing'
 import { Route as AuthedAccountRouteImport } from './../../routes/_authed/account'
+import { Route as ApiStripeWebhookRouteImport } from './../../routes/api/stripe/webhook'
 import { Route as ApiCacheImagesRouteImport } from './../../routes/api/cache/images'
 import { Route as ApiAuthSplatRouteImport } from './../../routes/api/auth/$'
 import { Route as AuthedDisputesDisputeIdRouteImport } from './../../routes/_authed/disputes.$disputeId'
 import { Route as ApiStripeOauthCallbackRouteImport } from './../../routes/api/stripe/oauth/callback'
 
+const TestQueryRoute = TestQueryRouteImport.update({
+  id: '/test-query',
+  path: '/test-query',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PublicRouteRoute = PublicRouteRouteImport.update({
   id: '/_public',
   getParentRoute: () => rootRouteImport,
@@ -48,6 +56,11 @@ const DevEmailsRoute = DevEmailsRouteImport.update({
 const PublicTermsRoute = PublicTermsRouteImport.update({
   id: '/terms',
   path: '/terms',
+  getParentRoute: () => PublicRouteRoute,
+} as any)
+const PublicSubProcessorsRoute = PublicSubProcessorsRouteImport.update({
+  id: '/sub-processors',
+  path: '/sub-processors',
   getParentRoute: () => PublicRouteRoute,
 } as any)
 const PublicSignInRoute = PublicSignInRouteImport.update({
@@ -90,6 +103,11 @@ const AuthedAccountRoute = AuthedAccountRouteImport.update({
   path: '/account',
   getParentRoute: () => AuthedRouteRoute,
 } as any)
+const ApiStripeWebhookRoute = ApiStripeWebhookRouteImport.update({
+  id: '/api/stripe/webhook',
+  path: '/api/stripe/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiCacheImagesRoute = ApiCacheImagesRouteImport.update({
   id: '/api/cache/images',
   path: '/api/cache/images',
@@ -113,6 +131,7 @@ const ApiStripeOauthCallbackRoute = ApiStripeOauthCallbackRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof PublicIndexRoute
+  '/test-query': typeof TestQueryRoute
   '/account': typeof AuthedAccountRoute
   '/billing': typeof AuthedBillingRoute
   '/dashboard': typeof AuthedDashboardRoute
@@ -121,15 +140,18 @@ export interface FileRoutesByFullPath {
   '/setup': typeof AuthedSetupRoute
   '/privacy': typeof PublicPrivacyRoute
   '/sign-in': typeof PublicSignInRoute
+  '/sub-processors': typeof PublicSubProcessorsRoute
   '/terms': typeof PublicTermsRoute
   '/dev/emails': typeof DevEmailsRoute
   '/disputes/$disputeId': typeof AuthedDisputesDisputeIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/cache/images': typeof ApiCacheImagesRoute
+  '/api/stripe/webhook': typeof ApiStripeWebhookRoute
   '/api/stripe/oauth/callback': typeof ApiStripeOauthCallbackRoute
 }
 export interface FileRoutesByTo {
   '/': typeof PublicIndexRoute
+  '/test-query': typeof TestQueryRoute
   '/account': typeof AuthedAccountRoute
   '/billing': typeof AuthedBillingRoute
   '/dashboard': typeof AuthedDashboardRoute
@@ -138,17 +160,20 @@ export interface FileRoutesByTo {
   '/setup': typeof AuthedSetupRoute
   '/privacy': typeof PublicPrivacyRoute
   '/sign-in': typeof PublicSignInRoute
+  '/sub-processors': typeof PublicSubProcessorsRoute
   '/terms': typeof PublicTermsRoute
   '/dev/emails': typeof DevEmailsRoute
   '/disputes/$disputeId': typeof AuthedDisputesDisputeIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/cache/images': typeof ApiCacheImagesRoute
+  '/api/stripe/webhook': typeof ApiStripeWebhookRoute
   '/api/stripe/oauth/callback': typeof ApiStripeOauthCallbackRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authed': typeof AuthedRouteRouteWithChildren
   '/_public': typeof PublicRouteRouteWithChildren
+  '/test-query': typeof TestQueryRoute
   '/_authed/account': typeof AuthedAccountRoute
   '/_authed/billing': typeof AuthedBillingRoute
   '/_authed/dashboard': typeof AuthedDashboardRoute
@@ -157,18 +182,21 @@ export interface FileRoutesById {
   '/_authed/setup': typeof AuthedSetupRoute
   '/_public/privacy': typeof PublicPrivacyRoute
   '/_public/sign-in': typeof PublicSignInRoute
+  '/_public/sub-processors': typeof PublicSubProcessorsRoute
   '/_public/terms': typeof PublicTermsRoute
   '/dev/emails': typeof DevEmailsRoute
   '/_public/': typeof PublicIndexRoute
   '/_authed/disputes/$disputeId': typeof AuthedDisputesDisputeIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/cache/images': typeof ApiCacheImagesRoute
+  '/api/stripe/webhook': typeof ApiStripeWebhookRoute
   '/api/stripe/oauth/callback': typeof ApiStripeOauthCallbackRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/test-query'
     | '/account'
     | '/billing'
     | '/dashboard'
@@ -177,15 +205,18 @@ export interface FileRouteTypes {
     | '/setup'
     | '/privacy'
     | '/sign-in'
+    | '/sub-processors'
     | '/terms'
     | '/dev/emails'
     | '/disputes/$disputeId'
     | '/api/auth/$'
     | '/api/cache/images'
+    | '/api/stripe/webhook'
     | '/api/stripe/oauth/callback'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/test-query'
     | '/account'
     | '/billing'
     | '/dashboard'
@@ -194,16 +225,19 @@ export interface FileRouteTypes {
     | '/setup'
     | '/privacy'
     | '/sign-in'
+    | '/sub-processors'
     | '/terms'
     | '/dev/emails'
     | '/disputes/$disputeId'
     | '/api/auth/$'
     | '/api/cache/images'
+    | '/api/stripe/webhook'
     | '/api/stripe/oauth/callback'
   id:
     | '__root__'
     | '/_authed'
     | '/_public'
+    | '/test-query'
     | '/_authed/account'
     | '/_authed/billing'
     | '/_authed/dashboard'
@@ -212,26 +246,37 @@ export interface FileRouteTypes {
     | '/_authed/setup'
     | '/_public/privacy'
     | '/_public/sign-in'
+    | '/_public/sub-processors'
     | '/_public/terms'
     | '/dev/emails'
     | '/_public/'
     | '/_authed/disputes/$disputeId'
     | '/api/auth/$'
     | '/api/cache/images'
+    | '/api/stripe/webhook'
     | '/api/stripe/oauth/callback'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   AuthedRouteRoute: typeof AuthedRouteRouteWithChildren
   PublicRouteRoute: typeof PublicRouteRouteWithChildren
+  TestQueryRoute: typeof TestQueryRoute
   DevEmailsRoute: typeof DevEmailsRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiCacheImagesRoute: typeof ApiCacheImagesRoute
+  ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
   ApiStripeOauthCallbackRoute: typeof ApiStripeOauthCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/test-query': {
+      id: '/test-query'
+      path: '/test-query'
+      fullPath: '/test-query'
+      preLoaderRoute: typeof TestQueryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_public': {
       id: '/_public'
       path: ''
@@ -265,6 +310,13 @@ declare module '@tanstack/react-router' {
       path: '/terms'
       fullPath: '/terms'
       preLoaderRoute: typeof PublicTermsRouteImport
+      parentRoute: typeof PublicRouteRoute
+    }
+    '/_public/sub-processors': {
+      id: '/_public/sub-processors'
+      path: '/sub-processors'
+      fullPath: '/sub-processors'
+      preLoaderRoute: typeof PublicSubProcessorsRouteImport
       parentRoute: typeof PublicRouteRoute
     }
     '/_public/sign-in': {
@@ -322,6 +374,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/account'
       preLoaderRoute: typeof AuthedAccountRouteImport
       parentRoute: typeof AuthedRouteRoute
+    }
+    '/api/stripe/webhook': {
+      id: '/api/stripe/webhook'
+      path: '/api/stripe/webhook'
+      fullPath: '/api/stripe/webhook'
+      preLoaderRoute: typeof ApiStripeWebhookRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/cache/images': {
       id: '/api/cache/images'
@@ -391,6 +450,7 @@ const AuthedRouteRouteWithChildren = AuthedRouteRoute._addFileChildren(
 interface PublicRouteRouteChildren {
   PublicPrivacyRoute: typeof PublicPrivacyRoute
   PublicSignInRoute: typeof PublicSignInRoute
+  PublicSubProcessorsRoute: typeof PublicSubProcessorsRoute
   PublicTermsRoute: typeof PublicTermsRoute
   PublicIndexRoute: typeof PublicIndexRoute
 }
@@ -398,6 +458,7 @@ interface PublicRouteRouteChildren {
 const PublicRouteRouteChildren: PublicRouteRouteChildren = {
   PublicPrivacyRoute: PublicPrivacyRoute,
   PublicSignInRoute: PublicSignInRoute,
+  PublicSubProcessorsRoute: PublicSubProcessorsRoute,
   PublicTermsRoute: PublicTermsRoute,
   PublicIndexRoute: PublicIndexRoute,
 }
@@ -409,9 +470,11 @@ const PublicRouteRouteWithChildren = PublicRouteRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   AuthedRouteRoute: AuthedRouteRouteWithChildren,
   PublicRouteRoute: PublicRouteRouteWithChildren,
+  TestQueryRoute: TestQueryRoute,
   DevEmailsRoute: DevEmailsRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiCacheImagesRoute: ApiCacheImagesRoute,
+  ApiStripeWebhookRoute: ApiStripeWebhookRoute,
   ApiStripeOauthCallbackRoute: ApiStripeOauthCallbackRoute,
 }
 export const routeTree = rootRouteImport

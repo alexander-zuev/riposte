@@ -15,6 +15,7 @@ export const stripeConnections = pgTable(
       .references(() => user.id),
 
     stripeAccountId: text('stripe_account_id').notNull(),
+    stripeBusinessName: text('stripe_business_name'),
     livemode: boolean('livemode').notNull(),
 
     scope: text('scope'),

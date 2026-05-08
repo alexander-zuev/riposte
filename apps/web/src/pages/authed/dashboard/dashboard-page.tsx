@@ -77,9 +77,10 @@ const setupHealthItems = [
 ] as const
 
 const syncHealthItems = [
+  { label: 'Stripe connection', value: 'Ready' },
   { label: 'Last Stripe sync', value: '12 min ago' },
   { label: 'Webhook ingestion', value: 'Ready' },
-  { label: 'Outcome reconciliation', value: 'Not run' },
+  { label: 'App database', value: 'Not configured' },
   { label: 'Broken connections', value: '1' },
 ] as const
 
@@ -274,11 +275,9 @@ export function DashboardPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <ClockIcon className="size-4 text-muted-foreground" />
-                Sync health
+                System health
               </CardTitle>
-              <CardDescription>
-                Ingestion and reconciliation status for Stripe dispute operations
-              </CardDescription>
+              <CardDescription>Connection and ingestion readiness</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               {syncHealthItems.map((item) => (

@@ -6,7 +6,7 @@ import {
   getRequiredOAuthTokenFields,
   STRIPE_APPS_ACCESS_TOKEN_TTL_MS,
 } from '@server/infrastructure/stripe/stripe-oauth-token'
-import { createFileRoute, redirect } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 import Stripe from 'stripe'
 
 const logger = createLogger('stripe-oauth')
@@ -20,21 +20,21 @@ export const Route = createFileRoute('/api/stripe/oauth/callback')({
         const code = url.searchParams.get('code')
         const state = url.searchParams.get('state')
         const error = url.searchParams.get('error')
+        const config = getServerConfig()
 
         if (error) {
           logger.warn('stripe_oauth_error', {
             error,
             description: url.searchParams.get('error_description'),
           })
-          throw redirect({ to: '/setup', search: { stripeError: error } })
+          return redirectToSettings(config, { stripeError: error })
         }
 
         if (!code) {
           logger.warn('stripe_oauth_missing_params', { hasCode: !!code, hasState: !!state })
-          throw redirect({ to: '/setup', search: { stripeError: 'missing_params' } })
+          return redirectToSettings(config, { stripeError: 'missing_params' })
         }
 
-        const config = getServerConfig()
         const { deps } = context
         let userId: string | undefined
 
@@ -42,7 +42,7 @@ export const Route = createFileRoute('/api/stripe/oauth/callback')({
           const stored = await consumeOAuthState(state, deps.kv.auth)
           if (stored.isErr() || !stored.value) {
             logger.warn('stripe_oauth_invalid_state', { state })
-            throw redirect({ to: '/setup', search: { stripeError: 'invalid_state' } })
+            return redirectToSettings(config, { stripeError: 'invalid_state' })
           }
           userId = stored.value.userId
         }
@@ -75,7 +75,7 @@ export const Route = createFileRoute('/api/stripe/oauth/callback')({
             hasRefreshToken: !!token.refresh_token,
             hasLivemode: typeof token.livemode === 'boolean',
           })
-          throw redirect({ to: '/setup', search: { stripeError: 'invalid_token_response' } })
+          return redirectToSettings(config, { stripeError: 'invalid_token_response' })
         }
 
         if (!userId) {
@@ -83,13 +83,20 @@ export const Route = createFileRoute('/api/stripe/oauth/callback')({
             stripeAccountId: tokenFields.stripeAccountId,
             livemode: tokenFields.livemode,
           })
-          throw redirect({ to: '/setup', search: { stripeConnected: 'true' } })
+          return redirectToSettings(config, { stripeConnected: 'true' })
         }
+
+        const oauthStripe = new Stripe(tokenFields.accessToken, {
+          httpClient: Stripe.createFetchHttpClient(),
+        })
+        const account = await oauthStripe.accounts.retrieve(tokenFields.stripeAccountId)
+        const stripeBusinessName = account.business_profile?.name ?? null
 
         const now = new Date()
         const saved = await deps.repos.stripeConnections(deps.db()).upsertConnectedAccount({
           userId,
           stripeAccountId: tokenFields.stripeAccountId,
+          stripeBusinessName,
           livemode: tokenFields.livemode,
           scope: token.scope,
           tokenType: token.token_type,
@@ -101,7 +108,7 @@ export const Route = createFileRoute('/api/stripe/oauth/callback')({
 
         if (saved.isErr()) {
           logger.error('stripe_oauth_persist_failed', { error: saved.error })
-          throw redirect({ to: '/setup', search: { stripeError: 'persistence_failed' } })
+          return redirectToSettings(config, { stripeError: 'persistence_failed' })
         }
 
         logger.info('stripe_oauth_connection_persisted', {
@@ -111,8 +118,17 @@ export const Route = createFileRoute('/api/stripe/oauth/callback')({
           userId: saved.value.userId,
         })
 
-        throw redirect({ to: '/setup', search: { stripeConnected: 'true' } })
+        return redirectToSettings(config, { stripeConnected: 'true' })
       },
     },
   },
 })
+
+function redirectToSettings(
+  config: ReturnType<typeof getServerConfig>,
+  search: Record<string, string>,
+) {
+  const url = new URL('/settings', config.appUrl)
+  for (const [key, value] of Object.entries(search)) url.searchParams.set(key, value)
+  return Response.redirect(url.toString(), 302)
+}

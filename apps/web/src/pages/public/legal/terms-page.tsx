@@ -60,7 +60,68 @@ export function TermsPage() {
             <p>You can revoke access at any time through your Stripe dashboard.</p>
           </Section>
 
-          <Section title="6. Acceptable Use">
+          <Section title="6. Data Processing Agreement">
+            <p>
+              This section constitutes a Data Processing Agreement ("DPA") under GDPR Article 28
+              between you (data controller) and Kollektiv LLC (data processor) for the processing of
+              your customers' personal data through the Service.
+            </p>
+
+            <h6>Scope and Purpose</h6>
+            <p>
+              Riposte processes personal data of your customers solely to compile and submit dispute
+              evidence on your behalf. Processing is limited to active disputes and the data
+              relevant to each dispute.
+            </p>
+
+            <h6>Data Categories</h6>
+            <p>
+              Depending on what you connect, Riposte may process: customer identity data, session
+              and access data, product usage and activity data, delivered outputs or proof of
+              service, support and communication history, and cancellation, refund, or billing
+              history.
+            </p>
+
+            <h6>Processor Obligations</h6>
+            <ul>
+              <li>
+                Process data only on your documented instructions and solely for dispute evidence
+              </li>
+              <li>Ensure personnel with access are bound by confidentiality</li>
+              <li>Implement appropriate technical and organizational security measures</li>
+              <li>Notify you without undue delay upon becoming aware of a personal data breach</li>
+              <li>Delete all customer data within 90 days of dispute resolution</li>
+              <li>
+                Make available information necessary to demonstrate compliance and allow for audits
+              </li>
+            </ul>
+
+            <h6>Sub-processors</h6>
+            <p>
+              You authorize Riposte to engage sub-processors listed on our{' '}
+              <a href="/sub-processors" className="underline">
+                sub-processors page
+              </a>
+              . We will notify you of changes to that list. Each sub-processor is bound by data
+              protection obligations no less protective than this DPA.
+            </p>
+
+            <h6>International Transfers</h6>
+            <p>
+              Where data is transferred outside the EEA, we rely on adequacy decisions, Standard
+              Contractual Clauses, or the EU-US Data Privacy Framework as applicable. Our
+              sub-processors maintain appropriate transfer mechanisms.
+            </p>
+
+            <h6>Data Subject Requests</h6>
+            <p>
+              If we receive a request from one of your customers regarding their personal data, we
+              will direct them to you and assist you in fulfilling the request to the extent
+              technically feasible.
+            </p>
+          </Section>
+
+          <Section title="7. Acceptable Use">
             <p>You agree not to:</p>
             <ul>
               <li>Use the Service for fraudulent disputes or false evidence</li>
@@ -70,14 +131,14 @@ export function TermsPage() {
             </ul>
           </Section>
 
-          <Section title="7. Open Source">
+          <Section title="8. Open Source">
             <p>
               Riposte's source code is licensed under AGPLv3. These Terms govern your use of the
               hosted Service at riposte.sh, not self-hosted instances.
             </p>
           </Section>
 
-          <Section title="8. Limitation of Liability">
+          <Section title="9. Limitation of Liability">
             <p>
               The Service is provided "as is" without warranties of any kind. We are not liable for
               lost disputes, revenue loss, or any indirect, incidental, or consequential damages
@@ -89,7 +150,7 @@ export function TermsPage() {
             </p>
           </Section>
 
-          <Section title="9. Termination">
+          <Section title="10. Termination">
             <p>
               We may suspend or terminate your access at any time for violation of these Terms. You
               may stop using the Service at any time by disconnecting your Stripe account and
@@ -97,14 +158,14 @@ export function TermsPage() {
             </p>
           </Section>
 
-          <Section title="10. Changes">
+          <Section title="11. Changes">
             <p>
               We may update these Terms. We'll notify you of material changes via email or in-app
               notice. Continued use after changes constitutes acceptance.
             </p>
           </Section>
 
-          <Section title="11. Governing Law">
+          <Section title="12. Governing Law">
             <p>
               These Terms are governed by the laws of the State of Wyoming, United States, without
               regard to conflict of law principles. Any disputes shall be resolved in the courts of
@@ -112,7 +173,7 @@ export function TermsPage() {
             </p>
           </Section>
 
-          <Section title="12. Contact">
+          <Section title="13. Contact">
             <p>If you have any questions about these Terms, please contact us at:</p>
             <p>
               Email:{' '}

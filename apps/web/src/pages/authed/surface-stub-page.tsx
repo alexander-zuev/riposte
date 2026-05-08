@@ -1,6 +1,6 @@
 import type { Icon } from '@phosphor-icons/react'
 import { CheckCircleIcon } from '@phosphor-icons/react'
-import { Badge } from '@web/ui/components/ui/badge'
+import { PageHeader } from '@web/pages/authed/shared/page-header'
 import {
   Card,
   CardContent,
@@ -28,14 +28,7 @@ export function SurfaceStubPage({
 }: SurfaceStubPageProps) {
   return (
     <div className="grid gap-6 text-foreground">
-      <header className="max-w-3xl">
-        <div className="flex items-center gap-2">
-          <Icon className="size-4 text-muted-foreground" />
-          <Badge variant="secondary">Stub</Badge>
-        </div>
-        <h1 className="mt-3">{title}</h1>
-        <p className="mt-2 text-muted-foreground">{description}</p>
-      </header>
+      <PageHeader title={title} description={description} eyebrow="Stub" icon={Icon} />
 
       <div className="grid gap-4 lg:grid-cols-3">
         {sections.map((section) => (

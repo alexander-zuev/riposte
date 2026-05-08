@@ -1,10 +1,11 @@
+/// <reference types="vite/client" />
+
 import {
   ArrowClockwiseIcon,
   HouseIcon,
   QuestionIcon,
   WarningOctagonIcon,
 } from '@phosphor-icons/react'
-/// <reference types="vite/client" />
 import * as Sentry from '@sentry/tanstackstart-react'
 import type { QueryClient } from '@tanstack/react-query'
 import {

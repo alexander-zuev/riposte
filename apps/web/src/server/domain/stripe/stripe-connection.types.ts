@@ -7,6 +7,7 @@ export type StripeConnection = {
   id: string
   userId: string
   stripeAccountId: string
+  stripeBusinessName: string | null
   livemode: boolean
   scope: string | null
   tokenType: string | null
@@ -21,6 +22,7 @@ export type StripeConnectionWithCredentials = StripeConnection & StripeConnectio
 export type UpsertStripeConnectionInput = {
   userId: string
   stripeAccountId: string
+  stripeBusinessName: string | null
   livemode: boolean
   scope?: string
   tokenType?: string

@@ -1,6 +1,6 @@
 import { settings } from '@web/lib/env/env'
 import { PostHogProvider } from 'posthog-js/react'
-import type { PropsWithChildren } from 'react'
+import type { PropsWithChildren, ReactNode } from 'react'
 
 const posthogOptions = {
   api_host: settings.posthog.apiHost,
@@ -19,7 +19,7 @@ export function AnalyticsProvider({ children }: PropsWithChildren) {
 
   return (
     <PostHogProvider apiKey={settings.posthog.apiKey} options={posthogOptions}>
-      {children}
+      {children as ReactNode}
     </PostHogProvider>
   )
 }

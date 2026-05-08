@@ -11,7 +11,7 @@ import type { ICredentialEncryptionService } from '@server/infrastructure/creden
 import type { DbStripeConnection, DrizzleDb } from '@server/infrastructure/db'
 import { stripeConnections } from '@server/infrastructure/db'
 import { Result } from 'better-result'
-import { eq } from 'drizzle-orm'
+import { desc, eq } from 'drizzle-orm'
 
 export class StripeConnectionRepository implements IStripeConnectionRepository {
   constructor(
@@ -35,6 +35,7 @@ export class StripeConnectionRepository implements IStripeConnectionRepository {
           .values({
             userId: input.userId,
             stripeAccountId: input.stripeAccountId,
+            stripeBusinessName: input.stripeBusinessName,
             livemode: input.livemode,
             scope: input.scope,
             tokenType: input.tokenType,
@@ -48,6 +49,7 @@ export class StripeConnectionRepository implements IStripeConnectionRepository {
             target: [stripeConnections.stripeAccountId, stripeConnections.livemode],
             set: {
               userId: input.userId,
+              stripeBusinessName: input.stripeBusinessName,
               scope: input.scope,
               tokenType: input.tokenType,
               credentialCiphertext: encryptedCredential.value.ciphertext,
@@ -75,6 +77,28 @@ export class StripeConnectionRepository implements IStripeConnectionRepository {
     stripeAccountId: string,
   ): Promise<Result<StripeConnection | null, DatabaseError>> {
     const found = await this.findDbByStripeAccountId(stripeAccountId)
+    if (found.isErr()) return found
+    return Result.ok(found.value ? this.toDomain(found.value) : null)
+  }
+
+  async findLatestByUserId(
+    userId: string,
+  ): Promise<Result<StripeConnection | null, DatabaseError>> {
+    const found = await Result.tryPromise({
+      try: async () => {
+        const [connection] = await this.db
+          .select()
+          .from(stripeConnections)
+          .where(eq(stripeConnections.userId, userId))
+          .orderBy(desc(stripeConnections.connectedAt))
+          .limit(1)
+
+        return connection ?? null
+      },
+      catch: (cause) =>
+        new DatabaseError({ message: 'Failed to find Stripe connection by user', cause }),
+    })
+
     if (found.isErr()) return found
     return Result.ok(found.value ? this.toDomain(found.value) : null)
   }
@@ -123,6 +147,7 @@ export class StripeConnectionRepository implements IStripeConnectionRepository {
       id: connection.id,
       userId: connection.userId,
       stripeAccountId: connection.stripeAccountId,
+      stripeBusinessName: connection.stripeBusinessName,
       livemode: connection.livemode,
       scope: connection.scope,
       tokenType: connection.tokenType,

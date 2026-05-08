@@ -19,6 +19,6 @@ const signInSearchSchema = z.object({
 
 export const Route = createFileRoute('/_public/sign-in')({
   validateSearch: zodValidator(signInSearchSchema),
-  loader: ({ context }) => context.queryClient.prefetchQuery(authQueries.lastLoginMethod()),
+  loader: async ({ context }) => context.queryClient.prefetchQuery(authQueries.lastLoginMethod()),
   component: SignInPage,
 })

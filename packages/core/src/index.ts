@@ -12,6 +12,7 @@
 export * from './domain/messaging'
 export * from './domain/primitives'
 export * from './domain/auth'
+export * from './domain/connections'
 export * from './domain/disputes'
 export * from './domain/storage'
 export * from './domain/waitlist'

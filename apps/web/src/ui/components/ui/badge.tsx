@@ -34,24 +34,22 @@ function Badge({
   render,
   ...props
 }: useRender.ComponentProps<'span'> & VariantProps<typeof badgeVariants>): React.JSX.Element {
-  return (
-    <IconContext.Provider value={BADGE_ICON_CONTEXT}>
-      {useRender({
-        defaultTagName: 'span',
-        props: mergeProps<'span'>(
-          {
-            className: cn(badgeVariants({ variant }), className),
-          },
-          props,
-        ),
-        render,
-        state: {
-          slot: 'badge',
-          variant,
-        },
-      })}
-    </IconContext.Provider>
-  )
+  const rendered = useRender({
+    defaultTagName: 'span',
+    props: mergeProps<'span'>(
+      {
+        className: cn(badgeVariants({ variant }), className),
+      },
+      props,
+    ),
+    render,
+    state: {
+      slot: 'badge',
+      variant,
+    },
+  }) as React.ReactNode
+
+  return <IconContext.Provider value={BADGE_ICON_CONTEXT}>{rendered}</IconContext.Provider>
 }
 
 export { Badge, badgeVariants }

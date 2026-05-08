@@ -26,7 +26,7 @@ export class ResendEmailService implements IEmailService {
   }): Promise<Result<{ id: string; success: boolean }, EmailServiceError>> {
     const sdkResponse = await Result.tryPromise(
       {
-        try: () =>
+        try: async () =>
           this.resend.emails.send({
             from: this.fromAddress,
             to: options.to,

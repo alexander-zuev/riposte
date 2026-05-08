@@ -6,6 +6,14 @@ import {
   sendWelcomeEmailSchema,
   userSignedUpSchema,
 } from '../auth/auth.messages'
+import { getConnectionsStatusSchema } from '../connections'
+import {
+  ingestDisputeClosedSchema,
+  ingestDisputeCreatedSchema,
+  ingestDisputeFundsReinstatedSchema,
+  ingestDisputeFundsWithdrawnSchema,
+  ingestDisputeUpdatedSchema,
+} from '../disputes/dispute.commands'
 import { disputeCaseReceivedSchema } from '../disputes/dispute.events'
 import { r2EventSchema, r2EventTransform } from '../storage/r2.messages'
 import { joinWaitlistSchema } from '../waitlist/waitlist.messages'
@@ -18,6 +26,11 @@ export const domainCommandSchema = z.discriminatedUnion('name', [
   sendMagicLinkSchema,
   sendWelcomeEmailSchema,
   joinWaitlistSchema,
+  ingestDisputeCreatedSchema,
+  ingestDisputeUpdatedSchema,
+  ingestDisputeClosedSchema,
+  ingestDisputeFundsReinstatedSchema,
+  ingestDisputeFundsWithdrawnSchema,
 ])
 
 export type DomainCommand = z.infer<typeof domainCommandSchema>
@@ -46,7 +59,10 @@ export type EventMap = {
  * Query Union & Map
  * ----------------------------------------------------------------------------------------------- */
 
-export const domainQuerySchema = z.discriminatedUnion('name', [getSessionStatusSchema])
+export const domainQuerySchema = z.discriminatedUnion('name', [
+  getSessionStatusSchema,
+  getConnectionsStatusSchema,
+])
 
 export type DomainQuery = z.infer<typeof domainQuerySchema>
 export type QueryName = DomainQuery['name']

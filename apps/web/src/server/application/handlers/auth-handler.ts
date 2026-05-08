@@ -30,7 +30,7 @@ export const sendWelcomeEmail: CommandHandler<SendWelcomeEmail, void, EmailServi
     text: template.text,
     tags: template.tags,
   })
-  if (sent.isErr()) return sent
+  if (sent.isErr()) return Result.err(sent.error)
 
   return Result.ok()
 }
@@ -49,7 +49,7 @@ export const sendMagicLink: CommandHandler<SendMagicLink, void, EmailServiceErro
     text: template.text,
     tags: template.tags,
   })
-  if (sent.isErr()) return sent
+  if (sent.isErr()) return Result.err(sent.error)
 
   return Result.ok()
 }

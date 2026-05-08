@@ -1,18 +1,8 @@
-import { QueryClient } from '@tanstack/react-query'
 import { createRouter } from '@tanstack/react-router'
 import { setupRouterSsrQueryIntegration } from '@tanstack/react-router-ssr-query'
+import { createQueryClient } from '@web/lib/query-client'
 
 import { routeTree } from './routeTree.gen'
-
-export function createQueryClient() {
-  return new QueryClient({
-    defaultOptions: {
-      queries: {
-        staleTime: 30_000,
-      },
-    },
-  })
-}
 
 export function getRouter() {
   const queryClient = createQueryClient()

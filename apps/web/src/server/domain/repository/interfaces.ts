@@ -26,6 +26,8 @@ export interface IStripeConnectionRepository {
     stripeAccountId: string,
   ) => Promise<Result<StripeConnection | null, DatabaseError>>
 
+  findLatestByUserId: (userId: string) => Promise<Result<StripeConnection | null, DatabaseError>>
+
   findWithCredentialsByStripeAccountId: (
     stripeAccountId: string,
   ) => Promise<

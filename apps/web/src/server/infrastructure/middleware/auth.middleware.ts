@@ -20,7 +20,7 @@ export interface RequiredAuthContext {
   session: Session
 }
 
-export const extractAuth = createMiddleware({ type: 'function' }).server(async ({ next }) => {
+export const extractAuth = createMiddleware().server(async ({ next }) => {
   const headers = getRequestHeaders()
   const auth = getAuthInstance()
 
@@ -43,7 +43,7 @@ export const extractAuth = createMiddleware({ type: 'function' }).server(async (
   })
 })
 
-export const requireAuth = createMiddleware({ type: 'function' })
+export const requireAuth = createMiddleware()
   .middleware([extractAuth])
   .server(async ({ next, context }) => {
     if (!context?.user || !context?.session) {

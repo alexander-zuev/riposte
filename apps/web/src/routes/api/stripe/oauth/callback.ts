@@ -1,6 +1,6 @@
 import { createLogger } from '@riposte/core'
 import { getServerConfig } from '@server/infrastructure/config'
-import { withDeps } from '@server/infrastructure/middleware/deps.middleware'
+import { withDepsRequest } from '@server/infrastructure/middleware/deps.middleware'
 import { consumeOAuthState } from '@server/infrastructure/stripe/stripe-oauth-state'
 import {
   getRequiredOAuthTokenFields,
@@ -13,7 +13,7 @@ const logger = createLogger('stripe-oauth')
 
 export const Route = createFileRoute('/api/stripe/oauth/callback')({
   server: {
-    middleware: [withDeps],
+    middleware: [withDepsRequest],
     handlers: {
       GET: async ({ request, context }) => {
         const url = new URL(request.url)

@@ -3,7 +3,6 @@ import * as Sentry from '@sentry/cloudflare'
 import handler, { createServerEntry } from '@tanstack/react-start/server-entry'
 import { queue } from '@web/server/entrypoints/queue'
 import { scheduled } from '@web/server/entrypoints/scheduled'
-import { createAppDeps } from '@web/server/infrastructure/app-deps'
 import { waitUntil } from 'cloudflare:workers'
 export { OutboxRelayDO, RateLimiterDO } from '@web/server/infrastructure/durable-objects'
 
@@ -20,9 +19,8 @@ setLoggerErrorHook((entry: ErrorCaptureEntry) => {
 const serverEntry = createServerEntry(handler)
 
 export default Sentry.withSentry((env: Env) => createSentryOptions(env), {
-  fetch(request, env, ctx) {
-    const deps = createAppDeps(env, ctx)
-    return serverEntry.fetch(request, { context: { deps } })
+  fetch(request, _env, _ctx) {
+    return serverEntry.fetch(request, { context: {} })
   },
   queue,
   scheduled,

@@ -1,14 +1,7 @@
 import { sql } from 'drizzle-orm'
-import {
-  boolean,
-  check,
-  index,
-  pgTable,
-  text,
-  timestamp,
-  uniqueIndex,
-  uuid,
-} from 'drizzle-orm/pg-core'
+import { boolean, index, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core'
+
+import { user } from './auth.schemas'
 
 export const stripeConnections = pgTable(
   'stripe_connections',
@@ -17,18 +10,22 @@ export const stripeConnections = pgTable(
       .default(sql`pg_catalog.gen_random_uuid()`)
       .primaryKey(),
 
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => user.id),
+
     stripeAccountId: text('stripe_account_id').notNull(),
     livemode: boolean('livemode').notNull(),
 
-    status: text('status').notNull(),
     scope: text('scope'),
     tokenType: text('token_type'),
 
-    accessToken: text('access_token').notNull(),
-    refreshToken: text('refresh_token').notNull(),
+    credentialCiphertext: text('credential_ciphertext').notNull(),
+    credentialIv: text('credential_iv').notNull(),
+    credentialKeyVersion: text('credential_key_version').notNull(),
+    accessTokenExpiresAt: timestamp('access_token_expires_at', { withTimezone: true }).notNull(),
 
     connectedAt: timestamp('connected_at', { withTimezone: true }).notNull(),
-    revokedAt: timestamp('revoked_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true })
       .notNull()
@@ -37,11 +34,7 @@ export const stripeConnections = pgTable(
   },
   (table) => [
     uniqueIndex('stripe_connections_account_mode_unique').on(table.stripeAccountId, table.livemode),
-    index('stripe_connections_status_idx').on(table.status),
-    check(
-      'stripe_connections_status_check',
-      sql`${table.status} in ('active', 'revoked', 'needs_reauth')`,
-    ),
+    index('stripe_connections_user_id_idx').on(table.userId),
   ],
 )
 

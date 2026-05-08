@@ -1,0 +1,3 @@
+ALTER TABLE "stripe_connections" ADD COLUMN "user_id" uuid NOT NULL;--> statement-breakpoint
+ALTER TABLE "stripe_connections" ADD COLUMN "access_token_expires_at" timestamp with time zone NOT NULL;--> statement-breakpoint
+ALTER TABLE "stripe_connections" ADD CONSTRAINT "stripe_connections_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;

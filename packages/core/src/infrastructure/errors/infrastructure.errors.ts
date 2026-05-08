@@ -85,6 +85,22 @@ export class KVError extends TaggedError('KVError')<{
   }
 }
 
+export class CredentialEncryptionError extends TaggedError('CredentialEncryptionError')<{
+  message: string
+  operation: 'encrypt' | 'decrypt'
+  cause: unknown
+  retryable: false
+}>() {
+  constructor(args: { operation: 'encrypt' | 'decrypt'; cause: unknown }) {
+    super({
+      message: `Credential ${args.operation} failed`,
+      operation: args.operation,
+      cause: args.cause,
+      retryable: false,
+    })
+  }
+}
+
 export type InfrastructureError =
   | DatabaseError
   | DuplicateMessageError
@@ -92,5 +108,6 @@ export type InfrastructureError =
   | DOUnreachableError
   | EmailServiceError
   | KVError
+  | CredentialEncryptionError
 
 import { DatabaseError } from './database.errors'

@@ -7,6 +7,8 @@ import type {
   IStripeConnectionRepository,
   IWaitlistRepository,
 } from '@server/domain/repository/interfaces'
+import type { ICredentialEncryptionService } from '@server/infrastructure/credentials/credential-encryption'
+import { CredentialEncryptionService } from '@server/infrastructure/credentials/credential-encryption'
 import type { DrizzleDb } from '@server/infrastructure/db'
 import { createDatabase } from '@server/infrastructure/db'
 import type { IEmailService } from '@server/infrastructure/email/interfaces'
@@ -54,6 +56,7 @@ export type AppDeps = {
   services: {
     messageBus: () => IMessageBus
     queueClient: () => IQueueClient
+    credentialEncryption: () => ICredentialEncryptionService
     email: () => IEmailService
     outboxRelay: () => IOutboxRelay
   }
@@ -75,7 +78,8 @@ export function createAppDeps(env: Env, ctx: WaitUntilContext): AppDeps {
     },
     repos: {
       outbox: (tx) => new OutboxRepository(tx),
-      stripeConnections: (tx) => new StripeConnectionRepository(tx),
+      stripeConnections: (tx) =>
+        new StripeConnectionRepository(tx, deps.services.credentialEncryption()),
       waitlist: (tx) => new WaitlistRepository(tx),
     },
     uow: {
@@ -84,6 +88,15 @@ export function createAppDeps(env: Env, ctx: WaitUntilContext): AppDeps {
     services: {
       messageBus: once<IMessageBus>(() => new MessageBus(deps)),
       queueClient: once<IQueueClient>(() => new QueueClient(env)),
+      credentialEncryption: once<ICredentialEncryptionService>(
+        () =>
+          new CredentialEncryptionService({
+            currentKeyVersion: env.CURRENT_CREDENTIAL_ENCRYPTION_KEY_VERSION,
+            keys: {
+              v1: env.CREDENTIAL_ENCRYPTION_KEY_V1,
+            },
+          }),
+      ),
       email: once<IEmailService>(() => new ResendEmailService(env.RESEND_API_KEY)),
       outboxRelay: once<IOutboxRelay>(
         () => new OutboxRelay(deps.db(), deps.services.queueClient(), deps.repos.outbox),

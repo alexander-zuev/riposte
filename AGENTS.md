@@ -51,6 +51,11 @@ DDD-inspired structure running on Cloudflare Workers:
 - `functions/` — TanStack Start server functions (RPC from frontend)
 - `middleware/` — Hono-style middleware (auth, error, logging)
 
+Repository contracts are domain-facing. Repository interfaces should accept and return domain
+types, not Drizzle inferred row/insert types. Drizzle `Db*` types are useful inside
+`infrastructure` implementations for schema-aligned DB mapping, but they should not leak into
+repository interfaces, application handlers, routes, or domain models.
+
 ### Message Bus Pattern
 
 Commands, events, and queries defined in `packages/core/src/domain/messaging/`. Transactional outbox pattern: handlers persist events to `message_outbox` table in the same transaction, then relay to Cloudflare Queues.

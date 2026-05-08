@@ -36,6 +36,27 @@
       "when": 1778171973529,
       "tag": "0004_noisy_mephistopheles",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1778172820457,
+      "tag": "0005_exotic_mandarin",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1778178497261,
+      "tag": "0006_cuddly_sally_floyd",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1778220039910,
+      "tag": "0007_flashy_the_executioner",
+      "breakpoints": true
     }
   ]
 }

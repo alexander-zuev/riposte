@@ -27,6 +27,14 @@ export function getServerConfig() {
       testModeSecretKey: env.STRIPE_TEST_SECRET_KEY,
       secretKey: env.STRIPE_SECRET_KEY,
       webhookSecret: env.STRIPE_WEBHOOK_SECRET,
+      appWebhookSecret: env.STRIPE_APP_WEBHOOK_SECRET,
+    },
+
+    credentialEncryption: {
+      currentKeyVersion: env.CURRENT_CREDENTIAL_ENCRYPTION_KEY_VERSION,
+      keys: {
+        v1: env.CREDENTIAL_ENCRYPTION_KEY_V1,
+      },
     },
 
     resendApiKey: env.RESEND_API_KEY,

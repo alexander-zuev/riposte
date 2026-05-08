@@ -1,6 +1,37 @@
-import type { DatabaseError, DomainEvent, DuplicateMessageError, UUIDv4 } from '@riposte/core'
+import type {
+  CredentialEncryptionError,
+  DatabaseError,
+  DomainEvent,
+  DuplicateMessageError,
+  UUIDv4,
+} from '@riposte/core'
+import type {
+  StripeConnection,
+  StripeConnectionWithCredentials,
+  UpsertStripeConnectionInput,
+} from '@server/domain/stripe'
 import type { DbOutbox } from '@server/infrastructure/db'
 import type { Result } from 'better-result'
+
+/* -------------------------------------------------------------------------------------------------
+ * Stripe Connection Repository
+ * ------------------------------------------------------------------------------------------------- */
+
+export interface IStripeConnectionRepository {
+  upsertConnectedAccount: (
+    input: UpsertStripeConnectionInput,
+  ) => Promise<Result<StripeConnection, DatabaseError | CredentialEncryptionError>>
+
+  findByStripeAccountId: (
+    stripeAccountId: string,
+  ) => Promise<Result<StripeConnection | null, DatabaseError>>
+
+  findWithCredentialsByStripeAccountId: (
+    stripeAccountId: string,
+  ) => Promise<
+    Result<StripeConnectionWithCredentials | null, DatabaseError | CredentialEncryptionError>
+  >
+}
 
 /* -------------------------------------------------------------------------------------------------
  * Waitlist Repository

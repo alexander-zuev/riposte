@@ -2,7 +2,9 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "riposte",
   "compatibility_date": "2026-04-21",
-  "compatibility_flags": ["nodejs_compat"],
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
   "main": "./src/server.ts",
   "upload_source_maps": true,
   "observability": {
@@ -19,7 +21,9 @@
   "rules": [
     {
       "type": "Text",
-      "globs": ["**/*.sql"],
+      "globs": [
+        "**/*.sql"
+      ],
       "fallthrough": true,
     },
   ],
@@ -32,15 +36,21 @@
   "migrations": [
     {
       "tag": "v1",
-      "new_sqlite_classes": ["RateLimiterDO"],
+      "new_sqlite_classes": [
+        "RateLimiterDO"
+      ],
     },
     {
       "tag": "v2",
-      "new_classes": ["OutboxRelayDO"],
+      "new_classes": [
+        "OutboxRelayDO"
+      ],
     },
   ],
   "triggers": {
-    "crons": ["*/1 * * * *"],
+    "crons": [
+      "*/1 * * * *"
+    ],
   },
   "env": {
     "dev": {
@@ -122,8 +132,12 @@
           "GOOGLE_CLIENT_SECRET",
           "GITHUB_CLIENT_SECRET",
           "TURNSTILE_SECRET_KEY",
+          "STRIPE_TEST_SECRET_KEY",
           "STRIPE_SECRET_KEY",
           "STRIPE_WEBHOOK_SECRET",
+          "STRIPE_APP_WEBHOOK_SECRET",
+          "CURRENT_CREDENTIAL_ENCRYPTION_KEY_VERSION",
+          "CREDENTIAL_ENCRYPTION_KEY_V1",
           "RESEND_API_KEY",
         ],
       },
@@ -208,6 +222,9 @@
           "TURNSTILE_SECRET_KEY",
           "STRIPE_SECRET_KEY",
           "STRIPE_WEBHOOK_SECRET",
+          "STRIPE_APP_WEBHOOK_SECRET",
+          "CURRENT_CREDENTIAL_ENCRYPTION_KEY_VERSION",
+          "CREDENTIAL_ENCRYPTION_KEY_V1",
           "RESEND_API_KEY",
         ],
       },
@@ -220,7 +237,10 @@
     },
     "test": {
       "name": "riposte-test",
-      "compatibility_flags": ["nodejs_compat", "service_binding_extra_handlers"],
+      "compatibility_flags": [
+        "nodejs_compat",
+        "service_binding_extra_handlers"
+      ],
       "hyperdrive": [
         {
           "binding": "HYPERDRIVE",
@@ -241,6 +261,9 @@
         "TURNSTILE_SECRET_KEY": "test",
         "STRIPE_SECRET_KEY": "test",
         "STRIPE_WEBHOOK_SECRET": "test",
+        "STRIPE_APP_WEBHOOK_SECRET": "test",
+        "CURRENT_CREDENTIAL_ENCRYPTION_KEY_VERSION": "v1",
+        "CREDENTIAL_ENCRYPTION_KEY_V1": "MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=",
         "RESEND_API_KEY": "test",
       },
       "kv_namespaces": [
@@ -372,6 +395,9 @@
           "TURNSTILE_SECRET_KEY",
           "STRIPE_SECRET_KEY",
           "STRIPE_WEBHOOK_SECRET",
+          "STRIPE_APP_WEBHOOK_SECRET",
+          "CURRENT_CREDENTIAL_ENCRYPTION_KEY_VERSION",
+          "CREDENTIAL_ENCRYPTION_KEY_V1",
           "RESEND_API_KEY",
         ],
       },

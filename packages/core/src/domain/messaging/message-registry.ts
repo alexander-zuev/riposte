@@ -13,9 +13,12 @@ import {
   ingestDisputeFundsReinstatedSchema,
   ingestDisputeFundsWithdrawnSchema,
   ingestDisputeUpdatedSchema,
+  syncDisputesSchema,
 } from '../disputes/dispute.commands'
 import { disputeCaseReceivedSchema } from '../disputes/dispute.events'
+import { getStripeAppSettingsSchema } from '../disputes/dispute.queries'
 import { r2EventSchema, r2EventTransform } from '../storage/r2.messages'
+import { handleStripeWebhookReceivedSchema } from '../stripe'
 import { joinWaitlistSchema } from '../waitlist/waitlist.messages'
 
 /* -------------------------------------------------------------------------------------------------
@@ -31,6 +34,8 @@ export const domainCommandSchema = z.discriminatedUnion('name', [
   ingestDisputeClosedSchema,
   ingestDisputeFundsReinstatedSchema,
   ingestDisputeFundsWithdrawnSchema,
+  syncDisputesSchema,
+  handleStripeWebhookReceivedSchema,
 ])
 
 export type DomainCommand = z.infer<typeof domainCommandSchema>
@@ -62,6 +67,7 @@ export type EventMap = {
 export const domainQuerySchema = z.discriminatedUnion('name', [
   getSessionStatusSchema,
   getConnectionsStatusSchema,
+  getStripeAppSettingsSchema,
 ])
 
 export type DomainQuery = z.infer<typeof domainQuerySchema>

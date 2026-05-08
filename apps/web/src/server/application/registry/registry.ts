@@ -5,6 +5,8 @@ import {
   sendWelcomeEmail,
 } from '@server/application/handlers/auth-handler'
 import { getConnectionsStatus } from '@server/application/handlers/connection-handler'
+import { getStripeAppSettings, syncDisputes } from '@server/application/handlers/stripe-app-handler'
+import { handleStripeWebhookReceived } from '@server/application/handlers/stripe-webhook-handler'
 import { joinWaitlist } from '@server/application/handlers/waitlist-handler'
 import { Result } from 'better-result'
 
@@ -21,6 +23,8 @@ export const COMMAND_HANDLERS = {
   IngestDisputeClosed: stubHandler,
   IngestDisputeFundsReinstated: stubHandler,
   IngestDisputeFundsWithdrawn: stubHandler,
+  SyncDisputes: syncDisputes,
+  HandleStripeWebhookReceived: handleStripeWebhookReceived,
 } satisfies CommandRegistry
 
 export const EVENT_HANDLERS: EventRegistry = {
@@ -30,6 +34,7 @@ export const EVENT_HANDLERS: EventRegistry = {
 export const QUERY_HANDLERS = {
   GetSessionStatus: getSessionStatus,
   GetConnectionsStatus: getConnectionsStatus,
+  GetStripeAppSettings: getStripeAppSettings,
 } satisfies QueryRegistry
 
 export const defaultRegistry = {

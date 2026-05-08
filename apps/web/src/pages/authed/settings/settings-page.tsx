@@ -122,6 +122,7 @@ export function SettingsPage() {
               <Button
                 type="button"
                 size="lg"
+                variant={isStripeConnected ? 'secondary' : 'default'}
                 className="h-12 w-full"
                 disabled={stripeOAuthMutation.isPending || connectionsQuery.isLoading}
                 onClick={handleStripeAction}

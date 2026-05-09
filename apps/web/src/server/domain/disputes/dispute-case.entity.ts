@@ -32,7 +32,7 @@ export type DisputeCaseSnapshot = {
   currency: CurrencyCode
   evidenceDueBy: Date
   workflowState: DisputeCaseWorkflowState
-  createdAt: Date
+  stripeCreatedAt: Date
   updatedAt: Date
 }
 
@@ -46,6 +46,7 @@ export type ReceiveStripeDisputeInput = {
 const stripeDisputeObjectSchema = z.object({
   id: z.string().min(1),
   amount: z.number().int().nonnegative(),
+  created: z.number().int().nonnegative(),
   currency: currencyCodeSchema,
   reason: z.string().min(1),
   status: stripeDisputeStatusSchema,
@@ -64,7 +65,7 @@ export class DisputeCase extends Entity<DisputeCaseSnapshot> {
     readonly amount: Money,
     readonly evidenceDueBy: Deadline,
     private state: DisputeCaseWorkflowState,
-    readonly createdAt: Date,
+    readonly stripeCreatedAt: Date,
     private updatedAt: Date,
   ) {
     super()
@@ -88,6 +89,8 @@ export class DisputeCase extends Entity<DisputeCaseSnapshot> {
     }
 
     const stripeDispute = parsed.data
+    const now = cloneDate(input.now ?? new Date())
+
     if (!stripeDispute.evidence_details.due_by || stripeDispute.evidence_details.due_by <= 0) {
       return Result.err(
         new ValidationError({
@@ -103,7 +106,6 @@ export class DisputeCase extends Entity<DisputeCaseSnapshot> {
       )
     }
 
-    const now = cloneDate(input.now ?? new Date())
     const disputeCase = new DisputeCase(
       stripeDisputeIdSchema.parse(stripeDispute.id),
       requireNonBlank(input.userId, 'userId'),
@@ -116,7 +118,7 @@ export class DisputeCase extends Entity<DisputeCaseSnapshot> {
       }),
       Deadline.create(new Date(stripeDispute.evidence_details.due_by * 1000)),
       { status: 'received' },
-      now,
+      new Date(stripeDispute.created * 1000),
       now,
     )
 
@@ -140,7 +142,7 @@ export class DisputeCase extends Entity<DisputeCaseSnapshot> {
       Money.deserialize({ amountMinor: snapshot.amountMinor, currency: snapshot.currency }),
       Deadline.deserialize(snapshot.evidenceDueBy),
       snapshot.workflowState,
-      cloneDate(snapshot.createdAt),
+      cloneDate(snapshot.stripeCreatedAt),
       cloneDate(snapshot.updatedAt),
     )
   }
@@ -215,7 +217,7 @@ export class DisputeCase extends Entity<DisputeCaseSnapshot> {
       currency: money.currency,
       evidenceDueBy: cloneDate(this.evidenceDueBy.serialize()),
       workflowState: this.state,
-      createdAt: cloneDate(this.createdAt),
+      stripeCreatedAt: cloneDate(this.stripeCreatedAt),
       updatedAt: cloneDate(this.updatedAt),
     }
   }

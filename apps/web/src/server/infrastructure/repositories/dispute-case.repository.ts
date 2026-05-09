@@ -134,14 +134,14 @@ function getCursorFilter(
 
 function getSortColumn(sortField: DisputeCaseSortField) {
   if (sortField === 'evidenceDueBy') return disputeCases.evidenceDueBy
-  if (sortField === 'createdAt') return disputeCases.createdAt
+  if (sortField === 'stripeCreatedAt') return disputeCases.stripeCreatedAt
 
   return disputeCases.amountMinor
 }
 
 function getSortValue(row: DbDisputeCase, sortField: DisputeCaseSortField) {
   if (sortField === 'amount') return row.amountMinor
-  if (sortField === 'createdAt') return row.createdAt.toISOString()
+  if (sortField === 'stripeCreatedAt') return row.stripeCreatedAt.toISOString()
 
   return row.evidenceDueBy.toISOString()
 }
@@ -166,7 +166,7 @@ function toDisputeCaseListItem(row: DbDisputeCase): DisputeCaseListItem {
       currency: row.currency,
     },
     evidenceDueBy: row.evidenceDueBy.toISOString(),
-    createdAt: row.createdAt.toISOString(),
+    stripeCreatedAt: row.stripeCreatedAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   }
 }

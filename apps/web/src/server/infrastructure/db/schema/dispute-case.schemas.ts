@@ -21,7 +21,7 @@ export const disputeCases = pgTable(
     evidenceDueBy: timestamp('evidence_due_by', { withTimezone: true }).notNull(),
     workflowState: jsonb('workflow_state').$type<DisputeCaseWorkflowState>().notNull(),
 
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    stripeCreatedAt: timestamp('stripe_created_at', { withTimezone: true }).notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true })
       .notNull()
       .defaultNow()

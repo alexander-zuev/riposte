@@ -4,7 +4,7 @@ import { baseQuerySchema } from '../base/base.messages'
 import { moneySchema, TimestamptzSchema, UserIdSchema } from '../primitives'
 import { disputeCaseWorkflowStatusSchema, stripeDisputeStatusSchema } from './dispute-case'
 
-export const disputeCaseSortFieldSchema = z.enum(['evidenceDueBy', 'createdAt', 'amount'])
+export const disputeCaseSortFieldSchema = z.enum(['evidenceDueBy', 'stripeCreatedAt', 'amount'])
 export const disputeCaseSortDirectionSchema = z.enum(['asc', 'desc'])
 
 export const disputeCaseSortSchema = z.object({
@@ -28,7 +28,7 @@ export const disputeCaseListItemSchema = z.object({
   reason: z.string().min(1),
   amount: moneySchema,
   evidenceDueBy: TimestamptzSchema,
-  createdAt: TimestamptzSchema,
+  stripeCreatedAt: TimestamptzSchema,
   updatedAt: TimestamptzSchema,
 })
 

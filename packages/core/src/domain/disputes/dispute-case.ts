@@ -50,3 +50,7 @@ export type DisputeCaseWorkflowState =
   | { status: 'won'; decidedAt: Date }
   | { status: 'lost'; decidedAt: Date }
   | { status: 'failed'; reason: string }
+
+// Stripe Price recurring interval. Source:
+// https://docs.stripe.com/api/prices/object#price_object-recurring-interval
+export type StripePriceRecurringInterval = 'day' | 'week' | 'month' | 'year'

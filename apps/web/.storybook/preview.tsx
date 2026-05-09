@@ -1,6 +1,6 @@
 import { withThemeByClassName } from '@storybook/addon-themes'
 import type { Preview, ReactRenderer } from '@storybook/react-vite'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClientProvider } from '@tanstack/react-query'
 import {
   createMemoryHistory,
   createRootRoute,
@@ -8,20 +8,22 @@ import {
   createRouter,
   RouterProvider,
 } from '@tanstack/react-router'
-import { createContext, useContext, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, type ReactNode } from 'react'
 
 import '../src/ui/stylesheets/globals.css'
-
-export const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: false,
-      refetchOnWindowFocus: false,
-    },
-  },
-})
+import { storybookQueryClient } from './query-client'
 
 const StoryContext = createContext<(() => ReactNode) | undefined>(undefined)
+
+function StoryRouterDecorator(Story: () => ReactNode) {
+  const renderStory = useCallback(() => <Story />, [Story])
+
+  return (
+    <StoryContext.Provider value={renderStory}>
+      <RouterProvider router={storyRouter} />
+    </StoryContext.Provider>
+  )
+}
 
 function RenderStory() {
   const storyFn = useContext(StoryContext)
@@ -59,13 +61,9 @@ const preview: Preview = {
       themes: { light: 'light', dark: 'dark' },
       defaultTheme: 'light',
     }),
+    StoryRouterDecorator,
     (Story) => (
-      <StoryContext.Provider value={() => <Story />}>
-        <RouterProvider router={storyRouter} />
-      </StoryContext.Provider>
-    ),
-    (Story) => (
-      <QueryClientProvider client={queryClient}>
+      <QueryClientProvider client={storybookQueryClient}>
         <Story />
       </QueryClientProvider>
     ),

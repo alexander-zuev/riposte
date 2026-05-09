@@ -3,7 +3,7 @@ import { unwrapRpc } from '@riposte/core/client'
 import { queryOptions } from '@tanstack/react-query'
 import { listDisputeCases } from '@web/server/entrypoints/functions/dispute-case.fn'
 
-type ListDisputeCasesInput = Omit<ListDisputeCases, 'type' | 'name' | 'userId'>
+export type ListDisputeCasesInput = Omit<ListDisputeCases, 'type' | 'name' | 'userId'>
 
 const defaultListInput = {
   limit: 20,

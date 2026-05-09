@@ -11,6 +11,8 @@ const startStubs = path.resolve(
   path.dirname(require.resolve('storybook-addon-tanstack-start/plugin')),
   'mocks/start-stubs.mjs',
 )
+const storybookRoot = path.resolve(__dirname)
+const disputeCaseFnMock = path.resolve(storybookRoot, 'mocks/dispute-case.fn.ts')
 
 function mockPlatformModules(): Plugin {
   const mocks: Record<string, string> = {
@@ -61,6 +63,8 @@ export default defineConfig({
     tsconfigPaths: true,
     alias: {
       '@tanstack/react-start/server': startStubs,
+      '@storybook-local': storybookRoot,
+      '@web/server/entrypoints/functions/dispute-case.fn': disputeCaseFnMock,
     },
   },
   optimizeDeps: {

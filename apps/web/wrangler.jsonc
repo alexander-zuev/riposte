@@ -125,6 +125,7 @@
         "POSTHOG_API_KEY": "phc_nYQ6Wm37RsonpnciM4CkjVaFtgQwU3XBBducMjZTfA4K",
         "GOOGLE_CLIENT_ID": "189119872614-1ef29kgrij3mmc38sbbmh7tl358835bg.apps.googleusercontent.com",
         "GITHUB_CLIENT_ID": "Ov23lipY2ARnuolBpq4A",
+        "CURRENT_CREDENTIAL_ENCRYPTION_KEY_VERSION": "v1",
       },
       "secrets": {
         "required": [
@@ -136,7 +137,6 @@
           "STRIPE_SECRET_KEY",
           "STRIPE_WEBHOOK_SECRET",
           "STRIPE_APP_WEBHOOK_SECRET",
-          "CURRENT_CREDENTIAL_ENCRYPTION_KEY_VERSION",
           "CREDENTIAL_ENCRYPTION_KEY_V1",
           "RESEND_API_KEY",
         ],
@@ -213,6 +213,7 @@
         "POSTHOG_API_KEY": "phc_nYQ6Wm37RsonpnciM4CkjVaFtgQwU3XBBducMjZTfA4K",
         "GOOGLE_CLIENT_ID": "",
         "GITHUB_CLIENT_ID": "",
+        "CURRENT_CREDENTIAL_ENCRYPTION_KEY_VERSION": "v1",
       },
       "secrets": {
         "required": [
@@ -223,7 +224,6 @@
           "STRIPE_SECRET_KEY",
           "STRIPE_WEBHOOK_SECRET",
           "STRIPE_APP_WEBHOOK_SECRET",
-          "CURRENT_CREDENTIAL_ENCRYPTION_KEY_VERSION",
           "CREDENTIAL_ENCRYPTION_KEY_V1",
           "RESEND_API_KEY",
         ],
@@ -386,6 +386,7 @@
         "POSTHOG_API_KEY": "phc_nYQ6Wm37RsonpnciM4CkjVaFtgQwU3XBBducMjZTfA4K",
         "GOOGLE_CLIENT_ID": "189119872614-dmtnkqeoibjubc0frpkms8sptbn9j2h0.apps.googleusercontent.com",
         "GITHUB_CLIENT_ID": "Ov23litSGfhKN1kOckGN",
+        "CURRENT_CREDENTIAL_ENCRYPTION_KEY_VERSION": "v1",
       },
       "secrets": {
         "required": [
@@ -396,7 +397,6 @@
           "STRIPE_SECRET_KEY",
           "STRIPE_WEBHOOK_SECRET",
           "STRIPE_APP_WEBHOOK_SECRET",
-          "CURRENT_CREDENTIAL_ENCRYPTION_KEY_VERSION",
           "CREDENTIAL_ENCRYPTION_KEY_V1",
           "RESEND_API_KEY",
         ],

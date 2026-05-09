@@ -138,6 +138,52 @@ const formatObject = (obj: unknown, isDev: boolean): string => {
   }
 }
 
+const stringifyLogEntry = (entry: Record<string, unknown>): string => {
+  try {
+    return JSON.stringify(entry, errorReplacer)
+  } catch {
+    return JSON.stringify({
+      timestamp: entry.timestamp,
+      level: entry.level,
+      module: entry.module,
+      message: entry.message,
+      data: '[Circular or Non-Serializable Object]',
+    })
+  }
+}
+
+const isBrowserRuntime = (): boolean => typeof window !== 'undefined'
+
+const supportsAnsiColor = (): boolean => {
+  if (typeof process === 'undefined') return false
+  if (process.env?.NO_COLOR !== undefined) return false
+  if (process.env?.FORCE_COLOR === '0') return false
+  if (process.env?.FORCE_COLOR !== undefined) return true
+  if (getNodeEnv() === 'development' && process.env?.CI === undefined) return true
+  return process.stdout?.isTTY === true
+}
+
+const ansi = {
+  gray: (value: string) => `\x1b[90m${value}\x1b[0m`,
+  blue: (value: string) => `\x1b[34m${value}\x1b[0m`,
+  green: (value: string) => `\x1b[32m${value}\x1b[0m`,
+  yellow: (value: string) => `\x1b[33m${value}\x1b[0m`,
+  red: (value: string) => `\x1b[31m${value}\x1b[0m`,
+}
+
+const colorizeLevelAnsi = (level: LogLevel): string => {
+  switch (level) {
+    case LogLevel.DEBUG:
+      return ansi.blue(level)
+    case LogLevel.INFO:
+      return ansi.green(level)
+    case LogLevel.WARN:
+      return ansi.yellow(level)
+    case LogLevel.ERROR:
+      return ansi.red(level)
+  }
+}
+
 export class Logger {
   private module: string
   private config: ReturnType<typeof getLogConfig>
@@ -170,7 +216,7 @@ export class Logger {
   private shouldLog(level: LogLevel): boolean {
     if (!this.config.enabled) return false
 
-    if (getNodeEnv() === 'production' && typeof window !== 'undefined') {
+    if (getNodeEnv() === 'production' && isBrowserRuntime()) {
       return false
     }
 
@@ -194,7 +240,7 @@ export class Logger {
 
     const timestamp = new Date().toISOString()
 
-    if (this.config.colorize) {
+    if (this.config.colorize && isBrowserRuntime()) {
       const formattedArgs = this.formatArgs(args)
       const levelColors: Record<LogLevel, string> = {
         [LogLevel.DEBUG]: 'color: #5b9bd5',
@@ -218,6 +264,21 @@ export class Logger {
         'color: inherit',
         ...formattedArgs,
       )
+    } else if (this.config.colorize && supportsAnsiColor()) {
+      const formattedArgs = this.formatArgs(args)
+      const devFn =
+        level === LogLevel.ERROR
+          ? console.error
+          : level === LogLevel.WARN
+            ? console.warn
+            : console.log
+
+      devFn(
+        `${ansi.gray(`[${timestamp}]`)} [${colorizeLevelAnsi(level)}] ${ansi.blue(
+          `[${this.module}]`,
+        )} ${message}`,
+        ...formattedArgs,
+      )
     } else {
       const entry: Record<string, unknown> = {
         timestamp,
@@ -231,7 +292,7 @@ export class Logger {
         entry.data = args
       }
 
-      const json = JSON.stringify(entry, errorReplacer)
+      const json = stringifyLogEntry(entry)
       const prodFn =
         level === LogLevel.ERROR
           ? console.error

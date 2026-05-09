@@ -1,4 +1,5 @@
-export type { BaseCommand, BaseEvent, BaseQuery } from '../base/base.messages'
+export type { BaseCommand, BaseEvent, BaseQuery, MessageId } from '../base/base.messages'
+export { MessageIdSchema, externalMessageIdSchema } from '../base/base.messages'
 export { createCommand, createEvent, createQuery } from './factory'
 export type {
   CommandMap,

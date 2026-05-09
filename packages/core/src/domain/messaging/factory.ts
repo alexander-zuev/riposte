@@ -1,3 +1,4 @@
+import type { MessageId } from '../base/base.messages'
 import type { UUIDv4 } from '../primitives'
 import type {
   CommandMap,
@@ -28,7 +29,7 @@ type QueryData<T extends QueryName> = Omit<QueryMap[T], QueryFactoryFields>
 export function createCommand<T extends CommandName>(
   name: T,
   data: CommandData<T>,
-  id: UUIDv4 = crypto.randomUUID(),
+  id: MessageId = crypto.randomUUID(),
 ): CommandMap[T] {
   return {
     id,

@@ -1,12 +1,7 @@
-// TODO: implement idempotency — deduplicate by event.id before handling commands
 // TODO: verify correct 4xx vs 5xx responses per Stripe retry semantics
 
-import {
-  createCommand,
-  createLogger,
-  type DomainCommand,
-  type StripeWebhookEvent,
-} from '@riposte/core'
+import { createLogger, stripeWebhookEventSchema } from '@riposte/core'
+import { toStripeWebhookCommand } from '@server/domain/stripe'
 import { getServerConfig } from '@server/infrastructure/config'
 import { withDepsRequest } from '@server/infrastructure/middleware/deps.middleware'
 import { createFileRoute } from '@tanstack/react-router'
@@ -21,6 +16,7 @@ export const Route = createFileRoute('/api/stripe/webhook')({
       POST: async ({ request, context }) => {
         const config = getServerConfig()
         const { deps } = context
+        const queueClient = deps.services.queueClient()
         const signature = request.headers.get('stripe-signature') ?? ''
         const rawBody = await request.text()
         let event: Stripe.Event
@@ -36,14 +32,24 @@ export const Route = createFileRoute('/api/stripe/webhook')({
           return new Response('Invalid signature', { status: 400 })
         }
 
-        const stripeEvent = toStripeWebhookEvent(event)
+        const parsedEvent = stripeWebhookEventSchema.safeParse(event)
+        if (!parsedEvent.success) {
+          logger.error('webhook_event_invalid', {
+            error: parsedEvent.error,
+            eventId: event.id,
+            type: event.type,
+          })
+          return new Response('Invalid event', { status: 500 })
+        }
+
+        const stripeEvent = parsedEvent.data
         const command = toStripeWebhookCommand(stripeEvent)
         if (!command) {
           logger.warn('webhook_unhandled_event_type', { type: event.type, id: event.id })
           return new Response('OK', { status: 200 })
         }
 
-        const result = await deps.services.queueClient().send(command)
+        const result = await queueClient.send(command)
 
         if (result.isErr()) {
           logger.error('webhook_queue_send_failed', {
@@ -59,35 +65,3 @@ export const Route = createFileRoute('/api/stripe/webhook')({
     },
   },
 })
-
-function toStripeWebhookEvent(event: Stripe.Event): StripeWebhookEvent {
-  return {
-    ...event,
-    id: event.id,
-    type: event.type,
-    account: event.account,
-    livemode: event.livemode,
-    data: event.data,
-  }
-}
-
-function toStripeWebhookCommand(event: StripeWebhookEvent): DomainCommand | undefined {
-  switch (event.type) {
-    case 'account.application.authorized':
-      return createCommand('HandleStripeAppAuthorized', { stripeEvent: event })
-    case 'account.application.deauthorized':
-      return createCommand('HandleStripeAppDeauthorized', { stripeEvent: event })
-    case 'charge.dispute.created':
-      return createCommand('IngestDisputeCreated', { stripeEvent: event })
-    case 'charge.dispute.updated':
-      return createCommand('IngestDisputeUpdated', { stripeEvent: event })
-    case 'charge.dispute.closed':
-      return createCommand('IngestDisputeClosed', { stripeEvent: event })
-    case 'charge.dispute.funds_reinstated':
-      return createCommand('IngestDisputeFundsReinstated', { stripeEvent: event })
-    case 'charge.dispute.funds_withdrawn':
-      return createCommand('IngestDisputeFundsWithdrawn', { stripeEvent: event })
-    default:
-      return undefined
-  }
-}

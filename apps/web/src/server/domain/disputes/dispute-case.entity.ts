@@ -130,6 +130,7 @@ export class DisputeCase extends Entity<DisputeCaseSnapshot> {
     disputeCase.addEvent(
       createEvent('DisputeCaseReceived', {
         disputeCaseId: disputeCase.id,
+        userId: disputeCase.userId,
       }),
     )
 

@@ -1,4 +1,5 @@
 import {
+  ArrowClockwiseIcon,
   BellIcon,
   DatabaseIcon,
   GearSixIcon,
@@ -125,17 +126,20 @@ export function SettingsPage() {
                 type="button"
                 size="lg"
                 variant={isStripeConnected ? 'secondary' : 'default'}
-                className="h-12 w-full"
+                className="w-full"
                 disabled={stripeOAuthMutation.isPending || connectionsQuery.isLoading}
                 onClick={handleStripeAction}
               >
-                {stripeOAuthMutation.isPending && <SpinnerIcon className="size-4 animate-spin" />}
-                {getStripeActionLabel({
-                  isLoading: connectionsQuery.isLoading,
-                  isError: connectionsQuery.isError,
-                  isConnected: isStripeConnected,
-                  isRevoked: isStripeRevoked,
-                })}
+                <StripeActionContent
+                  isPending={stripeOAuthMutation.isPending}
+                  isConnected={isStripeConnected}
+                  label={getStripeActionLabel({
+                    isLoading: connectionsQuery.isLoading,
+                    isError: connectionsQuery.isError,
+                    isConnected: isStripeConnected,
+                    isRevoked: isStripeRevoked,
+                  })}
+                />
               </Button>
             </CardContent>
           </Card>
@@ -212,6 +216,30 @@ function getStripeActionLabel(input: {
   if (input.isRevoked) return 'Connect again'
 
   return 'Connect to Stripe'
+}
+
+function StripeActionContent({
+  isPending,
+  isConnected,
+  label,
+}: {
+  isPending: boolean
+  isConnected: boolean
+  label: string
+}) {
+  const Icon = isConnected ? ArrowClockwiseIcon : isPending ? SpinnerIcon : null
+
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span className="flex size-4 items-center justify-center">
+        {Icon && (
+          <Icon data-icon="inline-start" className={isPending ? 'size-4 animate-spin' : 'size-4'} />
+        )}
+      </span>
+      <span>{label}</span>
+      <span className="size-4" aria-hidden="true" />
+    </span>
+  )
 }
 
 function getConnectionItems(input: {

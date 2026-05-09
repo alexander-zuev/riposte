@@ -4,6 +4,8 @@ import handler, { createServerEntry } from '@tanstack/react-start/server-entry'
 import { queue } from '@web/server/entrypoints/queue'
 import { scheduled } from '@web/server/entrypoints/scheduled'
 import { waitUntil } from 'cloudflare:workers'
+export { DisputeAgent } from '@web/server/infrastructure/agents/dispute-agent'
+export { DisputeAgentWorkflow } from '@web/server/infrastructure/workflows/dispute-agent-workflow'
 export { OutboxRelayDO, RateLimiterDO } from '@web/server/infrastructure/durable-objects'
 
 setLoggerErrorHook((entry: ErrorCaptureEntry) => {

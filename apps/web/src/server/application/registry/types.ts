@@ -45,15 +45,15 @@ export type QueryHandler<TQuery extends BaseQuery, TResult = unknown, TError = n
 
 // Registry types - map message names to handlers
 export type CommandRegistry = {
-  [K in keyof CommandMap]: CommandHandler<CommandMap[K], any, any>
+  [K in keyof CommandMap]: CommandHandler<CommandMap[K], unknown, unknown>
 }
 
 export type EventRegistry = {
-  [K in keyof EventMap]?: EventHandlerRegistration<EventMap[K]>[]
+  [K in keyof EventMap]?: EventHandlerRegistration<EventMap[K], unknown>[]
 }
 
 export type QueryRegistry = {
-  [K in keyof QueryMap]: QueryHandler<QueryMap[K], any, any>
+  [K in keyof QueryMap]: QueryHandler<QueryMap[K], unknown, unknown>
 }
 
 export type MessageRegistry = {

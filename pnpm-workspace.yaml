@@ -8,6 +8,7 @@ allowBuilds:
   '@tailwindcss/oxide': true
   better-sqlite3: true
   core-js: true
+  core-js-pure: true
   esbuild: true
   msw: true
   protobufjs: true
@@ -63,6 +64,7 @@ catalog:
   '@types/react': ^19.2.14
   '@types/react-dom': ^19.2.3
   '@vitejs/plugin-react': ^6.0.1
+  agents: ^0.12.3
   babel-plugin-react-compiler: ^1.0.0
   better-auth: ^1.6.9
   better-result: ^2.9.2

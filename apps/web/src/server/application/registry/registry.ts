@@ -5,6 +5,7 @@ import {
   sendWelcomeEmail,
 } from '@server/application/handlers/auth-handler'
 import { getConnectionsStatus } from '@server/application/handlers/connection-handler'
+import { startDisputeAgentWorkflow } from '@server/application/handlers/dispute-workflow-handler'
 import { getStripeAppSettings, syncDisputes } from '@server/application/handlers/stripe-app-handler'
 import {
   handleDisputeClosed,
@@ -33,9 +34,12 @@ export const COMMAND_HANDLERS = {
   HandleStripeAppDeauthorized: handleStripeAppDeauthorized,
 } satisfies CommandRegistry
 
-export const EVENT_HANDLERS: EventRegistry = {
+export const EVENT_HANDLERS = {
+  DisputeCaseReceived: [
+    { id: 'dispute.startDisputeAgentWorkflow', handle: startDisputeAgentWorkflow },
+  ],
   UserSignedUp: [{ id: 'auth.handleUserSignedUp', handle: handleUserSignedUp }],
-}
+} satisfies EventRegistry
 
 export const QUERY_HANDLERS = {
   GetSessionStatus: getSessionStatus,

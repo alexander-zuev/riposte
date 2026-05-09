@@ -38,6 +38,32 @@ export class DOUnreachableError extends TaggedError('DOUnreachableError')<{
   }
 }
 
+export class WorkflowError extends TaggedError('WorkflowError')<{
+  message: string
+  operation: 'start' | 'status' | 'pause' | 'resume' | 'terminate'
+  workflowName: string
+  instanceId: string
+  cause: unknown
+  retryable: boolean
+}>() {
+  constructor(args: {
+    operation: 'start' | 'status' | 'pause' | 'resume' | 'terminate'
+    workflowName: string
+    instanceId: string
+    cause: unknown
+    retryable: boolean
+  }) {
+    super({
+      message: `Workflow ${args.operation} failed for ${args.workflowName}:${args.instanceId}`,
+      operation: args.operation,
+      workflowName: args.workflowName,
+      instanceId: args.instanceId,
+      cause: args.cause,
+      retryable: args.retryable,
+    })
+  }
+}
+
 export class EmailServiceError extends TaggedError('EmailServiceError')<{
   message: string
   operation: 'configuration' | 'send'
@@ -106,6 +132,7 @@ export type InfrastructureError =
   | DuplicateMessageError
   | QueueError
   | DOUnreachableError
+  | WorkflowError
   | EmailServiceError
   | KVError
   | CredentialEncryptionError

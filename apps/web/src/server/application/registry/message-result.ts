@@ -7,8 +7,11 @@ import type {
   DuplicateMessageError,
   UnknownMessageTypeError,
 } from '@riposte/core'
-import type { COMMAND_HANDLERS, QUERY_HANDLERS } from '@server/application/registry/registry'
-import type { EventHandler } from '@server/application/registry/types'
+import type {
+  COMMAND_HANDLERS,
+  EVENT_HANDLERS,
+  QUERY_HANDLERS,
+} from '@server/application/registry/registry'
 import type { Result } from 'better-result'
 
 type ResultValue<TResult> = TResult extends Result<infer TValue, unknown> ? TValue : never
@@ -23,7 +26,9 @@ type QueryResult<TQuery extends DomainQuery> = TQuery['name'] extends keyof type
   ? Awaited<ReturnType<(typeof QUERY_HANDLERS)[TQuery['name']]>>
   : never
 
-type EventResult<TEvent extends DomainEvent> = Awaited<ReturnType<EventHandler<TEvent>>>
+type EventResult<TEvent extends DomainEvent> = TEvent['name'] extends keyof typeof EVENT_HANDLERS
+  ? Awaited<ReturnType<(typeof EVENT_HANDLERS)[TEvent['name']][number]['handle']>>
+  : Result<void, never>
 
 type HandlerResult<TMessage extends DomainMessage> = TMessage extends DomainCommand
   ? CommandResult<TMessage>

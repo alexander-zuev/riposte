@@ -57,6 +57,7 @@
     "@tanstack/react-router-ssr-query": "catalog:",
     "@tanstack/react-start": "catalog:",
     "@tanstack/zod-adapter": "catalog:",
+    "agents": "catalog:",
     "better-auth": "catalog:",
     "better-result": "catalog:",
     "class-variance-authority": "catalog:",

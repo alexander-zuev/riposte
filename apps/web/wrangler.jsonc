@@ -46,6 +46,12 @@
         "OutboxRelayDO"
       ],
     },
+    {
+      "tag": "v3",
+      "new_sqlite_classes": [
+        "DisputeAgent"
+      ],
+    },
   ],
   "triggers": {
     "crons": [
@@ -116,8 +122,19 @@
             "name": "OUTBOX_RELAY",
             "class_name": "OutboxRelayDO",
           },
+          {
+            "name": "DisputeAgent",
+            "class_name": "DisputeAgent",
+          },
         ],
       },
+      "workflows": [
+        {
+          "name": "dispute-agent-workflow-dev",
+          "binding": "DISPUTE_AGENT_WORKFLOW",
+          "class_name": "DisputeAgentWorkflow",
+        },
+      ],
       "vars": {
         "ENV": "development",
         "APP_URL": "http://localhost:3000",
@@ -204,8 +221,19 @@
             "name": "OUTBOX_RELAY",
             "class_name": "OutboxRelayDO",
           },
+          {
+            "name": "DisputeAgent",
+            "class_name": "DisputeAgent",
+          },
         ],
       },
+      "workflows": [
+        {
+          "name": "dispute-agent-workflow-staging",
+          "binding": "DISPUTE_AGENT_WORKFLOW",
+          "class_name": "DisputeAgentWorkflow",
+        },
+      ],
       "vars": {
         "ENV": "staging",
         "APP_URL": "https://staging.riposte.sh",
@@ -313,8 +341,19 @@
             "name": "OUTBOX_RELAY",
             "class_name": "OutboxRelayDO",
           },
+          {
+            "name": "DisputeAgent",
+            "class_name": "DisputeAgent",
+          },
         ],
       },
+      "workflows": [
+        {
+          "name": "dispute-agent-workflow-test",
+          "binding": "DISPUTE_AGENT_WORKFLOW",
+          "class_name": "DisputeAgentWorkflow",
+        },
+      ],
     },
     "prod": {
       "name": "riposte",
@@ -377,8 +416,19 @@
             "name": "OUTBOX_RELAY",
             "class_name": "OutboxRelayDO",
           },
+          {
+            "name": "DisputeAgent",
+            "class_name": "DisputeAgent",
+          },
         ],
       },
+      "workflows": [
+        {
+          "name": "dispute-agent-workflow-prod",
+          "binding": "DISPUTE_AGENT_WORKFLOW",
+          "class_name": "DisputeAgentWorkflow",
+        },
+      ],
       "vars": {
         "ENV": "production",
         "APP_URL": "https://riposte.sh",

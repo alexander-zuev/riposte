@@ -9,6 +9,10 @@ import type {
   IStripeConnectionRepository,
   IWaitlistRepository,
 } from '@server/domain/repository/interfaces'
+import {
+  DisputeAgentClient,
+  type IDisputeAgentClient,
+} from '@server/infrastructure/agents/dispute-agent-client'
 import type { ICredentialEncryptionService } from '@server/infrastructure/credentials/credential-encryption'
 import { CredentialEncryptionService } from '@server/infrastructure/credentials/credential-encryption'
 import type { DrizzleDb } from '@server/infrastructure/db'
@@ -62,6 +66,7 @@ export type AppDeps = {
     connectionManager: () => IConnectionManager
     queueClient: () => IQueueClient
     credentialEncryption: () => ICredentialEncryptionService
+    disputeAgentClient: () => IDisputeAgentClient
     email: () => IEmailService
     outboxRelay: () => IOutboxRelay
   }
@@ -106,6 +111,7 @@ export function createAppDeps(env: Env, ctx: WaitUntilContext): AppDeps {
             },
           }),
       ),
+      disputeAgentClient: once<IDisputeAgentClient>(() => new DisputeAgentClient(env)),
       email: once<IEmailService>(() => new ResendEmailService(env.RESEND_API_KEY)),
       outboxRelay: once<IOutboxRelay>(
         () => new OutboxRelay(deps.db(), deps.services.queueClient(), deps.repos.outbox),

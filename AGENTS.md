@@ -60,6 +60,11 @@ When a Drizzle schema column represents a domain union or branded type, type it 
 boundary with the domain type, for example `text('status').$type<StripeConnectionStatus>()`.
 Do not widen domain values to plain `string` and then repair them throughout repositories.
 
+If a production-code change forces edits to an unrelated unit-test mock, stop and re-evaluate the
+production-code dependency direction before touching the mock. Do not patch unrelated mocks to
+satisfy import-time side effects. Prefer reducing import-time work or localizing dependency access,
+especially in infrastructure modules that import Drizzle table schemas.
+
 ### Message Bus Pattern
 
 Commands, events, and queries defined in `packages/core/src/domain/messaging/`. Transactional outbox pattern: handlers persist events to `message_outbox` table in the same transaction, then relay to Cloudflare Queues.

@@ -1,11 +1,47 @@
-import type { DisputeCaseReceived, WorkflowError } from '@riposte/core'
-import { createLogger } from '@riposte/core'
+import type {
+  CollectDisputeEvidence,
+  DatabaseError,
+  DecideDisputeSubmission,
+  DisputeCaseReceived,
+  EnrichDisputeContext,
+  PrepareEvidencePacket,
+  ReviewEvidencePacket,
+  SubmitDisputeResponse,
+  WorkflowError,
+} from '@riposte/core'
+import { createLogger, EntityNotFoundError } from '@riposte/core'
 import type { HandlerContext } from '@server/application/registry/types'
 import { Result } from 'better-result'
 
 const logger = createLogger('dispute-workflow-handler')
 
 type DisputeAgentWorkflowHandlerError = WorkflowError
+type DisputeWorkflowCommandError = DatabaseError | EntityNotFoundError
+
+// Temporary workflow skeleton outputs. Replace these with real evidence, packet,
+// review, and submission contracts as each command grows past logging/stub behavior.
+export type CollectDisputeEvidenceResult = {
+  status: 'pending_agent_tools'
+}
+
+export type PrepareEvidencePacketResult = {
+  status: 'pending_packet_generation'
+}
+
+export type ReviewEvidencePacketResult = {
+  status: 'pending_evidence_review'
+}
+
+export type DecideDisputeSubmissionResult =
+  | { action: 'submit' }
+  | { action: 'ready_for_review'; reason: string }
+  | { action: 'needs_input'; reason: string }
+  | { action: 'ignore'; reason: string }
+  | { action: 'fail'; reason: string }
+
+export type SubmitDisputeResponseResult = {
+  action: 'submitted'
+}
 
 export async function startDisputeAgentWorkflow(
   event: DisputeCaseReceived,
@@ -23,4 +59,78 @@ export async function startDisputeAgentWorkflow(
   })
 
   return Result.ok(undefined)
+}
+
+export async function enrichDisputeContext(
+  command: EnrichDisputeContext,
+  { deps, tx }: HandlerContext,
+): Promise<Result<void, DisputeWorkflowCommandError>> {
+  const found = await deps.repos.disputeCases(tx).findById(command.disputeCaseId)
+  if (found.isErr()) return Result.err(found.error)
+
+  if (!found.value) {
+    return Result.err(new EntityNotFoundError({ entity: 'DisputeCase', id: command.disputeCaseId }))
+  }
+
+  found.value.startEvidenceCollection()
+
+  const saved = await deps.repos.disputeCases(tx).save(found.value)
+  if (saved.isErr()) return Result.err(saved.error)
+
+  logger.info('dispute_context_enrichment_started', {
+    disputeCaseId: saved.value.id,
+    userId: saved.value.userId,
+  })
+
+  return Result.ok(undefined)
+}
+
+export async function collectDisputeEvidence(
+  command: CollectDisputeEvidence,
+): Promise<Result<CollectDisputeEvidenceResult, never>> {
+  logger.info('dispute_evidence_collection_pending_agent_tools', {
+    disputeCaseId: command.disputeCaseId,
+  })
+
+  return Result.ok({ status: 'pending_agent_tools' })
+}
+
+export async function prepareEvidencePacket(
+  command: PrepareEvidencePacket,
+): Promise<Result<PrepareEvidencePacketResult, never>> {
+  logger.info('dispute_evidence_packet_pending_generation', {
+    disputeCaseId: command.disputeCaseId,
+  })
+
+  return Result.ok({ status: 'pending_packet_generation' })
+}
+
+export async function reviewEvidencePacket(
+  command: ReviewEvidencePacket,
+): Promise<Result<ReviewEvidencePacketResult, never>> {
+  logger.info('dispute_evidence_review_pending', {
+    disputeCaseId: command.disputeCaseId,
+  })
+
+  return Result.ok({ status: 'pending_evidence_review' })
+}
+
+export async function decideDisputeSubmission(
+  command: DecideDisputeSubmission,
+): Promise<Result<DecideDisputeSubmissionResult, never>> {
+  logger.info('dispute_submission_decision_pending_tools', {
+    disputeCaseId: command.disputeCaseId,
+  })
+
+  return Result.ok({ action: 'needs_input', reason: 'agent_tools_pending' })
+}
+
+export async function submitDisputeResponse(
+  command: SubmitDisputeResponse,
+): Promise<Result<SubmitDisputeResponseResult, never>> {
+  logger.info('dispute_response_submission_pending', {
+    disputeCaseId: command.disputeCaseId,
+  })
+
+  return Result.ok({ action: 'submitted' })
 }

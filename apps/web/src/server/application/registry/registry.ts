@@ -5,7 +5,15 @@ import {
   sendWelcomeEmail,
 } from '@server/application/handlers/auth-handler'
 import { getConnectionsStatus } from '@server/application/handlers/connection-handler'
-import { startDisputeAgentWorkflow } from '@server/application/handlers/dispute-workflow-handler'
+import {
+  collectDisputeEvidence,
+  decideDisputeSubmission,
+  enrichDisputeContext,
+  prepareEvidencePacket,
+  reviewEvidencePacket,
+  startDisputeAgentWorkflow,
+  submitDisputeResponse,
+} from '@server/application/handlers/dispute-workflow-handler'
 import { getStripeAppSettings, syncDisputes } from '@server/application/handlers/stripe-app-handler'
 import {
   handleDisputeClosed,
@@ -32,6 +40,12 @@ export const COMMAND_HANDLERS = {
   SyncDisputes: syncDisputes,
   HandleStripeAppAuthorized: handleStripeAppAuthorized,
   HandleStripeAppDeauthorized: handleStripeAppDeauthorized,
+  EnrichDisputeContext: enrichDisputeContext,
+  CollectDisputeEvidence: collectDisputeEvidence,
+  PrepareEvidencePacket: prepareEvidencePacket,
+  ReviewEvidencePacket: reviewEvidencePacket,
+  DecideDisputeSubmission: decideDisputeSubmission,
+  SubmitDisputeResponse: submitDisputeResponse,
 } satisfies CommandRegistry
 
 export const EVENT_HANDLERS = {

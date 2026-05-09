@@ -13,6 +13,12 @@ import {
   ingestDisputeFundsReinstatedSchema,
   ingestDisputeFundsWithdrawnSchema,
   ingestDisputeUpdatedSchema,
+  collectDisputeEvidenceSchema,
+  decideDisputeSubmissionSchema,
+  enrichDisputeContextSchema,
+  prepareEvidencePacketSchema,
+  reviewEvidencePacketSchema,
+  submitDisputeResponseSchema,
   syncDisputesSchema,
 } from '../disputes/dispute.commands'
 import { disputeCaseReceivedSchema } from '../disputes/dispute.events'
@@ -35,6 +41,12 @@ export const domainCommandSchema = z.discriminatedUnion('name', [
   ingestDisputeFundsReinstatedSchema,
   ingestDisputeFundsWithdrawnSchema,
   syncDisputesSchema,
+  enrichDisputeContextSchema,
+  collectDisputeEvidenceSchema,
+  prepareEvidencePacketSchema,
+  reviewEvidencePacketSchema,
+  decideDisputeSubmissionSchema,
+  submitDisputeResponseSchema,
   handleStripeAppAuthorizedSchema,
   handleStripeAppDeauthorizedSchema,
 ])

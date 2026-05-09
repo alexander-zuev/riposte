@@ -22,6 +22,12 @@ export interface IStripeConnectionRepository {
     input: UpsertStripeConnectionInput,
   ) => Promise<Result<StripeConnection, DatabaseError | CredentialEncryptionError>>
 
+  markRevokedByStripeAccountId: (input: {
+    stripeAccountId: string
+    stripeEventId: string
+    revokedAt: Date
+  }) => Promise<Result<StripeConnection | null, DatabaseError>>
+
   findByStripeAccountId: (
     stripeAccountId: string,
   ) => Promise<Result<StripeConnection | null, DatabaseError>>

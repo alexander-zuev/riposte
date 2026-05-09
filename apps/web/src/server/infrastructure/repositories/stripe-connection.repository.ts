@@ -37,6 +37,7 @@ export class StripeConnectionRepository implements IStripeConnectionRepository {
             stripeAccountId: input.stripeAccountId,
             stripeBusinessName: input.stripeBusinessName,
             livemode: input.livemode,
+            status: 'active',
             scope: input.scope,
             tokenType: input.tokenType,
             credentialCiphertext: encryptedCredential.value.ciphertext,
@@ -50,6 +51,7 @@ export class StripeConnectionRepository implements IStripeConnectionRepository {
             set: {
               userId: input.userId,
               stripeBusinessName: input.stripeBusinessName,
+              status: 'active',
               scope: input.scope,
               tokenType: input.tokenType,
               credentialCiphertext: encryptedCredential.value.ciphertext,
@@ -57,6 +59,8 @@ export class StripeConnectionRepository implements IStripeConnectionRepository {
               credentialKeyVersion: encryptedCredential.value.keyVersion,
               accessTokenExpiresAt: input.accessTokenExpiresAt,
               connectedAt: input.connectedAt,
+              revokedAt: null,
+              revokedStripeEventId: null,
               updatedAt: new Date(),
             },
           })
@@ -69,15 +73,42 @@ export class StripeConnectionRepository implements IStripeConnectionRepository {
       catch: (cause) => new DatabaseError({ message: 'Failed to upsert Stripe connection', cause }),
     })
 
-    if (saved.isErr()) return saved
+    if (saved.isErr()) return Result.err(saved.error)
     return Result.ok(this.toDomain(saved.value))
+  }
+
+  async markRevokedByStripeAccountId(input: {
+    stripeAccountId: string
+    stripeEventId: string
+    revokedAt: Date
+  }): Promise<Result<StripeConnection | null, DatabaseError>> {
+    const saved = await Result.tryPromise({
+      try: async () => {
+        const [connection] = await this.db
+          .update(stripeConnections)
+          .set({
+            status: 'revoked',
+            revokedAt: input.revokedAt,
+            revokedStripeEventId: input.stripeEventId,
+            updatedAt: new Date(),
+          })
+          .where(eq(stripeConnections.stripeAccountId, input.stripeAccountId))
+          .returning()
+
+        return connection ?? null
+      },
+      catch: (cause) => new DatabaseError({ message: 'Failed to revoke Stripe connection', cause }),
+    })
+
+    if (saved.isErr()) return Result.err(saved.error)
+    return Result.ok(saved.value ? this.toDomain(saved.value) : null)
   }
 
   async findByStripeAccountId(
     stripeAccountId: string,
   ): Promise<Result<StripeConnection | null, DatabaseError>> {
     const found = await this.findDbByStripeAccountId(stripeAccountId)
-    if (found.isErr()) return found
+    if (found.isErr()) return Result.err(found.error)
     return Result.ok(found.value ? this.toDomain(found.value) : null)
   }
 
@@ -99,7 +130,7 @@ export class StripeConnectionRepository implements IStripeConnectionRepository {
         new DatabaseError({ message: 'Failed to find Stripe connection by user', cause }),
     })
 
-    if (found.isErr()) return found
+    if (found.isErr()) return Result.err(found.error)
     return Result.ok(found.value ? this.toDomain(found.value) : null)
   }
 
@@ -149,10 +180,13 @@ export class StripeConnectionRepository implements IStripeConnectionRepository {
       stripeAccountId: connection.stripeAccountId,
       stripeBusinessName: connection.stripeBusinessName,
       livemode: connection.livemode,
+      status: connection.status,
       scope: connection.scope,
       tokenType: connection.tokenType,
       accessTokenExpiresAt: connection.accessTokenExpiresAt,
       connectedAt: connection.connectedAt,
+      revokedAt: connection.revokedAt,
+      revokedStripeEventId: connection.revokedStripeEventId,
       createdAt: connection.createdAt,
       updatedAt: connection.updatedAt,
     }

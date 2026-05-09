@@ -56,6 +56,10 @@ types, not Drizzle inferred row/insert types. Drizzle `Db*` types are useful ins
 `infrastructure` implementations for schema-aligned DB mapping, but they should not leak into
 repository interfaces, application handlers, routes, or domain models.
 
+When a Drizzle schema column represents a domain union or branded type, type it at the schema
+boundary with the domain type, for example `text('status').$type<StripeConnectionStatus>()`.
+Do not widen domain values to plain `string` and then repair them throughout repositories.
+
 ### Message Bus Pattern
 
 Commands, events, and queries defined in `packages/core/src/domain/messaging/`. Transactional outbox pattern: handlers persist events to `message_outbox` table in the same transaction, then relay to Cloudflare Queues.

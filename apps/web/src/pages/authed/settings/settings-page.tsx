@@ -40,6 +40,7 @@ export function SettingsPage() {
   const connectionsQuery = useQuery(connectionsQueries.status())
   const stripeConnection = connectionsQuery.data?.stripe
   const isStripeConnected = stripeConnection?.status === 'connected'
+  const isStripeRevoked = stripeConnection?.status === 'revoked'
   const stripeOAuthMutation = useMutation({
     mutationFn: async () => unwrapRpc(await getStripeOAuthUrl()),
     onMutate: () => {
@@ -103,6 +104,7 @@ export function SettingsPage() {
                   isLoading={connectionsQuery.isLoading}
                   isError={connectionsQuery.isError}
                   isConnected={isStripeConnected}
+                  isRevoked={isStripeRevoked}
                 />
               </CardAction>
             </CardHeader>
@@ -132,6 +134,7 @@ export function SettingsPage() {
                   isLoading: connectionsQuery.isLoading,
                   isError: connectionsQuery.isError,
                   isConnected: isStripeConnected,
+                  isRevoked: isStripeRevoked,
                 })}
               </Button>
             </CardContent>
@@ -182,14 +185,17 @@ function StripeStatusBadge({
   isLoading,
   isError,
   isConnected,
+  isRevoked,
 }: {
   isLoading: boolean
   isError: boolean
   isConnected: boolean
+  isRevoked: boolean
 }) {
   if (isLoading) return <Badge variant="secondary">Loading</Badge>
   if (isError) return <Badge variant="destructive">Error</Badge>
   if (isConnected) return <Badge variant="success">Connected</Badge>
+  if (isRevoked) return <Badge variant="warning">App uninstalled</Badge>
 
   return <Badge variant="warning">Needs connection</Badge>
 }
@@ -198,10 +204,12 @@ function getStripeActionLabel(input: {
   isLoading: boolean
   isError: boolean
   isConnected: boolean
+  isRevoked: boolean
 }) {
   if (input.isLoading) return 'Loading status'
   if (input.isError) return 'Retry status'
-  if (input.isConnected) return 'Reconnect Stripe'
+  if (input.isConnected) return 'Reconnect'
+  if (input.isRevoked) return 'Connect again'
 
   return 'Connect to Stripe'
 }

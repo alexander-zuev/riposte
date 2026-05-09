@@ -29,6 +29,8 @@
     "db:studio:dev": "dotenvx run -f .env.drizzle -- env DRIZZLE_ENV=dev drizzle-kit studio --port 4983",
     "db:studio:staging": "dotenvx run -f .env.drizzle -- env DRIZZLE_ENV=staging drizzle-kit studio --port 4984",
     "db:studio:prod": "dotenvx run -f .env.drizzle -- env DRIZZLE_ENV=prod drizzle-kit studio --port 4985",
+    "secret:set": "dotenvx set -f .env",
+    "secret:show": "dotenvx get -f .env",
     "better-auth-generate": "npx @better-auth/cli@latest generate --config src/server/infrastructure/auth/auth-gen.ts --output src/server/infrastructure/db/schema/auth.schemas.ts -y",
     "logs": "wrangler tail --env staging --format pretty",
     "logs:prod": "wrangler tail --env prod --format pretty",

@@ -3,16 +3,21 @@ export type StripeConnectionCredentials = {
   refreshToken: string
 }
 
+export type StripeConnectionStatus = 'active' | 'revoked'
+
 export type StripeConnection = {
   id: string
   userId: string
   stripeAccountId: string
   stripeBusinessName: string | null
   livemode: boolean
+  status: StripeConnectionStatus
   scope: string | null
   tokenType: string | null
   accessTokenExpiresAt: Date
   connectedAt: Date
+  revokedAt: Date | null
+  revokedStripeEventId: string | null
   createdAt: Date
   updatedAt: Date
 }

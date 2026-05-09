@@ -71,6 +71,13 @@
       "when": 1778269532592,
       "tag": "0009_dapper_proteus",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1778314494654,
+      "tag": "0010_stale_nemesis",
+      "breakpoints": true
     }
   ]
 }

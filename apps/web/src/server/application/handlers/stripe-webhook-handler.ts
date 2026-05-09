@@ -38,13 +38,40 @@ export async function handleStripeAppAuthorized(
 
 export async function handleStripeAppDeauthorized(
   command: HandleStripeAppDeauthorized,
+  { deps, tx }: HandlerContext,
 ): Promise<Result<void, StripeWebhookHandlerError>> {
+  const { account, id: eventId } = command.stripeEvent
+
   logger.info('stripe_app_deauthorized_received', {
-    account: command.stripeEvent.account,
-    eventId: command.stripeEvent.id,
+    account,
+    eventId,
     livemode: command.stripeEvent.livemode,
     stripeEvent: command.stripeEvent,
     type: command.stripeEvent.type,
+  })
+
+  if (!account) {
+    logger.error('stripe_app_deauthorized_missing_account', { eventId })
+    return Result.ok(undefined)
+  }
+
+  const revoked = await deps.repos.stripeConnections(tx).markRevokedByStripeAccountId({
+    stripeAccountId: account,
+    stripeEventId: eventId,
+    revokedAt: new Date(),
+  })
+  if (revoked.isErr()) return Result.err(revoked.error)
+
+  if (!revoked.value) {
+    logger.warn('stripe_app_deauthorized_unknown_account', { account, eventId })
+    return Result.ok(undefined)
+  }
+
+  logger.info('stripe_connection_revoked', {
+    account,
+    eventId,
+    stripeConnectionId: revoked.value.id,
+    userId: revoked.value.userId,
   })
 
   return Result.ok(undefined)

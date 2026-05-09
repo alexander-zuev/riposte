@@ -12,6 +12,10 @@ export type StripeConnectionState =
       status: 'not_connected'
     }
   | {
+      status: 'revoked'
+      connection: StripeConnection
+    }
+  | {
       status: 'connected'
       connection: StripeConnection
     }
@@ -42,7 +46,7 @@ export function createConnectionsStatus(input: {
 
   return {
     stripe: {
-      status: 'connected',
+      status: input.stripeConnection.status === 'revoked' ? 'revoked' : 'connected',
       connection: input.stripeConnection,
     },
     appDatabase: { status: 'not_connected' },

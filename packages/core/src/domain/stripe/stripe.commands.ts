@@ -2,9 +2,28 @@ import { z } from 'zod'
 
 import { baseCommandSchema } from '../base/base.messages'
 
-export const handleStripeWebhookReceivedSchema = baseCommandSchema.extend({
-  name: z.literal('HandleStripeWebhookReceived'),
-  stripeEvent: z.record(z.string(), z.unknown()),
+export const stripeWebhookEventSchema = z
+  .object({
+    id: z.string().min(1),
+    type: z.string().min(1),
+    account: z.string().min(1).optional(),
+    livemode: z.boolean(),
+    data: z.unknown(),
+  })
+  .passthrough()
+
+const stripeWebhookCommandBase = baseCommandSchema.extend({
+  stripeEvent: stripeWebhookEventSchema,
 })
 
-export type HandleStripeWebhookReceived = z.infer<typeof handleStripeWebhookReceivedSchema>
+export const handleStripeAppAuthorizedSchema = stripeWebhookCommandBase.extend({
+  name: z.literal('HandleStripeAppAuthorized'),
+})
+
+export const handleStripeAppDeauthorizedSchema = stripeWebhookCommandBase.extend({
+  name: z.literal('HandleStripeAppDeauthorized'),
+})
+
+export type StripeWebhookEvent = z.infer<typeof stripeWebhookEventSchema>
+export type HandleStripeAppAuthorized = z.infer<typeof handleStripeAppAuthorizedSchema>
+export type HandleStripeAppDeauthorized = z.infer<typeof handleStripeAppDeauthorizedSchema>

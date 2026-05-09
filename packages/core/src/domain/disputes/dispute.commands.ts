@@ -1,11 +1,10 @@
 import { z } from 'zod'
 
 import { baseCommandSchema } from '../base/base.messages'
-import { UserIdSchema } from '../primitives'
+import { stripeWebhookEventSchema } from '../stripe'
 
 const disputeCommandBase = baseCommandSchema.extend({
-  userId: UserIdSchema,
-  stripeEvent: z.record(z.string(), z.unknown()),
+  stripeEvent: stripeWebhookEventSchema,
 })
 
 export const ingestDisputeCreatedSchema = disputeCommandBase.extend({

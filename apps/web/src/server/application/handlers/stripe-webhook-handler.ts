@@ -1,53 +1,57 @@
 import {
-  createCommand,
   createLogger,
   type DatabaseError,
-  type HandleStripeWebhookReceived,
-  type QueueError,
+  type HandleStripeAppAuthorized,
+  type HandleStripeAppDeauthorized,
+  type IngestDisputeClosed,
+  type IngestDisputeCreated,
+  type IngestDisputeFundsReinstated,
+  type IngestDisputeFundsWithdrawn,
+  type IngestDisputeUpdated,
 } from '@riposte/core'
 import type { HandlerContext } from '@server/application/registry/types'
 import { Result } from 'better-result'
 
 const logger = createLogger('stripe-webhook-handler')
 
-type StripeWebhookHandlerError = DatabaseError | QueueError
+type StripeWebhookHandlerError = DatabaseError
+type DisputeCommand =
+  | IngestDisputeCreated
+  | IngestDisputeUpdated
+  | IngestDisputeClosed
+  | IngestDisputeFundsReinstated
+  | IngestDisputeFundsWithdrawn
 
-const DISPUTE_EVENT_COMMANDS = {
-  'charge.dispute.created': 'IngestDisputeCreated',
-  'charge.dispute.updated': 'IngestDisputeUpdated',
-  'charge.dispute.closed': 'IngestDisputeClosed',
-  'charge.dispute.funds_reinstated': 'IngestDisputeFundsReinstated',
-  'charge.dispute.funds_withdrawn': 'IngestDisputeFundsWithdrawn',
-} as const
+export async function handleStripeAppAuthorized(
+  command: HandleStripeAppAuthorized,
+): Promise<Result<void, StripeWebhookHandlerError>> {
+  logger.info('stripe_app_authorized_received', {
+    account: command.stripeEvent.account,
+    eventId: command.stripeEvent.id,
+  })
 
-type DisputeEventType = keyof typeof DISPUTE_EVENT_COMMANDS
+  return Result.ok(undefined)
+}
 
-export async function handleStripeWebhookReceived(
-  command: HandleStripeWebhookReceived,
+export async function handleStripeAppDeauthorized(
+  command: HandleStripeAppDeauthorized,
+): Promise<Result<void, StripeWebhookHandlerError>> {
+  logger.info('stripe_app_deauthorized_received', {
+    account: command.stripeEvent.account,
+    eventId: command.stripeEvent.id,
+  })
+
+  return Result.ok(undefined)
+}
+
+export async function ingestDisputeWebhook(
+  command: DisputeCommand,
   { deps, tx }: HandlerContext,
 ): Promise<Result<void, StripeWebhookHandlerError>> {
-  const event = command.stripeEvent
-  const type = getStringField(event, 'type')
-  const eventId = getStringField(event, 'id')
-  const account = getStringField(event, 'account')
-
-  if (type === 'account.application.authorized') {
-    logger.info('stripe_app_authorized_received', { account, eventId })
-    return Result.ok(undefined)
-  }
-
-  if (type === 'account.application.deauthorized') {
-    logger.info('stripe_app_deauthorized_received', { account, eventId })
-    return Result.ok(undefined)
-  }
-
-  if (!isDisputeEventType(type)) {
-    logger.warn('stripe_webhook_unhandled_event_type', { type, eventId })
-    return Result.ok(undefined)
-  }
+  const { account, id: eventId, type } = command.stripeEvent
 
   if (!account) {
-    logger.error('stripe_webhook_missing_account', { type, eventId })
+    logger.error('stripe_dispute_webhook_missing_account', { type, eventId })
     return Result.ok(undefined)
   }
 
@@ -56,33 +60,16 @@ export async function handleStripeWebhookReceived(
 
   const connection = connectionResult.value
   if (!connection) {
-    logger.warn('stripe_webhook_unknown_account', { account, eventId, type })
+    logger.warn('stripe_dispute_webhook_unknown_account', { account, eventId, type })
     return Result.ok(undefined)
   }
 
-  const disputeCommand = createCommand(DISPUTE_EVENT_COMMANDS[type], {
-    userId: connection.userId,
-    stripeEvent: event,
-  })
-  const sendResult = await deps.services.queueClient().send(disputeCommand)
-  if (sendResult.isErr()) return Result.err(sendResult.error)
-
-  logger.info('stripe_webhook_dispatched', {
-    command: disputeCommand.name,
+  logger.info('stripe_dispute_webhook_received', {
+    command: command.name,
     eventId,
     account,
     userId: connection.userId,
   })
 
   return Result.ok(undefined)
-}
-
-function isDisputeEventType(type: string | undefined): type is DisputeEventType {
-  if (!type) return false
-  return type in DISPUTE_EVENT_COMMANDS
-}
-
-function getStringField(record: Record<string, unknown>, key: string): string | undefined {
-  const value = record[key]
-  return typeof value === 'string' ? value : undefined
 }

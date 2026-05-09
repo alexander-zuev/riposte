@@ -5,9 +5,11 @@ import {
   stripeDisputeStatusSchema,
 } from '@riposte/core'
 import type {
+  CurrencyCode,
   DisputeCaseWorkflowState,
   DisputeCaseWorkflowStatus,
   MissingEvidence,
+  StripeDisputeStatus,
   UUIDv4,
 } from '@riposte/core'
 import { Entity } from '@server/domain/models/base.models'
@@ -24,10 +26,10 @@ export type DisputeCaseSnapshot = {
   id: DisputeCaseId
   userId: string
   stripeAccountId: string
-  stripeStatus: string
+  stripeStatus: StripeDisputeStatus
   reason: string
   amountMinor: number
-  currency: string
+  currency: CurrencyCode
   evidenceDueBy: Date
   workflowState: DisputeCaseWorkflowState
   createdAt: Date
@@ -57,7 +59,7 @@ export class DisputeCase extends Entity<DisputeCaseSnapshot> {
     readonly id: DisputeCaseId,
     readonly userId: string,
     readonly stripeAccountId: string,
-    readonly stripeStatus: string,
+    readonly stripeStatus: StripeDisputeStatus,
     readonly reason: string,
     readonly amount: Money,
     readonly evidenceDueBy: Deadline,
@@ -106,7 +108,7 @@ export class DisputeCase extends Entity<DisputeCaseSnapshot> {
       stripeDisputeIdSchema.parse(stripeDispute.id),
       requireNonBlank(input.userId, 'userId'),
       requireNonBlank(input.stripeAccountId, 'stripeAccountId'),
-      requireNonBlank(stripeDispute.status, 'stripeStatus'),
+      stripeDispute.status,
       requireNonBlank(stripeDispute.reason, 'reason'),
       Money.create({
         amountMinor: stripeDispute.amount,
@@ -133,7 +135,7 @@ export class DisputeCase extends Entity<DisputeCaseSnapshot> {
       stripeDisputeIdSchema.parse(snapshot.id),
       requireNonBlank(snapshot.userId, 'userId'),
       requireNonBlank(snapshot.stripeAccountId, 'stripeAccountId'),
-      requireNonBlank(snapshot.stripeStatus, 'stripeStatus'),
+      snapshot.stripeStatus,
       requireNonBlank(snapshot.reason, 'reason'),
       Money.deserialize({ amountMinor: snapshot.amountMinor, currency: snapshot.currency }),
       Deadline.deserialize(snapshot.evidenceDueBy),

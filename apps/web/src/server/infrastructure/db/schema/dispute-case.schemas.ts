@@ -1,4 +1,4 @@
-import type { DisputeCaseWorkflowState } from '@server/domain/disputes'
+import type { CurrencyCode, DisputeCaseWorkflowState, StripeDisputeStatus } from '@riposte/core'
 import { index, integer, jsonb, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core'
 
 import { user } from './auth.schemas'
@@ -14,10 +14,10 @@ export const disputeCases = pgTable(
 
     stripeAccountId: text('stripe_account_id').notNull(),
 
-    stripeStatus: text('stripe_status').notNull(),
+    stripeStatus: text('stripe_status').$type<StripeDisputeStatus>().notNull(),
     reason: text('reason').notNull(),
     amountMinor: integer('amount_minor').notNull(),
-    currency: text('currency').notNull(),
+    currency: text('currency').$type<CurrencyCode>().notNull(),
     evidenceDueBy: timestamp('evidence_due_by', { withTimezone: true }).notNull(),
     workflowState: jsonb('workflow_state').$type<DisputeCaseWorkflowState>().notNull(),
 

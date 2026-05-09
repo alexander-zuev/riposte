@@ -3,6 +3,8 @@ import type {
   DatabaseError,
   DomainEvent,
   DuplicateMessageError,
+  ListDisputeCases,
+  ListDisputeCasesResult,
   UUIDv4,
 } from '@riposte/core'
 import type { DisputeCase } from '@server/domain/disputes'
@@ -19,6 +21,10 @@ import type { Result } from 'better-result'
  * ------------------------------------------------------------------------------------------------- */
 
 export interface IDisputeCaseRepository {
+  findById: (id: string) => Promise<Result<DisputeCase | null, DatabaseError>>
+  listForUser: (
+    input: Omit<ListDisputeCases, 'type' | 'name'>,
+  ) => Promise<Result<ListDisputeCasesResult, DatabaseError>>
   save: (disputeCase: DisputeCase) => Promise<Result<DisputeCase, DatabaseError>>
 }
 

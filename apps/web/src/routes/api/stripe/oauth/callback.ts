@@ -48,7 +48,10 @@ export const Route = createFileRoute('/api/stripe/oauth/callback')({
         }
 
         const secretKey =
-          config.mode === 'production' ? config.stripe.secretKey : config.stripe.testModeSecretKey
+          config.mode === 'development' || config.mode === 'test'
+            ? config.stripe.testModeSecretKey
+            : config.stripe.secretKey
+
         const stripe = new Stripe(secretKey, {
           httpClient: Stripe.createFetchHttpClient(),
         })

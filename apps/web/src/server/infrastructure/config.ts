@@ -3,13 +3,17 @@ import { env, waitUntil } from 'cloudflare:workers'
 
 export type Mode = 'development' | 'test' | 'staging' | 'production'
 
+type DevEnv = typeof env & {
+  STRIPE_TEST_SECRET_KEY: string
+}
+
 /**
  * Must be called inside a request handler — cloudflare:workers env
  * is not populated during Vite SSR module evaluation.
  */
 export function getServerConfig() {
-  return {
-    mode: env.ENV as Mode,
+  const mode = env.ENV as Mode
+  const baseConfig = {
     appUrl: env.APP_URL as string,
 
     google: {
@@ -22,13 +26,6 @@ export function getServerConfig() {
     },
 
     turnstileSecretKey: env.TURNSTILE_SECRET_KEY,
-
-    stripe: {
-      testModeSecretKey: env.STRIPE_TEST_SECRET_KEY,
-      secretKey: env.STRIPE_SECRET_KEY,
-      webhookSecret: env.STRIPE_WEBHOOK_SECRET,
-      appWebhookSecret: env.STRIPE_APP_WEBHOOK_SECRET,
-    },
 
     credentialEncryption: {
       currentKeyVersion: env.CURRENT_CREDENTIAL_ENCRYPTION_KEY_VERSION,
@@ -43,6 +40,29 @@ export function getServerConfig() {
     rateLimiter: env.AUTH_RATE_LIMITER as DurableObjectNamespace,
     queue: env.BACKGROUND_QUEUE as Queue<DomainMessage>,
     waitUntil,
+  }
+
+  const stripeConfig = {
+    secretKey: env.STRIPE_SECRET_KEY,
+    webhookSecret: env.STRIPE_WEBHOOK_SECRET,
+    appWebhookSecret: env.STRIPE_APP_WEBHOOK_SECRET,
+  }
+
+  if (mode === 'development' || mode === 'test') {
+    return {
+      ...baseConfig,
+      mode,
+      stripe: {
+        ...stripeConfig,
+        testModeSecretKey: (env as DevEnv).STRIPE_TEST_SECRET_KEY,
+      },
+    }
+  }
+
+  return {
+    ...baseConfig,
+    mode,
+    stripe: stripeConfig,
   }
 }
 

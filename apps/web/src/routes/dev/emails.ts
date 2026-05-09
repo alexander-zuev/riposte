@@ -44,7 +44,8 @@ const TEMPLATE_RENDERERS = Object.fromEntries(
 ) as Record<string, TemplateMeta['render'] | undefined>
 
 function isDevOrTest(): boolean {
-  return env.ENV === 'development' || env.ENV === 'test'
+  const mode: string = env.ENV
+  return mode === 'development' || mode === 'test'
 }
 
 function escapeHtml(value: string): string {

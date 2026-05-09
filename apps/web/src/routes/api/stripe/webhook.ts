@@ -1,5 +1,3 @@
-// TODO: verify correct 4xx vs 5xx responses per Stripe retry semantics
-
 import { createLogger, stripeWebhookEventSchema } from '@riposte/core'
 import { toStripeWebhookCommand } from '@server/domain/stripe'
 import { getServerConfig } from '@server/infrastructure/config'
@@ -39,7 +37,7 @@ export const Route = createFileRoute('/api/stripe/webhook')({
             eventId: event.id,
             type: event.type,
           })
-          return new Response('Invalid event', { status: 500 })
+          return new Response('Invalid event', { status: 400 })
         }
 
         const stripeEvent = parsedEvent.data

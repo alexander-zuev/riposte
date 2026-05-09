@@ -8,7 +8,11 @@ export const stripeWebhookEventSchema = z
     type: z.string().min(1),
     account: z.string().min(1).optional(),
     livemode: z.boolean(),
-    data: z.unknown(),
+    data: z
+      .object({
+        object: z.unknown(),
+      })
+      .passthrough(),
   })
   .passthrough()
 

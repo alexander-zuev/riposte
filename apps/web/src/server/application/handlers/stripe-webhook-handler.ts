@@ -28,6 +28,9 @@ export async function handleStripeAppAuthorized(
   logger.info('stripe_app_authorized_received', {
     account: command.stripeEvent.account,
     eventId: command.stripeEvent.id,
+    livemode: command.stripeEvent.livemode,
+    stripeEvent: command.stripeEvent,
+    type: command.stripeEvent.type,
   })
 
   return Result.ok(undefined)
@@ -39,6 +42,9 @@ export async function handleStripeAppDeauthorized(
   logger.info('stripe_app_deauthorized_received', {
     account: command.stripeEvent.account,
     eventId: command.stripeEvent.id,
+    livemode: command.stripeEvent.livemode,
+    stripeEvent: command.stripeEvent,
+    type: command.stripeEvent.type,
   })
 
   return Result.ok(undefined)

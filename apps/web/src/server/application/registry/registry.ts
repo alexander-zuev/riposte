@@ -5,6 +5,7 @@ import {
   sendWelcomeEmail,
 } from '@server/application/handlers/auth-handler'
 import { getConnectionsStatus } from '@server/application/handlers/connection-handler'
+import { listDisputeCases } from '@server/application/handlers/dispute-case-handler'
 import {
   collectDisputeEvidence,
   decideDisputeSubmission,
@@ -59,6 +60,7 @@ export const QUERY_HANDLERS = {
   GetSessionStatus: getSessionStatus,
   GetConnectionsStatus: getConnectionsStatus,
   GetStripeAppSettings: getStripeAppSettings,
+  ListDisputeCases: listDisputeCases,
 } satisfies QueryRegistry
 
 export const defaultRegistry = {

@@ -22,7 +22,7 @@ import {
   syncDisputesSchema,
 } from '../disputes/dispute.commands'
 import { disputeCaseReceivedSchema } from '../disputes/dispute.events'
-import { getStripeAppSettingsSchema } from '../disputes/dispute.queries'
+import { getStripeAppSettingsSchema, listDisputeCasesSchema } from '../disputes/dispute.queries'
 import { r2EventSchema, r2EventTransform } from '../storage/r2.messages'
 import { handleStripeAppAuthorizedSchema, handleStripeAppDeauthorizedSchema } from '../stripe'
 import { joinWaitlistSchema } from '../waitlist/waitlist.messages'
@@ -81,6 +81,7 @@ export const domainQuerySchema = z.discriminatedUnion('name', [
   getSessionStatusSchema,
   getConnectionsStatusSchema,
   getStripeAppSettingsSchema,
+  listDisputeCasesSchema,
 ])
 
 export type DomainQuery = z.infer<typeof domainQuerySchema>

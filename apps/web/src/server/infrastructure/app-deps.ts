@@ -4,6 +4,7 @@ import { MessageBus } from '@server/application/message-bus/message-bus'
 import { executeUoW } from '@server/application/message-bus/unit-of-work'
 import { ConnectionManager, type IConnectionManager } from '@server/domain/connections'
 import type {
+  IDisputeCaseRepository,
   IOutboxRepository,
   IStripeConnectionRepository,
   IWaitlistRepository,
@@ -23,6 +24,7 @@ import {
 } from '@server/infrastructure/queues/outbox-relay-wakeup'
 import type { IQueueClient } from '@server/infrastructure/queues/queue-client'
 import { QueueClient } from '@server/infrastructure/queues/queue-client'
+import { DisputeCaseRepository } from '@server/infrastructure/repositories/dispute-case.repository'
 import { OutboxRepository } from '@server/infrastructure/repositories/outbox.repository'
 import { StripeConnectionRepository } from '@server/infrastructure/repositories/stripe-connection.repository'
 import { WaitlistRepository } from '@server/infrastructure/repositories/waitlist.repository'
@@ -42,6 +44,7 @@ export type AppDeps = {
   }
 
   repos: {
+    disputeCases: (tx: DrizzleDb) => IDisputeCaseRepository
     outbox: (tx: DrizzleDb) => IOutboxRepository
     stripeConnections: (tx: DrizzleDb) => IStripeConnectionRepository
     waitlist: (tx: DrizzleDb) => IWaitlistRepository
@@ -79,6 +82,7 @@ export function createAppDeps(env: Env, ctx: WaitUntilContext): AppDeps {
       cache: new KVClient(env.CACHE_KV),
     },
     repos: {
+      disputeCases: (tx) => new DisputeCaseRepository(tx),
       outbox: (tx) => new OutboxRepository(tx),
       stripeConnections: (tx) =>
         new StripeConnectionRepository(tx, deps.services.credentialEncryption()),

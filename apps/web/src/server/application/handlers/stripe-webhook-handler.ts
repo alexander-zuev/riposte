@@ -10,6 +10,7 @@ import {
   type IngestDisputeUpdated,
 } from '@riposte/core'
 import type { HandlerContext } from '@server/application/registry/types'
+import { DisputeCase } from '@server/domain/disputes'
 import { evaluateStripeWebhookConnection } from '@server/domain/stripe'
 import { Result } from 'better-result'
 
@@ -99,6 +100,30 @@ export async function handleDisputeCreated(
     account,
     eventId,
     userId: decision.connection.userId,
+  })
+
+  const disputeCase = DisputeCase.receiveStripeDispute({
+    userId: decision.connection.userId,
+    stripeAccountId: decision.connection.stripeAccountId,
+    stripeDispute: command.stripeEvent.data.object,
+  })
+  if (disputeCase.isErr()) {
+    logger.error('stripe_dispute_created_unactionable', {
+      account,
+      eventId,
+      error: disputeCase.error,
+    })
+    return Result.ok(undefined)
+  }
+
+  const saved = await deps.repos.disputeCases(tx).save(disputeCase.value)
+  if (saved.isErr()) return Result.err(saved.error)
+
+  logger.info('stripe_dispute_case_saved', {
+    account,
+    disputeCaseId: saved.value.id,
+    eventId,
+    userId: saved.value.userId,
   })
 
   return Result.ok(undefined)

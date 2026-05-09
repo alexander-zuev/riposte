@@ -1,29 +1,21 @@
 import { ValidationError, createEvent } from '@riposte/core'
 import type { UUIDv4 } from '@riposte/core'
+import { Entity } from '@server/domain/models/base.models'
+import { Result } from 'better-result'
+import { z } from 'zod'
 
-import { Entity } from '../models/base.models'
 import { Deadline } from './deadline.vo'
-import { stripeDisputeIdSchema } from './dispute.schemas'
+import { type StripeDisputeId, stripeDisputeIdSchema } from './dispute.schemas'
 import { Money } from './money.vo'
 
-export type DisputeCaseStatus =
-  | 'received'
-  | 'collecting_evidence'
-  | 'needs_input'
-  | 'ready_for_review'
-  | 'submitted'
-  | 'accepted'
-  | 'deadline_missed'
-  | 'won'
-  | 'lost'
-  | 'failed'
+export type DisputeCaseId = StripeDisputeId
 
 export type MissingEvidence = {
   code: string
   message: string
 }
 
-export type DisputeCaseState =
+export type DisputeCaseWorkflowState =
   | { status: 'received' }
   | { status: 'collecting_evidence'; startedAt: Date }
   | { status: 'needs_input'; missingEvidence: MissingEvidence[] }
@@ -35,52 +27,101 @@ export type DisputeCaseState =
   | { status: 'lost'; decidedAt: Date }
   | { status: 'failed'; reason: string }
 
-export type SerializedDisputeCase = {
-  id: UUIDv4
-  stripeDisputeId: string
+export type DisputeCaseWorkflowStatus = DisputeCaseWorkflowState['status']
+
+export type DisputeCaseSnapshot = {
+  id: DisputeCaseId
+  userId: string
+  stripeAccountId: string
+  stripeStatus: string
   reason: string
   amountMinor: number
   currency: string
   evidenceDueBy: Date
-  state: DisputeCaseState
+  workflowState: DisputeCaseWorkflowState
   createdAt: Date
   updatedAt: Date
 }
 
-export type CreateDisputeCaseInput = {
-  id: UUIDv4
-  stripeDisputeId: string
-  reason: string
-  amount: {
-    amountMinor: number
-    currency: string
-  }
-  evidenceDueBy: Date | string
+export type ReceiveStripeDisputeInput = {
+  userId: string
+  stripeAccountId: string
+  stripeDispute: unknown
   now?: Date
 }
 
-export class DisputeCase extends Entity<SerializedDisputeCase> {
+const stripeDisputeObjectSchema = z.object({
+  id: z.string().min(1),
+  amount: z.number().int(),
+  currency: z.string().min(1),
+  reason: z.string().min(1),
+  status: z.string().min(1),
+  evidence_details: z.object({
+    due_by: z.number().int().nullable(),
+  }),
+})
+
+export class DisputeCase extends Entity<DisputeCaseSnapshot> {
   private constructor(
-    readonly id: UUIDv4,
-    readonly stripeDisputeId: string,
+    readonly id: DisputeCaseId,
+    readonly userId: string,
+    readonly stripeAccountId: string,
+    readonly stripeStatus: string,
     readonly reason: string,
     readonly amount: Money,
     readonly evidenceDueBy: Deadline,
-    private state: DisputeCaseState,
+    private state: DisputeCaseWorkflowState,
     readonly createdAt: Date,
     private updatedAt: Date,
   ) {
     super()
   }
 
-  static create(input: CreateDisputeCaseInput): DisputeCase {
+  static receiveStripeDispute(
+    input: ReceiveStripeDisputeInput,
+  ): Result<DisputeCase, ValidationError> {
+    const parsed = stripeDisputeObjectSchema.safeParse(input.stripeDispute)
+    if (!parsed.success) {
+      return Result.err(
+        new ValidationError({
+          issues: parsed.error.issues.map((issue) => ({
+            code: issue.code,
+            path: issue.path.map((path) => (typeof path === 'symbol' ? String(path) : path)),
+            message: issue.message,
+          })),
+          message: 'Invalid Stripe dispute object',
+        }),
+      )
+    }
+
+    const stripeDispute = parsed.data
+    if (!stripeDispute.evidence_details.due_by || stripeDispute.evidence_details.due_by <= 0) {
+      return Result.err(
+        new ValidationError({
+          issues: [
+            {
+              code: 'stripe_dispute_response_deadline_missing',
+              path: ['evidence_details', 'due_by'],
+              message: 'Stripe dispute response deadline is missing',
+            },
+          ],
+          message: 'Stripe dispute response deadline is missing',
+        }),
+      )
+    }
+
     const now = cloneDate(input.now ?? new Date())
     const disputeCase = new DisputeCase(
-      input.id,
-      stripeDisputeIdSchema.parse(input.stripeDisputeId),
-      requireNonBlank(input.reason, 'reason'),
-      Money.create(input.amount),
-      Deadline.create(input.evidenceDueBy),
+      stripeDisputeIdSchema.parse(stripeDispute.id),
+      requireNonBlank(input.userId, 'userId'),
+      requireNonBlank(input.stripeAccountId, 'stripeAccountId'),
+      requireNonBlank(stripeDispute.status, 'stripeStatus'),
+      requireNonBlank(stripeDispute.reason, 'reason'),
+      Money.create({
+        amountMinor: stripeDispute.amount,
+        currency: stripeDispute.currency,
+      }),
+      Deadline.create(new Date(stripeDispute.evidence_details.due_by * 1000)),
       { status: 'received' },
       now,
       now,
@@ -89,32 +130,33 @@ export class DisputeCase extends Entity<SerializedDisputeCase> {
     disputeCase.addEvent(
       createEvent('DisputeCaseReceived', {
         disputeCaseId: disputeCase.id,
-        stripeDisputeId: disputeCase.stripeDisputeId,
       }),
     )
 
-    return disputeCase
+    return Result.ok(disputeCase)
   }
 
-  static deserialize(row: SerializedDisputeCase): DisputeCase {
+  static deserialize(snapshot: DisputeCaseSnapshot): DisputeCase {
     return new DisputeCase(
-      row.id,
-      stripeDisputeIdSchema.parse(row.stripeDisputeId),
-      requireNonBlank(row.reason, 'reason'),
-      Money.deserialize({ amountMinor: row.amountMinor, currency: row.currency }),
-      Deadline.deserialize(row.evidenceDueBy),
-      deserializeState(row.state),
-      cloneDate(row.createdAt),
-      cloneDate(row.updatedAt),
+      stripeDisputeIdSchema.parse(snapshot.id),
+      requireNonBlank(snapshot.userId, 'userId'),
+      requireNonBlank(snapshot.stripeAccountId, 'stripeAccountId'),
+      requireNonBlank(snapshot.stripeStatus, 'stripeStatus'),
+      requireNonBlank(snapshot.reason, 'reason'),
+      Money.deserialize({ amountMinor: snapshot.amountMinor, currency: snapshot.currency }),
+      Deadline.deserialize(snapshot.evidenceDueBy),
+      snapshot.workflowState,
+      cloneDate(snapshot.createdAt),
+      cloneDate(snapshot.updatedAt),
     )
   }
 
-  getStatus(): DisputeCaseStatus {
+  getStatus(): DisputeCaseWorkflowStatus {
     return this.state.status
   }
 
-  getState(): DisputeCaseState {
-    return cloneState(this.state)
+  getState(): DisputeCaseWorkflowState {
+    return this.state
   }
 
   getMissingEvidence(): MissingEvidence[] {
@@ -166,23 +208,25 @@ export class DisputeCase extends Entity<SerializedDisputeCase> {
     this.touch(now)
   }
 
-  serialize(): SerializedDisputeCase {
+  serialize(): DisputeCaseSnapshot {
     const money = this.amount.serialize()
 
     return {
       id: this.id,
-      stripeDisputeId: this.stripeDisputeId,
+      userId: this.userId,
+      stripeAccountId: this.stripeAccountId,
+      stripeStatus: this.stripeStatus,
       reason: this.reason,
       amountMinor: money.amountMinor,
       currency: money.currency,
       evidenceDueBy: cloneDate(this.evidenceDueBy.serialize()),
-      state: cloneState(this.state),
+      workflowState: this.state,
       createdAt: cloneDate(this.createdAt),
       updatedAt: cloneDate(this.updatedAt),
     }
   }
 
-  private ensureStatus(allowed: DisputeCaseStatus[], action: string): void {
+  private ensureStatus(allowed: DisputeCaseWorkflowStatus[], action: string): void {
     if (allowed.includes(this.state.status)) return
 
     throw validationError(
@@ -217,63 +261,4 @@ function validationError(path: string, message: string): ValidationError {
 
 function cloneDate(date: Date): Date {
   return new Date(date.getTime())
-}
-
-function cloneState(state: DisputeCaseState): DisputeCaseState {
-  switch (state.status) {
-    case 'received':
-      return { status: 'received' }
-    case 'collecting_evidence':
-      return { status: 'collecting_evidence', startedAt: cloneDate(state.startedAt) }
-    case 'needs_input':
-      return { status: 'needs_input', missingEvidence: [...state.missingEvidence] }
-    case 'ready_for_review':
-      return { status: 'ready_for_review', evidencePacketId: state.evidencePacketId }
-    case 'submitted':
-      return {
-        status: 'submitted',
-        evidencePacketId: state.evidencePacketId,
-        submittedAt: cloneDate(state.submittedAt),
-      }
-    case 'accepted':
-      return { status: 'accepted', acceptedAt: cloneDate(state.acceptedAt) }
-    case 'deadline_missed':
-      return { status: 'deadline_missed', missedAt: cloneDate(state.missedAt) }
-    case 'won':
-      return { status: 'won', decidedAt: cloneDate(state.decidedAt) }
-    case 'lost':
-      return { status: 'lost', decidedAt: cloneDate(state.decidedAt) }
-    case 'failed':
-      return { status: 'failed', reason: state.reason }
-  }
-}
-
-function deserializeState(state: DisputeCaseState): DisputeCaseState {
-  switch (state.status) {
-    case 'received':
-    case 'ready_for_review':
-    case 'submitted':
-    case 'accepted':
-    case 'deadline_missed':
-    case 'won':
-    case 'lost':
-    case 'failed':
-      return cloneState(state)
-    case 'collecting_evidence':
-      return { status: 'collecting_evidence', startedAt: cloneDate(state.startedAt) }
-    case 'needs_input':
-      if (state.missingEvidence.length === 0) {
-        throw validationError(
-          'state.missingEvidence',
-          'Missing evidence must include at least one item',
-        )
-      }
-      return {
-        status: 'needs_input',
-        missingEvidence: state.missingEvidence.map((item) => ({
-          code: requireNonBlank(item.code, 'state.missingEvidence.code'),
-          message: requireNonBlank(item.message, 'state.missingEvidence.message'),
-        })),
-      }
-  }
 }

@@ -1,5 +1,6 @@
-import { createCommand, createEvent } from '@riposte/core'
+import { createCommand, createEvent, stripeWebhookEventSchema } from '@riposte/core'
 import { createLogger } from '@riposte/core/client'
+import { toStripeWebhookCommand } from '@server/domain/stripe'
 import type { IQueueClient } from '@server/infrastructure/queues/queue-client'
 import type { User } from 'better-auth'
 import type { Stripe } from 'stripe'
@@ -92,23 +93,29 @@ export function createStripeCustomerHooks(queueClient?: IQueueClient) {
       logger.info('stripe_event', { type: event.type, id: event.id })
       if (!queueClient) return
 
-      switch (event.type) {
-        case 'charge.dispute.created': {
-          const dispute = event.data.object
-          logger.info('stripe_dispute_created', {
+      const parsedEvent = stripeWebhookEventSchema.safeParse(event)
+      if (parsedEvent.success) {
+        const command = toStripeWebhookCommand(parsedEvent.data)
+        if (command) {
+          const queued = await queueClient.send(command)
+          if (queued.isErr()) throw queued.error
+
+          logger.info('stripe_event_command_queued', {
+            command: command.name,
             eventId: event.id,
-            disputeId: dispute.id,
-            chargeId: dispute.charge,
-            paymentIntentId: dispute.payment_intent,
-            amount: dispute.amount,
-            currency: dispute.currency,
-            reason: dispute.reason,
-            status: dispute.status,
-            evidenceDueBy: dispute.evidence_details.due_by,
-            apiVersion: event.api_version,
+            type: event.type,
           })
-          break
+          return
         }
+      } else {
+        logger.error('stripe_event_invalid', {
+          eventId: event.id,
+          type: event.type,
+          error: parsedEvent.error,
+        })
+      }
+
+      switch (event.type) {
         case 'checkout.session.completed': {
           const session = event.data.object
           logger.info('checkout_session_completed', {

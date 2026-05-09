@@ -5,6 +5,7 @@ import type {
   DuplicateMessageError,
   UUIDv4,
 } from '@riposte/core'
+import type { DisputeCase } from '@server/domain/disputes'
 import type {
   StripeConnection,
   StripeConnectionWithCredentials,
@@ -12,6 +13,14 @@ import type {
 } from '@server/domain/stripe'
 import type { DbOutbox } from '@server/infrastructure/db'
 import type { Result } from 'better-result'
+
+/* -------------------------------------------------------------------------------------------------
+ * Dispute Case Repository
+ * ------------------------------------------------------------------------------------------------- */
+
+export interface IDisputeCaseRepository {
+  save: (disputeCase: DisputeCase) => Promise<Result<DisputeCase, DatabaseError>>
+}
 
 /* -------------------------------------------------------------------------------------------------
  * Stripe Connection Repository

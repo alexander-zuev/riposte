@@ -63,23 +63,44 @@ export function TermsPage() {
           <Section title="6. Data Processing Agreement">
             <p>
               This section constitutes a Data Processing Agreement ("DPA") under GDPR Article 28
-              between you (data controller) and Kollektiv LLC (data processor) for the processing of
-              your customers' personal data through the Service.
+              between you (controller) and Kollektiv LLC (processor) for merchant customer personal
+              data processed through the Service. Riposte acts as an independent controller for
+              Riposte account, billing, security, website, and product analytics data as described
+              in our Privacy Policy.
             </p>
 
-            <h6>Scope and Purpose</h6>
+            <h6>Subject Matter and Duration</h6>
             <p>
-              Riposte processes personal data of your customers solely to compile and submit dispute
-              evidence on your behalf. Processing is limited to active disputes and the data
-              relevant to each dispute.
+              The subject matter is Riposte's processing of merchant customer data to prepare,
+              review, submit, and track Stripe dispute evidence on your behalf. Processing lasts for
+              the period you use the Service and until the data is deleted or returned after dispute
+              resolution or account termination, subject to legal retention obligations.
             </p>
 
-            <h6>Data Categories</h6>
+            <h6>Nature and Purpose</h6>
             <p>
-              Depending on what you connect, Riposte may process: customer identity data, session
-              and access data, product usage and activity data, delivered outputs or proof of
-              service, support and communication history, and cancellation, refund, or billing
-              history.
+              Riposte processes merchant customer data to ingest Stripe dispute records, match the
+              disputed customer to your product data, collect relevant source-backed evidence,
+              generate evidence packets, submit or export dispute responses, track outcomes, and
+              send related notifications. Processing is limited to active or recent disputes and the
+              data relevant to each dispute.
+            </p>
+
+            <h6>Data Subjects and Data Categories</h6>
+            <p>
+              Data subjects are your customers or users involved in payment disputes. Depending on
+              what you connect, Riposte may process customer identity data, Stripe payment and
+              dispute data, session and access data, product usage and activity data, delivered
+              outputs or proof of service, support and communication history, and cancellation,
+              refund, or billing history.
+            </p>
+
+            <h6>Customer Instructions</h6>
+            <p>
+              We process merchant customer data only on your documented instructions, including
+              these Terms, your Service configuration, your connected data sources, and dispute
+              actions you approve or authorize. If we believe an instruction violates applicable
+              data protection law, we will notify you unless legally prohibited.
             </p>
 
             <h6>Processor Obligations</h6>
@@ -90,9 +111,12 @@ export function TermsPage() {
               <li>Ensure personnel with access are bound by confidentiality</li>
               <li>Implement appropriate technical and organizational security measures</li>
               <li>Notify you without undue delay upon becoming aware of a personal data breach</li>
-              <li>Delete all customer data within 90 days of dispute resolution</li>
               <li>
                 Make available information necessary to demonstrate compliance and allow for audits
+              </li>
+              <li>
+                Assist with data subject requests, security obligations, and data protection
+                assessments where required and technically feasible
               </li>
             </ul>
 
@@ -106,11 +130,12 @@ export function TermsPage() {
               protection obligations no less protective than this DPA.
             </p>
 
-            <h6>International Transfers</h6>
+            <h6>Deletion and Return</h6>
             <p>
-              Where data is transferred outside the EEA, we rely on adequacy decisions, Standard
-              Contractual Clauses, or the EU-US Data Privacy Framework as applicable. Our
-              sub-processors maintain appropriate transfer mechanisms.
+              We delete merchant customer dispute data within 90 days after dispute resolution or
+              account termination unless continued retention is required by law, legal hold, fraud
+              prevention, dispute defense, security, or backup integrity. Upon request, we will
+              return or export merchant customer dispute data where technically feasible.
             </p>
 
             <h6>Data Subject Requests</h6>
@@ -118,6 +143,22 @@ export function TermsPage() {
               If we receive a request from one of your customers regarding their personal data, we
               will direct them to you and assist you in fulfilling the request to the extent
               technically feasible.
+            </p>
+
+            <h6>Security, Audit, and Assistance</h6>
+            <p>
+              We maintain technical and organizational measures appropriate to the risk, including
+              encrypted transport, encrypted credentials, access controls, and operational logging.
+              We will make available information reasonably necessary to demonstrate compliance with
+              this DPA and will support audits through documentation or another reasonable process
+              that does not compromise the security of the Service or other customers.
+            </p>
+
+            <h6>International Transfers</h6>
+            <p>
+              Where data is transferred outside the EEA, we rely on adequacy decisions, Standard
+              Contractual Clauses, or the EU-US Data Privacy Framework as applicable. Our
+              sub-processors maintain appropriate transfer mechanisms.
             </p>
           </Section>
 

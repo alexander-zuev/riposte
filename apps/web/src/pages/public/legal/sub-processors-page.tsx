@@ -24,6 +24,11 @@ export function SubProcessorsPage() {
               in our Terms of Service. We will update this page and notify affected customers before
               engaging a new sub-processor.
             </p>
+            <p className="mt-3 text-sm text-muted-foreground">
+              Riposte distinguishes between Riposte account-user data and merchant customer dispute
+              data. Analytics and error monitoring sub-processors process Riposte account-user
+              telemetry and diagnostics, not merchant customer dispute evidence.
+            </p>
           </section>
 
           <section>
@@ -40,23 +45,42 @@ export function SubProcessorsPage() {
                   <tr className="border-b border-border">
                     <td className="px-4 py-3">Cloudflare, Inc.</td>
                     <td className="px-4 py-3">
-                      Application hosting (Workers), AI gateway, key-value storage, edge networking
+                      Application hosting, storage, Workers AI, AI Gateway where used, and edge
+                      networking
                     </td>
                     <td className="px-4 py-3">United States</td>
                   </tr>
                   <tr className="border-b border-border">
-                    <td className="px-4 py-3">PlanetScale, Inc.</td>
-                    <td className="px-4 py-3">Database hosting (Postgres)</td>
+                    <td className="px-4 py-3">PlanetScale</td>
+                    <td className="px-4 py-3">Application database hosting</td>
                     <td className="px-4 py-3">United States</td>
                   </tr>
                   <tr className="border-b border-border">
                     <td className="px-4 py-3">PostHog, Inc.</td>
-                    <td className="px-4 py-3">Product analytics</td>
+                    <td className="px-4 py-3">
+                      Product analytics for Riposte account-user activity
+                    </td>
+                    <td className="px-4 py-3">United States</td>
+                  </tr>
+                  <tr className="border-b border-border">
+                    <td className="px-4 py-3">Functional Software, Inc. dba Sentry</td>
+                    <td className="px-4 py-3">
+                      Error tracking and diagnostics for Riposte account-user sessions and service
+                      errors
+                    </td>
+                    <td className="px-4 py-3">United States</td>
+                  </tr>
+                  <tr className="border-b border-border">
+                    <td className="px-4 py-3">Plus Five Five, Inc. dba Resend</td>
+                    <td className="px-4 py-3">Transactional email delivery</td>
                     <td className="px-4 py-3">United States</td>
                   </tr>
                   <tr>
-                    <td className="px-4 py-3">Sentry (Functional Software, Inc.)</td>
-                    <td className="px-4 py-3">Error tracking and monitoring</td>
+                    <td className="px-4 py-3">Stripe</td>
+                    <td className="px-4 py-3">
+                      Payment processing, billing, connected Stripe account access, and dispute
+                      evidence submission
+                    </td>
                     <td className="px-4 py-3">United States</td>
                   </tr>
                 </tbody>
@@ -68,7 +92,8 @@ export function SubProcessorsPage() {
             <h3>Transfer mechanisms</h3>
             <p className="mt-3 text-sm text-muted-foreground">
               All sub-processors listed above are certified under the EU-US Data Privacy Framework
-              and/or maintain Standard Contractual Clauses for international data transfers.
+              and/or maintain Standard Contractual Clauses for international data transfers. Stripe
+              entities may vary by product, account location, and processing role.
             </p>
           </section>
 

@@ -93,18 +93,26 @@ export function PrivacyPage() {
                 <strong>Stripe</strong> — dispute evidence submitted via their API
               </li>
               <li>
-                <strong>Infrastructure providers</strong> — Cloudflare (hosting, AI gateway),
-                PlanetScale (database) — bound by their privacy policies and data processing
-                agreements
+                <strong>Infrastructure providers</strong> — Cloudflare (hosting, Workers AI, AI
+                Gateway where used, storage, and edge networking) and PlanetScale (database)
               </li>
               <li>
                 <strong>AI processing</strong> — merchant customer data may be processed through AI
-                models hosted on Cloudflare to generate evidence documents. No data leaves
-                Cloudflare infrastructure for AI processing
+                services hosted on Cloudflare to generate evidence documents. Cloudflare does not
+                use Workers AI customer content to train AI models. Where AI Gateway is used for
+                merchant customer content, we disable or avoid request and response payload logging
               </li>
               <li>
-                <strong>Analytics</strong> — PostHog (product analytics, self-hosted option
-                available)
+                <strong>Analytics</strong> — PostHog for product analytics, including account-user
+                identifiers and product usage telemetry
+              </li>
+              <li>
+                <strong>Error monitoring</strong> — Sentry for error tracking, diagnostics, and
+                related account-user context
+              </li>
+              <li>
+                <strong>Email delivery</strong> — Resend for transactional emails such as sign-in
+                links, account notices, and dispute updates
               </li>
             </ul>
             <p>We don't sell, rent, or trade your data to third parties.</p>

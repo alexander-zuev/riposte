@@ -10,17 +10,12 @@ import {
   type IngestDisputeUpdated,
 } from '@riposte/core'
 import type { HandlerContext } from '@server/application/registry/types'
+import { evaluateStripeWebhookConnection } from '@server/domain/stripe'
 import { Result } from 'better-result'
 
 const logger = createLogger('stripe-webhook-handler')
 
 type StripeWebhookHandlerError = DatabaseError
-type DisputeCommand =
-  | IngestDisputeCreated
-  | IngestDisputeUpdated
-  | IngestDisputeClosed
-  | IngestDisputeFundsReinstated
-  | IngestDisputeFundsWithdrawn
 
 export async function handleStripeAppAuthorized(
   command: HandleStripeAppAuthorized,
@@ -77,31 +72,161 @@ export async function handleStripeAppDeauthorized(
   return Result.ok(undefined)
 }
 
-export async function ingestDisputeWebhook(
-  command: DisputeCommand,
+export async function handleDisputeCreated(
+  command: IngestDisputeCreated,
   { deps, tx }: HandlerContext,
 ): Promise<Result<void, StripeWebhookHandlerError>> {
-  const { account, id: eventId, type } = command.stripeEvent
+  // Stripe Connect events must map back to an active merchant connection before we act.
+  const { account, id: eventId } = command.stripeEvent
 
-  if (!account) {
-    logger.error('stripe_dispute_webhook_missing_account', { type, eventId })
-    return Result.ok(undefined)
-  }
-
-  const connectionResult = await deps.repos.stripeConnections(tx).findByStripeAccountId(account)
+  const connectionResult = account
+    ? await deps.repos.stripeConnections(tx).findByStripeAccountId(account)
+    : Result.ok(null)
   if (connectionResult.isErr()) return Result.err(connectionResult.error)
 
-  const connection = connectionResult.value
-  if (!connection) {
-    logger.warn('stripe_dispute_webhook_unknown_account', { account, eventId, type })
+  const decision = evaluateStripeWebhookConnection({ account, connection: connectionResult.value })
+  if (decision.action === 'ignore') {
+    if (decision.reason === 'revoked_connection') {
+      logger.warn('stripe_dispute_created_revoked_connection', { account, eventId })
+      return Result.ok(undefined)
+    }
+
+    logger.error(`stripe_dispute_created_${decision.reason}`, { account, eventId })
     return Result.ok(undefined)
   }
 
-  logger.info('stripe_dispute_webhook_received', {
-    command: command.name,
-    eventId,
+  logger.info('stripe_dispute_created_received', {
     account,
-    userId: connection.userId,
+    eventId,
+    userId: decision.connection.userId,
+  })
+
+  return Result.ok(undefined)
+}
+
+export async function handleDisputeUpdated(
+  command: IngestDisputeUpdated,
+  { deps, tx }: HandlerContext,
+): Promise<Result<void, StripeWebhookHandlerError>> {
+  // Updates can arrive after uninstall; ignore them unless the connection is active.
+  const { account, id: eventId } = command.stripeEvent
+
+  const connectionResult = account
+    ? await deps.repos.stripeConnections(tx).findByStripeAccountId(account)
+    : Result.ok(null)
+  if (connectionResult.isErr()) return Result.err(connectionResult.error)
+
+  const decision = evaluateStripeWebhookConnection({ account, connection: connectionResult.value })
+  if (decision.action === 'ignore') {
+    if (decision.reason === 'revoked_connection') {
+      logger.warn('stripe_dispute_updated_revoked_connection', { account, eventId })
+      return Result.ok(undefined)
+    }
+
+    logger.error(`stripe_dispute_updated_${decision.reason}`, { account, eventId })
+    return Result.ok(undefined)
+  }
+
+  logger.info('stripe_dispute_updated_received', {
+    account,
+    eventId,
+    userId: decision.connection.userId,
+  })
+
+  return Result.ok(undefined)
+}
+
+export async function handleDisputeClosed(
+  command: IngestDisputeClosed,
+  { deps, tx }: HandlerContext,
+): Promise<Result<void, StripeWebhookHandlerError>> {
+  // Outcome events are only actionable for Stripe accounts we still own access to.
+  const { account, id: eventId } = command.stripeEvent
+
+  const connectionResult = account
+    ? await deps.repos.stripeConnections(tx).findByStripeAccountId(account)
+    : Result.ok(null)
+  if (connectionResult.isErr()) return Result.err(connectionResult.error)
+
+  const decision = evaluateStripeWebhookConnection({ account, connection: connectionResult.value })
+  if (decision.action === 'ignore') {
+    if (decision.reason === 'revoked_connection') {
+      logger.warn('stripe_dispute_closed_revoked_connection', { account, eventId })
+      return Result.ok(undefined)
+    }
+
+    logger.error(`stripe_dispute_closed_${decision.reason}`, { account, eventId })
+    return Result.ok(undefined)
+  }
+
+  logger.info('stripe_dispute_closed_received', {
+    account,
+    eventId,
+    userId: decision.connection.userId,
+  })
+
+  return Result.ok(undefined)
+}
+
+export async function handleDisputeFundsReinstated(
+  command: IngestDisputeFundsReinstated,
+  { deps, tx }: HandlerContext,
+): Promise<Result<void, StripeWebhookHandlerError>> {
+  // Funds events update money outcome later; for now they share the same access gate.
+  const { account, id: eventId } = command.stripeEvent
+
+  const connectionResult = account
+    ? await deps.repos.stripeConnections(tx).findByStripeAccountId(account)
+    : Result.ok(null)
+  if (connectionResult.isErr()) return Result.err(connectionResult.error)
+
+  const decision = evaluateStripeWebhookConnection({ account, connection: connectionResult.value })
+  if (decision.action === 'ignore') {
+    if (decision.reason === 'revoked_connection') {
+      logger.warn('stripe_dispute_funds_reinstated_revoked_connection', { account, eventId })
+      return Result.ok(undefined)
+    }
+
+    logger.error(`stripe_dispute_funds_reinstated_${decision.reason}`, { account, eventId })
+    return Result.ok(undefined)
+  }
+
+  logger.info('stripe_dispute_funds_reinstated_received', {
+    account,
+    eventId,
+    userId: decision.connection.userId,
+  })
+
+  return Result.ok(undefined)
+}
+
+export async function handleDisputeFundsWithdrawn(
+  command: IngestDisputeFundsWithdrawn,
+  { deps, tx }: HandlerContext,
+): Promise<Result<void, StripeWebhookHandlerError>> {
+  // Funds events update money outcome later; for now they share the same access gate.
+  const { account, id: eventId } = command.stripeEvent
+
+  const connectionResult = account
+    ? await deps.repos.stripeConnections(tx).findByStripeAccountId(account)
+    : Result.ok(null)
+  if (connectionResult.isErr()) return Result.err(connectionResult.error)
+
+  const decision = evaluateStripeWebhookConnection({ account, connection: connectionResult.value })
+  if (decision.action === 'ignore') {
+    if (decision.reason === 'revoked_connection') {
+      logger.warn('stripe_dispute_funds_withdrawn_revoked_connection', { account, eventId })
+      return Result.ok(undefined)
+    }
+
+    logger.error(`stripe_dispute_funds_withdrawn_${decision.reason}`, { account, eventId })
+    return Result.ok(undefined)
+  }
+
+  logger.info('stripe_dispute_funds_withdrawn_received', {
+    account,
+    eventId,
+    userId: decision.connection.userId,
   })
 
   return Result.ok(undefined)

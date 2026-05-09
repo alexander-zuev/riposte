@@ -7,9 +7,13 @@ import {
 import { getConnectionsStatus } from '@server/application/handlers/connection-handler'
 import { getStripeAppSettings, syncDisputes } from '@server/application/handlers/stripe-app-handler'
 import {
+  handleDisputeClosed,
+  handleDisputeCreated,
+  handleDisputeFundsReinstated,
+  handleDisputeFundsWithdrawn,
+  handleDisputeUpdated,
   handleStripeAppAuthorized,
   handleStripeAppDeauthorized,
-  ingestDisputeWebhook,
 } from '@server/application/handlers/stripe-webhook-handler'
 import { joinWaitlist } from '@server/application/handlers/waitlist-handler'
 
@@ -19,11 +23,11 @@ export const COMMAND_HANDLERS = {
   JoinWaitlist: joinWaitlist,
   SendMagicLink: sendMagicLink,
   SendWelcomeEmail: sendWelcomeEmail,
-  IngestDisputeCreated: ingestDisputeWebhook,
-  IngestDisputeUpdated: ingestDisputeWebhook,
-  IngestDisputeClosed: ingestDisputeWebhook,
-  IngestDisputeFundsReinstated: ingestDisputeWebhook,
-  IngestDisputeFundsWithdrawn: ingestDisputeWebhook,
+  IngestDisputeCreated: handleDisputeCreated,
+  IngestDisputeUpdated: handleDisputeUpdated,
+  IngestDisputeClosed: handleDisputeClosed,
+  IngestDisputeFundsReinstated: handleDisputeFundsReinstated,
+  IngestDisputeFundsWithdrawn: handleDisputeFundsWithdrawn,
   SyncDisputes: syncDisputes,
   HandleStripeAppAuthorized: handleStripeAppAuthorized,
   HandleStripeAppDeauthorized: handleStripeAppDeauthorized,

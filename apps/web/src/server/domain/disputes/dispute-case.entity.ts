@@ -1,5 +1,15 @@
-import { ValidationError, createEvent } from '@riposte/core'
-import type { UUIDv4 } from '@riposte/core'
+import {
+  ValidationError,
+  createEvent,
+  currencyCodeSchema,
+  stripeDisputeStatusSchema,
+} from '@riposte/core'
+import type {
+  DisputeCaseWorkflowState,
+  DisputeCaseWorkflowStatus,
+  MissingEvidence,
+  UUIDv4,
+} from '@riposte/core'
 import { Entity } from '@server/domain/models/base.models'
 import { Result } from 'better-result'
 import { z } from 'zod'
@@ -9,25 +19,6 @@ import { type StripeDisputeId, stripeDisputeIdSchema } from './dispute.schemas'
 import { Money } from './money.vo'
 
 export type DisputeCaseId = StripeDisputeId
-
-export type MissingEvidence = {
-  code: string
-  message: string
-}
-
-export type DisputeCaseWorkflowState =
-  | { status: 'received' }
-  | { status: 'collecting_evidence'; startedAt: Date }
-  | { status: 'needs_input'; missingEvidence: MissingEvidence[] }
-  | { status: 'ready_for_review'; evidencePacketId: UUIDv4 }
-  | { status: 'submitted'; evidencePacketId: UUIDv4; submittedAt: Date }
-  | { status: 'accepted'; acceptedAt: Date }
-  | { status: 'deadline_missed'; missedAt: Date }
-  | { status: 'won'; decidedAt: Date }
-  | { status: 'lost'; decidedAt: Date }
-  | { status: 'failed'; reason: string }
-
-export type DisputeCaseWorkflowStatus = DisputeCaseWorkflowState['status']
 
 export type DisputeCaseSnapshot = {
   id: DisputeCaseId
@@ -52,10 +43,10 @@ export type ReceiveStripeDisputeInput = {
 
 const stripeDisputeObjectSchema = z.object({
   id: z.string().min(1),
-  amount: z.number().int(),
-  currency: z.string().min(1),
+  amount: z.number().int().nonnegative(),
+  currency: currencyCodeSchema,
   reason: z.string().min(1),
-  status: z.string().min(1),
+  status: stripeDisputeStatusSchema,
   evidence_details: z.object({
     due_by: z.number().int().nullable(),
   }),

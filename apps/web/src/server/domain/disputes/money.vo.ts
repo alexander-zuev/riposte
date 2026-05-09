@@ -1,11 +1,6 @@
-import { ValidationError } from '@riposte/core'
+import { ValidationError, moneySchema, type Money as SerializedMoney } from '@riposte/core'
 
 import { ValueObject } from '../models/base.models'
-
-export type SerializedMoney = {
-  amountMinor: number
-  currency: string
-}
 
 export class Money extends ValueObject<SerializedMoney> {
   private constructor(
@@ -16,33 +11,19 @@ export class Money extends ValueObject<SerializedMoney> {
   }
 
   static create(input: SerializedMoney): Money {
-    const currency = input.currency.trim().toLowerCase()
-
-    if (!Number.isInteger(input.amountMinor) || input.amountMinor < 0) {
+    const parsed = moneySchema.safeParse(input)
+    if (!parsed.success) {
       throw new ValidationError({
-        issues: [
-          {
-            code: 'invalid_money_amount',
-            path: ['amountMinor'],
-            message: 'Money amount must be a non-negative integer in minor units',
-          },
-        ],
+        issues: parsed.error.issues.map((issue) => ({
+          code: issue.code,
+          path: issue.path.map((path) => (typeof path === 'symbol' ? String(path) : path)),
+          message: issue.message,
+        })),
+        message: 'Invalid money value',
       })
     }
 
-    if (!/^[a-z]{3}$/.test(currency)) {
-      throw new ValidationError({
-        issues: [
-          {
-            code: 'invalid_currency',
-            path: ['currency'],
-            message: 'Currency must be a three-letter ISO currency code',
-          },
-        ],
-      })
-    }
-
-    return new Money(input.amountMinor, currency)
+    return new Money(parsed.data.amountMinor, parsed.data.currency)
   }
 
   static deserialize(input: SerializedMoney): Money {

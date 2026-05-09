@@ -269,6 +269,8 @@ Service bindings/assets/browser/vectorize/images:
 
 - Path aliases: `@web/*` → `src/*`, `@server/*` → `src/server/*`
 - Package imports: `@riposte/core` (server), `@riposte/core/client` (browser-safe)
+- Commit messages must use Conventional Commits, such as `feat: add dispute sync`,
+  `fix: deduplicate Stripe webhooks`, or `docs: update agent guidance`.
 - Formatting: oxfmt. Linting: oxlint. No ESLint/Prettier.
 - UI primitives: default to components in `apps/web/src/ui/components` instead of raw HTML controls. Use raw elements only when there is a clear exception.
 - Styling: for colors, design tokens, typography, and reusable visual rules, reach for `apps/web/src/ui/stylesheets` first. If a needed token or utility is missing, ask why before adding one-off classes.

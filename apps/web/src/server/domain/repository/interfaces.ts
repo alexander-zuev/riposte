@@ -7,7 +7,11 @@ import type {
   ListDisputeCasesResult,
   UUIDv4,
 } from '@riposte/core'
-import type { DisputeCase } from '@server/domain/disputes'
+import type {
+  DisputeCase,
+  SaveStripeDisputeContextInput,
+  StripeDisputeContext,
+} from '@server/domain/disputes'
 import type {
   StripeConnection,
   StripeConnectionWithCredentials,
@@ -26,6 +30,19 @@ export interface IDisputeCaseRepository {
     input: Omit<ListDisputeCases, 'type' | 'name'>,
   ) => Promise<Result<ListDisputeCasesResult, DatabaseError>>
   save: (disputeCase: DisputeCase) => Promise<Result<DisputeCase, DatabaseError>>
+}
+
+/* -------------------------------------------------------------------------------------------------
+ * Stripe Dispute Context Repository
+ * ------------------------------------------------------------------------------------------------- */
+
+export interface IStripeDisputeContextRepository {
+  findByDisputeCaseId: (
+    disputeCaseId: string,
+  ) => Promise<Result<StripeDisputeContext | null, DatabaseError>>
+  save: (
+    input: SaveStripeDisputeContextInput,
+  ) => Promise<Result<StripeDisputeContext, DatabaseError>>
 }
 
 /* -------------------------------------------------------------------------------------------------

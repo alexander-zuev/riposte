@@ -92,6 +92,13 @@
       "when": 1778355678029,
       "tag": "0012_majestic_kylun",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1778356819931,
+      "tag": "0013_cooing_imperial_guard",
+      "breakpoints": true
     }
   ]
 }

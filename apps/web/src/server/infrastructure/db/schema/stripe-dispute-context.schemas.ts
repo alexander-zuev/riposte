@@ -1,5 +1,6 @@
-import type { CurrencyCode, StripePriceRecurringInterval } from '@riposte/core'
-import { integer, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
+import type { CurrencyCode } from '@riposte/core'
+import type { StripeSubscriptionItemSnapshot } from '@server/domain/disputes'
+import { jsonb, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
 
 import { disputeCases } from './dispute-case.schemas'
 
@@ -11,6 +12,7 @@ export const stripeDisputeContexts = pgTable('stripe_dispute_contexts', {
   chargeId: text('charge_id').notNull(),
   paymentIntentId: text('payment_intent_id'),
   chargeCreatedAt: timestamp('charge_created_at', { withTimezone: true }).notNull(),
+  chargeReceiptUrl: text('charge_receipt_url'),
 
   stripeCustomerId: text('stripe_customer_id'),
   customerEmail: text('customer_email'),
@@ -20,14 +22,11 @@ export const stripeDisputeContexts = pgTable('stripe_dispute_contexts', {
   invoicePdfUrl: text('invoice_pdf_url'),
 
   subscriptionId: text('subscription_id'),
-  planName: text('plan_name'),
-  planAmountMinor: integer('plan_amount_minor'),
-  planCurrency: text('plan_currency').$type<CurrencyCode>(),
-  planInterval: text('plan_interval').$type<StripePriceRecurringInterval>(),
   subscriptionStatus: text('subscription_status'),
+  subscriptionItems: jsonb('subscription_items').$type<StripeSubscriptionItemSnapshot[]>(),
 
-  totalPaidMinor: integer('total_paid_minor'),
-  totalPaidCurrency: text('total_paid_currency').$type<CurrencyCode>(),
+  totalPaidByCurrency:
+    jsonb('total_paid_by_currency').$type<Partial<Record<CurrencyCode, number>>>(),
 
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true })

@@ -7,6 +7,7 @@ import type {
   IDisputeCaseRepository,
   IOutboxRepository,
   IStripeConnectionRepository,
+  IStripeDisputeContextRepository,
   IWaitlistRepository,
 } from '@server/domain/repository/interfaces'
 import {
@@ -31,6 +32,7 @@ import { QueueClient } from '@server/infrastructure/queues/queue-client'
 import { DisputeCaseRepository } from '@server/infrastructure/repositories/dispute-case.repository'
 import { OutboxRepository } from '@server/infrastructure/repositories/outbox.repository'
 import { StripeConnectionRepository } from '@server/infrastructure/repositories/stripe-connection.repository'
+import { StripeDisputeContextRepository } from '@server/infrastructure/repositories/stripe-dispute-context.repository'
 import { WaitlistRepository } from '@server/infrastructure/repositories/waitlist.repository'
 import type { Result } from 'better-result'
 
@@ -51,6 +53,7 @@ export type AppDeps = {
     disputeCases: (tx: DrizzleDb) => IDisputeCaseRepository
     outbox: (tx: DrizzleDb) => IOutboxRepository
     stripeConnections: (tx: DrizzleDb) => IStripeConnectionRepository
+    stripeDisputeContexts: (tx: DrizzleDb) => IStripeDisputeContextRepository
     waitlist: (tx: DrizzleDb) => IWaitlistRepository
   }
 
@@ -91,6 +94,7 @@ export function createAppDeps(env: Env, ctx: WaitUntilContext): AppDeps {
       outbox: (tx) => new OutboxRepository(tx),
       stripeConnections: (tx) =>
         new StripeConnectionRepository(tx, deps.services.credentialEncryption()),
+      stripeDisputeContexts: (tx) => new StripeDisputeContextRepository(tx),
       waitlist: (tx) => new WaitlistRepository(tx),
     },
     uow: {

@@ -12,9 +12,9 @@ export function StripeDisputeEvidencePage() {
   return (
     <PageShell width="none" frame="none" header={<Header />}>
       <HeroSection />
+      <ProblemSection />
+      <ComparisonSection />
       <HowItWorksSection />
-      <WhatYouGetSection />
-      <FounderSection />
       <CalendlySection />
     </PageShell>
   )
@@ -49,28 +49,121 @@ function HeroSection() {
 
         <p className="mt-6 max-w-2xl text-lg text-muted-foreground">
           Riposte connects to Stripe and your database. When a dispute arrives, it pulls real
-          customer activity — sessions, usage, deliveries — and submits structured evidence to
-          Stripe before the deadline.
+          customer activity and submits structured evidence before the deadline.
         </p>
 
-        <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-          <a
-            href="#book"
-            className="inline-flex items-center rounded-md bg-accent px-6 py-3 font-medium text-accent-foreground no-underline transition-colors hover:bg-accent-hover hover:no-underline"
-          >
-            Book a call — bring a dispute
-          </a>
-          <a
-            href="#how"
-            className="inline-flex items-center rounded-md border border-border px-6 py-3 font-medium text-foreground no-underline transition-colors hover:bg-surface-hover hover:no-underline"
-          >
-            See how it works
-          </a>
-        </div>
+        <a
+          href="#book"
+          className="mt-8 inline-flex items-center rounded-md bg-accent px-6 py-3 font-medium text-accent-foreground no-underline transition-colors hover:bg-accent-hover hover:no-underline"
+        >
+          Try it on a real dispute
+        </a>
 
-        <p className="mt-8 text-system text-sm text-muted-foreground">
+        <p className="mt-6 text-system text-sm text-muted-foreground">
           Open source · Flat fee · No percentage cut
         </p>
+      </div>
+    </Section>
+  )
+}
+
+const PAIN_POINTS = [
+  {
+    stat: '30-60 min',
+    label: 'per dispute',
+    detail: 'Pulling data from Stripe, querying your database, formatting it, writing the argument — for every single dispute',
+  },
+  {
+    stat: '~12%',
+    label: 'win rate',
+    detail: 'Industry average. Most merchants submit a Stripe receipt and a paragraph of text. The bank reviewer scans it in 30 seconds',
+  },
+  {
+    stat: '7-21 days',
+    label: 'to respond',
+    detail: 'One submission, no edits. Miss it and you auto-lose. Most merchants don\'t respond at all',
+  },
+] as const
+
+function ProblemSection() {
+  return (
+    <Section background="panel">
+      <div className="container-max-w-6xl flex flex-col items-center">
+        <span className="inline-flex items-center text-system text-xs font-medium text-accent uppercase">
+          The problem
+        </span>
+
+        <h2 className="text-display mt-4 max-w-3xl text-center">
+          Your app has the proof. It never reaches Stripe.
+        </h2>
+
+        <p className="mt-4 max-w-2xl text-center text-muted-foreground">
+          The customer used your product for months — sessions, exports, generated content. But
+          when they dispute, you submit a receipt and hope for the best.
+        </p>
+
+        <div className="mt-12 grid w-full grid-cols-1 gap-6 md:grid-cols-3">
+          {PAIN_POINTS.map((point) => (
+            <div key={point.stat} className="rounded-lg border border-border bg-background p-6">
+              <span className="text-2xl font-bold text-destructive-muted-foreground">
+                {point.stat}
+              </span>
+              <span className="ml-2 text-sm text-muted-foreground">{point.label}</span>
+              <p className="mt-3 text-sm text-muted-foreground">{point.detail}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </Section>
+  )
+}
+
+function ComparisonSection() {
+  return (
+    <Section>
+      <div className="container-max-w-5xl flex flex-col items-center">
+        <span className="inline-flex items-center text-system text-xs font-medium text-accent uppercase">
+          The difference
+        </span>
+
+        <h2 className="text-display mt-4 text-center">
+          Receipt vs. real evidence
+        </h2>
+
+        <div className="mt-12 grid w-full grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="rounded-lg border border-border bg-surface p-6">
+            <h3 className="text-destructive-muted-foreground">What most merchants submit</h3>
+            <ul className="mt-4 flex flex-col gap-2">
+              {[
+                'Stripe receipt (Stripe already has this)',
+                'No proof the customer used the product',
+                'No delivery evidence',
+                '"Customer used our service" — generic text',
+              ].map((item) => (
+                <li key={item} className="flex items-start gap-2 text-sm text-muted-foreground">
+                  <span className="text-destructive-muted-foreground">✗</span>
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="rounded-lg border border-border bg-surface p-6">
+            <h3 className="text-success-muted-foreground">What Riposte submits</h3>
+            <ul className="mt-4 flex flex-col gap-2">
+              {[
+                '142 sessions, 18 exports, last active 2 days ago',
+                'Activity timeline with timestamps from your DB',
+                'Screenshots of delivered outputs',
+                'Structured to match Stripe evidence fields',
+              ].map((item) => (
+                <li key={item} className="flex items-start gap-2 text-sm text-muted-foreground">
+                  <span className="text-success-muted-foreground">✓</span>
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
       </div>
     </Section>
   )
@@ -117,7 +210,7 @@ function HowItWorksSection() {
 
           <StepCard
             number="2"
-            title="Evidence pulled from your app"
+            title="Evidence from your app"
             description="AI agent queries your database for sessions, usage, deliveries, support history."
           >
             <div className="rounded-md border border-border bg-background p-4 text-xs">
@@ -139,7 +232,7 @@ function HowItWorksSection() {
                   <div className="text-muted-foreground">your database</div>
                   <div className="mt-1 flex flex-col gap-0.5">
                     <Row label="Sessions" value="142" />
-                    <Row label="Exports created" value="18" />
+                    <Row label="Exports" value="18" />
                     <Row label="Last active" value="2 days ago" />
                     <Row label="Support tickets" value="0" />
                   </div>
@@ -150,8 +243,8 @@ function HowItWorksSection() {
 
           <StepCard
             number="3"
-            title="Structured packet submitted"
-            description="PDF + Stripe evidence fields sent via API. You review first if you want."
+            title="Submitted to Stripe"
+            description="PDF + evidence fields sent via API. You review first if you want."
           >
             <div className="rounded-md border border-border bg-background p-4 text-xs">
               <div className="flex items-center gap-2">
@@ -159,26 +252,11 @@ function HowItWorksSection() {
                 <span className="font-medium text-success-muted-foreground">submitted</span>
               </div>
               <div className="mt-3 flex flex-col gap-1.5 text-muted-foreground">
-                <div className="flex items-center justify-between">
-                  <span>Service documentation PDF</span>
-                  <span className="text-success-muted-foreground">✓</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>Activity timeline</span>
-                  <span className="text-success-muted-foreground">✓</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>Usage screenshots</span>
-                  <span className="text-success-muted-foreground">✓</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>Written argument</span>
-                  <span className="text-success-muted-foreground">✓</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>Stripe receipt</span>
-                  <span className="text-success-muted-foreground">✓</span>
-                </div>
+                <Row label="Service documentation PDF" value="" check />
+                <Row label="Activity timeline" value="" check />
+                <Row label="Usage screenshots" value="" check />
+                <Row label="Written argument" value="" check />
+                <Row label="Stripe receipt" value="" check />
               </div>
             </div>
           </StepCard>
@@ -213,125 +291,20 @@ function StepCard({
   )
 }
 
-function Row({ label, value }: { label: string; value: string }) {
+function Row({
+  label,
+  value,
+  check,
+}: {
+  label: string
+  value: string
+  check?: boolean
+}) {
   return (
     <div className="flex items-center justify-between">
       <span className="text-muted-foreground">{label}</span>
-      <span className="text-success-muted-foreground">✓ {value}</span>
+      <span className="text-success-muted-foreground">{check ? '✓' : `✓ ${value}`}</span>
     </div>
-  )
-}
-
-function WhatYouGetSection() {
-  return (
-    <Section>
-      <div className="container-max-w-5xl flex flex-col items-center">
-        <span className="inline-flex items-center text-system text-xs font-medium text-accent uppercase">
-          Why this works
-        </span>
-
-        <h2 className="text-display mt-4 text-center">
-          Stripe sees the payment. Your app has the proof.
-        </h2>
-
-        <p className="mt-4 max-w-2xl text-center text-muted-foreground">
-          Most merchants lose disputes because they only submit what Stripe already knows — a
-          receipt. Riposte pulls proof from your product: who logged in, what they did, what they
-          received.
-        </p>
-
-        <div className="mt-12 grid w-full grid-cols-1 gap-4 md:grid-cols-2">
-          <ComparisonCard
-            variant="without"
-            title="Without Riposte"
-            items={[
-              'Stripe receipt (Stripe already has this)',
-              'No usage proof',
-              'No delivery proof',
-              'Generic "customer used our service" text',
-              'Average win rate: ~20%',
-            ]}
-          />
-          <ComparisonCard
-            variant="with"
-            title="With Riposte"
-            items={[
-              '142 sessions, 18 exports, last active 2 days ago',
-              'Full activity timeline with timestamps',
-              'Screenshots of delivered outputs',
-              'Customer-specific evidence from your database',
-              'Structured to match Stripe evidence fields',
-            ]}
-          />
-        </div>
-      </div>
-    </Section>
-  )
-}
-
-function ComparisonCard({
-  variant,
-  title,
-  items,
-}: {
-  variant: 'without' | 'with'
-  title: string
-  items: string[]
-}) {
-  const isWith = variant === 'with'
-  return (
-    <div className="rounded-lg border border-border bg-surface p-6">
-      <h3
-        className={
-          isWith ? 'text-success-muted-foreground' : 'text-destructive-muted-foreground'
-        }
-      >
-        {title}
-      </h3>
-      <ul className="mt-4 flex flex-col gap-2">
-        {items.map((item) => (
-          <li key={item} className="flex items-start gap-2 text-sm text-muted-foreground">
-            <span className={isWith ? 'text-success-muted-foreground' : 'text-destructive-muted-foreground'}>
-              {isWith ? '✓' : '✗'}
-            </span>
-            {item}
-          </li>
-        ))}
-      </ul>
-    </div>
-  )
-}
-
-function FounderSection() {
-  return (
-    <Section background="panel">
-      <div className="container-max-w-4xl flex flex-col items-center text-center">
-        <p className="text-foreground">
-          I built Riposte because I watched SaaS founders lose disputes they should win. Not
-          because the customer was right — but because the evidence never left the database. The
-          tools that exist charge 25-30% of recovered money. Riposte is open source with a flat
-          fee.
-        </p>
-
-        <p className="mt-4 text-muted-foreground">
-          I'm looking for 3-5 merchants with real Stripe disputes to build this with. You bring
-          the dispute, I bring the agent. If Riposte can't build a better packet than what you'd
-          submit manually, you'll know in 30 minutes.
-        </p>
-
-        <p className="mt-4 text-sm text-muted-foreground">— Alexander, creator of Riposte</p>
-
-        <a
-          href={GITHUB_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-6 inline-flex items-center gap-2 rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground no-underline transition-colors hover:bg-surface-hover hover:no-underline"
-        >
-          <GithubLogoIcon className="h-4 w-4" />
-          View source on GitHub
-        </a>
-      </div>
-    </Section>
   )
 }
 
@@ -339,11 +312,26 @@ function CalendlySection() {
   return (
     <Section id="book">
       <div className="container-max-w-4xl flex flex-col items-center">
-        <h2 className="text-display text-center">Book a 30-minute call</h2>
+        <h2 className="text-display text-center">
+          Send me a dispute. I'll show you the evidence packet.
+        </h2>
 
-        <p className="mt-4 text-center text-muted-foreground">
-          Bring one recent Stripe dispute. We'll look at whether Riposte can build the evidence
-          packet from your actual data sources.
+        <p className="mt-4 max-w-xl text-center text-muted-foreground">
+          Pick a recent Stripe dispute. I'll run Riposte against your data and walk you through
+          what it builds — the activity timeline, the PDF, the Stripe fields. 30 minutes, no
+          strings attached.
+        </p>
+
+        <p className="mt-2 text-center text-sm text-muted-foreground">
+          — Alexander,{' '}
+          <a
+            href={GITHUB_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-muted-foreground underline"
+          >
+            creator of Riposte
+          </a>
         </p>
 
         <div className="mt-8 w-full">

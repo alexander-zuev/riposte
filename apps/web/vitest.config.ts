@@ -1,5 +1,6 @@
-import { cloudflareTest } from '@cloudflare/vitest-pool-workers'
 import { resolve } from 'node:path'
+
+import { cloudflareTest } from '@cloudflare/vitest-pool-workers'
 import { defineConfig } from 'vitest/config'
 
 const startStub = resolve(import.meta.dirname, 'test/mocks/tanstack-start-entry.ts')

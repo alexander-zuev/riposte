@@ -5,7 +5,7 @@
     "composite": false,
     "target": "ESNext",
     "jsx": "react-jsx",
-    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "lib": ["ESNext", "DOM"],
     "paths": {
       "@web/*": ["./src/*"],
       "@server/*": ["./src/server/*"]

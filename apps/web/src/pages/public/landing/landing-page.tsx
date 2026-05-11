@@ -796,6 +796,7 @@ function QualificationForm({ onRoute }: { onRoute: (route: FormRoute) => void })
       )
 
       posthog?.capture('landing_form_submitted', {
+        email: variables.email,
         qualified,
         uses_stripe: variables.usesStripe,
         product_type: variables.productType,

@@ -6,6 +6,25 @@ This file provides guidance to coding agents when working with this repository. 
 
 Open-source AI agent that wins Stripe disputes on autopilot. Deploys to Cloudflare Workers.
 
+## Engineering Approach
+
+Do not hallucinate product or integration behavior. We have enough primitives to build working
+software from source material, real APIs, and focused tests.
+
+- Ground decisions in local docs, first-party documentation, source code, or observed behavior from
+  the real system under test.
+- For Riposte product/dispute work, read `docs/private/specs/product-spec.md` and
+  `docs/private/specs/research/product-research.md` before changing behavior or claims.
+- When behavior matters, verify it directly with the real API/service in a safe test mode or sandbox.
+  Record what was verified when it affects product, architecture, or future implementation.
+- Use mocks to prepare our own boundaries, make tests deterministic, and cover error cases. Do not
+  let mocks become the source of truth for a third-party API or platform behavior.
+- Keep production paths deterministic where possible. AI can help collect, summarize, or draft, but
+  code should validate shapes, enforce policy, persist auditable facts, and perform side effects.
+- Separate facts, decisions, generated artifacts, and side effects in the domain model. This makes
+  behavior testable and prevents polished output from hiding missing evidence.
+- Prefer small end-to-end slices that touch the real boundary over broad speculative abstractions.
+
 ## Commands
 
 Check `package.json` (root) and `apps/web/package.json` for available scripts before running anything.

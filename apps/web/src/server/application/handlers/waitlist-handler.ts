@@ -7,5 +7,5 @@ export const joinWaitlist: CommandHandler<
   DatabaseError
 > = async (command, { deps, tx }) => {
   const repo = deps.repos.waitlist(tx)
-  return repo.addEmail(command.email)
+  return repo.add(command)
 }

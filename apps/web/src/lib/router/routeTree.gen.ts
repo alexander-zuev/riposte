@@ -16,7 +16,6 @@ import { Route as PublicIndexRouteImport } from './../../routes/_public/index'
 import { Route as DevEmailsRouteImport } from './../../routes/dev/emails'
 import { Route as PublicTermsRouteImport } from './../../routes/_public/terms'
 import { Route as PublicSubProcessorsRouteImport } from './../../routes/_public/sub-processors'
-import { Route as PublicStripeDisputeEvidenceRouteImport } from './../../routes/_public/stripe-dispute-evidence'
 import { Route as PublicSignInRouteImport } from './../../routes/_public/sign-in'
 import { Route as PublicPrivacyRouteImport } from './../../routes/_public/privacy'
 import { Route as AuthedSetupRouteImport } from './../../routes/_authed/setup'
@@ -64,12 +63,6 @@ const PublicSubProcessorsRoute = PublicSubProcessorsRouteImport.update({
   path: '/sub-processors',
   getParentRoute: () => PublicRouteRoute,
 } as any)
-const PublicStripeDisputeEvidenceRoute =
-  PublicStripeDisputeEvidenceRouteImport.update({
-    id: '/stripe-dispute-evidence',
-    path: '/stripe-dispute-evidence',
-    getParentRoute: () => PublicRouteRoute,
-  } as any)
 const PublicSignInRoute = PublicSignInRouteImport.update({
   id: '/sign-in',
   path: '/sign-in',
@@ -147,7 +140,6 @@ export interface FileRoutesByFullPath {
   '/setup': typeof AuthedSetupRoute
   '/privacy': typeof PublicPrivacyRoute
   '/sign-in': typeof PublicSignInRoute
-  '/stripe-dispute-evidence': typeof PublicStripeDisputeEvidenceRoute
   '/sub-processors': typeof PublicSubProcessorsRoute
   '/terms': typeof PublicTermsRoute
   '/dev/emails': typeof DevEmailsRoute
@@ -168,7 +160,6 @@ export interface FileRoutesByTo {
   '/setup': typeof AuthedSetupRoute
   '/privacy': typeof PublicPrivacyRoute
   '/sign-in': typeof PublicSignInRoute
-  '/stripe-dispute-evidence': typeof PublicStripeDisputeEvidenceRoute
   '/sub-processors': typeof PublicSubProcessorsRoute
   '/terms': typeof PublicTermsRoute
   '/dev/emails': typeof DevEmailsRoute
@@ -191,7 +182,6 @@ export interface FileRoutesById {
   '/_authed/setup': typeof AuthedSetupRoute
   '/_public/privacy': typeof PublicPrivacyRoute
   '/_public/sign-in': typeof PublicSignInRoute
-  '/_public/stripe-dispute-evidence': typeof PublicStripeDisputeEvidenceRoute
   '/_public/sub-processors': typeof PublicSubProcessorsRoute
   '/_public/terms': typeof PublicTermsRoute
   '/dev/emails': typeof DevEmailsRoute
@@ -215,7 +205,6 @@ export interface FileRouteTypes {
     | '/setup'
     | '/privacy'
     | '/sign-in'
-    | '/stripe-dispute-evidence'
     | '/sub-processors'
     | '/terms'
     | '/dev/emails'
@@ -236,7 +225,6 @@ export interface FileRouteTypes {
     | '/setup'
     | '/privacy'
     | '/sign-in'
-    | '/stripe-dispute-evidence'
     | '/sub-processors'
     | '/terms'
     | '/dev/emails'
@@ -258,7 +246,6 @@ export interface FileRouteTypes {
     | '/_authed/setup'
     | '/_public/privacy'
     | '/_public/sign-in'
-    | '/_public/stripe-dispute-evidence'
     | '/_public/sub-processors'
     | '/_public/terms'
     | '/dev/emails'
@@ -330,13 +317,6 @@ declare module '@tanstack/react-router' {
       path: '/sub-processors'
       fullPath: '/sub-processors'
       preLoaderRoute: typeof PublicSubProcessorsRouteImport
-      parentRoute: typeof PublicRouteRoute
-    }
-    '/_public/stripe-dispute-evidence': {
-      id: '/_public/stripe-dispute-evidence'
-      path: '/stripe-dispute-evidence'
-      fullPath: '/stripe-dispute-evidence'
-      preLoaderRoute: typeof PublicStripeDisputeEvidenceRouteImport
       parentRoute: typeof PublicRouteRoute
     }
     '/_public/sign-in': {
@@ -470,7 +450,6 @@ const AuthedRouteRouteWithChildren = AuthedRouteRoute._addFileChildren(
 interface PublicRouteRouteChildren {
   PublicPrivacyRoute: typeof PublicPrivacyRoute
   PublicSignInRoute: typeof PublicSignInRoute
-  PublicStripeDisputeEvidenceRoute: typeof PublicStripeDisputeEvidenceRoute
   PublicSubProcessorsRoute: typeof PublicSubProcessorsRoute
   PublicTermsRoute: typeof PublicTermsRoute
   PublicIndexRoute: typeof PublicIndexRoute
@@ -479,7 +458,6 @@ interface PublicRouteRouteChildren {
 const PublicRouteRouteChildren: PublicRouteRouteChildren = {
   PublicPrivacyRoute: PublicPrivacyRoute,
   PublicSignInRoute: PublicSignInRoute,
-  PublicStripeDisputeEvidenceRoute: PublicStripeDisputeEvidenceRoute,
   PublicSubProcessorsRoute: PublicSubProcessorsRoute,
   PublicTermsRoute: PublicTermsRoute,
   PublicIndexRoute: PublicIndexRoute,

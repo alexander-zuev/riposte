@@ -70,6 +70,13 @@ const FAVICON_LINKS = [
   { rel: 'manifest', href: '/manifest.json' },
 ]
 
+const PRECONNECT_LINKS = [
+  { rel: 'preconnect', href: 'https://assets.calendly.com' },
+  { rel: 'dns-prefetch', href: 'https://assets.calendly.com' },
+  { rel: 'preconnect', href: 'https://calendly.com' },
+  { rel: 'dns-prefetch', href: 'https://calendly.com' },
+]
+
 export function defaultHead(globalStylesHref: string) {
   const seo = createSeoHead({
     title: DEFAULT_TITLE,
@@ -83,6 +90,11 @@ export function defaultHead(globalStylesHref: string) {
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
       ...seo.meta,
     ],
-    links: [...FAVICON_LINKS, { rel: 'stylesheet', href: globalStylesHref }, ...seo.links],
+    links: [
+      ...PRECONNECT_LINKS,
+      ...FAVICON_LINKS,
+      { rel: 'stylesheet', href: globalStylesHref },
+      ...seo.links,
+    ],
   }
 }

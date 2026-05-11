@@ -6,8 +6,8 @@
   "scripts": {
     "cf-typegen": "wrangler types --env dev",
     "dev": "CLOUDFLARE_ENV=dev dotenvx run -- vite",
-    "build": "wrangler types --env staging && CLOUDFLARE_ENV=staging vite build --mode staging && oxlint src --quiet && tsc -p tsconfig.build.json --noEmit",
-    "build:prod": "wrangler types --env prod && CLOUDFLARE_ENV=prod vite build --mode production && oxlint src --quiet && tsc -p tsconfig.build.json --noEmit",
+    "build": "wrangler types --env staging && CLOUDFLARE_ENV=staging vite build --mode staging && oxlint src --quiet && tsc -p tsconfig.build.json",
+    "build:prod": "wrangler types --env prod && CLOUDFLARE_ENV=prod vite build --mode production && oxlint src --quiet && tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
     "preview": "dotenvx run -- vite preview",
     "test": "vitest run --reporter=dot --silent",

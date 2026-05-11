@@ -3,6 +3,7 @@ import type {
   DatabaseError,
   DomainEvent,
   DuplicateMessageError,
+  JoinWaitlist,
   ListDisputeCases,
   ListDisputeCasesResult,
   UUIDv4,
@@ -78,7 +79,7 @@ export interface IStripeConnectionRepository {
  * ------------------------------------------------------------------------------------------------- */
 
 export interface IWaitlistRepository {
-  addEmail: (email: string) => Promise<Result<{ alreadyExists: boolean }, DatabaseError>>
+  add: (command: JoinWaitlist) => Promise<Result<{ alreadyExists: boolean }, DatabaseError>>
 }
 
 /* -------------------------------------------------------------------------------------------------

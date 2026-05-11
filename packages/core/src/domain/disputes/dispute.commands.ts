@@ -48,6 +48,10 @@ const disputeWorkflowCommandBase = baseCommandSchema.extend({
   disputeCaseId: z.string().min(1),
 })
 
+export const triageDisputeCaseSchema = disputeWorkflowCommandBase.extend({
+  name: z.literal('TriageDisputeCase'),
+})
+
 export const enrichDisputeContextSchema = disputeWorkflowCommandBase.extend({
   name: z.literal('EnrichDisputeContext'),
 })
@@ -72,6 +76,7 @@ export const submitDisputeResponseSchema = disputeWorkflowCommandBase.extend({
   name: z.literal('SubmitDisputeResponse'),
 })
 
+export type TriageDisputeCase = z.infer<typeof triageDisputeCaseSchema>
 export type EnrichDisputeContext = z.infer<typeof enrichDisputeContextSchema>
 export type CollectDisputeEvidence = z.infer<typeof collectDisputeEvidenceSchema>
 export type PrepareEvidencePacket = z.infer<typeof prepareEvidencePacketSchema>

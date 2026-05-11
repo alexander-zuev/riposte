@@ -52,11 +52,13 @@ const sortableColumns = {
 
 const workflowStatusBadgeVariants = {
   received: 'secondary',
+  triaged: 'info',
   collecting_evidence: 'info',
   needs_input: 'warning',
   ready_for_review: 'accent',
   submitted: 'info',
   accepted: 'success',
+  ignored: 'secondary',
   deadline_missed: 'destructive',
   won: 'success',
   lost: 'destructive',
@@ -460,18 +462,24 @@ function formatMoney(money: DisputeCaseListItem['amount']) {
   }).format(money.amountMinor / 100)
 }
 
-function formatDate(value: string) {
+function formatDate(value: string | null) {
+  if (!value) return 'No deadline'
+
   return dateFormatter.format(new Date(value))
 }
 
 function getRequiredAction(status: DisputeCaseWorkflowStatus) {
   switch (status) {
+    case 'triaged':
+      return 'Start enrichment'
     case 'needs_input':
       return 'Add missing proof'
     case 'ready_for_review':
       return 'Review packet'
     case 'deadline_missed':
       return 'Review missed deadline'
+    case 'ignored':
+      return 'Ignored'
     case 'failed':
       return 'Fix failed run'
     default:

@@ -7,16 +7,24 @@ import type {
   PrepareEvidencePacket,
   ReviewEvidencePacket,
   SubmitDisputeResponse,
+  TriageDisputeCase,
   WorkflowError,
 } from '@riposte/core'
 import { createLogger, EntityNotFoundError } from '@riposte/core'
 import type { HandlerContext } from '@server/application/registry/types'
+import { triageDisputeCase } from '@server/domain/disputes'
 import { Result } from 'better-result'
 
 const logger = createLogger('dispute-workflow-handler')
 
 type DisputeAgentWorkflowHandlerError = WorkflowError
 type DisputeWorkflowCommandError = DatabaseError | EntityNotFoundError
+
+export type TriageDisputeCaseResult =
+  | { action: 'continue_to_enrichment' }
+  | { action: 'ignore'; reason: string }
+  | { action: 'needs_input'; reason: string }
+  | { action: 'deadline_missed'; reason: string }
 
 // Temporary workflow skeleton outputs. Replace these with real evidence, packet,
 // review, and submission contracts as each command grows past logging/stub behavior.
@@ -59,6 +67,39 @@ export async function startDisputeAgentWorkflow(
   })
 
   return Result.ok(undefined)
+}
+
+export async function triageDisputeCaseHandler(
+  command: TriageDisputeCase,
+  { deps, tx }: HandlerContext,
+): Promise<Result<TriageDisputeCaseResult, DisputeWorkflowCommandError>> {
+  const found = await deps.repos.disputeCases(tx).findById(command.disputeCaseId)
+  if (found.isErr()) return Result.err(found.error)
+
+  if (!found.value) {
+    return Result.err(new EntityNotFoundError({ entity: 'DisputeCase', id: command.disputeCaseId }))
+  }
+
+  const decision = triageDisputeCase(found.value)
+
+  logger.info('dispute_triage_decided', {
+    action: decision.action,
+    disputeCaseId: found.value.id,
+    paymentMethodDetailsCardNetworkReasonCode:
+      found.value.paymentMethodDetailsCardNetworkReasonCode,
+    paymentMethodDetailsType: found.value.paymentMethodDetailsType,
+    reason: decision.reason,
+    stripeReason: found.value.reason,
+  })
+
+  const saved = await deps.repos.disputeCases(tx).save(found.value)
+  if (saved.isErr()) return Result.err(saved.error)
+
+  return Result.ok(
+    decision.action === 'continue_to_enrichment'
+      ? { action: 'continue_to_enrichment' }
+      : { action: decision.action, reason: decision.reason },
+  )
 }
 
 export async function enrichDisputeContext(

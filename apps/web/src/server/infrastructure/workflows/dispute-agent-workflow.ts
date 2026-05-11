@@ -8,9 +8,19 @@ import type { AgentWorkflowEvent, AgentWorkflowStep } from 'agents/workflows'
 
 const logger = createLogger('dispute-agent-workflow')
 
+const internalStepConfig = {
+  retries: { limit: 3, delay: '2 seconds', backoff: 'exponential' },
+  timeout: '1 minute',
+} as const
+
+const externalStepConfig = {
+  retries: { limit: 5, delay: '10 seconds', backoff: 'exponential' },
+  timeout: '10 minutes',
+} as const
+
 type DisputeAgentWorkflowOutput = {
   disputeCaseId: string
-  action: 'ready_for_review' | 'needs_input' | 'ignore' | 'fail' | 'submitted'
+  action: 'ready_for_review' | 'needs_input' | 'ignore' | 'deadline_missed' | 'fail' | 'submitted'
   reason?: string
 }
 
@@ -28,7 +38,21 @@ class DisputeAgentWorkflowBase extends AgentWorkflow<DisputeAgent, DisputeAgentW
   ): Promise<DisputeAgentWorkflowOutput> {
     const { disputeCaseId } = event.payload
 
-    await step.do('enrich dispute context', async () => {
+    const triage = await step.do('triage dispute', internalStepConfig, async () => {
+      const command = createCommand(
+        'TriageDisputeCase',
+        { disputeCaseId },
+        `workflow:${event.instanceId}:triage-dispute`,
+      )
+      const result = await this.deps.services.messageBus().handle(command)
+      if (result.isErr()) throw result.error
+
+      return result.value
+    })
+
+    if (triage.action !== 'continue_to_enrichment') return { disputeCaseId, ...triage }
+
+    await step.do('enrich dispute context', externalStepConfig, async () => {
       const command = createCommand(
         'EnrichDisputeContext',
         { disputeCaseId },
@@ -40,7 +64,7 @@ class DisputeAgentWorkflowBase extends AgentWorkflow<DisputeAgent, DisputeAgentW
       return result.value
     })
 
-    await step.do('collect evidence', async () => {
+    await step.do('collect evidence', externalStepConfig, async () => {
       const command = createCommand(
         'CollectDisputeEvidence',
         { disputeCaseId },
@@ -52,7 +76,7 @@ class DisputeAgentWorkflowBase extends AgentWorkflow<DisputeAgent, DisputeAgentW
       return result.value
     })
 
-    await step.do('prepare evidence packet', async () => {
+    await step.do('prepare evidence packet', externalStepConfig, async () => {
       const command = createCommand(
         'PrepareEvidencePacket',
         { disputeCaseId },
@@ -64,7 +88,7 @@ class DisputeAgentWorkflowBase extends AgentWorkflow<DisputeAgent, DisputeAgentW
       return result.value
     })
 
-    await step.do('review evidence packet', async () => {
+    await step.do('review evidence packet', internalStepConfig, async () => {
       const command = createCommand(
         'ReviewEvidencePacket',
         { disputeCaseId },
@@ -76,7 +100,7 @@ class DisputeAgentWorkflowBase extends AgentWorkflow<DisputeAgent, DisputeAgentW
       return result.value
     })
 
-    const decision = await step.do('decide submission', async () => {
+    const decision = await step.do('decide submission', internalStepConfig, async () => {
       const command = createCommand(
         'DecideDisputeSubmission',
         { disputeCaseId },
@@ -90,7 +114,7 @@ class DisputeAgentWorkflowBase extends AgentWorkflow<DisputeAgent, DisputeAgentW
 
     if (decision.action !== 'submit') return { disputeCaseId, ...decision }
 
-    const submitted = await step.do('submit dispute response', async () => {
+    const submitted = await step.do('submit dispute response', externalStepConfig, async () => {
       const command = createCommand(
         'SubmitDisputeResponse',
         { disputeCaseId },

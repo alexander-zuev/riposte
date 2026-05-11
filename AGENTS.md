@@ -177,6 +177,15 @@ class DuplicateMessageError extends TaggedError("DuplicateMessageError")<{
 
 Use `matchError` / `matchErrorPartial` when choosing behavior by `_tag`. After `Result.deserialize`, errors are plain objects; match on `_tag`, not `.is()`.
 
+### Switches and handler errors
+
+Every `switch` statement must include an explicit `default` case. Do not silently fall through or
+use a no-op exhaustiveness marker in runtime code. If an unexpected default is reached inside a
+command/event/query handler, log the unexpected value and return a typed `Result.err(...)` such as a
+`ValidationError` or domain-specific `TaggedError`. Do not `throw` from handlers for expected or
+classifiable failures; reserve `throw` for true programmer bugs, impossible invariants, or framework
+control flow.
+
 ### UoW and retry
 
 Drizzle rolls back only by throwing, so `executeUoW` may contain a small throw bridge: store the `Result.err`, call `tx.rollback()`, catch `TransactionRollbackError`, and return the stored `Result.err`. This is an adapter detail; outside UoW the contract remains `Promise<Result<T, E>>`.

@@ -14,6 +14,7 @@ import {
   reviewEvidencePacket,
   startDisputeAgentWorkflow,
   submitDisputeResponse,
+  triageDisputeCaseHandler,
 } from '@server/application/handlers/dispute-workflow-handler'
 import { getStripeAppSettings, syncDisputes } from '@server/application/handlers/stripe-app-handler'
 import {
@@ -41,6 +42,7 @@ export const COMMAND_HANDLERS = {
   SyncDisputes: syncDisputes,
   HandleStripeAppAuthorized: handleStripeAppAuthorized,
   HandleStripeAppDeauthorized: handleStripeAppDeauthorized,
+  TriageDisputeCase: triageDisputeCaseHandler,
   EnrichDisputeContext: enrichDisputeContext,
   CollectDisputeEvidence: collectDisputeEvidence,
   PrepareEvidencePacket: prepareEvidencePacket,

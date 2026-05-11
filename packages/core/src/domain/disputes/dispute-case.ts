@@ -20,11 +20,13 @@ export const stripeDisputeStatusSchema = z.enum(STRIPE_DISPUTE_STATUSES)
 
 export const DISPUTE_CASE_WORKFLOW_STATUSES = [
   'received',
+  'triaged',
   'collecting_evidence',
   'needs_input',
   'ready_for_review',
   'submitted',
   'accepted',
+  'ignored',
   'deadline_missed',
   'won',
   'lost',
@@ -41,11 +43,13 @@ export type MissingEvidence = {
 
 export type DisputeCaseWorkflowState =
   | { status: 'received' }
+  | { status: 'triaged'; triagedAt: Date }
   | { status: 'collecting_evidence'; startedAt: Date }
   | { status: 'needs_input'; missingEvidence: MissingEvidence[] }
   | { status: 'ready_for_review'; evidencePacketId: UUIDv4 }
   | { status: 'submitted'; evidencePacketId: UUIDv4; submittedAt: Date }
   | { status: 'accepted'; acceptedAt: Date }
+  | { status: 'ignored'; reason: string; ignoredAt: Date }
   | { status: 'deadline_missed'; missedAt: Date }
   | { status: 'won'; decidedAt: Date }
   | { status: 'lost'; decidedAt: Date }

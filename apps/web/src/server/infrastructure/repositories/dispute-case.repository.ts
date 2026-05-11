@@ -15,6 +15,7 @@ import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm'
 type ListDisputeCasesInput = Omit<ListDisputeCases, 'type' | 'name'>
 type ListDisputeCaseFilters = NonNullable<ListDisputeCasesInput['filters']>
 type ListDisputeCaseCursor = NonNullable<ListDisputeCasesInput['cursor']>
+const noEvidenceDeadlineSortValue = '9999-12-31T23:59:59.999Z'
 
 export class DisputeCaseRepository implements IDisputeCaseRepository {
   constructor(private readonly db: DrizzleDb) {}
@@ -87,11 +88,26 @@ export class DisputeCaseRepository implements IDisputeCaseRepository {
             set: {
               userId: row.userId,
               stripeAccountId: row.stripeAccountId,
+              sourceStripeEventId: row.sourceStripeEventId,
+              sourceStripeEventType: row.sourceStripeEventType,
+              livemode: row.livemode,
               stripeStatus: row.stripeStatus,
               reason: row.reason,
               amountMinor: row.amountMinor,
               currency: row.currency,
-              evidenceDueBy: row.evidenceDueBy,
+              charge: row.charge,
+              paymentIntent: row.paymentIntent,
+              paymentMethodDetailsType: row.paymentMethodDetailsType,
+              paymentMethodDetailsCardBrand: row.paymentMethodDetailsCardBrand,
+              paymentMethodDetailsCardCaseType: row.paymentMethodDetailsCardCaseType,
+              paymentMethodDetailsCardNetworkReasonCode:
+                row.paymentMethodDetailsCardNetworkReasonCode,
+              enhancedEligibilityTypes: row.enhancedEligibilityTypes,
+              evidenceDetailsDueBy: row.evidenceDetailsDueBy,
+              evidenceDetailsHasEvidence: row.evidenceDetailsHasEvidence,
+              evidenceDetailsPastDue: row.evidenceDetailsPastDue,
+              evidenceDetailsSubmissionCount: row.evidenceDetailsSubmissionCount,
+              isChargeRefundable: row.isChargeRefundable,
               workflowState: row.workflowState,
               updatedAt: row.updatedAt,
             },
@@ -133,7 +149,9 @@ function getCursorFilter(
 }
 
 function getSortColumn(sortField: DisputeCaseSortField) {
-  if (sortField === 'evidenceDueBy') return disputeCases.evidenceDueBy
+  if (sortField === 'evidenceDueBy') {
+    return sql`coalesce(${disputeCases.evidenceDetailsDueBy}, ${noEvidenceDeadlineSortValue}::timestamptz)`
+  }
   if (sortField === 'stripeCreatedAt') return disputeCases.stripeCreatedAt
 
   return disputeCases.amountMinor
@@ -143,7 +161,7 @@ function getSortValue(row: DbDisputeCase, sortField: DisputeCaseSortField) {
   if (sortField === 'amount') return row.amountMinor
   if (sortField === 'stripeCreatedAt') return row.stripeCreatedAt.toISOString()
 
-  return row.evidenceDueBy.toISOString()
+  return row.evidenceDetailsDueBy?.toISOString() ?? noEvidenceDeadlineSortValue
 }
 
 function normalizeCursorSortValue(
@@ -165,7 +183,7 @@ function toDisputeCaseListItem(row: DbDisputeCase): DisputeCaseListItem {
       amountMinor: row.amountMinor,
       currency: row.currency,
     },
-    evidenceDueBy: row.evidenceDueBy.toISOString(),
+    evidenceDueBy: row.evidenceDetailsDueBy?.toISOString() ?? null,
     stripeCreatedAt: row.stripeCreatedAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   }

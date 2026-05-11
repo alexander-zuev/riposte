@@ -27,7 +27,7 @@ export const disputeCaseListItemSchema = z.object({
   stripeStatus: stripeDisputeStatusSchema,
   reason: z.string().min(1),
   amount: moneySchema,
-  evidenceDueBy: TimestamptzSchema,
+  evidenceDueBy: TimestamptzSchema.nullable(),
   stripeCreatedAt: TimestamptzSchema,
   updatedAt: TimestamptzSchema,
 })

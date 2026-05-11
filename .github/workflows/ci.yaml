@@ -43,6 +43,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Generate Cloudflare types
+        run: pnpm --filter @riposte/web run cf-typegen
+
       - name: Lint
         run: pnpm lint
 

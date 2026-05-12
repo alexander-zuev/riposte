@@ -1,11 +1,12 @@
 import { createLogger } from '@riposte/core'
 import { getServerConfig } from '@server/infrastructure/config'
-import { withDepsRequest } from '@server/infrastructure/middleware/deps.middleware'
+import { apiRouteWithDepsMiddleware } from '@server/infrastructure/middleware'
 import { consumeOAuthState } from '@server/infrastructure/stripe/stripe-oauth-state'
 import {
   getRequiredOAuthTokenFields,
   STRIPE_APPS_ACCESS_TOKEN_TTL_MS,
 } from '@server/infrastructure/stripe/stripe-oauth-token'
+import { stripeRequest } from '@server/infrastructure/stripe/stripe-request'
 import { createFileRoute } from '@tanstack/react-router'
 import Stripe from 'stripe'
 
@@ -13,7 +14,7 @@ const logger = createLogger('stripe-oauth')
 
 export const Route = createFileRoute('/api/stripe/oauth/callback')({
   server: {
-    middleware: [withDepsRequest],
+    middleware: apiRouteWithDepsMiddleware,
     handlers: {
       GET: async ({ request, context }) => {
         const url = new URL(request.url)
@@ -56,10 +57,21 @@ export const Route = createFileRoute('/api/stripe/oauth/callback')({
           httpClient: Stripe.createFetchHttpClient(),
         })
 
-        const token = await stripe.oauth.token({
-          grant_type: 'authorization_code',
-          code,
-        })
+        const tokenResult = await stripeRequest('oauth.token', () =>
+          stripe.oauth.token({
+            grant_type: 'authorization_code',
+            code,
+          }),
+        )
+        if (tokenResult.isErr()) {
+          logger.warn('stripe_oauth_token_failed', {
+            operation: tokenResult.error.operation,
+            retryable: tokenResult.error.retryable,
+            stripeRequestId: tokenResult.error.stripeRequestId,
+          })
+          return redirectToSettings(config, { stripeError: 'oauth_token_failed' })
+        }
+        const token = tokenResult.value
 
         logger.info('stripe_oauth_token_response', {
           stripeUserId: token.stripe_user_id,
@@ -92,7 +104,19 @@ export const Route = createFileRoute('/api/stripe/oauth/callback')({
         const oauthStripe = new Stripe(tokenFields.accessToken, {
           httpClient: Stripe.createFetchHttpClient(),
         })
-        const account = await oauthStripe.accounts.retrieve(tokenFields.stripeAccountId)
+        const accountResult = await stripeRequest('accounts.retrieve', () =>
+          oauthStripe.accounts.retrieve(tokenFields.stripeAccountId),
+        )
+        if (accountResult.isErr()) {
+          logger.warn('stripe_oauth_account_retrieve_failed', {
+            operation: accountResult.error.operation,
+            retryable: accountResult.error.retryable,
+            stripeAccountId: tokenFields.stripeAccountId,
+            stripeRequestId: accountResult.error.stripeRequestId,
+          })
+          return redirectToSettings(config, { stripeError: 'account_retrieve_failed' })
+        }
+        const account = accountResult.value
         const stripeBusinessName = account.business_profile?.name ?? null
 
         const now = new Date()

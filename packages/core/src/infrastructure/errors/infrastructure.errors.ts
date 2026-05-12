@@ -127,6 +127,30 @@ export class CredentialEncryptionError extends TaggedError('CredentialEncryption
   }
 }
 
+export class StripeApiError extends TaggedError('StripeApiError')<{
+  message: string
+  operation: string
+  cause: unknown
+  retryable: boolean
+  stripeRequestId?: string
+}>() {
+  constructor(args: {
+    operation: string
+    cause: unknown
+    retryable: boolean
+    message?: string
+    stripeRequestId?: string
+  }) {
+    super({
+      message: args.message ?? `Stripe ${args.operation} failed`,
+      operation: args.operation,
+      cause: args.cause,
+      retryable: args.retryable,
+      stripeRequestId: args.stripeRequestId,
+    })
+  }
+}
+
 export type InfrastructureError =
   | DatabaseError
   | DuplicateMessageError
@@ -136,5 +160,6 @@ export type InfrastructureError =
   | EmailServiceError
   | KVError
   | CredentialEncryptionError
+  | StripeApiError
 
 import { DatabaseError } from './database.errors'

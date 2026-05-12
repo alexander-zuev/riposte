@@ -327,19 +327,19 @@ function MetricCard({
 }) {
   return (
     <Card className="h-28">
-      <CardHeader className="gap-2">
+      <CardHeader className="flex flex-row items-start justify-between gap-2">
         <CardTitle className="flex items-center gap-2">
-          <Icon className="size-4 text-muted-foreground" />
+          <Icon className="size-4 shrink-0 text-muted-foreground" />
           {label}
         </CardTitle>
-        <CardAction className="static col-auto row-auto">
+        <CardAction className="static col-auto row-auto flex items-start pt-0.5">
           <Tooltip>
             <TooltipTrigger
               render={
                 <button
                   type="button"
                   aria-label={`${label} metric definition`}
-                  className="text-muted-foreground hover:text-foreground"
+                  className="flex size-5 cursor-pointer items-center justify-center text-muted-foreground hover:text-foreground"
                 >
                   <InfoIcon className="size-3.5" />
                 </button>

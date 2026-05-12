@@ -1,6 +1,6 @@
 import type { ListDisputeCases } from '@riposte/core/client'
 import { unwrapRpc } from '@riposte/core/client'
-import { queryOptions } from '@tanstack/react-query'
+import { keepPreviousData, queryOptions } from '@tanstack/react-query'
 import { listDisputeCases } from '@web/server/entrypoints/functions/dispute-case.fn'
 
 export type ListDisputeCasesInput = Omit<ListDisputeCases, 'type' | 'name' | 'userId'>
@@ -15,5 +15,6 @@ export const disputeQueries = {
     queryOptions({
       queryKey: ['disputes', 'list', input] as const,
       queryFn: async () => unwrapRpc(await listDisputeCases({ data: input })),
+      placeholderData: keepPreviousData,
     }),
 }

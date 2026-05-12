@@ -1,4 +1,4 @@
-import { useRouterState } from '@tanstack/react-router'
+import { Link, useRouterState } from '@tanstack/react-router'
 import { isNavItemActive, primaryNavItems } from '@web/pages/authed/shared/nav-config'
 import {
   Sidebar,
@@ -33,10 +33,10 @@ export function AppSidebar() {
                       isActive={active}
                       tooltip={item.label}
                       render={
-                        <a href={item.href}>
+                        <Link to={item.href}>
                           <Icon weight="duotone" />
                           <span>{item.label}</span>
-                        </a>
+                        </Link>
                       }
                     />
                     {'badge' in item && item.badge ? (

@@ -75,7 +75,9 @@ export function MobileSidebar() {
                     />
                     <span className="truncate">{item.label}</span>
                   </span>
-                  {item.badge ? <span className="text-xs tabular-nums">{item.badge}</span> : null}
+                  {item.badge ? (
+                    <span className="text-system text-xs tabular-nums">{item.badge}</span>
+                  ) : null}
                 </a>
               )
             })}

@@ -329,9 +329,15 @@ function DisputeRow({ dispute }: { dispute: DisputeCaseListItem }) {
       <TableCell className="w-[16%] min-w-40 truncate">
         {getRequiredAction(dispute.workflowStatus)}
       </TableCell>
-      <TableCell className="w-[9%] min-w-24 font-medium">{formatMoney(dispute.amount)}</TableCell>
-      <TableCell className="w-[11%] min-w-32">{formatDate(dispute.evidenceDueBy)}</TableCell>
-      <TableCell className="w-[9%] min-w-28">{formatDate(dispute.stripeCreatedAt)}</TableCell>
+      <TableCell className="w-[9%] min-w-24 text-system font-medium tabular-nums">
+        {formatMoney(dispute.amount)}
+      </TableCell>
+      <TableCell className="w-[11%] min-w-32 text-system">
+        {formatDate(dispute.evidenceDueBy)}
+      </TableCell>
+      <TableCell className="w-[9%] min-w-28 text-system">
+        {formatDate(dispute.stripeCreatedAt)}
+      </TableCell>
       <TableCell className="w-[3%] min-w-12 text-center">
         <a
           href={getStripeDashboardUrl(dispute.disputeId)}
@@ -354,7 +360,7 @@ function DisputeDetailLink({ disputeId }: { disputeId: string }) {
     <Link
       to="/disputes/$disputeId"
       params={params}
-      className="block truncate font-medium underline-offset-4 hover:underline"
+      className="block truncate text-system font-medium underline-offset-4 hover:underline"
     >
       {disputeId}
     </Link>
@@ -442,10 +448,24 @@ function TableStateLabel({
   isError: boolean
   isLoading: boolean
 }) {
-  if (isLoading) return <Badge variant="secondary">-- shown</Badge>
-  if (isError) return <Badge variant="secondary">0 shown</Badge>
+  if (isLoading)
+    return (
+      <Badge variant="secondary" className="text-system tabular-nums">
+        -- shown
+      </Badge>
+    )
+  if (isError)
+    return (
+      <Badge variant="secondary" className="text-system tabular-nums">
+        0 shown
+      </Badge>
+    )
 
-  return <Badge variant="secondary">{shownCount} shown</Badge>
+  return (
+    <Badge variant="secondary" className="text-system tabular-nums">
+      {shownCount} shown
+    </Badge>
+  )
 }
 
 function formatStatusLabel(value: string) {

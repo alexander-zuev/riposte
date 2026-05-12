@@ -9,6 +9,7 @@ import { buildImageProxyUrl } from '@riposte/core/client'
 import { Link } from '@tanstack/react-router'
 import type { AuthUser } from '@web/entities/auth/auth-user'
 import { cn } from '@web/lib/utils'
+import { Button } from '@web/ui/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -44,6 +45,12 @@ const defaultLinks = [
   },
 ] satisfies readonly UserDropdownLink[]
 
+const defaultFallbackAvatarTone = {
+  border: 'after:border-lime-6',
+  surface: 'bg-accent-muted',
+  text: 'text-accent-muted-foreground',
+}
+
 export function UserDropdown({ user, links = defaultLinks, onLogOut }: UserDropdownProps) {
   const displayName = user.displayName ?? user.email
 
@@ -51,9 +58,10 @@ export function UserDropdown({ user, links = defaultLinks, onLogOut }: UserDropd
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger
         render={
-          <button
+          <Button
             type="button"
-            className="group flex min-w-0 items-center gap-3 px-2 py-1 text-left hover:bg-muted"
+            variant="ghost"
+            className="group h-auto w-56 min-w-0 justify-start gap-3 px-2 py-1 text-left"
             aria-label="Open user menu"
           />
         }
@@ -65,7 +73,7 @@ export function UserDropdown({ user, links = defaultLinks, onLogOut }: UserDropd
         </div>
         <CaretDownIcon className="size-3 shrink-0 text-muted-foreground transition-transform group-data-[popup-open]:rotate-180" />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" sideOffset={8} className="w-56">
+      <DropdownMenuContent align="end" sideOffset={8}>
         {links.map((item) => {
           const ItemIcon = item.icon
 
@@ -96,29 +104,53 @@ export function UserAvatar({ user, className }: { user: AuthUser; className?: st
   const handleImageLoad = useCallback(() => setImageLoaded(true), [])
   const handleImageError = useCallback(() => setImageError(true), [])
 
-  const backgroundColor = useMemo(() => {
+  const fallbackAvatarTone = useMemo(() => {
     const source = user.id || user.email
     let hash = 0
     for (let index = 0; index < source.length; index += 1) {
       hash = source.charCodeAt(index) + hash * 31
     }
 
-    const colors = ['bg-chart-1', 'bg-chart-2', 'bg-chart-3', 'bg-chart-4', 'bg-chart-5']
-    return colors[Math.abs(hash) % colors.length]
+    const tones = [
+      defaultFallbackAvatarTone,
+      {
+        border: 'after:border-orange-6',
+        surface: 'bg-warning-muted',
+        text: 'text-warning-muted-foreground',
+      },
+      {
+        border: 'after:border-jade-6',
+        surface: 'bg-success-muted',
+        text: 'text-success-muted-foreground',
+      },
+      {
+        border: 'after:border-iris-6',
+        surface: 'bg-info-muted',
+        text: 'text-info-muted-foreground',
+      },
+      {
+        border: 'after:border-red-6',
+        surface: 'bg-destructive-muted',
+        text: 'text-destructive-muted-foreground',
+      },
+    ]
+    return tones[Math.abs(hash) % tones.length] ?? defaultFallbackAvatarTone
   }, [user.id, user.email])
 
   return (
     <div
       className={cn(
-        'relative size-8 shrink-0 overflow-hidden rounded-full after:absolute after:inset-0 after:rounded-full after:border after:border-border after:mix-blend-darken dark:after:mix-blend-lighten',
+        'relative size-8 shrink-0 overflow-hidden rounded-full after:absolute after:inset-0 after:rounded-full after:border after:mix-blend-darken dark:after:mix-blend-lighten',
+        imageUrl && !imageError ? 'after:border-border' : fallbackAvatarTone.border,
         className,
       )}
     >
       {(!imageUrl || imageError || !imageLoaded) && (
         <div
           className={cn(
-            'absolute inset-0 flex items-center justify-center text-sm font-medium text-primary-foreground',
-            backgroundColor,
+            'absolute inset-0 flex items-center justify-center text-sm font-medium',
+            fallbackAvatarTone.surface,
+            fallbackAvatarTone.text,
           )}
           aria-label={`${user.email}'s avatar`}
         >

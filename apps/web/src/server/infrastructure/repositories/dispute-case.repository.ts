@@ -102,6 +102,7 @@ export class DisputeCaseRepository implements IDisputeCaseRepository {
               paymentMethodDetailsCardCaseType: row.paymentMethodDetailsCardCaseType,
               paymentMethodDetailsCardNetworkReasonCode:
                 row.paymentMethodDetailsCardNetworkReasonCode,
+              customerPurchaseIp: row.customerPurchaseIp,
               enhancedEligibilityTypes: row.enhancedEligibilityTypes,
               evidenceDetailsDueBy: row.evidenceDetailsDueBy,
               evidenceDetailsHasEvidence: row.evidenceDetailsHasEvidence,

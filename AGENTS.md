@@ -229,6 +229,13 @@ Hyperdrive/Postgres:
 - Use unique test-owned IDs, emails, message IDs, aggregate IDs, and correlation IDs.
 - Clean up with targeted deletes by owned IDs.
 - Never assert on whole-table global state unless the test created and owns the whole table state.
+- For quick local inspection, the reliable default is querying through the running Docker container:
+  `docker exec riposte-postgres psql -U postgres -d riposte -c "select ..."` for app data, or
+  `-d riposte_test` for integration-test data. The compose service is named `postgres`, but the
+  container name is `riposte-postgres`.
+- Host `psql` can be faster when the local client/env is healthy because Postgres is published on
+  `localhost:5432`, but do not spend time debugging it during product work; fall back to
+  `docker exec riposte-postgres psql ...`.
 
 KV (`AUTH_KV`, `CACHE_KV`):
 

@@ -29,6 +29,7 @@ export const disputeCases = pgTable(
     paymentMethodDetailsCardNetworkReasonCode: text(
       'payment_method_details_card_network_reason_code',
     ),
+    customerPurchaseIp: text('customer_purchase_ip'),
     enhancedEligibilityTypes: jsonb('enhanced_eligibility_types').$type<string[]>().notNull(),
     evidenceDetailsDueBy: timestamp('evidence_details_due_by', { withTimezone: true }),
     evidenceDetailsHasEvidence: boolean('evidence_details_has_evidence').notNull(),

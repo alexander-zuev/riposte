@@ -39,6 +39,7 @@ export type DisputeCaseSnapshot = {
   paymentMethodDetailsCardBrand: string | null
   paymentMethodDetailsCardCaseType: string | null
   paymentMethodDetailsCardNetworkReasonCode: string | null
+  customerPurchaseIp: string | null
   enhancedEligibilityTypes: string[]
   evidenceDetailsDueBy: Date | null
   evidenceDetailsHasEvidence: boolean
@@ -91,6 +92,11 @@ const stripeDisputeObjectSchema = z.object({
     past_due: z.boolean(),
     submission_count: z.number().int().nonnegative(),
   }),
+  evidence: z
+    .object({
+      customer_purchase_ip: z.string().min(1).nullable().optional(),
+    })
+    .optional(),
 })
 
 export class DisputeCase extends Entity<DisputeCaseSnapshot> {
@@ -110,6 +116,7 @@ export class DisputeCase extends Entity<DisputeCaseSnapshot> {
     readonly paymentMethodDetailsCardBrand: string | null,
     readonly paymentMethodDetailsCardCaseType: string | null,
     readonly paymentMethodDetailsCardNetworkReasonCode: string | null,
+    readonly customerPurchaseIp: string | null,
     readonly enhancedEligibilityTypes: string[],
     readonly evidenceDetailsDueBy: Deadline | null,
     readonly evidenceDetailsHasEvidence: boolean,
@@ -163,6 +170,7 @@ export class DisputeCase extends Entity<DisputeCaseSnapshot> {
       stripeDispute.payment_method_details?.card?.brand ?? null,
       stripeDispute.payment_method_details?.card?.case_type ?? null,
       stripeDispute.payment_method_details?.card?.network_reason_code ?? null,
+      stripeDispute.evidence?.customer_purchase_ip ?? null,
       [...stripeDispute.enhanced_eligibility_types],
       dueBy && dueBy > 0 ? Deadline.create(new Date(dueBy * 1000)) : null,
       stripeDispute.evidence_details.has_evidence,
@@ -201,6 +209,7 @@ export class DisputeCase extends Entity<DisputeCaseSnapshot> {
       snapshot.paymentMethodDetailsCardBrand,
       snapshot.paymentMethodDetailsCardCaseType,
       snapshot.paymentMethodDetailsCardNetworkReasonCode,
+      snapshot.customerPurchaseIp,
       [...snapshot.enhancedEligibilityTypes],
       snapshot.evidenceDetailsDueBy ? Deadline.deserialize(snapshot.evidenceDetailsDueBy) : null,
       snapshot.evidenceDetailsHasEvidence,
@@ -318,6 +327,7 @@ export class DisputeCase extends Entity<DisputeCaseSnapshot> {
       paymentMethodDetailsCardBrand: this.paymentMethodDetailsCardBrand,
       paymentMethodDetailsCardCaseType: this.paymentMethodDetailsCardCaseType,
       paymentMethodDetailsCardNetworkReasonCode: this.paymentMethodDetailsCardNetworkReasonCode,
+      customerPurchaseIp: this.customerPurchaseIp,
       enhancedEligibilityTypes: [...this.enhancedEligibilityTypes],
       evidenceDetailsDueBy: this.evidenceDetailsDueBy
         ? cloneDate(this.evidenceDetailsDueBy.serialize())

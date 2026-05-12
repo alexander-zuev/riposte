@@ -1,5 +1,13 @@
-import type { CurrencyCode } from '@riposte/core'
-import type { StripeSubscriptionItemSnapshot } from '@server/domain/disputes'
+import type {
+  StripeCardSnapshot,
+  StripeChargeSnapshot,
+  StripeCustomerSnapshot,
+  StripeInvoiceSnapshot,
+  StripePaymentHistorySnapshot,
+  StripeRefundSnapshot,
+  StripeRiskSnapshot,
+  StripeSubscriptionSnapshot,
+} from '@server/domain/disputes'
 import { jsonb, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
 
 import { disputeCases } from './dispute-case.schemas'
@@ -9,24 +17,14 @@ export const stripeDisputeContexts = pgTable('stripe_dispute_contexts', {
     .primaryKey()
     .references(() => disputeCases.id, { onDelete: 'cascade' }),
 
-  chargeId: text('charge_id').notNull(),
-  paymentIntentId: text('payment_intent_id'),
-  chargeCreatedAt: timestamp('charge_created_at', { withTimezone: true }).notNull(),
-  chargeReceiptUrl: text('charge_receipt_url'),
-
-  stripeCustomerId: text('stripe_customer_id'),
-  customerEmail: text('customer_email'),
-  customerName: text('customer_name'),
-
-  invoiceId: text('invoice_id'),
-  invoicePdfUrl: text('invoice_pdf_url'),
-
-  subscriptionId: text('subscription_id'),
-  subscriptionStatus: text('subscription_status'),
-  subscriptionItems: jsonb('subscription_items').$type<StripeSubscriptionItemSnapshot[]>(),
-
-  totalPaidByCurrency:
-    jsonb('total_paid_by_currency').$type<Partial<Record<CurrencyCode, number>>>(),
+  charge: jsonb('charge').$type<StripeChargeSnapshot>().notNull(),
+  customer: jsonb('customer').$type<StripeCustomerSnapshot>(),
+  card: jsonb('card').$type<StripeCardSnapshot>(),
+  risk: jsonb('risk').$type<StripeRiskSnapshot>().notNull(),
+  invoice: jsonb('invoice').$type<StripeInvoiceSnapshot>(),
+  subscription: jsonb('subscription').$type<StripeSubscriptionSnapshot>(),
+  refunds: jsonb('refunds').$type<StripeRefundSnapshot[]>().notNull(),
+  paymentHistory: jsonb('payment_history').$type<StripePaymentHistorySnapshot>().notNull(),
 
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true })

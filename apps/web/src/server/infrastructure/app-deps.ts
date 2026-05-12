@@ -34,6 +34,10 @@ import { OutboxRepository } from '@server/infrastructure/repositories/outbox.rep
 import { StripeConnectionRepository } from '@server/infrastructure/repositories/stripe-connection.repository'
 import { StripeDisputeContextRepository } from '@server/infrastructure/repositories/stripe-dispute-context.repository'
 import { WaitlistRepository } from '@server/infrastructure/repositories/waitlist.repository'
+import {
+  StripeClientProvider,
+  type IStripeClientProvider,
+} from '@server/infrastructure/stripe/stripe-client-provider'
 import type { Result } from 'better-result'
 
 type WaitUntilContext = Pick<ExecutionContext, 'waitUntil'>
@@ -71,6 +75,7 @@ export type AppDeps = {
     credentialEncryption: () => ICredentialEncryptionService
     disputeAgentClient: () => IDisputeAgentClient
     email: () => IEmailService
+    stripeClientProvider: () => IStripeClientProvider
     outboxRelay: () => IOutboxRelay
   }
 
@@ -117,6 +122,9 @@ export function createAppDeps(env: Env, ctx: WaitUntilContext): AppDeps {
       ),
       disputeAgentClient: once<IDisputeAgentClient>(() => new DisputeAgentClient(env)),
       email: once<IEmailService>(() => new ResendEmailService(env.RESEND_API_KEY)),
+      stripeClientProvider: once<IStripeClientProvider>(
+        () => new StripeClientProvider(deps.repos.stripeConnections(deps.db())),
+      ),
       outboxRelay: once<IOutboxRelay>(
         () => new OutboxRelay(deps.db(), deps.services.queueClient(), deps.repos.outbox),
       ),

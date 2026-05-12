@@ -36,3 +36,9 @@ export type UpsertStripeConnectionInput = {
   accessTokenExpiresAt: Date
   connectedAt: Date
 }
+
+export type RefreshStripeCredentialsInput = {
+  stripeAccountId: string
+  accessToken: string
+  refreshToken: string
+}

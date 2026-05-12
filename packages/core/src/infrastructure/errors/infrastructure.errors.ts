@@ -151,6 +151,29 @@ export class StripeApiError extends TaggedError('StripeApiError')<{
   }
 }
 
+type StripeConnectionUnavailableInput =
+  | { reason: 'missing_account' }
+  | { reason: 'unknown_account'; account: string }
+  | { reason: 'revoked_connection'; account: string }
+
+export class StripeConnectionUnavailableError extends TaggedError(
+  'StripeConnectionUnavailableError',
+)<{
+  message: string
+  reason: 'missing_account' | 'unknown_account' | 'revoked_connection'
+  account?: string
+  retryable: false
+}>() {
+  constructor(args: StripeConnectionUnavailableInput) {
+    super({
+      reason: args.reason,
+      account: 'account' in args ? args.account : undefined,
+      message: `Stripe connection unavailable: ${args.reason}`,
+      retryable: false,
+    })
+  }
+}
+
 export type InfrastructureError =
   | DatabaseError
   | DuplicateMessageError
@@ -161,5 +184,6 @@ export type InfrastructureError =
   | KVError
   | CredentialEncryptionError
   | StripeApiError
+  | StripeConnectionUnavailableError
 
 import { DatabaseError } from './database.errors'

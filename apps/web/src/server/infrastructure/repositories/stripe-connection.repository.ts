@@ -2,6 +2,7 @@ import type { CredentialEncryptionError } from '@riposte/core'
 import { DatabaseError } from '@riposte/core'
 import type { IStripeConnectionRepository } from '@server/domain/repository/interfaces'
 import type {
+  RefreshStripeCredentialsInput,
   StripeConnection,
   StripeConnectionCredentials,
   StripeConnectionWithCredentials,
@@ -10,6 +11,7 @@ import type {
 import type { ICredentialEncryptionService } from '@server/infrastructure/credentials/credential-encryption'
 import type { DbStripeConnection, DrizzleDb } from '@server/infrastructure/db'
 import { stripeConnections } from '@server/infrastructure/db'
+import { STRIPE_APPS_ACCESS_TOKEN_TTL_MS } from '@server/infrastructure/stripe/stripe-oauth-token'
 import { Result } from 'better-result'
 import { desc, eq } from 'drizzle-orm'
 
@@ -153,6 +155,47 @@ export class StripeConnectionRepository implements IStripeConnectionRepository {
     return Result.ok({
       ...this.toDomain(found.value),
       ...credentials.value,
+    })
+  }
+
+  async refreshCredentials(
+    input: RefreshStripeCredentialsInput,
+  ): Promise<Result<StripeConnectionWithCredentials, DatabaseError | CredentialEncryptionError>> {
+    const encrypted = await this.credentialEncryption.encrypt({
+      accessToken: input.accessToken,
+      refreshToken: input.refreshToken,
+    })
+    if (encrypted.isErr()) return Result.err(encrypted.error)
+
+    const accessTokenExpiresAt = new Date(Date.now() + STRIPE_APPS_ACCESS_TOKEN_TTL_MS)
+
+    const saved = await Result.tryPromise({
+      try: async () => {
+        const [connection] = await this.db
+          .update(stripeConnections)
+          .set({
+            credentialCiphertext: encrypted.value.ciphertext,
+            credentialIv: encrypted.value.iv,
+            credentialKeyVersion: encrypted.value.keyVersion,
+            accessTokenExpiresAt,
+            updatedAt: new Date(),
+          })
+          .where(eq(stripeConnections.stripeAccountId, input.stripeAccountId))
+          .returning()
+
+        if (!connection) throw new Error('Stripe connection not found for credential refresh')
+
+        return connection
+      },
+      catch: (cause) =>
+        new DatabaseError({ message: 'Failed to refresh Stripe credentials', cause }),
+    })
+    if (saved.isErr()) return Result.err(saved.error)
+
+    return Result.ok({
+      ...this.toDomain(saved.value),
+      accessToken: input.accessToken,
+      refreshToken: input.refreshToken,
     })
   }
 

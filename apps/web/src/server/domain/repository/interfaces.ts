@@ -14,6 +14,7 @@ import type {
   StripeDisputeContext,
 } from '@server/domain/disputes'
 import type {
+  RefreshStripeCredentialsInput,
   StripeConnection,
   StripeConnectionWithCredentials,
   UpsertStripeConnectionInput,
@@ -72,6 +73,10 @@ export interface IStripeConnectionRepository {
   ) => Promise<
     Result<StripeConnectionWithCredentials | null, DatabaseError | CredentialEncryptionError>
   >
+
+  refreshCredentials: (
+    input: RefreshStripeCredentialsInput,
+  ) => Promise<Result<StripeConnectionWithCredentials, DatabaseError | CredentialEncryptionError>>
 }
 
 /* -------------------------------------------------------------------------------------------------

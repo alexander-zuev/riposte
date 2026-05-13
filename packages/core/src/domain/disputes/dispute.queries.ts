@@ -37,6 +37,10 @@ export const disputeCaseListItemSchema = z.object({
   updatedAt: TimestamptzSchema,
 })
 
+export const disputeSyncStateSchema = z.object({
+  lastSyncedAt: TimestamptzSchema.nullable(),
+})
+
 export const getStripeAppSettingsSchema = baseQuerySchema.extend({
   name: z.literal('GetStripeAppSettings'),
   stripeAccountId: z.string().min(1),
@@ -57,6 +61,7 @@ export const listDisputeCasesSchema = baseQuerySchema.extend({
 export const listDisputeCasesResultSchema = z.object({
   items: z.array(disputeCaseListItemSchema),
   nextCursor: disputeCaseListCursorSchema.nullable(),
+  sync: disputeSyncStateSchema,
 })
 
 export type DisputeCaseSortField = z.infer<typeof disputeCaseSortFieldSchema>
@@ -65,6 +70,7 @@ export type DisputeCaseSort = z.infer<typeof disputeCaseSortSchema>
 export type DisputeCaseListCursor = z.infer<typeof disputeCaseListCursorSchema>
 export type DisputeCaseListFilters = z.infer<typeof disputeCaseListFiltersSchema>
 export type DisputeCaseListItem = z.infer<typeof disputeCaseListItemSchema>
+export type DisputeSyncState = z.infer<typeof disputeSyncStateSchema>
 export type GetStripeAppSettings = z.infer<typeof getStripeAppSettingsSchema>
 export type ListDisputeCases = z.infer<typeof listDisputeCasesSchema>
 export type ListDisputeCasesResult = z.infer<typeof listDisputeCasesResultSchema>

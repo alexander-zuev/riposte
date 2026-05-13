@@ -1,12 +1,10 @@
-import type {
-  DisputeCaseListItem,
-  DisputeCaseSortField,
-  ListDisputeCases,
-  ListDisputeCasesResult,
-} from '@riposte/core'
+import type { DisputeCaseListItem, DisputeCaseSortField, ListDisputeCases } from '@riposte/core'
 import { DatabaseError } from '@riposte/core'
 import { DisputeCase } from '@server/domain/disputes'
-import type { IDisputeCaseRepository } from '@server/domain/repository/interfaces'
+import type {
+  DisputeCaseListPage,
+  IDisputeCaseRepository,
+} from '@server/domain/repository/interfaces'
 import type { DbDisputeCase, DbNewDisputeCase, DrizzleDb } from '@server/infrastructure/db'
 import { disputeCases } from '@server/infrastructure/db'
 import { Result } from 'better-result'
@@ -39,7 +37,7 @@ export class DisputeCaseRepository extends BaseRepository implements IDisputeCas
 
   async listForUser(
     input: ListDisputeCasesInput,
-  ): Promise<Result<ListDisputeCasesResult, DatabaseError>> {
+  ): Promise<Result<DisputeCaseListPage, DatabaseError>> {
     const listed = await Result.tryPromise({
       try: async () => {
         const sortColumn = getSortColumn(input.sort.field)

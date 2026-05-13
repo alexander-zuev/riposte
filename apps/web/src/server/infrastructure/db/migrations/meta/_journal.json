@@ -134,6 +134,34 @@
       "when": 1778680773803,
       "tag": "0018_redundant_gladiator",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1778692839582,
+      "tag": "0019_tricky_wither",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1778693048077,
+      "tag": "0020_natural_cassandra_nova",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1778694052500,
+      "tag": "0021_elite_thor_girl",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1778694417674,
+      "tag": "0022_fast_ultimates",
+      "breakpoints": true
     }
   ]
 }

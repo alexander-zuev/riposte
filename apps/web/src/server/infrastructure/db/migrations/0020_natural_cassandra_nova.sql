@@ -1,0 +1,1 @@
+CREATE INDEX "dispute_evidence_packets_user_dispute_case_idx" ON "dispute_evidence_packets" USING btree ("user_id","dispute_case_id");

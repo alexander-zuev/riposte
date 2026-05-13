@@ -12,6 +12,7 @@ import type {
 } from '@riposte/core'
 import { createLogger, EntityNotFoundError } from '@riposte/core'
 import type { HandlerContext } from '@server/application/registry/types'
+import { DisputeEvidencePacket } from '@server/domain/disputes'
 import type { DisputeCaseEvaluation } from '@server/domain/disputes'
 import type { GetClientError } from '@server/infrastructure/stripe/stripe-client-provider'
 import { fetchStripeDisputeContext } from '@server/infrastructure/stripe/stripe-dispute-enrichment'
@@ -148,15 +149,56 @@ export async function collectDisputeEvidence(
 
 export async function generateEvidencePacket(
   command: GenerateEvidencePacket,
-): Promise<Result<GenerateEvidencePacketResult, never>> {
-  logger.info('dispute_evidence_packet_pending_generation', {
+  { deps, tx }: HandlerContext,
+): Promise<Result<GenerateEvidencePacketResult, DisputeWorkflowCommandError>> {
+  const found = await deps.repos.disputeCases(tx).findById(command.disputeCaseId)
+  if (found.isErr()) return Result.err(found.error)
+
+  if (!found.value) {
+    return Result.err(new EntityNotFoundError({ entity: 'DisputeCase', id: command.disputeCaseId }))
+  }
+
+  const context = await deps.repos
+    .stripeDisputeContexts(tx)
+    .findByDisputeCaseId(command.disputeCaseId)
+  if (context.isErr()) return Result.err(context.error)
+
+  if (!context.value) {
+    return Result.err(
+      new EntityNotFoundError({
+        entity: 'StripeDisputeContext',
+        id: command.disputeCaseId,
+      }),
+    )
+  }
+
+  const latest = await deps.repos.disputeEvidencePackets(tx).findLatestByDisputeCaseId({
+    userId: found.value.userId,
     disputeCaseId: command.disputeCaseId,
+  })
+  if (latest.isErr()) return Result.err(latest.error)
+
+  const packet = DisputeEvidencePacket.createFromDispute({
+    disputeCase: found.value,
+    disputeContext: context.value,
+    previousPacket: latest.value,
+    now: new Date(),
+  })
+
+  const saved = await deps.repos.disputeEvidencePackets(tx).save(packet)
+  if (saved.isErr()) return Result.err(saved.error)
+
+  logger.info('dispute_evidence_packet_generated', {
+    disputeCaseId: found.value.id,
+    evidencePacketId: saved.value.id,
+    evidenceQuality: saved.value.evidenceQuality,
+    version: saved.value.version,
   })
 
   return Result.ok({
-    action: 'await_human',
-    reason: 'packet_generation_pending',
-    evidencePacketId: null,
+    action: 'generated',
+    evidencePacketId: saved.value.id,
+    quality: saved.value.evidenceQuality,
   })
 }
 

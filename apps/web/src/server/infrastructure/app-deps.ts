@@ -5,9 +5,11 @@ import { executeUoW } from '@server/application/message-bus/unit-of-work'
 import { ConnectionManager, type IConnectionManager } from '@server/domain/connections'
 import type {
   IDisputeCaseRepository,
+  IDisputeEvidencePacketRepository,
   IOutboxRepository,
   IStripeConnectionRepository,
   IStripeDisputeContextRepository,
+  IStripeDisputeSyncStateRepository,
   IWaitlistRepository,
 } from '@server/domain/repository/interfaces'
 import {
@@ -30,9 +32,11 @@ import {
 import type { IQueueClient } from '@server/infrastructure/queues/queue-client'
 import { QueueClient } from '@server/infrastructure/queues/queue-client'
 import { DisputeCaseRepository } from '@server/infrastructure/repositories/dispute-case.repository'
+import { DisputeEvidencePacketRepository } from '@server/infrastructure/repositories/dispute-evidence-packet.repository'
 import { OutboxRepository } from '@server/infrastructure/repositories/outbox.repository'
 import { StripeConnectionRepository } from '@server/infrastructure/repositories/stripe-connection.repository'
 import { StripeDisputeContextRepository } from '@server/infrastructure/repositories/stripe-dispute-context.repository'
+import { StripeDisputeSyncStateRepository } from '@server/infrastructure/repositories/stripe-dispute-sync-state.repository'
 import { WaitlistRepository } from '@server/infrastructure/repositories/waitlist.repository'
 import {
   StripeClientProvider,
@@ -55,9 +59,11 @@ export type AppDeps = {
 
   repos: {
     disputeCases: (tx: DrizzleDb) => IDisputeCaseRepository
+    disputeEvidencePackets: (tx: DrizzleDb) => IDisputeEvidencePacketRepository
     outbox: (tx: DrizzleDb) => IOutboxRepository
     stripeConnections: (tx: DrizzleDb) => IStripeConnectionRepository
     stripeDisputeContexts: (tx: DrizzleDb) => IStripeDisputeContextRepository
+    stripeDisputeSyncState: (tx: DrizzleDb) => IStripeDisputeSyncStateRepository
     waitlist: (tx: DrizzleDb) => IWaitlistRepository
   }
 
@@ -96,10 +102,12 @@ export function createAppDeps(env: Env, ctx: WaitUntilContext): AppDeps {
     },
     repos: {
       disputeCases: (tx) => new DisputeCaseRepository(tx),
+      disputeEvidencePackets: (tx) => new DisputeEvidencePacketRepository(tx),
       outbox: (tx) => new OutboxRepository(tx),
       stripeConnections: (tx) =>
         new StripeConnectionRepository(tx, deps.services.credentialEncryption()),
       stripeDisputeContexts: (tx) => new StripeDisputeContextRepository(tx),
+      stripeDisputeSyncState: (tx) => new StripeDisputeSyncStateRepository(tx),
       waitlist: (tx) => new WaitlistRepository(tx),
     },
     uow: {

@@ -6,10 +6,12 @@ import type {
   JoinWaitlist,
   ListDisputeCases,
   ListDisputeCasesResult,
+  DisputeSyncState,
   UUIDv4,
 } from '@riposte/core'
 import type {
   DisputeCase,
+  DisputeEvidencePacket,
   SaveStripeDisputeContextInput,
   StripeDisputeContext,
 } from '@server/domain/disputes'
@@ -22,6 +24,8 @@ import type {
 import type { DbOutbox } from '@server/infrastructure/db'
 import type { Result } from 'better-result'
 
+export type DisputeCaseListPage = Omit<ListDisputeCasesResult, 'sync'>
+
 /* -------------------------------------------------------------------------------------------------
  * Dispute Case Repository
  * ------------------------------------------------------------------------------------------------- */
@@ -30,8 +34,16 @@ export interface IDisputeCaseRepository {
   findById: (id: string) => Promise<Result<DisputeCase | null, DatabaseError>>
   listForUser: (
     input: Omit<ListDisputeCases, 'type' | 'name'>,
-  ) => Promise<Result<ListDisputeCasesResult, DatabaseError>>
+  ) => Promise<Result<DisputeCaseListPage, DatabaseError>>
   save: (disputeCase: DisputeCase) => Promise<Result<DisputeCase, DatabaseError>>
+}
+
+/* -------------------------------------------------------------------------------------------------
+ * Stripe Dispute Sync State Repository
+ * ------------------------------------------------------------------------------------------------- */
+
+export interface IStripeDisputeSyncStateRepository {
+  findForUser: (userId: string) => Promise<Result<DisputeSyncState, DatabaseError>>
 }
 
 /* -------------------------------------------------------------------------------------------------
@@ -45,6 +57,18 @@ export interface IStripeDisputeContextRepository {
   save: (
     input: SaveStripeDisputeContextInput,
   ) => Promise<Result<StripeDisputeContext, DatabaseError>>
+}
+
+/* -------------------------------------------------------------------------------------------------
+ * Dispute Evidence Packet Repository
+ * ------------------------------------------------------------------------------------------------- */
+
+export interface IDisputeEvidencePacketRepository {
+  findLatestByDisputeCaseId: (input: {
+    userId: UUIDv4
+    disputeCaseId: string
+  }) => Promise<Result<DisputeEvidencePacket | null, DatabaseError>>
+  save: (packet: DisputeEvidencePacket) => Promise<Result<DisputeEvidencePacket, DatabaseError>>
 }
 
 /* -------------------------------------------------------------------------------------------------

@@ -15,9 +15,13 @@ import {
   type DisputeCaseSort,
   type DisputeCaseSortField,
 } from '@riposte/core/client'
-import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
-import { disputeQueries, type ListDisputeCasesInput } from '@web/entities/disputes/dispute-queries'
+import { useDisputeListData } from '@web/pages/authed/disputes/hooks/use-dispute-list-data'
+import {
+  useDisputeListFilters,
+  type WorkflowStatus,
+} from '@web/pages/authed/disputes/hooks/use-dispute-list-filters'
+import { useSyncDisputesMutation } from '@web/pages/authed/disputes/hooks/use-sync-disputes-mutation'
 import { PageHeader } from '@web/pages/authed/shared/page-header'
 import { Badge } from '@web/ui/components/ui/badge'
 import { Button } from '@web/ui/components/ui/button'
@@ -39,10 +43,9 @@ import {
   TableHeader,
   TableRow,
 } from '@web/ui/components/ui/table'
-import { useCallback, useMemo, useState, type ComponentProps, type ReactNode } from 'react'
+import { useCallback, useMemo, type ComponentProps, type ReactNode } from 'react'
 
 type BadgeVariant = ComponentProps<typeof Badge>['variant']
-type WorkflowStatus = (typeof DISPUTE_CASE_WORKFLOW_STATUSES)[number]
 
 const sortableColumns = {
   evidenceDueBy: 'Evidence due',
@@ -69,33 +72,22 @@ const dateFormatter = new Intl.DateTimeFormat('en-US', {
   day: 'numeric',
   year: 'numeric',
 })
+const syncTimestampFormatter = new Intl.DateTimeFormat('en-US', {
+  month: 'short',
+  day: 'numeric',
+  year: 'numeric',
+  hour: 'numeric',
+  minute: '2-digit',
+})
 
 const statusFilterTrigger = <Button type="button" variant="secondary" size="sm" />
 
 export function DisputesPage() {
-  const [selectedStatuses, setSelectedStatuses] = useState<WorkflowStatus[]>([])
-  const [sort, setSort] = useState<DisputeCaseSort>({
-    field: 'evidenceDueBy',
-    direction: 'asc',
-  })
-  const listInput = useMemo<ListDisputeCasesInput>(
-    () => ({
-      limit: 20,
-      sort,
-      filters:
-        selectedStatuses.length > 0
-          ? {
-              statuses: selectedStatuses,
-            }
-          : undefined,
-    }),
-    [selectedStatuses, sort],
+  const filters = useDisputeListFilters()
+  const { disputes, isError, isLoading, lastSyncedAt, retry } = useDisputeListData(
+    filters.listInput,
   )
-  const disputesQuery = useQuery(disputeQueries.list(listInput))
-  const disputes = disputesQuery.data?.items ?? []
-  const handleRetry = useCallback(() => {
-    disputesQuery.refetch().catch(() => undefined)
-  }, [disputesQuery])
+  const syncMutation = useSyncDisputesMutation()
 
   return (
     <div className="grid gap-6 text-foreground">
@@ -108,65 +100,91 @@ export function DisputesPage() {
 
       <section className="grid gap-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <DisputesToolbar
-            selectedStatuses={selectedStatuses}
-            onSelectedStatusesChange={setSelectedStatuses}
-            disabled={disputesQuery.isLoading}
-          />
-          <div className="shrink-0">
-            <TableStateLabel
-              shownCount={disputes.length}
-              isError={disputesQuery.isError}
-              isLoading={disputesQuery.isLoading}
+          <div className="flex flex-wrap items-center gap-2">
+            <DisputesToolbar
+              selectedStatuses={filters.selectedStatuses}
+              onSelectedStatusesChange={filters.setSelectedStatuses}
+              disabled={isLoading}
             />
+          </div>
+          <div className="shrink-0">
+            <Button
+              type="button"
+              size="sm"
+              disabled={syncMutation.isPending}
+              onClick={() => syncMutation.mutate()}
+            >
+              <ArrowClockwiseIcon data-icon="inline-start" />
+              {syncMutation.isPending ? 'Syncing' : 'Sync now'}
+            </Button>
           </div>
         </div>
 
-        <Table className="table-fixed">
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[24%] min-w-44">Dispute</TableHead>
-              <TableHead className="w-[14%] min-w-32">Customer</TableHead>
-              <TableHead className="w-[14%] min-w-36">Status</TableHead>
-              <TableHead className="w-[16%] min-w-40">Required action</TableHead>
-              <SortableTableHead
-                field="amount"
-                sort={sort}
-                className="w-[9%] min-w-24"
-                disabled={disputesQuery.isLoading}
-                onSortChange={setSort}
-              />
-              <SortableTableHead
-                field="evidenceDueBy"
-                sort={sort}
-                className="w-[11%] min-w-32"
-                disabled={disputesQuery.isLoading}
-                onSortChange={setSort}
-              />
-              <SortableTableHead
-                field="stripeCreatedAt"
-                sort={sort}
-                className="w-[9%] min-w-28"
-                disabled={disputesQuery.isLoading}
-                onSortChange={setSort}
-              />
-              <TableHead className="w-[3%] min-w-12 text-center">Link</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {disputesQuery.isLoading ? (
-              <DisputesLoadingRows />
-            ) : disputesQuery.isError ? (
-              <DisputesErrorRow onRetry={handleRetry} />
-            ) : disputes.length === 0 ? (
-              <DisputesEmptyRow hasFilters={selectedStatuses.length > 0} />
-            ) : (
-              disputes.map((dispute) => <DisputeRow key={dispute.disputeId} dispute={dispute} />)
-            )}
-          </TableBody>
-        </Table>
+        <div className="grid gap-2">
+          <Table className="table-fixed">
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[24%] min-w-44">Dispute</TableHead>
+                <TableHead className="w-[14%] min-w-32">Customer</TableHead>
+                <TableHead className="w-[14%] min-w-36">Status</TableHead>
+                <TableHead className="w-[16%] min-w-40">Required action</TableHead>
+                <SortableTableHead
+                  field="amount"
+                  sort={filters.sort}
+                  className="w-[9%] min-w-24"
+                  disabled={isLoading}
+                  onSortChange={filters.setSort}
+                />
+                <SortableTableHead
+                  field="evidenceDueBy"
+                  sort={filters.sort}
+                  className="w-[11%] min-w-32"
+                  disabled={isLoading}
+                  onSortChange={filters.setSort}
+                />
+                <SortableTableHead
+                  field="stripeCreatedAt"
+                  sort={filters.sort}
+                  className="w-[9%] min-w-28"
+                  disabled={isLoading}
+                  onSortChange={filters.setSort}
+                />
+                <TableHead className="w-[3%] min-w-12 text-center">Link</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                <DisputesLoadingRows />
+              ) : isError ? (
+                <DisputesErrorRow onRetry={retry} />
+              ) : disputes.length === 0 ? (
+                <DisputesEmptyRow hasFilters={filters.hasSelectedStatuses} />
+              ) : (
+                disputes.map((dispute) => <DisputeRow key={dispute.disputeId} dispute={dispute} />)
+              )}
+            </TableBody>
+          </Table>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <SyncStateLabel lastSyncedAt={lastSyncedAt} isLoading={isLoading} />
+            <TableStateLabel shownCount={disputes.length} isError={isError} isLoading={isLoading} />
+          </div>
+        </div>
       </section>
     </div>
+  )
+}
+
+function SyncStateLabel({
+  lastSyncedAt,
+  isLoading,
+}: {
+  lastSyncedAt: Date | null
+  isLoading: boolean
+}) {
+  return (
+    <span className="text-xs text-muted-foreground">
+      Last sync: <span className="text-system">{formatLastSyncedAt(lastSyncedAt, isLoading)}</span>
+    </span>
   )
 }
 
@@ -480,6 +498,12 @@ function formatDate(value: string | null) {
   if (!value) return 'No deadline'
 
   return dateFormatter.format(new Date(value))
+}
+
+function formatLastSyncedAt(value: Date | null, isLoading: boolean) {
+  if (!value) return isLoading ? '--' : 'never'
+
+  return syncTimestampFormatter.format(value)
 }
 
 function getRequiredAction(status: WorkflowStatus) {

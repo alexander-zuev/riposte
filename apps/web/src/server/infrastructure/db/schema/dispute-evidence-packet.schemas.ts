@@ -1,3 +1,4 @@
+import type { SupportedVisualEvidenceCategory } from '@riposte/core'
 import type {
   DisputeEvidencePacketArtifact,
   DisputeEvidencePdfDocument,
@@ -20,6 +21,7 @@ export const disputeEvidencePackets = pgTable(
       .notNull()
       .references(() => disputeCases.id, { onDelete: 'cascade' }),
     version: integer('version').notNull(),
+    category: text('category').$type<SupportedVisualEvidenceCategory>().notNull().default('fraudulent'),
     stripeEvidencePayload: jsonb('stripe_evidence_payload')
       .$type<FraudDigitalStripeEvidencePayload>()
       .notNull(),

@@ -18,6 +18,27 @@ export const stripeDisputeStatusSchema = z.enum(STRIPE_DISPUTE_STATUSES)
 
 export const STRIPE_DISPUTE_REASONS_FRAUD_ADJACENT = ['fraudulent', 'unrecognized'] as const
 
+// Stripe visual evidence categories:
+// https://docs.stripe.com/disputes/visual-evidence
+export const STRIPE_VISUAL_EVIDENCE_CATEGORIES = [
+  'credit_not_processed',
+  'duplicate',
+  'fraudulent',
+  'general',
+  'product_not_received',
+  'product_unacceptable',
+  'subscription_canceled',
+] as const
+
+export type StripeVisualEvidenceCategory = (typeof STRIPE_VISUAL_EVIDENCE_CATEGORIES)[number]
+export const stripeVisualEvidenceCategorySchema = z.enum(STRIPE_VISUAL_EVIDENCE_CATEGORIES)
+
+export const SUPPORTED_VISUAL_EVIDENCE_CATEGORIES = ['fraudulent'] as const
+
+export type SupportedVisualEvidenceCategory =
+  (typeof SUPPORTED_VISUAL_EVIDENCE_CATEGORIES)[number]
+export const supportedVisualEvidenceCategorySchema = z.enum(SUPPORTED_VISUAL_EVIDENCE_CATEGORIES)
+
 export const STRIPE_DISPUTE_REASONS_REVIEW_ONLY = ['product_not_received', 'duplicate'] as const
 
 export const STRIPE_DISPUTE_REASONS_NO_NORMAL_CONTEST_PATH = [

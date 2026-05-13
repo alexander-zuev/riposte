@@ -42,6 +42,7 @@
     "@cloudflare/vite-plugin": "catalog:",
     "@fontsource-variable/inter": "catalog:",
     "@fontsource-variable/jetbrains-mono": "catalog:",
+    "@libpdf/core": "catalog:",
     "@marsidev/react-turnstile": "catalog:",
     "@phosphor-icons/react": "catalog:",
     "@radix-ui/colors": "catalog:",

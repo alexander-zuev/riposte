@@ -1,0 +1,1 @@
+ALTER TABLE "dispute_evidence_packets" ADD COLUMN "category" text DEFAULT 'fraudulent' NOT NULL;

@@ -1,4 +1,4 @@
-import type { UUIDv4 } from '@riposte/core'
+import type { SupportedVisualEvidenceCategory, UUIDv4 } from '@riposte/core'
 import { Entity } from '@server/domain/models/base.models'
 
 import type { DisputeCase, DisputeCaseId } from './dispute-case.entity'
@@ -45,6 +45,7 @@ export type DisputeEvidencePacketSnapshot = {
   userId: UUIDv4
   disputeCaseId: DisputeCaseId
   version: number
+  category: SupportedVisualEvidenceCategory
   stripeEvidencePayload: FraudDigitalStripeEvidencePayload
   pdfDocument: DisputeEvidencePdfDocument
   artifacts: DisputeEvidencePacketArtifact[]
@@ -66,6 +67,7 @@ export class DisputeEvidencePacket extends Entity<DisputeEvidencePacketSnapshot>
     readonly userId: UUIDv4,
     readonly disputeCaseId: DisputeCaseId,
     readonly version: number,
+    readonly category: SupportedVisualEvidenceCategory,
     readonly stripeEvidencePayload: FraudDigitalStripeEvidencePayload,
     readonly pdfDocument: DisputeEvidencePdfDocument,
     readonly artifacts: DisputeEvidencePacketArtifact[],
@@ -80,6 +82,7 @@ export class DisputeEvidencePacket extends Entity<DisputeEvidencePacketSnapshot>
   ): DisputeEvidencePacket {
     const version = input.previousPacket ? input.previousPacket.version + 1 : 1
     const id = crypto.randomUUID() as UUIDv4
+    const category: SupportedVisualEvidenceCategory = 'fraudulent'
     const caseSnapshot = input.disputeCase.serialize()
     const customerName =
       stripeEvidenceString(caseSnapshot.evidence.customer_name) ??
@@ -107,6 +110,7 @@ export class DisputeEvidencePacket extends Entity<DisputeEvidencePacketSnapshot>
       input.disputeCase.userId,
       input.disputeCase.id,
       version,
+      category,
       stripeEvidencePayload,
       buildFraudEvidencePdfDocument(input.disputeCase, input.disputeContext, stripeEvidencePayload),
       [
@@ -133,6 +137,7 @@ export class DisputeEvidencePacket extends Entity<DisputeEvidencePacketSnapshot>
       snapshot.userId,
       snapshot.disputeCaseId,
       requirePositiveInteger(snapshot.version, 'version'),
+      snapshot.category,
       snapshot.stripeEvidencePayload,
       snapshot.pdfDocument,
       snapshot.artifacts.map((artifact) => ({ ...artifact })),
@@ -147,6 +152,7 @@ export class DisputeEvidencePacket extends Entity<DisputeEvidencePacketSnapshot>
       userId: this.userId,
       disputeCaseId: this.disputeCaseId,
       version: this.version,
+      category: this.category,
       stripeEvidencePayload: this.stripeEvidencePayload,
       pdfDocument: this.pdfDocument,
       artifacts: this.artifacts.map((artifact) => ({ ...artifact })),

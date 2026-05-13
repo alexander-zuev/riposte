@@ -25,6 +25,7 @@ catalog:
   '@dotenvx/dotenvx': ^1.65.0
   '@fontsource-variable/inter': ^5.2.8
   '@fontsource-variable/jetbrains-mono': ^5.2.8
+  '@libpdf/core': 0.3.4
   '@marsidev/react-turnstile': ^1.5.2
   '@phosphor-icons/react': ^2.1.10
   '@radix-ui/colors': ^3.0.0
@@ -113,5 +114,6 @@ catalog:
 engineStrict: true
 
 minimumReleaseAge: 14400
+
 
 shellEmulator: true

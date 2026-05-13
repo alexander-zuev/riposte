@@ -133,10 +133,7 @@ class DisputeAgentWorkflowBase extends AgentWorkflow<DisputeAgent, DisputeAgentW
 /**
  * Bridges Result contracts to Workflow retry semantics without turning expected Err values into Panic.
  */
-export function unwrapWorkflowStepResult<T>(
-  step: string,
-  result: Result<T, WorkflowStepError>,
-): T {
+export function unwrapWorkflowStepResult<T>(step: string, result: Result<T, WorkflowStepError>): T {
   if (result.isOk()) return result.value
 
   const { error } = result

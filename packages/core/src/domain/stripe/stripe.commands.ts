@@ -28,6 +28,13 @@ export const handleStripeAppDeauthorizedSchema = stripeWebhookCommandBase.extend
   name: z.literal('HandleStripeAppDeauthorized'),
 })
 
+export const handleStripeOAuthCallbackSchema = baseCommandSchema.extend({
+  name: z.literal('HandleStripeOAuthCallback'),
+  code: z.string().min(1),
+  state: z.string().min(1).optional(),
+})
+
 export type StripeWebhookEvent = z.infer<typeof stripeWebhookEventSchema>
 export type HandleStripeAppAuthorized = z.infer<typeof handleStripeAppAuthorizedSchema>
 export type HandleStripeAppDeauthorized = z.infer<typeof handleStripeAppDeauthorizedSchema>
+export type HandleStripeOAuthCallback = z.infer<typeof handleStripeOAuthCallbackSchema>

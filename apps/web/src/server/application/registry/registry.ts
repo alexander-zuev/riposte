@@ -17,6 +17,7 @@ import {
   triageDisputeCaseHandler,
 } from '@server/application/handlers/dispute-workflow-handler'
 import { getStripeAppSettings, syncDisputes } from '@server/application/handlers/stripe-app-handler'
+import { handleStripeOAuthCallback } from '@server/application/handlers/stripe-oauth-handler'
 import {
   handleDisputeClosed,
   handleDisputeCreated,
@@ -42,6 +43,7 @@ export const COMMAND_HANDLERS = {
   SyncDisputes: syncDisputes,
   HandleStripeAppAuthorized: handleStripeAppAuthorized,
   HandleStripeAppDeauthorized: handleStripeAppDeauthorized,
+  HandleStripeOAuthCallback: handleStripeOAuthCallback,
   TriageDisputeCase: triageDisputeCaseHandler,
   EnrichDisputeContext: enrichDisputeContext,
   CollectDisputeEvidence: collectDisputeEvidence,

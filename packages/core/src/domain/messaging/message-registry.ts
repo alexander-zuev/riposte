@@ -25,7 +25,11 @@ import {
 import { disputeCaseReceivedSchema } from '../disputes/dispute.events'
 import { getStripeAppSettingsSchema, listDisputeCasesSchema } from '../disputes/dispute.queries'
 import { r2EventSchema, r2EventTransform } from '../storage/r2.messages'
-import { handleStripeAppAuthorizedSchema, handleStripeAppDeauthorizedSchema } from '../stripe'
+import {
+  handleStripeAppAuthorizedSchema,
+  handleStripeAppDeauthorizedSchema,
+  handleStripeOAuthCallbackSchema,
+} from '../stripe'
 import { joinWaitlistSchema } from '../waitlist/waitlist.messages'
 
 /* -------------------------------------------------------------------------------------------------
@@ -51,6 +55,7 @@ export const domainCommandSchema = z.discriminatedUnion('name', [
   submitDisputeResponseSchema,
   handleStripeAppAuthorizedSchema,
   handleStripeAppDeauthorizedSchema,
+  handleStripeOAuthCallbackSchema,
 ])
 
 export type DomainCommand = z.infer<typeof domainCommandSchema>

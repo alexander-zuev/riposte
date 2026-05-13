@@ -1,10 +1,11 @@
-/**
- * Proxies external images, primarily auth avatars, through our edge.
- */
+import { routeErrorMiddleware } from '@server/infrastructure/middleware'
 import { createFileRoute } from '@tanstack/react-router'
 import { waitUntil } from 'cloudflare:workers'
 import { z } from 'zod'
 
+/**
+ * Proxies external images, primarily auth avatars, through our edge.
+ */
 const MAX_IMAGE_SIZE = 2 * 1024 * 1024
 const CACHE_TTL = 7 * 24 * 60 * 60
 
@@ -56,6 +57,7 @@ async function fetchImage(url: string): Promise<Response | null> {
 
 export const Route = createFileRoute('/api/cache/images')({
   server: {
+    middleware: [routeErrorMiddleware],
     handlers: {
       GET: async ({ request }) => {
         const { searchParams } = new URL(request.url)

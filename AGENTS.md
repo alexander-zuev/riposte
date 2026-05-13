@@ -130,6 +130,14 @@ Use `better-result` to make expected failures part of the function contract. Doc
 - TanStack Start error middleware is a thrown-error safety net. It should catch framework control
   flow, validation adapter weirdness, and unexpected bugs. It does not observe normal
   `Result.err()` returns serialized through `toServerFnRpc(...)` or converted into HTTP responses.
+- API routes should compose expected failures into a final `Result` and consume it once at the route
+  boundary. This boundary handling is required: use `resultToApiResponse(...)` for normal JSON APIs,
+  and route-specific `match`/overrides for redirects, webhooks, text, images, or streaming responses.
+  The `ok`/`err` override callbacks are optional only when the generic JSON mapping is correct.
+  Middleware remains only a thrown-error safety net.
+- API routes should keep only transport validation/parsing that belongs to the route, then dispatch
+  application work through `deps.services.messageBus().handle(createCommand(...))`. Put expected
+  application errors beside the rest of the typed errors, not as ad hoc route-local wrappers.
 - TanStack Query query/mutation functions should preserve Query semantics: consume `Result` at the query boundary and throw the typed `TaggedError` on `Err`, so `onError`, retries, error boundaries, and devtools continue to work. Prefer throwing `result.error` over wrapping it in a generic `Error`.
 - Workflow steps are an adapter exception: retryable `Err` values throw the original error so the
   step retry policy applies; non-retryable `Err` values log the original error and throw

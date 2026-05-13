@@ -1,9 +1,10 @@
 import { createLogger, stripeWebhookEventSchema } from '@riposte/core'
 import { toStripeWebhookCommand } from '@server/domain/stripe'
 import { getServerConfig } from '@server/infrastructure/config'
+import { resultToApiResponse } from '@server/infrastructure/http/api-result'
 import { apiRouteWithDepsMiddleware } from '@server/infrastructure/middleware'
 import { createFileRoute } from '@tanstack/react-router'
-import Stripe from 'stripe'
+import StripeClient, { type Stripe } from 'stripe'
 
 const logger = createLogger('stripe-webhook')
 
@@ -20,7 +21,7 @@ export const Route = createFileRoute('/api/stripe/webhook')({
         let event: Stripe.Event
 
         try {
-          event = await Stripe.webhooks.constructEventAsync(
+          event = await StripeClient.webhooks.constructEventAsync(
             rawBody,
             signature,
             config.stripe.appWebhookSecret,
@@ -49,16 +50,17 @@ export const Route = createFileRoute('/api/stripe/webhook')({
 
         const result = await queueClient.send(command)
 
-        if (result.isErr()) {
-          logger.error('webhook_queue_send_failed', {
-            error: result.error,
-            eventId: event.id,
-            type: event.type,
-          })
-          return new Response('Queue error', { status: 500 })
-        }
-
-        return new Response('OK', { status: 200 })
+        return resultToApiResponse(result, {
+          ok: () => new Response('OK', { status: 200 }),
+          err: (error) => {
+            logger.error('webhook_queue_send_failed', {
+              error,
+              eventId: event.id,
+              type: event.type,
+            })
+            return new Response('Webhook processing failed', { status: 500 })
+          },
+        })
       },
     },
   },

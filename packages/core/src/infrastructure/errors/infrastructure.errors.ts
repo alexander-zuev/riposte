@@ -174,6 +174,36 @@ export class StripeConnectionUnavailableError extends TaggedError(
   }
 }
 
+export class StripeOAuthCallbackError extends TaggedError('StripeOAuthCallbackError')<{
+  message: string
+  reason:
+    | 'invalid_state'
+    | 'oauth_token_failed'
+    | 'invalid_token_response'
+    | 'account_retrieve_failed'
+    | 'persistence_failed'
+  cause?: unknown
+  retryable: false
+}>() {
+  constructor(args: {
+    reason:
+      | 'invalid_state'
+      | 'oauth_token_failed'
+      | 'invalid_token_response'
+      | 'account_retrieve_failed'
+      | 'persistence_failed'
+    cause?: unknown
+    message?: string
+  }) {
+    super({
+      reason: args.reason,
+      cause: args.cause,
+      message: args.message ?? `Stripe OAuth callback failed: ${args.reason}`,
+      retryable: false,
+    })
+  }
+}
+
 export type InfrastructureError =
   | DatabaseError
   | DuplicateMessageError
@@ -185,5 +215,6 @@ export type InfrastructureError =
   | CredentialEncryptionError
   | StripeApiError
   | StripeConnectionUnavailableError
+  | StripeOAuthCallbackError
 
 import { DatabaseError } from './database.errors'

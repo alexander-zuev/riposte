@@ -1,5 +1,9 @@
+import { ImageFetchFailedError, ImageTooLargeError, UnsupportedImageTypeError } from '@riposte/core'
+import { resultToApiResponse } from '@server/infrastructure/http/api-result'
 import { routeErrorMiddleware } from '@server/infrastructure/middleware'
+import { RETRY } from '@server/infrastructure/resilience/retry'
 import { createFileRoute } from '@tanstack/react-router'
+import { Result } from 'better-result'
 import { waitUntil } from 'cloudflare:workers'
 import { z } from 'zod'
 
@@ -18,42 +22,7 @@ const imageProxyUrlSchema = z.url({
 
 const ALLOWED_CONTENT_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif'])
 
-async function fetchImage(url: string): Promise<Response | null> {
-  try {
-    const response = await fetch(url, {
-      headers: { 'User-Agent': 'Riposte-Image-Proxy/1.0' },
-      signal: AbortSignal.timeout(10000),
-    })
-
-    if (!response.ok) return null
-
-    const contentType = response.headers.get('content-type')?.split(';')[0] ?? 'image/jpeg'
-
-    if (!ALLOWED_CONTENT_TYPES.has(contentType)) {
-      return new Response('Invalid image format', { status: 415 })
-    }
-
-    const contentLength = response.headers.get('content-length')
-    if (contentLength && Number.parseInt(contentLength) > MAX_IMAGE_SIZE) {
-      return new Response('Image too large', { status: 413 })
-    }
-
-    const imageBuffer = await response.arrayBuffer()
-    if (imageBuffer.byteLength > MAX_IMAGE_SIZE) {
-      return new Response('Image too large', { status: 413 })
-    }
-
-    return new Response(imageBuffer, {
-      headers: {
-        'Content-Type': contentType,
-        'Content-Length': imageBuffer.byteLength.toString(),
-        'Cache-Control': `public, max-age=${CACHE_TTL}`,
-      },
-    })
-  } catch {
-    return null
-  }
-}
+type ImageProxyError = ImageFetchFailedError | UnsupportedImageTypeError | ImageTooLargeError
 
 export const Route = createFileRoute('/api/cache/images')({
   server: {
@@ -67,8 +36,8 @@ export const Route = createFileRoute('/api/cache/images')({
           return new Response('Missing url parameter', { status: 400 })
         }
 
-        const result = imageProxyUrlSchema.safeParse(url)
-        if (!result.success) {
+        const parsedUrl = imageProxyUrlSchema.safeParse(url)
+        if (!parsedUrl.success) {
           return new Response('Invalid URL', { status: 400 })
         }
 
@@ -83,19 +52,88 @@ export const Route = createFileRoute('/api/cache/images')({
           })
         }
 
-        const response = await fetchImage(url)
-        if (!response) {
-          return new Response('Failed to load image', { status: 502 })
-        }
+        const result: Result<Response, ImageProxyError> = await Result.gen(async function* () {
+          const upstream = yield* Result.await(
+            Result.tryPromise(
+              {
+                try: () =>
+                  fetch(url, {
+                    headers: { 'User-Agent': 'Riposte-Image-Proxy/1.0' },
+                    signal: AbortSignal.timeout(10000),
+                  }),
+                catch: (cause) => new ImageFetchFailedError({ cause }),
+              },
+              RETRY.externalApi,
+            ),
+          )
 
-        if (!response.ok) return response
+          if (!upstream.ok) {
+            return Result.err(new ImageFetchFailedError({ status: upstream.status }))
+          }
 
-        waitUntil(cache.put(request, response.clone()))
+          const contentType = upstream.headers.get('content-type')?.split(';')[0] ?? 'image/jpeg'
+          if (!ALLOWED_CONTENT_TYPES.has(contentType)) {
+            return Result.err(new UnsupportedImageTypeError({ contentType }))
+          }
 
-        return new Response(response.body, {
-          headers: {
-            ...Object.fromEntries(response.headers),
-            'X-Cache': 'MISS',
+          const contentLength = upstream.headers.get('content-length')
+          if (contentLength && Number.parseInt(contentLength) > MAX_IMAGE_SIZE) {
+            return Result.err(
+              new ImageTooLargeError({
+                actualBytes: Number.parseInt(contentLength),
+                maxBytes: MAX_IMAGE_SIZE,
+              }),
+            )
+          }
+
+          const imageBuffer = yield* Result.await(
+            Result.tryPromise({
+              try: () => upstream.arrayBuffer(),
+              catch: (cause) => new ImageFetchFailedError({ cause }),
+            }),
+          )
+
+          if (imageBuffer.byteLength > MAX_IMAGE_SIZE) {
+            return Result.err(
+              new ImageTooLargeError({
+                actualBytes: imageBuffer.byteLength,
+                maxBytes: MAX_IMAGE_SIZE,
+              }),
+            )
+          }
+
+          return Result.ok(
+            new Response(imageBuffer, {
+              headers: {
+                'Content-Type': contentType,
+                'Content-Length': imageBuffer.byteLength.toString(),
+                'Cache-Control': `public, max-age=${CACHE_TTL}`,
+              },
+            }),
+          )
+        })
+
+        return resultToApiResponse(result, {
+          ok: (response) => {
+            waitUntil(cache.put(request, response.clone()))
+
+            return new Response(response.body, {
+              headers: {
+                ...Object.fromEntries(response.headers),
+                'X-Cache': 'MISS',
+              },
+            })
+          },
+          err: (error) => {
+            if (UnsupportedImageTypeError.is(error)) {
+              return new Response(error.message, { status: 415 })
+            }
+
+            if (ImageTooLargeError.is(error)) {
+              return new Response(error.message, { status: 413 })
+            }
+
+            return new Response(error.message, { status: 502 })
           },
         })
       },

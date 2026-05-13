@@ -111,6 +111,51 @@ export class KVError extends TaggedError('KVError')<{
   }
 }
 
+export class ImageFetchFailedError extends TaggedError('ImageFetchFailedError')<{
+  message: string
+  cause?: unknown
+  status?: number
+  retryable: true
+}>() {
+  constructor(args: { cause?: unknown; status?: number } = {}) {
+    super({
+      ...args,
+      message: 'Failed to load image',
+      retryable: true,
+    })
+  }
+}
+
+export class UnsupportedImageTypeError extends TaggedError('UnsupportedImageTypeError')<{
+  contentType: string
+  message: string
+  retryable: false
+}>() {
+  constructor(args: { contentType: string }) {
+    super({
+      contentType: args.contentType,
+      message: 'Invalid image format',
+      retryable: false,
+    })
+  }
+}
+
+export class ImageTooLargeError extends TaggedError('ImageTooLargeError')<{
+  actualBytes?: number
+  maxBytes: number
+  message: string
+  retryable: false
+}>() {
+  constructor(args: { actualBytes?: number; maxBytes: number }) {
+    super({
+      actualBytes: args.actualBytes,
+      maxBytes: args.maxBytes,
+      message: 'Image too large',
+      retryable: false,
+    })
+  }
+}
+
 export class CredentialEncryptionError extends TaggedError('CredentialEncryptionError')<{
   message: string
   operation: 'encrypt' | 'decrypt'
@@ -212,6 +257,9 @@ export type InfrastructureError =
   | WorkflowError
   | EmailServiceError
   | KVError
+  | ImageFetchFailedError
+  | UnsupportedImageTypeError
+  | ImageTooLargeError
   | CredentialEncryptionError
   | StripeApiError
   | StripeConnectionUnavailableError

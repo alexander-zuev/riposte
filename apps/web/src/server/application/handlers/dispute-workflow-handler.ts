@@ -1,11 +1,10 @@
 import type {
   CollectDisputeEvidence,
   DatabaseError,
-  DecideDisputeSubmission,
   DisputeCaseReceived,
   EnrichDisputeContext,
-  PrepareEvidencePacket,
-  ReviewEvidencePacket,
+  GenerateEvidencePacket,
+  RouteDisputeSubmissionPolicy,
   SubmitDisputeResponse,
   TriageDisputeCase,
   ValidationError,
@@ -27,27 +26,26 @@ type DisputeWorkflowCommandError =
   | GetClientError
   | ValidationError
 
-// Temporary post-evaluation workflow skeleton outputs.
-// Replace these local placeholders with real domain/application contracts when
-// evidence collection, packet preparation, review, and submission are implemented.
-export type CollectDisputeEvidenceResult = {
-  status: 'pending_agent_tools'
-}
+// Temporary post-evaluation workflow contracts. Keep the action shape stable as
+// evidence collection, packet generation, policy routing, and submission become real.
+export type CollectDisputeEvidenceResult =
+  | { action: 'collected' }
+  | { action: 'await_human'; reason: string; missingEvidence: unknown[] }
+  | { action: 'failed'; reason: string }
 
-export type PrepareEvidencePacketResult = {
-  status: 'pending_packet_generation'
-}
+export type EvidenceQuality = 'low' | 'medium' | 'high'
 
-export type ReviewEvidencePacketResult = {
-  status: 'pending_evidence_review'
-}
+export type GenerateEvidencePacketResult =
+  | { action: 'generated'; evidencePacketId: string; quality: EvidenceQuality }
+  | { action: 'await_human'; reason: string; evidencePacketId: string | null }
+  | { action: 'failed'; reason: string }
 
-export type DecideDisputeSubmissionResult =
-  | { action: 'submit' }
-  | { action: 'ready_for_review'; reason: string }
-  | { action: 'needs_input'; reason: string }
+export type RouteDisputeSubmissionPolicyResult =
+  | { action: 'await_human'; reason: string; evidencePacketId: string | null }
+  | { action: 'submit'; evidencePacketId: string }
+  | { action: 'accept'; reason: string }
   | { action: 'no_response'; reason: string }
-  | { action: 'fail'; reason: string }
+  | { action: 'failed'; reason: string }
 
 export type SubmitDisputeResponseResult = {
   action: 'submitted'
@@ -145,37 +143,36 @@ export async function collectDisputeEvidence(
     disputeCaseId: command.disputeCaseId,
   })
 
-  return Result.ok({ status: 'pending_agent_tools' })
+  return Result.ok({ action: 'collected' })
 }
 
-export async function prepareEvidencePacket(
-  command: PrepareEvidencePacket,
-): Promise<Result<PrepareEvidencePacketResult, never>> {
+export async function generateEvidencePacket(
+  command: GenerateEvidencePacket,
+): Promise<Result<GenerateEvidencePacketResult, never>> {
   logger.info('dispute_evidence_packet_pending_generation', {
     disputeCaseId: command.disputeCaseId,
   })
 
-  return Result.ok({ status: 'pending_packet_generation' })
+  return Result.ok({
+    action: 'await_human',
+    reason: 'packet_generation_pending',
+    evidencePacketId: null,
+  })
 }
 
-export async function reviewEvidencePacket(
-  command: ReviewEvidencePacket,
-): Promise<Result<ReviewEvidencePacketResult, never>> {
-  logger.info('dispute_evidence_review_pending', {
+export async function routeDisputeSubmissionPolicy(
+  command: RouteDisputeSubmissionPolicy,
+): Promise<Result<RouteDisputeSubmissionPolicyResult, never>> {
+  logger.info('dispute_submission_policy_review_first', {
     disputeCaseId: command.disputeCaseId,
+    evidencePacketId: command.evidencePacketId,
   })
 
-  return Result.ok({ status: 'pending_evidence_review' })
-}
-
-export async function decideDisputeSubmission(
-  command: DecideDisputeSubmission,
-): Promise<Result<DecideDisputeSubmissionResult, never>> {
-  logger.info('dispute_submission_decision_pending_tools', {
-    disputeCaseId: command.disputeCaseId,
+  return Result.ok({
+    action: 'await_human',
+    reason: 'review_first_policy',
+    evidencePacketId: command.evidencePacketId,
   })
-
-  return Result.ok({ action: 'needs_input', reason: 'agent_tools_pending' })
 }
 
 export async function submitDisputeResponse(

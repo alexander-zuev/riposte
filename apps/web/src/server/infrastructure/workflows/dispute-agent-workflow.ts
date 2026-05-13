@@ -1,5 +1,7 @@
 import { createCommand, createLogger, createSentryOptions } from '@riposte/core'
+import type { DomainCommand } from '@riposte/core'
 import * as Sentry from '@sentry/cloudflare'
+import type { MessageBusError } from '@server/application/registry/message-result'
 import type { DisputeAgent } from '@server/infrastructure/agents/dispute-agent'
 import type { DisputeAgentWorkflowParams } from '@server/infrastructure/agents/dispute-agent-client'
 import { createAppDeps, type AppDeps } from '@server/infrastructure/app-deps'
@@ -22,14 +24,6 @@ const externalStepConfig = {
 
 type DisputeAgentWorkflowOutput = {
   disputeCaseId: string
-  action: 'await_human' | 'no_response' | 'ready_for_review' | 'needs_input' | 'fail' | 'submitted'
-  reason?: string
-}
-
-type WorkflowStepError = {
-  message: string
-  retryable: boolean
-  _tag?: string
 }
 
 class DisputeAgentWorkflowBase extends AgentWorkflow<DisputeAgent, DisputeAgentWorkflowParams> {
@@ -56,7 +50,7 @@ class DisputeAgentWorkflowBase extends AgentWorkflow<DisputeAgent, DisputeAgentW
       return unwrapWorkflowStepResult('triage dispute', result)
     })
 
-    if (triage.action !== 'contest') return { disputeCaseId, ...triage }
+    if (triage.action !== 'contest') return { disputeCaseId }
 
     await step.do('enrich dispute context', externalStepConfig, async () => {
       const command = createCommand(
@@ -68,7 +62,7 @@ class DisputeAgentWorkflowBase extends AgentWorkflow<DisputeAgent, DisputeAgentW
       return unwrapWorkflowStepResult('enrich dispute context', result)
     })
 
-    await step.do('collect evidence', externalStepConfig, async () => {
+    const collected = await step.do('collect evidence', externalStepConfig, async () => {
       const command = createCommand(
         'CollectDisputeEvidence',
         { disputeCaseId },
@@ -78,37 +72,31 @@ class DisputeAgentWorkflowBase extends AgentWorkflow<DisputeAgent, DisputeAgentW
       return unwrapWorkflowStepResult('collect evidence', result)
     })
 
-    await step.do('prepare evidence packet', externalStepConfig, async () => {
+    if (collected.action !== 'collected') return { disputeCaseId }
+
+    const packet = await step.do('generate evidence packet', externalStepConfig, async () => {
       const command = createCommand(
-        'PrepareEvidencePacket',
+        'GenerateEvidencePacket',
         { disputeCaseId },
-        `workflow:${event.instanceId}:prepare-evidence-packet`,
+        `workflow:${event.instanceId}:generate-evidence-packet`,
       )
       const result = await this.deps.services.messageBus().handle(command)
-      return unwrapWorkflowStepResult('prepare evidence packet', result)
+      return unwrapWorkflowStepResult('generate evidence packet', result)
     })
 
-    await step.do('review evidence packet', internalStepConfig, async () => {
+    if (packet.action !== 'generated') return { disputeCaseId }
+
+    const route = await step.do('route submission policy', internalStepConfig, async () => {
       const command = createCommand(
-        'ReviewEvidencePacket',
-        { disputeCaseId },
-        `workflow:${event.instanceId}:review-evidence-packet`,
+        'RouteDisputeSubmissionPolicy',
+        { disputeCaseId, evidencePacketId: packet.evidencePacketId },
+        `workflow:${event.instanceId}:route-submission-policy`,
       )
       const result = await this.deps.services.messageBus().handle(command)
-      return unwrapWorkflowStepResult('review evidence packet', result)
+      return unwrapWorkflowStepResult('route submission policy', result)
     })
 
-    const decision = await step.do('decide submission', internalStepConfig, async () => {
-      const command = createCommand(
-        'DecideDisputeSubmission',
-        { disputeCaseId },
-        `workflow:${event.instanceId}:decide-submission`,
-      )
-      const result = await this.deps.services.messageBus().handle(command)
-      return unwrapWorkflowStepResult('decide submission', result)
-    })
-
-    if (decision.action !== 'submit') return { disputeCaseId, ...decision }
+    if (route.action !== 'submit') return { disputeCaseId }
 
     const submitted = await step.do('submit dispute response', externalStepConfig, async () => {
       const command = createCommand(
@@ -126,14 +114,17 @@ class DisputeAgentWorkflowBase extends AgentWorkflow<DisputeAgent, DisputeAgentW
       instanceId: event.instanceId,
     })
 
-    return { disputeCaseId, action: submitted.action }
+    return { disputeCaseId }
   }
 }
 
 /**
  * Bridges Result contracts to Workflow retry semantics without turning expected Err values into Panic.
  */
-export function unwrapWorkflowStepResult<T>(step: string, result: Result<T, WorkflowStepError>): T {
+export function unwrapWorkflowStepResult<T>(
+  step: string,
+  result: Result<T, MessageBusError<DomainCommand>>,
+): T {
   if (result.isOk()) return result.value
 
   const { error } = result

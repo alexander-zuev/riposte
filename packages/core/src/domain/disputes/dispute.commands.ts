@@ -60,16 +60,13 @@ export const collectDisputeEvidenceSchema = disputeWorkflowCommandBase.extend({
   name: z.literal('CollectDisputeEvidence'),
 })
 
-export const prepareEvidencePacketSchema = disputeWorkflowCommandBase.extend({
-  name: z.literal('PrepareEvidencePacket'),
+export const generateEvidencePacketSchema = disputeWorkflowCommandBase.extend({
+  name: z.literal('GenerateEvidencePacket'),
 })
 
-export const reviewEvidencePacketSchema = disputeWorkflowCommandBase.extend({
-  name: z.literal('ReviewEvidencePacket'),
-})
-
-export const decideDisputeSubmissionSchema = disputeWorkflowCommandBase.extend({
-  name: z.literal('DecideDisputeSubmission'),
+export const routeDisputeSubmissionPolicySchema = disputeWorkflowCommandBase.extend({
+  name: z.literal('RouteDisputeSubmissionPolicy'),
+  evidencePacketId: z.string().min(1),
 })
 
 export const submitDisputeResponseSchema = disputeWorkflowCommandBase.extend({
@@ -79,7 +76,6 @@ export const submitDisputeResponseSchema = disputeWorkflowCommandBase.extend({
 export type TriageDisputeCase = z.infer<typeof triageDisputeCaseSchema>
 export type EnrichDisputeContext = z.infer<typeof enrichDisputeContextSchema>
 export type CollectDisputeEvidence = z.infer<typeof collectDisputeEvidenceSchema>
-export type PrepareEvidencePacket = z.infer<typeof prepareEvidencePacketSchema>
-export type ReviewEvidencePacket = z.infer<typeof reviewEvidencePacketSchema>
-export type DecideDisputeSubmission = z.infer<typeof decideDisputeSubmissionSchema>
+export type GenerateEvidencePacket = z.infer<typeof generateEvidencePacketSchema>
+export type RouteDisputeSubmissionPolicy = z.infer<typeof routeDisputeSubmissionPolicySchema>
 export type SubmitDisputeResponse = z.infer<typeof submitDisputeResponseSchema>

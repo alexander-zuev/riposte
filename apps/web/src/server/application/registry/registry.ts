@@ -8,10 +8,9 @@ import { getConnectionsStatus } from '@server/application/handlers/connection-ha
 import { listDisputeCases } from '@server/application/handlers/dispute-case-handler'
 import {
   collectDisputeEvidence,
-  decideDisputeSubmission,
   enrichDisputeContext,
-  prepareEvidencePacket,
-  reviewEvidencePacket,
+  generateEvidencePacket,
+  routeDisputeSubmissionPolicy,
   startDisputeAgentWorkflow,
   submitDisputeResponse,
   triageDisputeCaseHandler,
@@ -47,9 +46,8 @@ export const COMMAND_HANDLERS = {
   TriageDisputeCase: triageDisputeCaseHandler,
   EnrichDisputeContext: enrichDisputeContext,
   CollectDisputeEvidence: collectDisputeEvidence,
-  PrepareEvidencePacket: prepareEvidencePacket,
-  ReviewEvidencePacket: reviewEvidencePacket,
-  DecideDisputeSubmission: decideDisputeSubmission,
+  GenerateEvidencePacket: generateEvidencePacket,
+  RouteDisputeSubmissionPolicy: routeDisputeSubmissionPolicy,
   SubmitDisputeResponse: submitDisputeResponse,
 } satisfies CommandRegistry
 

@@ -40,7 +40,12 @@ export type DisputeCaseSnapshot = {
   paymentMethodDetailsCardCaseType: string | null
   paymentMethodDetailsCardNetworkReasonCode: string | null
   customerPurchaseIp: string | null
+  metadata: Record<string, string>
+  balanceTransaction: string | null
+  balanceTransactions: unknown[]
+  evidence: Record<string, unknown>
   enhancedEligibilityTypes: string[]
+  evidenceDetailsEnhancedEligibility: Record<string, unknown>
   evidenceDetailsDueBy: Date | null
   evidenceDetailsHasEvidence: boolean
   evidenceDetailsPastDue: boolean
@@ -66,6 +71,9 @@ const stripeDisputeObjectSchema = z.object({
   charge: z.string().min(1),
   created: z.number().int().nonnegative(),
   currency: currencyCodeSchema,
+  balance_transaction: z.string().min(1).nullable().optional(),
+  balance_transactions: z.array(z.unknown()).optional().default([]),
+  metadata: z.record(z.string(), z.string()).optional().default({}),
   enhanced_eligibility_types: z.array(z.string().min(1)).optional().default([]),
   is_charge_refundable: z.boolean(),
   livemode: z.boolean(),
@@ -88,15 +96,12 @@ const stripeDisputeObjectSchema = z.object({
   status: stripeDisputeStatusSchema,
   evidence_details: z.object({
     due_by: z.number().int().nullable(),
+    enhanced_eligibility: z.record(z.string(), z.unknown()).optional().default({}),
     has_evidence: z.boolean(),
     past_due: z.boolean(),
     submission_count: z.number().int().nonnegative(),
   }),
-  evidence: z
-    .object({
-      customer_purchase_ip: z.string().min(1).nullable().optional(),
-    })
-    .optional(),
+  evidence: z.record(z.string(), z.unknown()).optional().default({}),
 })
 
 export class DisputeCase extends Entity<DisputeCaseSnapshot> {
@@ -117,7 +122,12 @@ export class DisputeCase extends Entity<DisputeCaseSnapshot> {
     readonly paymentMethodDetailsCardCaseType: string | null,
     readonly paymentMethodDetailsCardNetworkReasonCode: string | null,
     readonly customerPurchaseIp: string | null,
+    readonly metadata: Record<string, string>,
+    readonly balanceTransaction: string | null,
+    readonly balanceTransactions: unknown[],
+    readonly evidence: Record<string, unknown>,
     readonly enhancedEligibilityTypes: string[],
+    readonly evidenceDetailsEnhancedEligibility: Record<string, unknown>,
     readonly evidenceDetailsDueBy: Deadline | null,
     readonly evidenceDetailsHasEvidence: boolean,
     readonly evidenceDetailsPastDue: boolean,
@@ -170,8 +180,13 @@ export class DisputeCase extends Entity<DisputeCaseSnapshot> {
       stripeDispute.payment_method_details?.card?.brand ?? null,
       stripeDispute.payment_method_details?.card?.case_type ?? null,
       stripeDispute.payment_method_details?.card?.network_reason_code ?? null,
-      stripeDispute.evidence?.customer_purchase_ip ?? null,
+      stringOrNull(stripeDispute.evidence.customer_purchase_ip),
+      { ...stripeDispute.metadata },
+      stripeDispute.balance_transaction ?? null,
+      [...stripeDispute.balance_transactions],
+      { ...stripeDispute.evidence },
       [...stripeDispute.enhanced_eligibility_types],
+      { ...stripeDispute.evidence_details.enhanced_eligibility },
       dueBy && dueBy > 0 ? Deadline.create(new Date(dueBy * 1000)) : null,
       stripeDispute.evidence_details.has_evidence,
       stripeDispute.evidence_details.past_due,
@@ -210,7 +225,12 @@ export class DisputeCase extends Entity<DisputeCaseSnapshot> {
       snapshot.paymentMethodDetailsCardCaseType,
       snapshot.paymentMethodDetailsCardNetworkReasonCode,
       snapshot.customerPurchaseIp,
+      { ...snapshot.metadata },
+      snapshot.balanceTransaction,
+      [...snapshot.balanceTransactions],
+      { ...snapshot.evidence },
       [...snapshot.enhancedEligibilityTypes],
+      { ...snapshot.evidenceDetailsEnhancedEligibility },
       snapshot.evidenceDetailsDueBy ? Deadline.deserialize(snapshot.evidenceDetailsDueBy) : null,
       snapshot.evidenceDetailsHasEvidence,
       snapshot.evidenceDetailsPastDue,
@@ -328,7 +348,12 @@ export class DisputeCase extends Entity<DisputeCaseSnapshot> {
       paymentMethodDetailsCardCaseType: this.paymentMethodDetailsCardCaseType,
       paymentMethodDetailsCardNetworkReasonCode: this.paymentMethodDetailsCardNetworkReasonCode,
       customerPurchaseIp: this.customerPurchaseIp,
+      metadata: { ...this.metadata },
+      balanceTransaction: this.balanceTransaction,
+      balanceTransactions: [...this.balanceTransactions],
+      evidence: { ...this.evidence },
       enhancedEligibilityTypes: [...this.enhancedEligibilityTypes],
+      evidenceDetailsEnhancedEligibility: { ...this.evidenceDetailsEnhancedEligibility },
       evidenceDetailsDueBy: this.evidenceDetailsDueBy
         ? cloneDate(this.evidenceDetailsDueBy.serialize())
         : null,
@@ -361,6 +386,10 @@ function requireNonBlank(value: string, path: string): string {
   if (normalized) return normalized
 
   throw validationError(path, `${path} must not be blank`)
+}
+
+function stringOrNull(value: unknown): string | null {
+  return typeof value === 'string' && value.trim() ? value : null
 }
 
 function validationError(path: string, message: string): ValidationError {

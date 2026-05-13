@@ -1,4 +1,4 @@
-import { currencyCodeSchema, type StripeApiError } from '@riposte/core'
+import { createLogger, currencyCodeSchema, type StripeApiError } from '@riposte/core'
 import type {
   DisputeCase,
   SaveStripeDisputeContextInput,
@@ -17,6 +17,8 @@ import { stripeRequest } from '@server/infrastructure/stripe/stripe-request'
 import { Result } from 'better-result'
 import Stripe from 'stripe'
 
+const logger = createLogger('stripe-dispute-enrichment')
+
 export async function fetchStripeDisputeContext(
   stripe: Stripe,
   disputeCase: DisputeCase,
@@ -29,15 +31,15 @@ export async function fetchStripeDisputeContext(
         }),
       ),
     )
+    logStripeResponse('disputes.retrieve', disputeCase.id, dispute)
 
     const chargeId = objectId(dispute.charge) ?? disputeCase.charge
-    const charge =
-      expanded<Stripe.Charge>(dispute.charge, 'charge') ??
-      (yield* Result.await(
-        stripeRequest('charges.retrieve', () =>
-          stripe.charges.retrieve(chargeId, { expand: ['customer', 'payment_intent'] }),
-        ),
-      ))
+    const charge = yield* Result.await(
+      stripeRequest('charges.retrieve', () =>
+        stripe.charges.retrieve(chargeId, { expand: ['customer', 'payment_intent'] }),
+      ),
+    )
+    logStripeResponse('charges.retrieve', chargeId, charge)
 
     const customer = yield* Result.await(resolveCustomer(stripe, charge))
     const invoice = yield* Result.await(resolveInvoice(stripe, customer?.id ?? null, charge))
@@ -66,14 +68,19 @@ function resolveCustomer(
 ): Promise<Result<Stripe.Customer | null, StripeApiError>> {
   const customer = charge.customer
   const expandedCustomer = expandedCustomerObject(customer)
-  if (expandedCustomer) return Promise.resolve(Result.ok(expandedCustomer))
+  if (expandedCustomer) {
+    logStripeResponse('customers.resolve_expanded', expandedCustomer.id, expandedCustomer)
+    return Promise.resolve(Result.ok(expandedCustomer))
+  }
 
   const customerId = objectId(customer)
   if (!customerId) return Promise.resolve(Result.ok(null))
 
   return stripeRequest('customers.retrieve', async () => {
     const found = await stripe.customers.retrieve(customerId)
-    return found.deleted ? null : found
+    const customer = found.deleted ? null : found
+    logStripeResponse('customers.retrieve', customerId, customer)
+    return customer
   })
 }
 
@@ -92,6 +99,7 @@ async function resolveInvoice(
     }),
   )
   if (invoices.isErr()) return Result.err(invoices.error)
+  logStripeResponse('invoices.list', customerId, invoices.value)
 
   const invoice = invoices.value.data.find((item) => invoiceHasCharge(item, charge.id)) ?? null
 
@@ -106,14 +114,18 @@ function resolveSubscription(
 
   const invoiceSubscription = getInvoiceSubscription(invoice)
   if (!invoiceSubscription) return Promise.resolve(Result.ok(null))
-  if (typeof invoiceSubscription !== 'string')
+  if (typeof invoiceSubscription !== 'string') {
+    logStripeResponse('subscriptions.resolve_expanded', invoiceSubscription.id, invoiceSubscription)
     return Promise.resolve(Result.ok(invoiceSubscription))
+  }
 
-  return stripeRequest('subscriptions.retrieve', () =>
-    stripe.subscriptions.retrieve(invoiceSubscription, {
+  return stripeRequest('subscriptions.retrieve', async () => {
+    const subscription = await stripe.subscriptions.retrieve(invoiceSubscription, {
       expand: ['items.data.price.product'],
-    }),
-  )
+    })
+    logStripeResponse('subscriptions.retrieve', invoiceSubscription, subscription)
+    return subscription
+  })
 }
 
 async function resolveRefunds(
@@ -126,6 +138,7 @@ async function resolveRefunds(
     stripe.refunds.list({ charge: charge.id, limit: 10 }),
   )
   if (refunds.isErr()) return Result.err(refunds.error)
+  logStripeResponse('refunds.list', charge.id, refunds.value)
 
   return Result.ok(refunds.value.data)
 }
@@ -136,12 +149,19 @@ function resolveReview(
 ): Promise<Result<Stripe.Review | null, StripeApiError>> {
   const review = charge.review
   const expandedReview = expanded<Stripe.Review>(review, 'review')
-  if (expandedReview) return Promise.resolve(Result.ok(expandedReview))
+  if (expandedReview) {
+    logStripeResponse('reviews.resolve_expanded', expandedReview.id, expandedReview)
+    return Promise.resolve(Result.ok(expandedReview))
+  }
 
   const reviewId = objectId(review)
   if (!reviewId) return Promise.resolve(Result.ok(null))
 
-  return stripeRequest('reviews.retrieve', () => stripe.reviews.retrieve(reviewId))
+  return stripeRequest('reviews.retrieve', async () => {
+    const found = await stripe.reviews.retrieve(reviewId)
+    logStripeResponse('reviews.retrieve', reviewId, found)
+    return found
+  })
 }
 
 function resolvePriorCharges(
@@ -152,7 +172,16 @@ function resolvePriorCharges(
 
   return stripeRequest('charges.list', async () => {
     const charges = await stripe.charges.list({ customer: customerId, limit: 20 })
+    logStripeResponse('charges.list', customerId, charges)
     return charges.data
+  })
+}
+
+function logStripeResponse(operation: string, id: string, response: unknown) {
+  logger.debug('stripe_enrichment_response', {
+    operation,
+    id,
+    response,
   })
 }
 
@@ -185,10 +214,16 @@ function toCardSnapshot(charge: Stripe.Charge): StripeCardSnapshot | null {
   if (!card) return null
 
   return {
+    paymentMethodId: objectId(charge.payment_method),
     brand: card.brand,
     last4: card.last4,
     network: card.network,
     fingerprint: card.fingerprint ?? null,
+    country: card.country ?? null,
+    funding: card.funding ?? null,
+    expMonth: card.exp_month ?? null,
+    expYear: card.exp_year ?? null,
+    networkTransactionId: card.network_transaction_id ?? null,
     checks: card.checks
       ? {
           addressLine1Check: card.checks.address_line1_check,

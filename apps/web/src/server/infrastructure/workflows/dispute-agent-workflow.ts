@@ -5,6 +5,8 @@ import type { DisputeAgentWorkflowParams } from '@server/infrastructure/agents/d
 import { createAppDeps, type AppDeps } from '@server/infrastructure/app-deps'
 import { AgentWorkflow } from 'agents/workflows'
 import type { AgentWorkflowEvent, AgentWorkflowStep } from 'agents/workflows'
+import type { Result } from 'better-result'
+import { NonRetryableError } from 'cloudflare:workflows'
 
 const logger = createLogger('dispute-agent-workflow')
 
@@ -22,6 +24,12 @@ type DisputeAgentWorkflowOutput = {
   disputeCaseId: string
   action: 'ready_for_review' | 'needs_input' | 'ignore' | 'deadline_missed' | 'fail' | 'submitted'
   reason?: string
+}
+
+type WorkflowStepError = {
+  message: string
+  retryable: boolean
+  _tag?: string
 }
 
 class DisputeAgentWorkflowBase extends AgentWorkflow<DisputeAgent, DisputeAgentWorkflowParams> {
@@ -45,9 +53,7 @@ class DisputeAgentWorkflowBase extends AgentWorkflow<DisputeAgent, DisputeAgentW
         `workflow:${event.instanceId}:triage-dispute`,
       )
       const result = await this.deps.services.messageBus().handle(command)
-      if (result.isErr()) throw logStepError('triage dispute', result.error)
-
-      return result.value
+      return unwrapWorkflowStepResult('triage dispute', result)
     })
 
     if (triage.action !== 'continue_to_enrichment') return { disputeCaseId, ...triage }
@@ -59,9 +65,7 @@ class DisputeAgentWorkflowBase extends AgentWorkflow<DisputeAgent, DisputeAgentW
         `workflow:${event.instanceId}:enrich-dispute-context`,
       )
       const result = await this.deps.services.messageBus().handle(command)
-      if (result.isErr()) throw logStepError('enrich dispute context', result.error)
-
-      return result.value
+      return unwrapWorkflowStepResult('enrich dispute context', result)
     })
 
     await step.do('collect evidence', externalStepConfig, async () => {
@@ -71,9 +75,7 @@ class DisputeAgentWorkflowBase extends AgentWorkflow<DisputeAgent, DisputeAgentW
         `workflow:${event.instanceId}:collect-evidence`,
       )
       const result = await this.deps.services.messageBus().handle(command)
-      if (result.isErr()) throw logStepError('collect evidence', result.error)
-
-      return result.value
+      return unwrapWorkflowStepResult('collect evidence', result)
     })
 
     await step.do('prepare evidence packet', externalStepConfig, async () => {
@@ -83,9 +85,7 @@ class DisputeAgentWorkflowBase extends AgentWorkflow<DisputeAgent, DisputeAgentW
         `workflow:${event.instanceId}:prepare-evidence-packet`,
       )
       const result = await this.deps.services.messageBus().handle(command)
-      if (result.isErr()) throw logStepError('prepare evidence packet', result.error)
-
-      return result.value
+      return unwrapWorkflowStepResult('prepare evidence packet', result)
     })
 
     await step.do('review evidence packet', internalStepConfig, async () => {
@@ -95,9 +95,7 @@ class DisputeAgentWorkflowBase extends AgentWorkflow<DisputeAgent, DisputeAgentW
         `workflow:${event.instanceId}:review-evidence-packet`,
       )
       const result = await this.deps.services.messageBus().handle(command)
-      if (result.isErr()) throw logStepError('review evidence packet', result.error)
-
-      return result.value
+      return unwrapWorkflowStepResult('review evidence packet', result)
     })
 
     const decision = await step.do('decide submission', internalStepConfig, async () => {
@@ -107,9 +105,7 @@ class DisputeAgentWorkflowBase extends AgentWorkflow<DisputeAgent, DisputeAgentW
         `workflow:${event.instanceId}:decide-submission`,
       )
       const result = await this.deps.services.messageBus().handle(command)
-      if (result.isErr()) throw logStepError('decide submission', result.error)
-
-      return result.value
+      return unwrapWorkflowStepResult('decide submission', result)
     })
 
     if (decision.action !== 'submit') return { disputeCaseId, ...decision }
@@ -121,9 +117,7 @@ class DisputeAgentWorkflowBase extends AgentWorkflow<DisputeAgent, DisputeAgentW
         `workflow:${event.instanceId}:submit-dispute-response`,
       )
       const result = await this.deps.services.messageBus().handle(command)
-      if (result.isErr()) throw logStepError('submit dispute response', result.error)
-
-      return result.value
+      return unwrapWorkflowStepResult('submit dispute response', result)
     })
 
     logger.info('dispute_agent_workflow_completed', {
@@ -136,9 +130,24 @@ class DisputeAgentWorkflowBase extends AgentWorkflow<DisputeAgent, DisputeAgentW
   }
 }
 
-function logStepError(step: string, error: unknown): unknown {
-  logger.error('workflow_step_failed', { step, error })
-  return error
+/**
+ * Bridges Result contracts to Workflow retry semantics without turning expected Err values into Panic.
+ */
+export function unwrapWorkflowStepResult<T>(
+  step: string,
+  result: Result<T, WorkflowStepError>,
+): T {
+  if (result.isOk()) return result.value
+
+  const { error } = result
+
+  if (error.retryable === true) {
+    logger.warn('workflow_step_retryable_error', { step, error })
+    throw error
+  }
+
+  logger.error('workflow_step_non_retryable_error', { step, error })
+  throw new NonRetryableError(error.message, error._tag)
 }
 
 export const DisputeAgentWorkflow = Sentry.instrumentWorkflowWithSentry(

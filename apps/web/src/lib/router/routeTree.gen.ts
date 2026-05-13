@@ -9,7 +9,6 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './../../routes/__root'
-import { Route as TestQueryRouteImport } from './../../routes/test-query'
 import { Route as PublicRouteRouteImport } from './../../routes/_public/route'
 import { Route as AuthedRouteRouteImport } from './../../routes/_authed/route'
 import { Route as PublicIndexRouteImport } from './../../routes/_public/index'
@@ -30,11 +29,6 @@ import { Route as ApiAuthSplatRouteImport } from './../../routes/api/auth/$'
 import { Route as AuthedDisputesDisputeIdRouteImport } from './../../routes/_authed/disputes.$disputeId'
 import { Route as ApiStripeOauthCallbackRouteImport } from './../../routes/api/stripe/oauth/callback'
 
-const TestQueryRoute = TestQueryRouteImport.update({
-  id: '/test-query',
-  path: '/test-query',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const PublicRouteRoute = PublicRouteRouteImport.update({
   id: '/_public',
   getParentRoute: () => rootRouteImport,
@@ -131,7 +125,6 @@ const ApiStripeOauthCallbackRoute = ApiStripeOauthCallbackRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof PublicIndexRoute
-  '/test-query': typeof TestQueryRoute
   '/account': typeof AuthedAccountRoute
   '/billing': typeof AuthedBillingRoute
   '/dashboard': typeof AuthedDashboardRoute
@@ -151,7 +144,6 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof PublicIndexRoute
-  '/test-query': typeof TestQueryRoute
   '/account': typeof AuthedAccountRoute
   '/billing': typeof AuthedBillingRoute
   '/dashboard': typeof AuthedDashboardRoute
@@ -173,7 +165,6 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authed': typeof AuthedRouteRouteWithChildren
   '/_public': typeof PublicRouteRouteWithChildren
-  '/test-query': typeof TestQueryRoute
   '/_authed/account': typeof AuthedAccountRoute
   '/_authed/billing': typeof AuthedBillingRoute
   '/_authed/dashboard': typeof AuthedDashboardRoute
@@ -196,7 +187,6 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/test-query'
     | '/account'
     | '/billing'
     | '/dashboard'
@@ -216,7 +206,6 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/test-query'
     | '/account'
     | '/billing'
     | '/dashboard'
@@ -237,7 +226,6 @@ export interface FileRouteTypes {
     | '__root__'
     | '/_authed'
     | '/_public'
-    | '/test-query'
     | '/_authed/account'
     | '/_authed/billing'
     | '/_authed/dashboard'
@@ -260,7 +248,6 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   AuthedRouteRoute: typeof AuthedRouteRouteWithChildren
   PublicRouteRoute: typeof PublicRouteRouteWithChildren
-  TestQueryRoute: typeof TestQueryRoute
   DevEmailsRoute: typeof DevEmailsRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiCacheImagesRoute: typeof ApiCacheImagesRoute
@@ -270,13 +257,6 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/test-query': {
-      id: '/test-query'
-      path: '/test-query'
-      fullPath: '/test-query'
-      preLoaderRoute: typeof TestQueryRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/_public': {
       id: '/_public'
       path: ''
@@ -470,7 +450,6 @@ const PublicRouteRouteWithChildren = PublicRouteRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   AuthedRouteRoute: AuthedRouteRouteWithChildren,
   PublicRouteRoute: PublicRouteRouteWithChildren,
-  TestQueryRoute: TestQueryRoute,
   DevEmailsRoute: DevEmailsRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiCacheImagesRoute: ApiCacheImagesRoute,

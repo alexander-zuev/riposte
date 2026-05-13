@@ -46,7 +46,6 @@ export class DisputeAgentClient implements IDisputeAgentClient {
     return Result.tryPromise(
       {
         try: async () => {
-          logger.debug('start_workflow_requested', { disputeCaseId, instanceId, userId })
           const agent = await getAgentByName(this.env.DisputeAgent, userId)
 
           await agent.runWorkflow(
@@ -86,7 +85,6 @@ export class DisputeAgentClient implements IDisputeAgentClient {
     return Result.tryPromise(
       {
         try: async () => {
-          logger.debug('pause_workflow_requested', { disputeCaseId, instanceId, userId })
           const agent = await getAgentByName(this.env.DisputeAgent, userId)
           await agent.pauseWorkflow(instanceId)
           logger.debug('pause_workflow_succeeded', { disputeCaseId, instanceId, userId })
@@ -113,7 +111,6 @@ export class DisputeAgentClient implements IDisputeAgentClient {
     return Result.tryPromise(
       {
         try: async () => {
-          logger.debug('resume_workflow_requested', { disputeCaseId, instanceId, userId })
           const agent = await getAgentByName(this.env.DisputeAgent, userId)
           await agent.resumeWorkflow(instanceId)
           logger.debug('resume_workflow_succeeded', { disputeCaseId, instanceId, userId })
@@ -140,7 +137,6 @@ export class DisputeAgentClient implements IDisputeAgentClient {
     return Result.tryPromise(
       {
         try: async () => {
-          logger.debug('terminate_workflow_requested', { disputeCaseId, instanceId, userId })
           const agent = await getAgentByName(this.env.DisputeAgent, userId)
           await agent.terminateWorkflow(instanceId)
           logger.debug('terminate_workflow_succeeded', { disputeCaseId, instanceId, userId })

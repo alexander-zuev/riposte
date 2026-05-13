@@ -34,10 +34,16 @@ export type StripeCustomerSnapshot = {
 }
 
 export type StripeCardSnapshot = {
+  paymentMethodId: string | null
   brand: string | null
   last4: string | null
   network: string | null
   fingerprint: string | null
+  country: string | null
+  funding: string | null
+  expMonth: number | null
+  expYear: number | null
+  networkTransactionId: string | null
   checks: {
     addressLine1Check: string | null
     addressPostalCodeCheck: string | null

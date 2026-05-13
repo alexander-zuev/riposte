@@ -120,6 +120,13 @@
       "when": 1778581163521,
       "tag": "0016_nostalgic_shotgun",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1778663423244,
+      "tag": "0017_stiff_microchip",
+      "breakpoints": true
     }
   ]
 }

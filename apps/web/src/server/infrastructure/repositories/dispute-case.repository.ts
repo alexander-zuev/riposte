@@ -107,7 +107,12 @@ export class DisputeCaseRepository extends BaseRepository implements IDisputeCas
               paymentMethodDetailsCardNetworkReasonCode:
                 row.paymentMethodDetailsCardNetworkReasonCode,
               customerPurchaseIp: row.customerPurchaseIp,
+              metadata: row.metadata,
+              balanceTransaction: row.balanceTransaction,
+              balanceTransactions: row.balanceTransactions,
+              evidence: row.evidence,
               enhancedEligibilityTypes: row.enhancedEligibilityTypes,
+              evidenceDetailsEnhancedEligibility: row.evidenceDetailsEnhancedEligibility,
               evidenceDetailsDueBy: row.evidenceDetailsDueBy,
               evidenceDetailsHasEvidence: row.evidenceDetailsHasEvidence,
               evidenceDetailsPastDue: row.evidenceDetailsPastDue,

@@ -1,7 +1,7 @@
 import { createLogger, stripeWebhookEventSchema } from '@riposte/core'
 import { toStripeWebhookCommand } from '@server/domain/stripe'
 import { getServerConfig } from '@server/infrastructure/config'
-import { withDepsRequest } from '@server/infrastructure/middleware/deps.middleware'
+import { apiRouteWithDepsMiddleware } from '@server/infrastructure/middleware'
 import { createFileRoute } from '@tanstack/react-router'
 import Stripe from 'stripe'
 
@@ -9,7 +9,7 @@ const logger = createLogger('stripe-webhook')
 
 export const Route = createFileRoute('/api/stripe/webhook')({
   server: {
-    middleware: [withDepsRequest],
+    middleware: apiRouteWithDepsMiddleware,
     handlers: {
       POST: async ({ request, context }) => {
         const config = getServerConfig()

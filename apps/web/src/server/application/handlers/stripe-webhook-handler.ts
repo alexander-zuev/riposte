@@ -87,6 +87,11 @@ export async function handleDisputeCreated(
     eventId,
     userId: connection.value.userId,
   })
+  logger.debug('stripe_dispute_created_object', {
+    account,
+    eventId,
+    stripeDispute: command.stripeEvent.data.object,
+  })
 
   const disputeCase = DisputeCase.receiveStripeDispute({
     userId: connection.value.userId,

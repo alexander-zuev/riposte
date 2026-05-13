@@ -36,6 +36,17 @@ Do not manually edit generated files. In particular, never hand-edit
 source config and running the appropriate generation command, such as
 `pnpm --filter @riposte/web run cf-typegen`.
 
+Do not manually create or edit Drizzle migration files or migration journal/snapshot metadata under
+`apps/web/src/server/infrastructure/db/migrations/`. Change the Drizzle schema first, then generate
+migrations with `pnpm --filter @riposte/web run db:generate`. If Drizzle prompts for an interactive
+choice or the intended migration is ambiguous, stop and ask the user before proceeding. Apply local
+development migrations with `pnpm --filter @riposte/web run db:migrate:dev` only after generation.
+
+## Code Comments
+
+Use concise JSDoc or comments where they capture intent, policy, or a non-obvious boundary nuance.
+Avoid comments that restate the code or describe implementation details likely to change.
+
 ## Architecture
 
 Monorepo with pnpm workspaces + Turborepo:
@@ -104,6 +115,9 @@ Use `better-result` to make expected failures part of the function contract. Doc
 
 - `Result.err(...)` = an expected failure the caller can handle: validation, not found, duplicate message, authorization, DB/API/queue failure.
 - `throw` = a bug or framework control flow: impossible state, missing setup/env, invalid lifecycle usage, `redirect()`, `notFound()`.
+- `better-result` does not throw for expected failures. It returns/propagates `Err`. It can still
+  throw `Panic` for programmer defects inside Result callbacks/generators, and `unwrap()` throws on
+  `Err`.
 - Do not let expected throws travel upward through layers. Convert them at the boundary where they happen.
 - Group errors with union types, not inheritance: `type SaveUserError = ValidationError | DatabaseError`.
 
@@ -113,7 +127,13 @@ Use `better-result` to make expected failures part of the function contract. Doc
 - Repositories catch driver/Drizzle/postgres throws with `Result.tryPromise({ try, catch })` and return `Result.err(new DatabaseError(...))`.
 - Application handlers propagate `Result` from domain/services/repos. Do not catch expected errors there.
 - Entry points/server functions/queue consumers consume final Results with `match`, `isErr`, or error serialization.
+- TanStack Start error middleware is a thrown-error safety net. It should catch framework control
+  flow, validation adapter weirdness, and unexpected bugs. It does not observe normal
+  `Result.err()` returns serialized through `toServerFnRpc(...)` or converted into HTTP responses.
 - TanStack Query query/mutation functions should preserve Query semantics: consume `Result` at the query boundary and throw the typed `TaggedError` on `Err`, so `onError`, retries, error boundaries, and devtools continue to work. Prefer throwing `result.error` over wrapping it in a generic `Error`.
+- Workflow steps are an adapter exception: retryable `Err` values throw the original error so the
+  step retry policy applies; non-retryable `Err` values log the original error and throw
+  `NonRetryableError` so the Workflow fails immediately without retrying.
 - Fire-and-forget post-commit work, like waking the outbox relay in `waitUntil`, should log and swallow. The transaction already committed and the outbox row is durable.
 
 ### Composition rules
@@ -191,6 +211,26 @@ control flow.
 Drizzle rolls back only by throwing, so `executeUoW` may contain a small throw bridge: store the `Result.err`, call `tx.rollback()`, catch `TransactionRollbackError`, and return the stored `Result.err`. This is an adapter detail; outside UoW the contract remains `Promise<Result<T, E>>`.
 
 Retry at the caller boundary, not inside repositories. Queue consumer / workflow step retry should retry the whole transaction/UoW, not individual SQL statements.
+
+For workflows, map handler `Result.err()` by retryability:
+
+- `error.retryable === true` or an unexpected panic/bug that should be retried by the workflow
+  runtime: throw from inside `step.do(...)`.
+- `error.retryable === false`: log the original structured error, then throw `NonRetryableError`
+  from inside `step.do(...)`.
+- Business stop conditions such as `needs_input`, `deadline_missed`, or `ignore` should be normal
+  `Ok` handler outputs, not `Err`.
+- If an error has no explicit `retryable` flag, do not assume it is retryable merely because it is an
+  `Err`. Classify it before deciding whether to throw.
+
+```typescript
+const result = await messageBus.handle(command)
+if (result.isErr()) {
+  if (result.error.retryable === true) throw result.error
+  logger.error('workflow_step_non_retryable_error', { error: result.error })
+  throw new NonRetryableError(result.error.message, result.error._tag)
+}
+```
 
 ### Logging and instrumentation
 

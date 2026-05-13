@@ -112,6 +112,6 @@ catalog:
 
 engineStrict: true
 
-minimumReleaseAge: 2880
+minimumReleaseAge: 14400
 
 shellEmulator: true

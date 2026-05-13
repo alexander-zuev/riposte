@@ -8,6 +8,7 @@ import type {
   ReviewEvidencePacket,
   SubmitDisputeResponse,
   TriageDisputeCase,
+  ValidationError,
   WorkflowError,
 } from '@riposte/core'
 import { createLogger, EntityNotFoundError } from '@riposte/core'
@@ -20,7 +21,11 @@ import { Result } from 'better-result'
 const logger = createLogger('dispute-workflow-handler')
 
 type DisputeAgentWorkflowHandlerError = WorkflowError
-type DisputeWorkflowCommandError = DatabaseError | EntityNotFoundError | GetClientError
+type DisputeWorkflowCommandError =
+  | DatabaseError
+  | EntityNotFoundError
+  | GetClientError
+  | ValidationError
 
 export type TriageDisputeCaseResult =
   | { action: 'continue_to_enrichment' }
@@ -115,13 +120,18 @@ export async function enrichDisputeContext(
     return Result.err(new EntityNotFoundError({ entity: 'DisputeCase', id: command.disputeCaseId }))
   }
 
-  const stripe = await deps.services.stripeClientProvider().getForAccount(found.value.stripeAccountId)
+  const stripe = await deps.services
+    .stripeClientProvider()
+    .getForAccount(found.value.stripeAccountId)
   if (stripe.isErr()) return Result.err(stripe.error)
 
   const context = await fetchStripeDisputeContext(stripe.value, found.value)
   if (context.isErr()) return Result.err(context.error)
 
-  const savedContext = await deps.repos.stripeDisputeContexts(tx).save(context.value)
+  const refreshed = found.value.refreshStripeDisputeFacts(context.value.stripeDispute)
+  if (refreshed.isErr()) return Result.err(refreshed.error)
+
+  const savedContext = await deps.repos.stripeDisputeContexts(tx).save(context.value.context)
   if (savedContext.isErr()) return Result.err(savedContext.error)
 
   found.value.startEvidenceCollection()

@@ -90,7 +90,7 @@ export async function handleDisputeCreated(
   logger.debug('stripe_dispute_created_object', {
     account,
     eventId,
-    stripeDispute: command.stripeEvent.data.object,
+    stripeDispute: summarizeStripeDispute(command.stripeEvent.data.object),
   })
 
   const disputeCase = DisputeCase.receiveStripeDispute({
@@ -120,6 +120,75 @@ export async function handleDisputeCreated(
   })
 
   return Result.ok(undefined)
+}
+
+function summarizeStripeDispute(input: unknown) {
+  if (!input || typeof input !== 'object') return { object: typeof input }
+
+  const dispute = input as Record<string, unknown>
+  const evidence = objectRecord(dispute.evidence)
+  const evidenceDetails = objectRecord(dispute.evidence_details)
+  const paymentMethodDetails = objectRecord(dispute.payment_method_details)
+  const card = objectRecord(paymentMethodDetails?.card)
+
+  return {
+    id: stringValue(dispute.id),
+    object: stringValue(dispute.object),
+    amount: numberValue(dispute.amount),
+    currency: stringValue(dispute.currency),
+    status: stringValue(dispute.status),
+    reason: stringValue(dispute.reason),
+    chargeId: expandableId(dispute.charge),
+    paymentIntentId: expandableId(dispute.payment_intent),
+    balanceTransactionId: expandableId(dispute.balance_transaction),
+    balanceTransactionCount: Array.isArray(dispute.balance_transactions)
+      ? dispute.balance_transactions.length
+      : 0,
+    evidence: {
+      hasCustomerPurchaseIp: Boolean(stringValue(evidence?.customer_purchase_ip)),
+      hasCustomerEmailAddress: Boolean(stringValue(evidence?.customer_email_address)),
+      hasCustomerName: Boolean(stringValue(evidence?.customer_name)),
+      hasBillingAddress: Boolean(stringValue(evidence?.billing_address)),
+      hasProductDescription: Boolean(stringValue(evidence?.product_description)),
+    },
+    evidenceDetails: {
+      dueBy: numberValue(evidenceDetails?.due_by),
+      hasEvidence: booleanValue(evidenceDetails?.has_evidence),
+      pastDue: booleanValue(evidenceDetails?.past_due),
+      submissionCount: numberValue(evidenceDetails?.submission_count),
+    },
+    paymentMethodDetails: {
+      type: stringValue(paymentMethodDetails?.type),
+      cardBrand: stringValue(card?.brand),
+      cardCaseType: stringValue(card?.case_type),
+      cardNetworkReasonCode: stringValue(card?.network_reason_code),
+    },
+  }
+}
+
+function objectRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null
+}
+
+function expandableId(value: unknown): string | null {
+  if (typeof value === 'string' && value.trim()) return value
+  const object = objectRecord(value)
+
+  return stringValue(object?.id)
+}
+
+function stringValue(value: unknown): string | null {
+  return typeof value === 'string' && value.trim() ? value : null
+}
+
+function numberValue(value: unknown): number | null {
+  return typeof value === 'number' ? value : null
+}
+
+function booleanValue(value: unknown): boolean | null {
+  return typeof value === 'boolean' ? value : null
 }
 
 export async function handleDisputeUpdated(

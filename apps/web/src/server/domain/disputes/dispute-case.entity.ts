@@ -65,10 +65,15 @@ export type ReceiveStripeDisputeInput = {
   now?: Date
 }
 
+const expandableIdSchema = z.union([
+  z.string().min(1),
+  z.object({ id: z.string().min(1) }).passthrough(),
+])
+
 const stripeDisputeObjectSchema = z.object({
   id: z.string().min(1),
   amount: z.number().int().nonnegative(),
-  charge: z.string().min(1),
+  charge: expandableIdSchema,
   created: z.number().int().nonnegative(),
   currency: currencyCodeSchema,
   balance_transaction: z.string().min(1).nullable().optional(),
@@ -77,7 +82,7 @@ const stripeDisputeObjectSchema = z.object({
   enhanced_eligibility_types: z.array(z.string().min(1)).optional().default([]),
   is_charge_refundable: z.boolean(),
   livemode: z.boolean(),
-  payment_intent: z.string().min(1).nullable().optional(),
+  payment_intent: expandableIdSchema.nullable().optional(),
   payment_method_details: z
     .object({
       type: z.string().min(1).nullable().optional(),
@@ -112,7 +117,7 @@ export class DisputeCase extends Entity<DisputeCaseSnapshot> {
     readonly sourceStripeEventId: string,
     readonly sourceStripeEventType: string,
     readonly livemode: boolean,
-    readonly stripeStatus: StripeDisputeStatus,
+    private stripeStatus: StripeDisputeStatus,
     readonly reason: string,
     readonly amount: Money,
     readonly charge: string,
@@ -121,18 +126,18 @@ export class DisputeCase extends Entity<DisputeCaseSnapshot> {
     readonly paymentMethodDetailsCardBrand: string | null,
     readonly paymentMethodDetailsCardCaseType: string | null,
     readonly paymentMethodDetailsCardNetworkReasonCode: string | null,
-    readonly customerPurchaseIp: string | null,
-    readonly metadata: Record<string, string>,
-    readonly balanceTransaction: string | null,
-    readonly balanceTransactions: unknown[],
-    readonly evidence: Record<string, unknown>,
-    readonly enhancedEligibilityTypes: string[],
-    readonly evidenceDetailsEnhancedEligibility: Record<string, unknown>,
-    readonly evidenceDetailsDueBy: Deadline | null,
-    readonly evidenceDetailsHasEvidence: boolean,
-    readonly evidenceDetailsPastDue: boolean,
-    readonly evidenceDetailsSubmissionCount: number,
-    readonly isChargeRefundable: boolean,
+    private customerPurchaseIp: string | null,
+    private metadata: Record<string, string>,
+    private balanceTransaction: string | null,
+    private balanceTransactions: unknown[],
+    private evidence: Record<string, unknown>,
+    private enhancedEligibilityTypes: string[],
+    private evidenceDetailsEnhancedEligibility: Record<string, unknown>,
+    private evidenceDetailsDueBy: Deadline | null,
+    private evidenceDetailsHasEvidence: boolean,
+    private evidenceDetailsPastDue: boolean,
+    private evidenceDetailsSubmissionCount: number,
+    private isChargeRefundable: boolean,
     private state: DisputeCaseWorkflowState,
     readonly stripeCreatedAt: Date,
     private updatedAt: Date,
@@ -143,21 +148,10 @@ export class DisputeCase extends Entity<DisputeCaseSnapshot> {
   static receiveStripeDispute(
     input: ReceiveStripeDisputeInput,
   ): Result<DisputeCase, ValidationError> {
-    const parsed = stripeDisputeObjectSchema.safeParse(input.stripeDispute)
-    if (!parsed.success) {
-      return Result.err(
-        new ValidationError({
-          issues: parsed.error.issues.map((issue) => ({
-            code: issue.code,
-            path: issue.path.map((path) => (typeof path === 'symbol' ? String(path) : path)),
-            message: issue.message,
-          })),
-          message: 'Invalid Stripe dispute object',
-        }),
-      )
-    }
+    const parsed = parseStripeDisputeObject(input.stripeDispute)
+    if (parsed.isErr()) return Result.err(parsed.error)
 
-    const stripeDispute = parsed.data
+    const stripeDispute = parsed.value
     const now = cloneDate(input.now ?? new Date())
     const dueBy = stripeDispute.evidence_details.due_by
 
@@ -174,8 +168,8 @@ export class DisputeCase extends Entity<DisputeCaseSnapshot> {
         amountMinor: stripeDispute.amount,
         currency: stripeDispute.currency,
       }),
-      requireNonBlank(stripeDispute.charge, 'charge'),
-      stripeDispute.payment_intent ?? null,
+      requireNonBlank(expandableId(stripeDispute.charge), 'charge'),
+      expandableIdOrNull(stripeDispute.payment_intent),
       stripeDispute.payment_method_details?.type ?? null,
       stripeDispute.payment_method_details?.card?.brand ?? null,
       stripeDispute.payment_method_details?.card?.case_type ?? null,
@@ -242,6 +236,40 @@ export class DisputeCase extends Entity<DisputeCaseSnapshot> {
     )
   }
 
+  refreshStripeDisputeFacts(
+    stripeDisputeInput: unknown,
+    now: Date = new Date(),
+  ): Result<void, ValidationError> {
+    const parsed = parseStripeDisputeObject(stripeDisputeInput)
+    if (parsed.isErr()) return Result.err(parsed.error)
+
+    const stripeDispute = parsed.value
+    if (stripeDispute.id !== this.id) {
+      return Result.err(validationError('id', 'Stripe dispute id must match dispute case id'))
+    }
+
+    const dueBy = stripeDispute.evidence_details.due_by
+
+    this.stripeStatus = stripeDispute.status
+    this.customerPurchaseIp = stringOrNull(stripeDispute.evidence.customer_purchase_ip)
+    this.metadata = { ...stripeDispute.metadata }
+    this.balanceTransaction = stripeDispute.balance_transaction ?? null
+    this.balanceTransactions = [...stripeDispute.balance_transactions]
+    this.evidence = { ...stripeDispute.evidence }
+    this.enhancedEligibilityTypes = [...stripeDispute.enhanced_eligibility_types]
+    this.evidenceDetailsEnhancedEligibility = {
+      ...stripeDispute.evidence_details.enhanced_eligibility,
+    }
+    this.evidenceDetailsDueBy = dueBy && dueBy > 0 ? Deadline.create(new Date(dueBy * 1000)) : null
+    this.evidenceDetailsHasEvidence = stripeDispute.evidence_details.has_evidence
+    this.evidenceDetailsPastDue = stripeDispute.evidence_details.past_due
+    this.evidenceDetailsSubmissionCount = stripeDispute.evidence_details.submission_count
+    this.isChargeRefundable = stripeDispute.is_charge_refundable
+    this.touch(now)
+
+    return Result.ok(undefined)
+  }
+
   getStatus(): DisputeCaseWorkflowStatus {
     return this.state.status
   }
@@ -264,6 +292,10 @@ export class DisputeCase extends Entity<DisputeCaseSnapshot> {
 
   getIgnoredReason(): string | null {
     return this.state.status === 'ignored' ? this.state.reason : null
+  }
+
+  getEvidenceDetailsDueBy(): Date | null {
+    return this.evidenceDetailsDueBy ? cloneDate(this.evidenceDetailsDueBy.serialize()) : null
   }
 
   markTriaged(now: Date = new Date()): void {
@@ -386,6 +418,36 @@ function requireNonBlank(value: string, path: string): string {
   if (normalized) return normalized
 
   throw validationError(path, `${path} must not be blank`)
+}
+
+function parseStripeDisputeObject(
+  input: unknown,
+): Result<z.infer<typeof stripeDisputeObjectSchema>, ValidationError> {
+  const parsed = stripeDisputeObjectSchema.safeParse(input)
+  if (parsed.success) return Result.ok(parsed.data)
+
+  return Result.err(
+    new ValidationError({
+      issues: parsed.error.issues.map((issue) => ({
+        code: issue.code,
+        path: issue.path.map((path) => (typeof path === 'symbol' ? String(path) : path)),
+        message: issue.message,
+      })),
+      message: 'Invalid Stripe dispute object',
+    }),
+  )
+}
+
+function expandableId(value: z.infer<typeof expandableIdSchema>): string {
+  return typeof value === 'string' ? value : value.id
+}
+
+function expandableIdOrNull(
+  value: z.infer<typeof expandableIdSchema> | null | undefined,
+): string | null {
+  if (!value) return null
+
+  return expandableId(value)
 }
 
 function stringOrNull(value: unknown): string | null {

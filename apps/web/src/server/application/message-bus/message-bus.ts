@@ -85,14 +85,6 @@ export class MessageBus implements IMessageBus {
       return Result.ok(value)
     }, this)
 
-    if (result.isErr() && DuplicateMessageError.is(result.error)) {
-      logger.warn('Duplicate command ignored', {
-        command: command.name,
-        id: command.id,
-      })
-      return Result.ok(undefined) as MessageResult<CommandMap[TName]>
-    }
-
     return result as MessageResult<CommandMap[TName]>
   }
 

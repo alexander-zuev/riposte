@@ -71,11 +71,13 @@ function decideDisputeTriage(
     return { action: 'ignore', reason: 'visa_10_5_no_remedy' }
   }
 
-  if (!disputeCase.evidenceDetailsDueBy) {
+  const evidenceDetailsDueBy = disputeCase.getEvidenceDetailsDueBy()
+
+  if (!evidenceDetailsDueBy) {
     return { action: 'needs_input', reason: 'no_usable_evidence_deadline' }
   }
 
-  if (disputeCase.evidenceDetailsDueBy.serialize().getTime() <= now.getTime()) {
+  if (evidenceDetailsDueBy.getTime() <= now.getTime()) {
     return { action: 'deadline_missed', reason: 'evidence_deadline_past' }
   }
 

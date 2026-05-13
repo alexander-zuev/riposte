@@ -45,7 +45,7 @@ class DisputeAgentWorkflowBase extends AgentWorkflow<DisputeAgent, DisputeAgentW
         `workflow:${event.instanceId}:triage-dispute`,
       )
       const result = await this.deps.services.messageBus().handle(command)
-      if (result.isErr()) throw result.error
+      if (result.isErr()) throw logStepError('triage dispute', result.error)
 
       return result.value
     })
@@ -59,7 +59,7 @@ class DisputeAgentWorkflowBase extends AgentWorkflow<DisputeAgent, DisputeAgentW
         `workflow:${event.instanceId}:enrich-dispute-context`,
       )
       const result = await this.deps.services.messageBus().handle(command)
-      if (result.isErr()) throw result.error
+      if (result.isErr()) throw logStepError('enrich dispute context', result.error)
 
       return result.value
     })
@@ -71,7 +71,7 @@ class DisputeAgentWorkflowBase extends AgentWorkflow<DisputeAgent, DisputeAgentW
         `workflow:${event.instanceId}:collect-evidence`,
       )
       const result = await this.deps.services.messageBus().handle(command)
-      if (result.isErr()) throw result.error
+      if (result.isErr()) throw logStepError('collect evidence', result.error)
 
       return result.value
     })
@@ -83,7 +83,7 @@ class DisputeAgentWorkflowBase extends AgentWorkflow<DisputeAgent, DisputeAgentW
         `workflow:${event.instanceId}:prepare-evidence-packet`,
       )
       const result = await this.deps.services.messageBus().handle(command)
-      if (result.isErr()) throw result.error
+      if (result.isErr()) throw logStepError('prepare evidence packet', result.error)
 
       return result.value
     })
@@ -95,7 +95,7 @@ class DisputeAgentWorkflowBase extends AgentWorkflow<DisputeAgent, DisputeAgentW
         `workflow:${event.instanceId}:review-evidence-packet`,
       )
       const result = await this.deps.services.messageBus().handle(command)
-      if (result.isErr()) throw result.error
+      if (result.isErr()) throw logStepError('review evidence packet', result.error)
 
       return result.value
     })
@@ -107,7 +107,7 @@ class DisputeAgentWorkflowBase extends AgentWorkflow<DisputeAgent, DisputeAgentW
         `workflow:${event.instanceId}:decide-submission`,
       )
       const result = await this.deps.services.messageBus().handle(command)
-      if (result.isErr()) throw result.error
+      if (result.isErr()) throw logStepError('decide submission', result.error)
 
       return result.value
     })
@@ -121,7 +121,7 @@ class DisputeAgentWorkflowBase extends AgentWorkflow<DisputeAgent, DisputeAgentW
         `workflow:${event.instanceId}:submit-dispute-response`,
       )
       const result = await this.deps.services.messageBus().handle(command)
-      if (result.isErr()) throw result.error
+      if (result.isErr()) throw logStepError('submit dispute response', result.error)
 
       return result.value
     })
@@ -134,6 +134,11 @@ class DisputeAgentWorkflowBase extends AgentWorkflow<DisputeAgent, DisputeAgentW
 
     return { disputeCaseId, action: submitted.action }
   }
+}
+
+function logStepError(step: string, error: unknown): unknown {
+  logger.error('workflow_step_failed', { step, error })
+  return error
 }
 
 export const DisputeAgentWorkflow = Sentry.instrumentWorkflowWithSentry(

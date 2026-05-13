@@ -88,7 +88,7 @@ async function resolveInvoice(
     stripe.invoices.list({
       customer: customerId,
       limit: 10,
-      expand: ['data.subscription', 'data.lines.data.price.product'],
+      expand: ['data.subscription'],
     }),
   )
   if (invoices.isErr()) return Result.err(invoices.error)

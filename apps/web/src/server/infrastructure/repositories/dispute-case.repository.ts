@@ -12,13 +12,17 @@ import { disputeCases } from '@server/infrastructure/db'
 import { Result } from 'better-result'
 import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm'
 
+import { BaseRepository } from './base.repository'
+
 type ListDisputeCasesInput = Omit<ListDisputeCases, 'type' | 'name'>
 type ListDisputeCaseFilters = NonNullable<ListDisputeCasesInput['filters']>
 type ListDisputeCaseCursor = NonNullable<ListDisputeCasesInput['cursor']>
 const noEvidenceDeadlineSortValue = '9999-12-31T23:59:59.999Z'
 
-export class DisputeCaseRepository implements IDisputeCaseRepository {
-  constructor(private readonly db: DrizzleDb) {}
+export class DisputeCaseRepository extends BaseRepository implements IDisputeCaseRepository {
+  constructor(private readonly db: DrizzleDb) {
+    super()
+  }
 
   async findById(id: string): Promise<Result<DisputeCase | null, DatabaseError>> {
     const found = await Result.tryPromise({
@@ -116,6 +120,7 @@ export class DisputeCaseRepository implements IDisputeCaseRepository {
           .returning()
 
         if (!caseRow) throw new Error('Dispute case save returned no rows')
+        this.dispatchEvents(disputeCase)
         return caseRow
       },
       catch: (cause) => new DatabaseError({ message: 'Failed to save dispute case', cause }),

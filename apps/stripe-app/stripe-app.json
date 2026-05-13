@@ -2,7 +2,7 @@
   "$schema": "https://stripe.com/stripe-app.schema.json",
   "id": "app.riposte.sh",
   "name": "Riposte",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "icon": "./riposte_icon_512.png",
   "ui_extension": {
     "views": [

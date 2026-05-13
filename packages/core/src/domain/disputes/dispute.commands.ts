@@ -33,12 +33,13 @@ export type IngestDisputeClosed = z.infer<typeof ingestDisputeClosedSchema>
 export type IngestDisputeFundsReinstated = z.infer<typeof ingestDisputeFundsReinstatedSchema>
 export type IngestDisputeFundsWithdrawn = z.infer<typeof ingestDisputeFundsWithdrawnSchema>
 
-const syncTimelineSchema = z.enum(['last_7_days', 'last_30_days', 'last_90_days', 'last_365_days'])
+const syncTimelineSchema = z.enum(['last_120_days'])
 export type SyncTimeline = z.infer<typeof syncTimelineSchema>
 
 export const syncDisputesSchema = baseCommandSchema.extend({
   name: z.literal('SyncDisputes'),
   stripeAccountId: z.string().min(1),
+  livemode: z.boolean(),
   timeline: syncTimelineSchema,
 })
 

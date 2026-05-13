@@ -28,6 +28,8 @@ import { Route as ApiCacheImagesRouteImport } from './../../routes/api/cache/ima
 import { Route as ApiAuthSplatRouteImport } from './../../routes/api/auth/$'
 import { Route as AuthedDisputesDisputeIdRouteImport } from './../../routes/_authed/disputes.$disputeId'
 import { Route as ApiStripeOauthCallbackRouteImport } from './../../routes/api/stripe/oauth/callback'
+import { Route as ApiStripeAppSyncRouteImport } from './../../routes/api/stripe/app/sync'
+import { Route as ApiStripeAppSettingsRouteImport } from './../../routes/api/stripe/app/settings'
 
 const PublicRouteRoute = PublicRouteRouteImport.update({
   id: '/_public',
@@ -122,6 +124,16 @@ const ApiStripeOauthCallbackRoute = ApiStripeOauthCallbackRouteImport.update({
   path: '/api/stripe/oauth/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiStripeAppSyncRoute = ApiStripeAppSyncRouteImport.update({
+  id: '/api/stripe/app/sync',
+  path: '/api/stripe/app/sync',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiStripeAppSettingsRoute = ApiStripeAppSettingsRouteImport.update({
+  id: '/api/stripe/app/settings',
+  path: '/api/stripe/app/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof PublicIndexRoute
@@ -140,6 +152,8 @@ export interface FileRoutesByFullPath {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/cache/images': typeof ApiCacheImagesRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
+  '/api/stripe/app/settings': typeof ApiStripeAppSettingsRoute
+  '/api/stripe/app/sync': typeof ApiStripeAppSyncRoute
   '/api/stripe/oauth/callback': typeof ApiStripeOauthCallbackRoute
 }
 export interface FileRoutesByTo {
@@ -159,6 +173,8 @@ export interface FileRoutesByTo {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/cache/images': typeof ApiCacheImagesRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
+  '/api/stripe/app/settings': typeof ApiStripeAppSettingsRoute
+  '/api/stripe/app/sync': typeof ApiStripeAppSyncRoute
   '/api/stripe/oauth/callback': typeof ApiStripeOauthCallbackRoute
 }
 export interface FileRoutesById {
@@ -181,6 +197,8 @@ export interface FileRoutesById {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/cache/images': typeof ApiCacheImagesRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
+  '/api/stripe/app/settings': typeof ApiStripeAppSettingsRoute
+  '/api/stripe/app/sync': typeof ApiStripeAppSyncRoute
   '/api/stripe/oauth/callback': typeof ApiStripeOauthCallbackRoute
 }
 export interface FileRouteTypes {
@@ -202,6 +220,8 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/api/cache/images'
     | '/api/stripe/webhook'
+    | '/api/stripe/app/settings'
+    | '/api/stripe/app/sync'
     | '/api/stripe/oauth/callback'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -221,6 +241,8 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/api/cache/images'
     | '/api/stripe/webhook'
+    | '/api/stripe/app/settings'
+    | '/api/stripe/app/sync'
     | '/api/stripe/oauth/callback'
   id:
     | '__root__'
@@ -242,6 +264,8 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/api/cache/images'
     | '/api/stripe/webhook'
+    | '/api/stripe/app/settings'
+    | '/api/stripe/app/sync'
     | '/api/stripe/oauth/callback'
   fileRoutesById: FileRoutesById
 }
@@ -252,6 +276,8 @@ export interface RootRouteChildren {
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiCacheImagesRoute: typeof ApiCacheImagesRoute
   ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
+  ApiStripeAppSettingsRoute: typeof ApiStripeAppSettingsRoute
+  ApiStripeAppSyncRoute: typeof ApiStripeAppSyncRoute
   ApiStripeOauthCallbackRoute: typeof ApiStripeOauthCallbackRoute
 }
 
@@ -390,6 +416,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiStripeOauthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/stripe/app/sync': {
+      id: '/api/stripe/app/sync'
+      path: '/api/stripe/app/sync'
+      fullPath: '/api/stripe/app/sync'
+      preLoaderRoute: typeof ApiStripeAppSyncRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/stripe/app/settings': {
+      id: '/api/stripe/app/settings'
+      path: '/api/stripe/app/settings'
+      fullPath: '/api/stripe/app/settings'
+      preLoaderRoute: typeof ApiStripeAppSettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -454,6 +494,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiCacheImagesRoute: ApiCacheImagesRoute,
   ApiStripeWebhookRoute: ApiStripeWebhookRoute,
+  ApiStripeAppSettingsRoute: ApiStripeAppSettingsRoute,
+  ApiStripeAppSyncRoute: ApiStripeAppSyncRoute,
   ApiStripeOauthCallbackRoute: ApiStripeOauthCallbackRoute,
 }
 export const routeTree = rootRouteImport

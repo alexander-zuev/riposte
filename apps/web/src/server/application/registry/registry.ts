@@ -15,7 +15,11 @@ import {
   submitDisputeResponse,
   triageDisputeCaseHandler,
 } from '@server/application/handlers/dispute-workflow-handler'
-import { getStripeAppSettings, syncDisputes } from '@server/application/handlers/stripe-app-handler'
+import {
+  fanOutScheduledDisputeSync,
+  getStripeAppSettings,
+  syncDisputes,
+} from '@server/application/handlers/stripe-app-handler'
 import { handleStripeOAuthCallback } from '@server/application/handlers/stripe-oauth-handler'
 import {
   handleDisputeClosed,
@@ -57,6 +61,9 @@ export const EVENT_HANDLERS = {
   ],
   DisputeCaseCompleted: [],
   DisputeCaseFailed: [],
+  ScheduledDisputeSyncDue: [
+    { id: 'stripeApp.fanOutScheduledDisputeSync', handle: fanOutScheduledDisputeSync },
+  ],
   UserSignedUp: [{ id: 'auth.handleUserSignedUp', handle: handleUserSignedUp }],
 } satisfies EventRegistry
 

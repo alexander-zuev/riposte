@@ -27,3 +27,9 @@ export const disputeCaseFailedSchema = baseEventSchema.extend({
 })
 
 export type DisputeCaseFailed = z.infer<typeof disputeCaseFailedSchema>
+
+export const scheduledDisputeSyncDueSchema = baseEventSchema.extend({
+  name: z.literal('ScheduledDisputeSyncDue'),
+})
+
+export type ScheduledDisputeSyncDue = z.infer<typeof scheduledDisputeSyncDueSchema>

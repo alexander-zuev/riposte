@@ -1,4 +1,5 @@
 import type { CurrencyCode, StripePriceRecurringInterval } from '@riposte/core'
+import { Entity } from '@server/domain/models/base.models'
 import type Stripe from 'stripe'
 
 export type StripeSubscriptionItemSnapshot = {
@@ -128,7 +129,7 @@ export type StripePaymentHistorySnapshot = {
   totalPaidByCurrency: Partial<Record<CurrencyCode, number>>
 }
 
-export type StripeDisputeContext = {
+export type StripeDisputeContextSnapshot = {
   disputeCaseId: string
   charge: StripeChargeSnapshot
   customer: StripeCustomerSnapshot | null
@@ -142,4 +143,111 @@ export type StripeDisputeContext = {
   updatedAt: Date
 }
 
-export type SaveStripeDisputeContextInput = Omit<StripeDisputeContext, 'createdAt' | 'updatedAt'>
+export type SaveStripeDisputeContextInput = Omit<
+  StripeDisputeContextSnapshot,
+  'createdAt' | 'updatedAt'
+>
+
+export class StripeDisputeContext extends Entity<StripeDisputeContextSnapshot> {
+  readonly id: string
+
+  private constructor(
+    readonly disputeCaseId: string,
+    readonly charge: StripeChargeSnapshot,
+    readonly customer: StripeCustomerSnapshot | null,
+    readonly card: StripeCardSnapshot | null,
+    readonly risk: StripeRiskSnapshot,
+    readonly invoice: StripeInvoiceSnapshot | null,
+    readonly subscription: StripeSubscriptionSnapshot | null,
+    readonly refunds: StripeRefundSnapshot[],
+    readonly paymentHistory: StripePaymentHistorySnapshot,
+    readonly createdAt: Date,
+    readonly updatedAt: Date,
+  ) {
+    super()
+    this.id = disputeCaseId
+  }
+
+  static create(input: SaveStripeDisputeContextInput, now = new Date()): StripeDisputeContext {
+    return new StripeDisputeContext(
+      input.disputeCaseId,
+      input.charge,
+      input.customer,
+      input.card,
+      input.risk,
+      input.invoice,
+      input.subscription,
+      input.refunds,
+      input.paymentHistory,
+      now,
+      now,
+    )
+  }
+
+  static deserialize(snapshot: StripeDisputeContextSnapshot): StripeDisputeContext {
+    return new StripeDisputeContext(
+      snapshot.disputeCaseId,
+      {
+        ...snapshot.charge,
+        created: date(snapshot.charge.created),
+      },
+      snapshot.customer,
+      snapshot.card,
+      snapshot.risk,
+      snapshot.invoice
+        ? {
+            ...snapshot.invoice,
+            created: date(snapshot.invoice.created),
+          }
+        : null,
+      snapshot.subscription
+        ? {
+            ...snapshot.subscription,
+            cancelAt: snapshot.subscription.cancelAt ? date(snapshot.subscription.cancelAt) : null,
+            canceledAt: snapshot.subscription.canceledAt
+              ? date(snapshot.subscription.canceledAt)
+              : null,
+            currentPeriodEnd: snapshot.subscription.currentPeriodEnd
+              ? date(snapshot.subscription.currentPeriodEnd)
+              : null,
+            currentPeriodStart: snapshot.subscription.currentPeriodStart
+              ? date(snapshot.subscription.currentPeriodStart)
+              : null,
+          }
+        : null,
+      snapshot.refunds.map((refund) => ({
+        ...refund,
+        created: date(refund.created),
+      })),
+      {
+        ...snapshot.paymentHistory,
+        priorCharges: snapshot.paymentHistory.priorCharges.map((charge) => ({
+          ...charge,
+          created: date(charge.created),
+        })),
+      },
+      date(snapshot.createdAt),
+      date(snapshot.updatedAt),
+    )
+  }
+
+  serialize(): StripeDisputeContextSnapshot {
+    return {
+      disputeCaseId: this.disputeCaseId,
+      charge: this.charge,
+      customer: this.customer,
+      card: this.card,
+      risk: this.risk,
+      invoice: this.invoice,
+      subscription: this.subscription,
+      refunds: this.refunds,
+      paymentHistory: this.paymentHistory,
+      createdAt: this.createdAt,
+      updatedAt: this.updatedAt,
+    }
+  }
+}
+
+function date(value: Date | string): Date {
+  return value instanceof Date ? value : new Date(value)
+}

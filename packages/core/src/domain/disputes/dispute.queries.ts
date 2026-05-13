@@ -27,6 +27,8 @@ export const disputeCaseListFiltersSchema = z.object({
 
 export const disputeCaseListItemSchema = z.object({
   disputeId: z.string().min(1),
+  customerEmail: z.string().nullable(),
+  customerName: z.string().nullable(),
   workflowStatus: disputeCaseWorkflowStatusSchema,
   contestDecision: contestDecisionKindSchema,
   stripeStatus: stripeDisputeStatusSchema,
@@ -44,6 +46,7 @@ export const disputeSyncStateSchema = z.object({
 export const getStripeAppSettingsSchema = baseQuerySchema.extend({
   name: z.literal('GetStripeAppSettings'),
   stripeAccountId: z.string().min(1),
+  livemode: z.boolean(),
 })
 
 export const listDisputeCasesSchema = baseQuerySchema.extend({

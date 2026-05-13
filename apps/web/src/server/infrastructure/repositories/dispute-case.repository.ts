@@ -185,6 +185,8 @@ function normalizeCursorSortValue(
 function toDisputeCaseListItem(row: DbDisputeCase): DisputeCaseListItem {
   return {
     disputeId: row.id,
+    customerEmail: stringValue(row.evidence.customer_email_address),
+    customerName: stringValue(row.evidence.customer_name),
     workflowStatus: row.workflowState.status,
     contestDecision: row.contestDecision.status,
     stripeStatus: row.stripeStatus,
@@ -197,4 +199,8 @@ function toDisputeCaseListItem(row: DbDisputeCase): DisputeCaseListItem {
     stripeCreatedAt: row.stripeCreatedAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   }
+}
+
+function stringValue(value: unknown) {
+  return typeof value === 'string' && value.trim() ? value : null
 }

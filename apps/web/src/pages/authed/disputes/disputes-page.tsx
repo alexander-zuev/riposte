@@ -70,14 +70,16 @@ const moneyFormatter = new Intl.NumberFormat('en-US', {
 const dateFormatter = new Intl.DateTimeFormat('en-US', {
   month: 'short',
   day: 'numeric',
+  timeZone: 'UTC',
   year: 'numeric',
 })
 const syncTimestampFormatter = new Intl.DateTimeFormat('en-US', {
   month: 'short',
   day: 'numeric',
-  year: 'numeric',
   hour: 'numeric',
   minute: '2-digit',
+  timeZone: 'UTC',
+  year: 'numeric',
 })
 
 const statusFilterTrigger = <Button type="button" variant="secondary" size="sm" />
@@ -125,27 +127,26 @@ export function DisputesPage() {
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[24%] min-w-44">Dispute</TableHead>
-                <TableHead className="w-[14%] min-w-32">Customer</TableHead>
-                <TableHead className="w-[14%] min-w-36">Status</TableHead>
-                <TableHead className="w-[16%] min-w-40">Required action</TableHead>
+                <TableHead className="w-[18%] min-w-32">Customer</TableHead>
+                <TableHead className="w-[18%] min-w-36">Status</TableHead>
                 <SortableTableHead
                   field="amount"
                   sort={filters.sort}
-                  className="w-[9%] min-w-24"
+                  className="w-[12%] min-w-24"
                   disabled={isLoading}
                   onSortChange={filters.setSort}
                 />
                 <SortableTableHead
                   field="evidenceDueBy"
                   sort={filters.sort}
-                  className="w-[11%] min-w-32"
+                  className="w-[13%] min-w-32"
                   disabled={isLoading}
                   onSortChange={filters.setSort}
                 />
                 <SortableTableHead
                   field="stripeCreatedAt"
                   sort={filters.sort}
-                  className="w-[9%] min-w-28"
+                  className="w-[12%] min-w-28"
                   disabled={isLoading}
                   onSortChange={filters.setSort}
                 />
@@ -164,7 +165,7 @@ export function DisputesPage() {
               )}
             </TableBody>
           </Table>
-          <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center justify-between gap-2 px-2">
             <SyncStateLabel lastSyncedAt={lastSyncedAt} isLoading={isLoading} />
             <TableStateLabel shownCount={disputes.length} isError={isError} isLoading={isLoading} />
           </div>
@@ -330,24 +331,26 @@ function DisputeRow({ dispute }: { dispute: DisputeCaseListItem }) {
           </span>
         </div>
       </TableCell>
-      <TableCell className="w-[14%] min-w-32 truncate text-muted-foreground">
-        Unknown customer
+      <TableCell className="w-[18%] min-w-32">
+        <div className="grid min-w-0 gap-1">
+          <span className="truncate">{dispute.customerName ?? 'Unknown customer'}</span>
+          {dispute.customerEmail && (
+            <span className="truncate text-muted-foreground">{dispute.customerEmail}</span>
+          )}
+        </div>
       </TableCell>
-      <TableCell className="w-[14%] min-w-36">
+      <TableCell className="w-[18%] min-w-36">
         <Badge variant={workflowStatusBadgeVariants[dispute.workflowStatus]}>
           {formatStatusLabel(dispute.workflowStatus)}
         </Badge>
       </TableCell>
-      <TableCell className="w-[16%] min-w-40 truncate">
-        {getRequiredAction(dispute.workflowStatus)}
-      </TableCell>
-      <TableCell className="w-[9%] min-w-24 text-system font-medium tabular-nums">
+      <TableCell className="w-[12%] min-w-24 text-system font-medium tabular-nums">
         {formatMoney(dispute.amount)}
       </TableCell>
-      <TableCell className="w-[11%] min-w-32 text-system">
+      <TableCell className="w-[13%] min-w-32 text-system">
         {formatDate(dispute.evidenceDueBy)}
       </TableCell>
-      <TableCell className="w-[9%] min-w-28 text-system">
+      <TableCell className="w-[12%] min-w-28 text-system">
         {formatDate(dispute.stripeCreatedAt)}
       </TableCell>
       <TableCell className="w-[3%] min-w-12 text-center">
@@ -382,7 +385,7 @@ function DisputeDetailLink({ disputeId }: { disputeId: string }) {
 function DisputesLoadingRows() {
   return Array.from({ length: 5 }, (_, index) => (
     <TableRow key={index}>
-      {Array.from({ length: 8 }, (_cell, cellIndex) => (
+      {Array.from({ length: 7 }, (_cell, cellIndex) => (
         <TableCell key={cellIndex}>
           <Skeleton className="h-5 w-full" />
         </TableCell>
@@ -394,7 +397,7 @@ function DisputesLoadingRows() {
 function DisputesEmptyRow({ hasFilters }: { hasFilters: boolean }) {
   return (
     <TableRow>
-      <TableCell colSpan={8} className="h-44">
+      <TableCell colSpan={7} className="h-44">
         <TableMessage
           icon={hasFilters ? MagnifyingGlassIcon : ListChecksIcon}
           title={hasFilters ? 'No matching disputes' : 'No disputes yet'}
@@ -412,7 +415,7 @@ function DisputesEmptyRow({ hasFilters }: { hasFilters: boolean }) {
 function DisputesErrorRow({ onRetry }: { onRetry: () => void }) {
   return (
     <TableRow>
-      <TableCell colSpan={8} className="h-44">
+      <TableCell colSpan={7} className="h-44">
         <TableMessage
           icon={WarningIcon}
           title="Could not load disputes"
@@ -504,29 +507,6 @@ function formatLastSyncedAt(value: Date | null, isLoading: boolean) {
   if (!value) return isLoading ? '--' : 'never'
 
   return syncTimestampFormatter.format(value)
-}
-
-function getRequiredAction(status: WorkflowStatus) {
-  switch (status) {
-    case 'received':
-      return 'N/A'
-    case 'evaluated':
-      return 'Start enrichment'
-    case 'collecting_evidence':
-      return 'N/A'
-    case 'awaiting_human':
-      return 'Add missing proof'
-    case 'completed':
-      return 'N/A'
-    case 'failed':
-      return 'Fix failed run'
-    default:
-      return assertNever()
-  }
-}
-
-function assertNever(): never {
-  throw new Error('Unhandled dispute workflow status')
 }
 
 function getStripeDashboardUrl(disputeId: string) {

@@ -2,11 +2,11 @@ import type { UUIDv4 } from '@riposte/core'
 import { Entity } from '@server/domain/models/base.models'
 
 import type { DisputeCase, DisputeCaseId } from './dispute-case.entity'
-import type { StripeDisputeContext } from './stripe-dispute-context'
+import type { StripeDisputeContext } from './stripe-dispute-context.entity'
 
 export type FraudEvidencePdfArtifact = {
   kind: 'fraud_evidence_pdf'
-  stripeEvidenceField: 'uncategorized_file'
+  stripeEvidenceField: 'service_documentation'
   r2Key: string
   contentType: 'application/pdf'
 }
@@ -19,7 +19,7 @@ export type FraudDigitalStripeEvidencePayload = {
   customer_email_address: string | null
   access_activity_log: string
   uncategorized_text: string
-  uncategorized_file: null
+  service_documentation: null
 }
 
 export type DisputeEvidencePdfDocument = {
@@ -34,6 +34,11 @@ export type DisputeEvidencePdfDocument = {
 }
 
 export type EvidenceQuality = 'low' | 'medium' | 'high'
+
+export type CollectedDisputeEvidence = {
+  accessActivityLog: string | null
+  rebuttalText: string | null
+}
 
 export type DisputeEvidencePacketSnapshot = {
   id: UUIDv4
@@ -50,6 +55,7 @@ export type DisputeEvidencePacketSnapshot = {
 export type CreateDisputeEvidencePacketFromDisputeInput = {
   disputeCase: DisputeCase
   disputeContext: StripeDisputeContext
+  collectedEvidence?: Partial<CollectedDisputeEvidence>
   previousPacket: DisputeEvidencePacket | null
   now: Date
 }
@@ -75,25 +81,38 @@ export class DisputeEvidencePacket extends Entity<DisputeEvidencePacketSnapshot>
     const version = input.previousPacket ? input.previousPacket.version + 1 : 1
     const id = crypto.randomUUID() as UUIDv4
     const caseSnapshot = input.disputeCase.serialize()
+    const customerName =
+      stripeEvidenceString(caseSnapshot.evidence.customer_name) ??
+      input.disputeContext.customer?.name ??
+      null
+    const customerEmail =
+      stripeEvidenceString(caseSnapshot.evidence.customer_email_address) ??
+      input.disputeContext.customer?.email ??
+      null
+    const stripeEvidencePayload: FraudDigitalStripeEvidencePayload = {
+      customer_purchase_ip: caseSnapshot.customerPurchaseIp,
+      customer_name: customerName,
+      customer_email_address: customerEmail,
+      access_activity_log:
+        nonEmptyString(input.collectedEvidence?.accessActivityLog) ??
+        buildAccessActivityLog(input.disputeContext),
+      uncategorized_text:
+        nonEmptyString(input.collectedEvidence?.rebuttalText) ??
+        buildFraudRebuttalText(input.disputeCase, input.disputeContext),
+      service_documentation: null,
+    }
 
     return new DisputeEvidencePacket(
       id,
       input.disputeCase.userId,
       input.disputeCase.id,
       version,
-      {
-        customer_purchase_ip: caseSnapshot.customerPurchaseIp,
-        customer_name: input.disputeContext.customer?.name ?? null,
-        customer_email_address: input.disputeContext.customer?.email ?? null,
-        access_activity_log: buildAccessActivityLog(input.disputeContext),
-        uncategorized_text: buildFraudRebuttalText(input.disputeCase, input.disputeContext),
-        uncategorized_file: null,
-      },
-      buildFraudEvidencePdfDocument(input.disputeCase, input.disputeContext),
+      stripeEvidencePayload,
+      buildFraudEvidencePdfDocument(input.disputeCase, input.disputeContext, stripeEvidencePayload),
       [
         {
           kind: 'fraud_evidence_pdf',
-          stripeEvidenceField: 'uncategorized_file',
+          stripeEvidenceField: 'service_documentation',
           r2Key: buildFraudEvidencePdfR2Key(
             input.disputeCase.userId,
             input.disputeCase.id,
@@ -146,6 +165,7 @@ function requirePositiveInteger(value: number, path: string): number {
 function buildFraudEvidencePdfDocument(
   disputeCase: DisputeCase,
   context: StripeDisputeContext,
+  stripeEvidencePayload: FraudDigitalStripeEvidencePayload,
 ): DisputeEvidencePdfDocument {
   const caseSnapshot = disputeCase.serialize()
 
@@ -168,9 +188,12 @@ function buildFraudEvidencePdfDocument(
       {
         heading: 'Customer',
         rows: [
-          { label: 'Name', value: context.customer?.name ?? 'Not provided' },
-          { label: 'Email', value: context.customer?.email ?? 'Not provided' },
-          { label: 'Purchase IP', value: caseSnapshot.customerPurchaseIp ?? 'Not provided' },
+          { label: 'Name', value: stripeEvidencePayload.customer_name ?? 'Not provided' },
+          { label: 'Email', value: stripeEvidencePayload.customer_email_address ?? 'Not provided' },
+          {
+            label: 'Purchase IP',
+            value: stripeEvidencePayload.customer_purchase_ip ?? 'Not provided',
+          },
         ],
       },
       {
@@ -227,6 +250,10 @@ function buildAccessActivityLog(context: StripeDisputeContext): string {
 
 function buildFraudRebuttalText(disputeCase: DisputeCase, context: StripeDisputeContext): string {
   const caseSnapshot = disputeCase.serialize()
+  const customerEmail =
+    stripeEvidenceString(caseSnapshot.evidence.customer_email_address) ??
+    context.customer?.email ??
+    null
   const refundCount = context.refunds.length
   const priorNonDisputedCharges = context.paymentHistory.priorCharges.filter(
     (charge) => !charge.disputed,
@@ -234,7 +261,7 @@ function buildFraudRebuttalText(disputeCase: DisputeCase, context: StripeDispute
 
   return [
     `Riposte is contesting dispute ${disputeCase.id} for a ${caseSnapshot.currency.toUpperCase()} ${caseSnapshot.amountMinor} charge.`,
-    `Stripe facts link the payment to customer ${context.customer?.email ?? context.customer?.id ?? 'unknown customer'} and purchase IP ${caseSnapshot.customerPurchaseIp ?? 'not provided'}.`,
+    `Stripe facts link the payment to customer ${customerEmail ?? context.customer?.id ?? 'unknown customer'} and purchase IP ${caseSnapshot.customerPurchaseIp ?? 'not provided'}.`,
     `The card fingerprint is ${context.card?.fingerprint ?? 'not available'} and Stripe reports ${priorNonDisputedCharges} prior non-disputed charge(s) in the payment history context.`,
     refundCount === 0
       ? 'Stripe refund records show no refunds for the disputed charge at packet generation time.'
@@ -249,4 +276,12 @@ function buildFraudEvidencePdfR2Key(
   packetId: UUIDv4,
 ): string {
   return `users/${userId}/disputes/${disputeCaseId}/evidence-packets/v${version}/${packetId}/fraud-evidence.pdf`
+}
+
+function stripeEvidenceString(value: unknown): string | null {
+  return typeof value === 'string' && value.trim() ? value : null
+}
+
+function nonEmptyString(value: string | null | undefined): string | null {
+  return typeof value === 'string' && value.trim() ? value : null
 }

@@ -6,12 +6,10 @@ import {
   Link,
   PropertyList,
   PropertyListItem,
-  Select,
   SettingsView,
 } from '@stripe/ui-extension-sdk/ui'
 import React from 'react'
 
-type Timeline = 'last_7_days' | 'last_30_days' | 'last_90_days' | 'last_365_days'
 type RequestStatus = 'idle' | 'loading' | 'syncing' | 'started' | 'error'
 
 type SettingsResponse = {
@@ -21,21 +19,14 @@ type SettingsResponse = {
 
 const DEFAULT_SETUP_URL = 'https://riposte.sh/setup'
 
-const timelineLabels: Record<Timeline, string> = {
-  last_7_days: 'Last 7 days',
-  last_30_days: 'Last 30 days',
-  last_90_days: 'Last 90 days',
-  last_365_days: 'Last year',
-}
-
 export default function AppSettings({ environment, userContext }: ExtensionContextValue) {
-  const [timeline, setTimeline] = React.useState<Timeline>('last_30_days')
   const [lastSyncAt, setLastSyncAt] = React.useState<string | null>(null)
   const [setupUrl, setSetupUrl] = React.useState(DEFAULT_SETUP_URL)
   const [status, setStatus] = React.useState<RequestStatus>('idle')
 
   const apiBase = getApiBase(environment.constants?.API_BASE)
   const accountId = userContext.account.id
+  const livemode = environment.mode === 'live'
 
   React.useEffect(() => {
     let cancelled = false
@@ -44,7 +35,10 @@ export default function AppSettings({ environment, userContext }: ExtensionConte
       setStatus('loading')
       try {
         const response = await fetch(
-          `${apiBase}/api/stripe/app/settings?account_id=${encodeURIComponent(accountId)}`,
+          `${apiBase}/api/stripe/app/settings?${new URLSearchParams({
+            account_id: accountId,
+            livemode: String(livemode),
+          }).toString()}`,
         )
 
         if (!response.ok) throw new Error(`Settings request failed: ${response.status}`)
@@ -67,7 +61,7 @@ export default function AppSettings({ environment, userContext }: ExtensionConte
     return () => {
       cancelled = true
     }
-  }, [accountId, apiBase])
+  }, [accountId, apiBase, livemode])
 
   async function startSync() {
     setStatus('syncing')
@@ -79,7 +73,7 @@ export default function AppSettings({ environment, userContext }: ExtensionConte
         },
         body: JSON.stringify({
           accountId,
-          timeline,
+          livemode,
         }),
       })
 
@@ -106,8 +100,8 @@ export default function AppSettings({ environment, userContext }: ExtensionConte
         {status === 'started' && (
           <Banner
             type="default"
-            title="Sync started"
-            description={`Riposte is syncing ${timelineLabels[timeline].toLowerCase()}`}
+            title="Sync queued"
+            description="Riposte will sync recent disputes in the background"
           />
         )}
 
@@ -131,19 +125,6 @@ export default function AppSettings({ environment, userContext }: ExtensionConte
             borderRadius: 'small',
           }}
         >
-          <Select
-            css={{ width: 'fill' }}
-            name="timeline"
-            label="Timeline"
-            value={timeline}
-            onChange={(event) => setTimeline(event.currentTarget.value as Timeline)}
-          >
-            <option value="last_7_days">Last 7 days</option>
-            <option value="last_30_days">Last 30 days</option>
-            <option value="last_90_days">Last 90 days</option>
-            <option value="last_365_days">Last year</option>
-          </Select>
-
           <Button
             type="primary"
             pending={status === 'syncing'}
@@ -180,7 +161,7 @@ function getStatusMessage(status: RequestStatus): string {
     case 'syncing':
       return 'Starting sync...'
     case 'started':
-      return 'Sync started'
+      return 'Sync queued'
     case 'error':
       return 'Error'
     case 'idle':

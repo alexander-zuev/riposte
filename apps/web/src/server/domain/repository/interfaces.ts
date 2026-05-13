@@ -12,7 +12,6 @@ import type {
 import type {
   DisputeCase,
   DisputeEvidencePacket,
-  SaveStripeDisputeContextInput,
   StripeDisputeContext,
 } from '@server/domain/disputes'
 import type {
@@ -25,6 +24,12 @@ import type { DbOutbox } from '@server/infrastructure/db'
 import type { Result } from 'better-result'
 
 export type DisputeCaseListPage = Omit<ListDisputeCasesResult, 'sync'>
+
+export type StripeDisputeSyncAccount = {
+  userId: string
+  stripeAccountId: string
+  livemode: boolean
+}
 
 /* -------------------------------------------------------------------------------------------------
  * Dispute Case Repository
@@ -44,6 +49,14 @@ export interface IDisputeCaseRepository {
 
 export interface IStripeDisputeSyncStateRepository {
   findForUser: (userId: string) => Promise<Result<DisputeSyncState, DatabaseError>>
+  findForAccount: (input: {
+    stripeAccountId: string
+    livemode: boolean
+  }) => Promise<Result<DisputeSyncState, DatabaseError>>
+  findDueAccounts: (input: {
+    dueBefore: Date
+    limit: number
+  }) => Promise<Result<StripeDisputeSyncAccount[], DatabaseError>>
 }
 
 /* -------------------------------------------------------------------------------------------------
@@ -54,9 +67,7 @@ export interface IStripeDisputeContextRepository {
   findByDisputeCaseId: (
     disputeCaseId: string,
   ) => Promise<Result<StripeDisputeContext | null, DatabaseError>>
-  save: (
-    input: SaveStripeDisputeContextInput,
-  ) => Promise<Result<StripeDisputeContext, DatabaseError>>
+  save: (context: StripeDisputeContext) => Promise<Result<StripeDisputeContext, DatabaseError>>
 }
 
 /* -------------------------------------------------------------------------------------------------

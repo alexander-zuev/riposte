@@ -12,7 +12,7 @@ import type {
 } from '@riposte/core'
 import { createLogger, EntityNotFoundError } from '@riposte/core'
 import type { HandlerContext } from '@server/application/registry/types'
-import { DisputeEvidencePacket } from '@server/domain/disputes'
+import { DisputeEvidencePacket, StripeDisputeContext } from '@server/domain/disputes'
 import type { DisputeCaseEvaluation } from '@server/domain/disputes'
 import type { GetClientError } from '@server/infrastructure/stripe/stripe-client-provider'
 import { fetchStripeDisputeContext } from '@server/infrastructure/stripe/stripe-dispute-enrichment'
@@ -121,7 +121,8 @@ export async function enrichDisputeContext(
   const refreshed = found.value.refreshStripeDisputeFacts(context.value.stripeDispute)
   if (refreshed.isErr()) return Result.err(refreshed.error)
 
-  const savedContext = await deps.repos.stripeDisputeContexts(tx).save(context.value.context)
+  const disputeContext = StripeDisputeContext.create(context.value.context)
+  const savedContext = await deps.repos.stripeDisputeContexts(tx).save(disputeContext)
   if (savedContext.isErr()) return Result.err(savedContext.error)
 
   found.value.startEvidenceCollection()

@@ -1,5 +1,5 @@
 import { DatabaseError } from '@riposte/core'
-import type { SaveStripeDisputeContextInput, StripeDisputeContext } from '@server/domain/disputes'
+import { StripeDisputeContext } from '@server/domain/disputes'
 import type { IStripeDisputeContextRepository } from '@server/domain/repository/interfaces'
 import type { DbNewStripeDisputeContext, DrizzleDb } from '@server/infrastructure/db'
 import { stripeDisputeContexts } from '@server/infrastructure/db'
@@ -19,7 +19,7 @@ export class StripeDisputeContextRepository implements IStripeDisputeContextRepo
           .from(stripeDisputeContexts)
           .where(eq(stripeDisputeContexts.disputeCaseId, disputeCaseId))
 
-        return row ?? null
+        return row ? StripeDisputeContext.deserialize(row) : null
       },
       catch: (cause) =>
         new DatabaseError({ message: 'Failed to find Stripe dispute context', cause }),
@@ -28,10 +28,8 @@ export class StripeDisputeContextRepository implements IStripeDisputeContextRepo
     return found
   }
 
-  async save(
-    input: SaveStripeDisputeContextInput,
-  ): Promise<Result<StripeDisputeContext, DatabaseError>> {
-    const row = input satisfies DbNewStripeDisputeContext
+  async save(context: StripeDisputeContext): Promise<Result<StripeDisputeContext, DatabaseError>> {
+    const row = context.serialize() satisfies DbNewStripeDisputeContext
 
     const saved = await Result.tryPromise({
       try: async () => {
@@ -55,7 +53,7 @@ export class StripeDisputeContextRepository implements IStripeDisputeContextRepo
           .returning()
 
         if (!contextRow) throw new Error('Stripe dispute context save returned no row')
-        return contextRow
+        return StripeDisputeContext.deserialize(contextRow)
       },
       catch: (cause) =>
         new DatabaseError({ message: 'Failed to save Stripe dispute context', cause }),

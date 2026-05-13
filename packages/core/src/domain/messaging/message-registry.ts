@@ -25,6 +25,7 @@ import {
   disputeCaseCompletedSchema,
   disputeCaseFailedSchema,
   disputeCaseReceivedSchema,
+  scheduledDisputeSyncDueSchema,
 } from '../disputes/dispute.events'
 import { getStripeAppSettingsSchema, listDisputeCasesSchema } from '../disputes/dispute.queries'
 import { r2EventSchema, r2EventTransform } from '../storage/r2.messages'
@@ -75,6 +76,7 @@ export const domainEventSchema = z.discriminatedUnion('name', [
   disputeCaseReceivedSchema,
   disputeCaseCompletedSchema,
   disputeCaseFailedSchema,
+  scheduledDisputeSyncDueSchema,
   r2EventSchema,
 ])
 

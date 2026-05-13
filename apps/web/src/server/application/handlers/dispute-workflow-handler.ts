@@ -13,7 +13,7 @@ import type {
 } from '@riposte/core'
 import { createLogger, EntityNotFoundError } from '@riposte/core'
 import type { HandlerContext } from '@server/application/registry/types'
-import { triageDisputeCase } from '@server/domain/disputes'
+import type { DisputeCaseEvaluation } from '@server/domain/disputes'
 import type { GetClientError } from '@server/infrastructure/stripe/stripe-client-provider'
 import { fetchStripeDisputeContext } from '@server/infrastructure/stripe/stripe-dispute-enrichment'
 import { Result } from 'better-result'
@@ -27,13 +27,9 @@ type DisputeWorkflowCommandError =
   | GetClientError
   | ValidationError
 
-export type TriageDisputeCaseResult =
-  | { action: 'contest' }
-  | { action: 'no_response'; reason: string }
-  | { action: 'await_human'; reason: string }
-
-// Temporary workflow skeleton outputs. Replace these with real evidence, packet,
-// review, and submission contracts as each command grows past logging/stub behavior.
+// Temporary post-evaluation workflow skeleton outputs.
+// Replace these local placeholders with real domain/application contracts when
+// evidence collection, packet preparation, review, and submission are implemented.
 export type CollectDisputeEvidenceResult = {
   status: 'pending_agent_tools'
 }
@@ -50,7 +46,7 @@ export type DecideDisputeSubmissionResult =
   | { action: 'submit' }
   | { action: 'ready_for_review'; reason: string }
   | { action: 'needs_input'; reason: string }
-  | { action: 'ignore'; reason: string }
+  | { action: 'no_response'; reason: string }
   | { action: 'fail'; reason: string }
 
 export type SubmitDisputeResponseResult = {
@@ -78,7 +74,7 @@ export async function startDisputeAgentWorkflow(
 export async function triageDisputeCaseHandler(
   command: TriageDisputeCase,
   { deps, tx }: HandlerContext,
-): Promise<Result<TriageDisputeCaseResult, DisputeWorkflowCommandError>> {
+): Promise<Result<DisputeCaseEvaluation, DisputeWorkflowCommandError>> {
   const found = await deps.repos.disputeCases(tx).findById(command.disputeCaseId)
   if (found.isErr()) return Result.err(found.error)
 
@@ -86,7 +82,7 @@ export async function triageDisputeCaseHandler(
     return Result.err(new EntityNotFoundError({ entity: 'DisputeCase', id: command.disputeCaseId }))
   }
 
-  const decision = triageDisputeCase(found.value)
+  const decision = found.value.evaluate()
 
   logger.info('dispute_triage_decided', {
     action: decision.action,
@@ -101,11 +97,7 @@ export async function triageDisputeCaseHandler(
   const saved = await deps.repos.disputeCases(tx).save(found.value)
   if (saved.isErr()) return Result.err(saved.error)
 
-  return Result.ok(
-    decision.action === 'contest'
-      ? { action: 'contest' }
-      : { action: decision.action, reason: decision.reason },
-  )
+  return Result.ok(decision)
 }
 
 export async function enrichDisputeContext(

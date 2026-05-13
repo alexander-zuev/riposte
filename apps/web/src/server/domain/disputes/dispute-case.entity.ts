@@ -1,18 +1,19 @@
 import {
+  STRIPE_DISPUTE_REASONS_FRAUD_ADJACENT,
+  STRIPE_DISPUTE_REASONS_NO_NORMAL_CONTEST_PATH,
+  STRIPE_DISPUTE_REASONS_POST_MVP,
+  STRIPE_DISPUTE_REASONS_REVIEW_ONLY,
+  STRIPE_DISPUTE_REASONS_SPECIAL_HANDLING_OUT_OF_MVP,
   ValidationError,
   createEvent,
   currencyCodeSchema,
   stripeDisputeStatusSchema,
 } from '@riposte/core'
 import type {
-  ContestDecisionKind,
+  ContestDecision,
   ContestDecisionReason,
   CurrencyCode,
-  DisputeCaseCompletionReason,
-  DisputeCaseHumanActionReason,
-  DisputeCaseWorkflowState,
   DisputeCaseWorkflowStatus,
-  MissingEvidence,
   StripeDisputeStatus,
   UUIDv4,
 } from '@riposte/core'
@@ -25,6 +26,48 @@ import { type StripeDisputeId, stripeDisputeIdSchema } from './dispute.schemas'
 import { Money } from './money.vo'
 
 export type DisputeCaseId = StripeDisputeId
+
+export type MissingEvidence = {
+  code: string
+  message: string
+}
+
+export const DISPUTE_CASE_HUMAN_ACTION_REASONS = [
+  'missing_input',
+  'approval_required',
+  'connection_repair',
+  'submission_failed_retryable',
+] as const
+
+export type DisputeCaseHumanActionReason = (typeof DISPUTE_CASE_HUMAN_ACTION_REASONS)[number]
+
+export const DISPUTE_CASE_COMPLETION_REASONS = [
+  'contest_submitted',
+  'accept_submitted',
+  'no_response',
+  'deadline_missed',
+] as const
+
+export type DisputeCaseCompletionReason = (typeof DISPUTE_CASE_COMPLETION_REASONS)[number]
+
+export type DisputeCaseWorkflowState =
+  | { status: 'received' }
+  | { status: 'evaluated'; evaluatedAt: Date }
+  | { status: 'collecting_evidence'; startedAt: Date }
+  | {
+      status: 'awaiting_human'
+      reason: DisputeCaseHumanActionReason
+      missingEvidence: MissingEvidence[]
+      evidencePacketId: UUIDv4 | null
+      requestedAt: Date
+    }
+  | { status: 'completed'; reason: DisputeCaseCompletionReason; completedAt: Date }
+  | { status: 'failed'; reason: string }
+
+export type DisputeCaseEvaluation =
+  | { action: 'contest'; reason: ContestDecisionReason }
+  | { action: 'no_response'; reason: ContestDecisionReason }
+  | { action: 'await_human'; reason: ContestDecisionReason }
 
 export type DisputeCaseSnapshot = {
   id: DisputeCaseId
@@ -55,9 +98,7 @@ export type DisputeCaseSnapshot = {
   evidenceDetailsPastDue: boolean
   evidenceDetailsSubmissionCount: number
   isChargeRefundable: boolean
-  contestDecision: ContestDecisionKind
-  contestDecisionReason: ContestDecisionReason | null
-  contestDecisionDecidedAt: Date | null
+  contestDecision: ContestDecision
   workflowState: DisputeCaseWorkflowState
   stripeCreatedAt: Date
   updatedAt: Date
@@ -145,9 +186,7 @@ export class DisputeCase extends Entity<DisputeCaseSnapshot> {
     private evidenceDetailsPastDue: boolean,
     private evidenceDetailsSubmissionCount: number,
     private isChargeRefundable: boolean,
-    private contestDecision: ContestDecisionKind,
-    private contestDecisionReason: ContestDecisionReason | null,
-    private contestDecisionDecidedAt: Date | null,
+    private contestDecision: ContestDecision,
     private state: DisputeCaseWorkflowState,
     readonly stripeCreatedAt: Date,
     private updatedAt: Date,
@@ -196,9 +235,7 @@ export class DisputeCase extends Entity<DisputeCaseSnapshot> {
       stripeDispute.evidence_details.past_due,
       stripeDispute.evidence_details.submission_count,
       stripeDispute.is_charge_refundable,
-      'undecided',
-      null,
-      null,
+      { status: 'undecided' },
       { status: 'received' },
       new Date(stripeDispute.created * 1000),
       now,
@@ -244,8 +281,6 @@ export class DisputeCase extends Entity<DisputeCaseSnapshot> {
       snapshot.evidenceDetailsSubmissionCount,
       snapshot.isChargeRefundable,
       snapshot.contestDecision,
-      snapshot.contestDecisionReason,
-      snapshot.contestDecisionDecidedAt ? cloneDate(snapshot.contestDecisionDecidedAt) : null,
       snapshot.workflowState,
       cloneDate(snapshot.stripeCreatedAt),
       cloneDate(snapshot.updatedAt),
@@ -306,26 +341,96 @@ export class DisputeCase extends Entity<DisputeCaseSnapshot> {
     return this.state.status === 'failed' ? this.state.reason : null
   }
 
-  getContestDecision(): {
-    decision: ContestDecisionKind
-    reason: ContestDecisionReason | null
-    decidedAt: Date | null
-  } {
-    return {
-      decision: this.contestDecision,
-      reason: this.contestDecisionReason,
-      decidedAt: this.contestDecisionDecidedAt ? cloneDate(this.contestDecisionDecidedAt) : null,
-    }
+  getContestDecision(): ContestDecision {
+    return this.contestDecision
   }
 
   getEvidenceDetailsDueBy(): Date | null {
     return this.evidenceDetailsDueBy ? cloneDate(this.evidenceDetailsDueBy.serialize()) : null
   }
 
-  markEvaluated(now: Date = new Date()): void {
-    this.ensureStatus(['received'], 'mark evaluated')
-    this.state = { status: 'evaluated', evaluatedAt: cloneDate(now) }
-    this.touch(now)
+  evaluate(): DisputeCaseEvaluation {
+    this.ensureStatus(['received'], 'evaluate')
+    const now = new Date()
+    const decision = this.determineEvaluation(now)
+
+    switch (decision.action) {
+      case 'contest':
+        this.recordContestDecision('contest', decision.reason, now)
+        this.state = { status: 'evaluated', evaluatedAt: cloneDate(now) }
+        this.touch(now)
+        return decision
+      case 'no_response':
+        this.recordContestDecision('no_response', decision.reason, now)
+        this.markCompleted(
+          decision.reason === 'evidence_deadline_past' ? 'deadline_missed' : 'no_response',
+          now,
+        )
+        return decision
+      case 'await_human':
+        this.recordContestDecision('contest', decision.reason, now)
+        this.state = {
+          status: 'awaiting_human',
+          reason: 'missing_input',
+          missingEvidence: [
+            {
+              code: decision.reason,
+              message: getEvaluationHumanInputMessage(decision.reason),
+            },
+          ],
+          evidencePacketId: null,
+          requestedAt: cloneDate(now),
+        }
+        this.touch(now)
+        return decision
+      default:
+        return assertNever(decision)
+    }
+  }
+
+  private determineEvaluation(now: Date): DisputeCaseEvaluation {
+    if (this.paymentMethodDetailsType !== 'card') {
+      return { action: 'no_response', reason: 'non_card_mvp' }
+    }
+
+    if (includes(STRIPE_DISPUTE_REASONS_NO_NORMAL_CONTEST_PATH, this.reason)) {
+      return { action: 'no_response', reason: 'no_normal_contest_path' }
+    }
+
+    if (includes(STRIPE_DISPUTE_REASONS_SPECIAL_HANDLING_OUT_OF_MVP, this.reason)) {
+      return { action: 'no_response', reason: 'special_handling_out_of_mvp' }
+    }
+
+    if (includes(STRIPE_DISPUTE_REASONS_POST_MVP, this.reason)) {
+      return { action: 'no_response', reason: 'post_mvp_reason' }
+    }
+
+    if (this.paymentMethodDetailsCardNetworkReasonCode === '10.5') {
+      return { action: 'no_response', reason: 'visa_10_5_no_remedy' }
+    }
+
+    const evidenceDetailsDueBy = this.getEvidenceDetailsDueBy()
+
+    if (!evidenceDetailsDueBy) {
+      return { action: 'no_response', reason: 'no_usable_evidence_deadline' }
+    }
+
+    if (evidenceDetailsDueBy.getTime() <= now.getTime()) {
+      return { action: 'no_response', reason: 'evidence_deadline_past' }
+    }
+
+    if (includes(STRIPE_DISPUTE_REASONS_FRAUD_ADJACENT, this.reason)) {
+      return { action: 'contest', reason: 'supported_card_fraud_adjacent' }
+    }
+
+    if (includes(STRIPE_DISPUTE_REASONS_REVIEW_ONLY, this.reason) || this.reason === 'general') {
+      return {
+        action: 'await_human',
+        reason: this.reason === 'general' ? 'general_reason' : 'review_only_reason',
+      }
+    }
+
+    return { action: 'no_response', reason: 'post_mvp_reason' }
   }
 
   startEvidenceCollection(now: Date = new Date()): void {
@@ -357,27 +462,23 @@ export class DisputeCase extends Entity<DisputeCaseSnapshot> {
     this.touch(now)
   }
 
-  setContestDecision(
-    decision: Exclude<ContestDecisionKind, 'undecided'>,
-    reason: ContestDecisionReason,
-    now: Date = new Date(),
-  ): void {
-    this.contestDecision = decision
-    this.contestDecisionReason = reason
-    this.contestDecisionDecidedAt = cloneDate(now)
-    this.touch(now)
-  }
-
   complete(reason: DisputeCaseCompletionReason, now: Date = new Date()): void {
     this.ensureStatus(['evaluated', 'collecting_evidence', 'awaiting_human'], 'complete')
-    this.state = { status: 'completed', reason, completedAt: cloneDate(now) }
-    this.touch(now)
+    this.markCompleted(reason, now)
   }
 
   markFailed(reason: string, now: Date = new Date()): void {
     this.ensureStatus(['evaluated', 'collecting_evidence', 'awaiting_human'], 'mark failed')
 
-    this.state = { status: 'failed', reason: requireNonBlank(reason, 'failureReason') }
+    const failureReason = requireNonBlank(reason, 'failureReason')
+    this.state = { status: 'failed', reason: failureReason }
+    this.addEvent(
+      createEvent('DisputeCaseFailed', {
+        disputeCaseId: this.id,
+        userId: this.userId,
+        reason: failureReason,
+      }),
+    )
     this.touch(now)
   }
 
@@ -416,10 +517,6 @@ export class DisputeCase extends Entity<DisputeCaseSnapshot> {
       evidenceDetailsSubmissionCount: this.evidenceDetailsSubmissionCount,
       isChargeRefundable: this.isChargeRefundable,
       contestDecision: this.contestDecision,
-      contestDecisionReason: this.contestDecisionReason,
-      contestDecisionDecidedAt: this.contestDecisionDecidedAt
-        ? cloneDate(this.contestDecisionDecidedAt)
-        : null,
       workflowState: this.state,
       stripeCreatedAt: cloneDate(this.stripeCreatedAt),
       updatedAt: cloneDate(this.updatedAt),
@@ -437,6 +534,30 @@ export class DisputeCase extends Entity<DisputeCaseSnapshot> {
 
   private touch(now: Date): void {
     this.updatedAt = cloneDate(now)
+  }
+
+  private recordContestDecision(
+    status: Exclude<ContestDecision['status'], 'undecided'>,
+    reason: ContestDecisionReason,
+    now: Date,
+  ): void {
+    this.contestDecision = {
+      status,
+      reason,
+      decidedAt: cloneDate(now),
+    }
+  }
+
+  private markCompleted(reason: DisputeCaseCompletionReason, now: Date): void {
+    this.state = { status: 'completed', reason, completedAt: cloneDate(now) }
+    this.addEvent(
+      createEvent('DisputeCaseCompleted', {
+        disputeCaseId: this.id,
+        userId: this.userId,
+        reason,
+      }),
+    )
+    this.touch(now)
   }
 }
 
@@ -495,4 +616,23 @@ function validationError(path: string, message: string): ValidationError {
 
 function cloneDate(date: Date): Date {
   return new Date(date.getTime())
+}
+
+function includes<const T extends readonly string[]>(values: T, value: string): value is T[number] {
+  return values.includes(value)
+}
+
+function getEvaluationHumanInputMessage(reason: ContestDecisionReason): string {
+  switch (reason) {
+    case 'general_reason':
+      return 'Stripe dispute reason is too general for autopilot'
+    case 'review_only_reason':
+      return 'Dispute reason is review-only for MVP'
+    default:
+      return `Merchant input is required for contest decision reason: ${reason}`
+  }
+}
+
+function assertNever(value: never): never {
+  throw new Error(`Unhandled dispute case evaluation value: ${JSON.stringify(value)}`)
 }

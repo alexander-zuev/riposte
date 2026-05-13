@@ -1,10 +1,5 @@
-import type {
-  ContestDecisionKind,
-  ContestDecisionReason,
-  CurrencyCode,
-  DisputeCaseWorkflowState,
-  StripeDisputeStatus,
-} from '@riposte/core'
+import type { ContestDecision, CurrencyCode, StripeDisputeStatus } from '@riposte/core'
+import type { DisputeCaseWorkflowState } from '@server/domain/disputes'
 import { boolean, index, integer, jsonb, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core'
 
 import { user } from './auth.schemas'
@@ -49,9 +44,7 @@ export const disputeCases = pgTable(
     evidenceDetailsPastDue: boolean('evidence_details_past_due').notNull(),
     evidenceDetailsSubmissionCount: integer('evidence_details_submission_count').notNull(),
     isChargeRefundable: boolean('is_charge_refundable').notNull(),
-    contestDecision: text('contest_decision').$type<ContestDecisionKind>().notNull(),
-    contestDecisionReason: text('contest_decision_reason').$type<ContestDecisionReason>(),
-    contestDecisionDecidedAt: timestamp('contest_decision_decided_at', { withTimezone: true }),
+    contestDecision: jsonb('contest_decision').$type<ContestDecision>().notNull(),
     workflowState: jsonb('workflow_state').$type<DisputeCaseWorkflowState>().notNull(),
 
     stripeCreatedAt: timestamp('stripe_created_at', { withTimezone: true }).notNull(),

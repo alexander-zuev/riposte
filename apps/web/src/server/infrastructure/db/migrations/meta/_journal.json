@@ -127,6 +127,13 @@
       "when": 1778663423244,
       "tag": "0017_stiff_microchip",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1778680773803,
+      "tag": "0018_redundant_gladiator",
+      "breakpoints": true
     }
   ]
 }

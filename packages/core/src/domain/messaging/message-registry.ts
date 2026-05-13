@@ -22,7 +22,11 @@ import {
   syncDisputesSchema,
   triageDisputeCaseSchema,
 } from '../disputes/dispute.commands'
-import { disputeCaseReceivedSchema } from '../disputes/dispute.events'
+import {
+  disputeCaseCompletedSchema,
+  disputeCaseFailedSchema,
+  disputeCaseReceivedSchema,
+} from '../disputes/dispute.events'
 import { getStripeAppSettingsSchema, listDisputeCasesSchema } from '../disputes/dispute.queries'
 import { r2EventSchema, r2EventTransform } from '../storage/r2.messages'
 import {
@@ -71,6 +75,8 @@ export type CommandMap = {
 export const domainEventSchema = z.discriminatedUnion('name', [
   userSignedUpSchema,
   disputeCaseReceivedSchema,
+  disputeCaseCompletedSchema,
+  disputeCaseFailedSchema,
   r2EventSchema,
 ])
 

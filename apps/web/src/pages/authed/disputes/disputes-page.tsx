@@ -14,7 +14,6 @@ import {
   type DisputeCaseListItem,
   type DisputeCaseSort,
   type DisputeCaseSortField,
-  type DisputeCaseWorkflowStatus,
 } from '@riposte/core/client'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
@@ -43,6 +42,7 @@ import {
 import { useCallback, useMemo, useState, type ComponentProps, type ReactNode } from 'react'
 
 type BadgeVariant = ComponentProps<typeof Badge>['variant']
+type WorkflowStatus = (typeof DISPUTE_CASE_WORKFLOW_STATUSES)[number]
 
 const sortableColumns = {
   evidenceDueBy: 'Evidence due',
@@ -52,18 +52,12 @@ const sortableColumns = {
 
 const workflowStatusBadgeVariants = {
   received: 'secondary',
-  triaged: 'info',
+  evaluated: 'info',
   collecting_evidence: 'info',
-  needs_input: 'warning',
-  ready_for_review: 'accent',
-  submitted: 'info',
-  accepted: 'success',
-  ignored: 'secondary',
-  deadline_missed: 'destructive',
-  won: 'success',
-  lost: 'destructive',
+  awaiting_human: 'warning',
+  completed: 'success',
   failed: 'destructive',
-} as const satisfies Record<DisputeCaseWorkflowStatus, BadgeVariant>
+} as const satisfies Record<WorkflowStatus, BadgeVariant>
 
 const moneyFormatter = new Intl.NumberFormat('en-US', {
   style: 'currency',
@@ -79,7 +73,7 @@ const dateFormatter = new Intl.DateTimeFormat('en-US', {
 const statusFilterTrigger = <Button type="button" variant="secondary" size="sm" />
 
 export function DisputesPage() {
-  const [selectedStatuses, setSelectedStatuses] = useState<DisputeCaseWorkflowStatus[]>([])
+  const [selectedStatuses, setSelectedStatuses] = useState<WorkflowStatus[]>([])
   const [sort, setSort] = useState<DisputeCaseSort>({
     field: 'evidenceDueBy',
     direction: 'asc',
@@ -181,8 +175,8 @@ function DisputesToolbar({
   onSelectedStatusesChange,
   disabled,
 }: {
-  selectedStatuses: DisputeCaseWorkflowStatus[]
-  onSelectedStatusesChange: (statuses: DisputeCaseWorkflowStatus[]) => void
+  selectedStatuses: WorkflowStatus[]
+  onSelectedStatusesChange: (statuses: WorkflowStatus[]) => void
   disabled: boolean
 }) {
   const label =
@@ -243,9 +237,9 @@ function StatusFilterOption({
   selectedStatuses,
   onSelectedStatusesChange,
 }: {
-  status: DisputeCaseWorkflowStatus
-  selectedStatuses: DisputeCaseWorkflowStatus[]
-  onSelectedStatusesChange: (statuses: DisputeCaseWorkflowStatus[]) => void
+  status: WorkflowStatus
+  selectedStatuses: WorkflowStatus[]
+  onSelectedStatusesChange: (statuses: WorkflowStatus[]) => void
 }) {
   const handleCheckedChange = useCallback(
     (checked: boolean) => {
@@ -488,23 +482,27 @@ function formatDate(value: string | null) {
   return dateFormatter.format(new Date(value))
 }
 
-function getRequiredAction(status: DisputeCaseWorkflowStatus) {
+function getRequiredAction(status: WorkflowStatus) {
   switch (status) {
-    case 'triaged':
+    case 'received':
+      return 'N/A'
+    case 'evaluated':
       return 'Start enrichment'
-    case 'needs_input':
+    case 'collecting_evidence':
+      return 'N/A'
+    case 'awaiting_human':
       return 'Add missing proof'
-    case 'ready_for_review':
-      return 'Review packet'
-    case 'deadline_missed':
-      return 'Review missed deadline'
-    case 'ignored':
-      return 'Ignored'
+    case 'completed':
+      return 'N/A'
     case 'failed':
       return 'Fix failed run'
     default:
-      return 'N/A'
+      return assertNever()
   }
+}
+
+function assertNever(): never {
+  throw new Error('Unhandled dispute workflow status')
 }
 
 function getStripeDashboardUrl(disputeId: string) {

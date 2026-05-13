@@ -188,6 +188,7 @@ function toDisputeCaseListItem(row: DbDisputeCase): DisputeCaseListItem {
   return {
     disputeId: row.id,
     workflowStatus: row.workflowState.status,
+    contestDecision: row.contestDecision.status,
     stripeStatus: row.stripeStatus,
     reason: row.reason,
     amount: {

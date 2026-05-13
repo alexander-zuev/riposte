@@ -1,0 +1,1 @@
+ALTER TABLE "dispute_cases" ADD COLUMN "contest_decision" jsonb NOT NULL;

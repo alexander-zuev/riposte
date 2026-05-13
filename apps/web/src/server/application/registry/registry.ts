@@ -57,6 +57,8 @@ export const EVENT_HANDLERS = {
   DisputeCaseReceived: [
     { id: 'dispute.startDisputeAgentWorkflow', handle: startDisputeAgentWorkflow },
   ],
+  DisputeCaseCompleted: [],
+  DisputeCaseFailed: [],
   UserSignedUp: [{ id: 'auth.handleUserSignedUp', handle: handleUserSignedUp }],
 } satisfies EventRegistry
 

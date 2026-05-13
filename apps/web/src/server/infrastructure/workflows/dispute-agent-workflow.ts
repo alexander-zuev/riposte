@@ -22,7 +22,7 @@ const externalStepConfig = {
 
 type DisputeAgentWorkflowOutput = {
   disputeCaseId: string
-  action: 'ready_for_review' | 'needs_input' | 'ignore' | 'deadline_missed' | 'fail' | 'submitted'
+  action: 'await_human' | 'no_response' | 'ready_for_review' | 'needs_input' | 'fail' | 'submitted'
   reason?: string
 }
 
@@ -56,7 +56,7 @@ class DisputeAgentWorkflowBase extends AgentWorkflow<DisputeAgent, DisputeAgentW
       return unwrapWorkflowStepResult('triage dispute', result)
     })
 
-    if (triage.action !== 'continue_to_enrichment') return { disputeCaseId, ...triage }
+    if (triage.action !== 'contest') return { disputeCaseId, ...triage }
 
     await step.do('enrich dispute context', externalStepConfig, async () => {
       const command = createCommand(

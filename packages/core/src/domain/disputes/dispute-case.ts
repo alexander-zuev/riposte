@@ -20,39 +20,83 @@ export const stripeDisputeStatusSchema = z.enum(STRIPE_DISPUTE_STATUSES)
 
 export const DISPUTE_CASE_WORKFLOW_STATUSES = [
   'received',
-  'triaged',
+  'evaluated',
   'collecting_evidence',
-  'needs_input',
-  'ready_for_review',
-  'submitted',
-  'accepted',
-  'ignored',
-  'deadline_missed',
-  'won',
-  'lost',
+  'awaiting_human',
+  'completed',
   'failed',
 ] as const
 
 export type DisputeCaseWorkflowStatus = (typeof DISPUTE_CASE_WORKFLOW_STATUSES)[number]
 export const disputeCaseWorkflowStatusSchema = z.enum(DISPUTE_CASE_WORKFLOW_STATUSES)
 
+export const CONTEST_DECISIONS = ['undecided', 'contest', 'accept', 'no_response'] as const
+
+export type ContestDecisionKind = (typeof CONTEST_DECISIONS)[number]
+export const contestDecisionKindSchema = z.enum(CONTEST_DECISIONS)
+
+export const CONTEST_DECISION_REASONS = [
+  'supported_card_fraud_adjacent',
+  'non_card_mvp',
+  'no_normal_contest_path',
+  'special_handling_out_of_mvp',
+  'post_mvp_reason',
+  'visa_10_5_no_remedy',
+  'general_reason',
+  'review_only_reason',
+  'no_usable_evidence_deadline',
+  'evidence_deadline_past',
+  'founder_declined',
+] as const
+
+export type ContestDecisionReason = (typeof CONTEST_DECISION_REASONS)[number]
+export const contestDecisionReasonSchema = z.enum(CONTEST_DECISION_REASONS)
+
+export type ContestDecision =
+  | { decision: 'undecided'; reason: null; decidedAt: null }
+  | {
+      decision: Exclude<ContestDecisionKind, 'undecided'>
+      reason: ContestDecisionReason
+      decidedAt: Date
+    }
+
 export type MissingEvidence = {
   code: string
   message: string
 }
 
+export const DISPUTE_CASE_HUMAN_ACTION_REASONS = [
+  'missing_input',
+  'approval_required',
+  'connection_repair',
+  'submission_failed_retryable',
+] as const
+
+export type DisputeCaseHumanActionReason = (typeof DISPUTE_CASE_HUMAN_ACTION_REASONS)[number]
+export const disputeCaseHumanActionReasonSchema = z.enum(DISPUTE_CASE_HUMAN_ACTION_REASONS)
+
+export const DISPUTE_CASE_COMPLETION_REASONS = [
+  'contest_submitted',
+  'accept_submitted',
+  'no_response',
+  'deadline_missed',
+] as const
+
+export type DisputeCaseCompletionReason = (typeof DISPUTE_CASE_COMPLETION_REASONS)[number]
+export const disputeCaseCompletionReasonSchema = z.enum(DISPUTE_CASE_COMPLETION_REASONS)
+
 export type DisputeCaseWorkflowState =
   | { status: 'received' }
-  | { status: 'triaged'; triagedAt: Date }
+  | { status: 'evaluated'; evaluatedAt: Date }
   | { status: 'collecting_evidence'; startedAt: Date }
-  | { status: 'needs_input'; missingEvidence: MissingEvidence[] }
-  | { status: 'ready_for_review'; evidencePacketId: UUIDv4 }
-  | { status: 'submitted'; evidencePacketId: UUIDv4; submittedAt: Date }
-  | { status: 'accepted'; acceptedAt: Date }
-  | { status: 'ignored'; reason: string; ignoredAt: Date }
-  | { status: 'deadline_missed'; missedAt: Date }
-  | { status: 'won'; decidedAt: Date }
-  | { status: 'lost'; decidedAt: Date }
+  | {
+      status: 'awaiting_human'
+      reason: DisputeCaseHumanActionReason
+      missingEvidence: MissingEvidence[]
+      evidencePacketId: UUIDv4 | null
+      requestedAt: Date
+    }
+  | { status: 'completed'; reason: DisputeCaseCompletionReason; completedAt: Date }
   | { status: 'failed'; reason: string }
 
 // Stripe Price recurring interval. Source:

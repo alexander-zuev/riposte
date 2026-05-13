@@ -5,7 +5,11 @@ import {
   stripeDisputeStatusSchema,
 } from '@riposte/core'
 import type {
+  ContestDecisionKind,
+  ContestDecisionReason,
   CurrencyCode,
+  DisputeCaseCompletionReason,
+  DisputeCaseHumanActionReason,
   DisputeCaseWorkflowState,
   DisputeCaseWorkflowStatus,
   MissingEvidence,
@@ -51,6 +55,9 @@ export type DisputeCaseSnapshot = {
   evidenceDetailsPastDue: boolean
   evidenceDetailsSubmissionCount: number
   isChargeRefundable: boolean
+  contestDecision: ContestDecisionKind
+  contestDecisionReason: ContestDecisionReason | null
+  contestDecisionDecidedAt: Date | null
   workflowState: DisputeCaseWorkflowState
   stripeCreatedAt: Date
   updatedAt: Date
@@ -138,6 +145,9 @@ export class DisputeCase extends Entity<DisputeCaseSnapshot> {
     private evidenceDetailsPastDue: boolean,
     private evidenceDetailsSubmissionCount: number,
     private isChargeRefundable: boolean,
+    private contestDecision: ContestDecisionKind,
+    private contestDecisionReason: ContestDecisionReason | null,
+    private contestDecisionDecidedAt: Date | null,
     private state: DisputeCaseWorkflowState,
     readonly stripeCreatedAt: Date,
     private updatedAt: Date,
@@ -186,6 +196,9 @@ export class DisputeCase extends Entity<DisputeCaseSnapshot> {
       stripeDispute.evidence_details.past_due,
       stripeDispute.evidence_details.submission_count,
       stripeDispute.is_charge_refundable,
+      'undecided',
+      null,
+      null,
       { status: 'received' },
       new Date(stripeDispute.created * 1000),
       now,
@@ -230,6 +243,9 @@ export class DisputeCase extends Entity<DisputeCaseSnapshot> {
       snapshot.evidenceDetailsPastDue,
       snapshot.evidenceDetailsSubmissionCount,
       snapshot.isChargeRefundable,
+      snapshot.contestDecision,
+      snapshot.contestDecisionReason,
+      snapshot.contestDecisionDecidedAt ? cloneDate(snapshot.contestDecisionDecidedAt) : null,
       snapshot.workflowState,
       cloneDate(snapshot.stripeCreatedAt),
       cloneDate(snapshot.updatedAt),
@@ -279,81 +295,87 @@ export class DisputeCase extends Entity<DisputeCaseSnapshot> {
   }
 
   getMissingEvidence(): MissingEvidence[] {
-    return this.state.status === 'needs_input' ? [...this.state.missingEvidence] : []
+    return this.state.status === 'awaiting_human' ? [...this.state.missingEvidence] : []
   }
 
   getEvidencePacketId(): UUIDv4 | null {
-    return this.state.status === 'ready_for_review' ? this.state.evidencePacketId : null
+    return this.state.status === 'awaiting_human' ? this.state.evidencePacketId : null
   }
 
   getFailureReason(): string | null {
     return this.state.status === 'failed' ? this.state.reason : null
   }
 
-  getIgnoredReason(): string | null {
-    return this.state.status === 'ignored' ? this.state.reason : null
+  getContestDecision(): {
+    decision: ContestDecisionKind
+    reason: ContestDecisionReason | null
+    decidedAt: Date | null
+  } {
+    return {
+      decision: this.contestDecision,
+      reason: this.contestDecisionReason,
+      decidedAt: this.contestDecisionDecidedAt ? cloneDate(this.contestDecisionDecidedAt) : null,
+    }
   }
 
   getEvidenceDetailsDueBy(): Date | null {
     return this.evidenceDetailsDueBy ? cloneDate(this.evidenceDetailsDueBy.serialize()) : null
   }
 
-  markTriaged(now: Date = new Date()): void {
-    this.ensureStatus(['received'], 'mark triaged')
-    this.state = { status: 'triaged', triagedAt: cloneDate(now) }
+  markEvaluated(now: Date = new Date()): void {
+    this.ensureStatus(['received'], 'mark evaluated')
+    this.state = { status: 'evaluated', evaluatedAt: cloneDate(now) }
     this.touch(now)
   }
 
   startEvidenceCollection(now: Date = new Date()): void {
-    this.ensureStatus(['triaged', 'needs_input'], 'start evidence collection')
+    this.ensureStatus(['evaluated', 'awaiting_human'], 'start evidence collection')
     this.state = { status: 'collecting_evidence', startedAt: cloneDate(now) }
     this.touch(now)
   }
 
-  markNeedsInput(missingEvidence: MissingEvidence[], now: Date = new Date()): void {
-    this.ensureStatus(['received', 'collecting_evidence'], 'mark needs input')
-
-    if (missingEvidence.length === 0) {
-      throw validationError('missingEvidence', 'Missing evidence must include at least one item')
-    }
-
+  awaitHumanInput(
+    args: {
+      reason: DisputeCaseHumanActionReason
+      missingEvidence?: MissingEvidence[]
+      evidencePacketId?: UUIDv4 | null
+    },
+    now: Date = new Date(),
+  ): void {
+    this.ensureStatus(['evaluated', 'collecting_evidence'], 'await human input')
+    const missingEvidence = args.missingEvidence ?? []
     this.state = {
-      status: 'needs_input',
+      status: 'awaiting_human',
+      reason: args.reason,
       missingEvidence: missingEvidence.map((item) => ({
         code: requireNonBlank(item.code, 'missingEvidence.code'),
         message: requireNonBlank(item.message, 'missingEvidence.message'),
       })),
+      evidencePacketId: args.evidencePacketId ?? null,
+      requestedAt: cloneDate(now),
     }
     this.touch(now)
   }
 
-  markReadyForReview(evidencePacketId: UUIDv4, now: Date = new Date()): void {
-    this.ensureStatus(['collecting_evidence', 'needs_input'], 'mark ready for review')
-
-    this.state = { status: 'ready_for_review', evidencePacketId }
+  setContestDecision(
+    decision: Exclude<ContestDecisionKind, 'undecided'>,
+    reason: ContestDecisionReason,
+    now: Date = new Date(),
+  ): void {
+    this.contestDecision = decision
+    this.contestDecisionReason = reason
+    this.contestDecisionDecidedAt = cloneDate(now)
     this.touch(now)
   }
 
-  markIgnored(reason: string, now: Date = new Date()): void {
-    this.ensureStatus(['received', 'collecting_evidence'], 'mark ignored')
-
-    this.state = {
-      status: 'ignored',
-      reason: requireNonBlank(reason, 'ignoredReason'),
-      ignoredAt: cloneDate(now),
-    }
-    this.touch(now)
-  }
-
-  markDeadlineMissed(now: Date = new Date()): void {
-    this.ensureStatus(['received', 'collecting_evidence'], 'mark deadline missed')
-
-    this.state = { status: 'deadline_missed', missedAt: cloneDate(now) }
+  complete(reason: DisputeCaseCompletionReason, now: Date = new Date()): void {
+    this.ensureStatus(['evaluated', 'collecting_evidence', 'awaiting_human'], 'complete')
+    this.state = { status: 'completed', reason, completedAt: cloneDate(now) }
     this.touch(now)
   }
 
   markFailed(reason: string, now: Date = new Date()): void {
-    this.ensureStatus(['collecting_evidence'], 'mark failed')
+    this.ensureStatus(['evaluated', 'collecting_evidence', 'awaiting_human'], 'mark failed')
 
     this.state = { status: 'failed', reason: requireNonBlank(reason, 'failureReason') }
     this.touch(now)
@@ -393,6 +415,11 @@ export class DisputeCase extends Entity<DisputeCaseSnapshot> {
       evidenceDetailsPastDue: this.evidenceDetailsPastDue,
       evidenceDetailsSubmissionCount: this.evidenceDetailsSubmissionCount,
       isChargeRefundable: this.isChargeRefundable,
+      contestDecision: this.contestDecision,
+      contestDecisionReason: this.contestDecisionReason,
+      contestDecisionDecidedAt: this.contestDecisionDecidedAt
+        ? cloneDate(this.contestDecisionDecidedAt)
+        : null,
       workflowState: this.state,
       stripeCreatedAt: cloneDate(this.stripeCreatedAt),
       updatedAt: cloneDate(this.updatedAt),

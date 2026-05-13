@@ -10,8 +10,9 @@
   "scripts": {
     "prepare-package": "npm install --package-lock-only --ignore-scripts",
     "typecheck": "tsc --noEmit",
-    "upload": "npm install --package-lock-only --ignore-scripts && stripe apps upload",
-    "start": "stripe apps start --manifest stripe-app.dev.json"
+    "upload": "npm install --package-lock-only --ignore-scripts && stripe -p riposte apps upload --live",
+    "upload:dev": "npm install --package-lock-only --ignore-scripts && stripe -p riposte-dev apps upload",
+    "start": "stripe -p riposte-dev apps start --manifest stripe-app.dev.json"
   },
   "dependencies": {
     "@stripe/ui-extension-sdk": "9.1.0",

@@ -2,7 +2,11 @@ import { z } from 'zod'
 
 import { baseQuerySchema } from '../base/base.messages'
 import { moneySchema, TimestamptzSchema, UserIdSchema } from '../primitives'
-import { disputeCaseWorkflowStatusSchema, stripeDisputeStatusSchema } from './dispute-case'
+import {
+  contestDecisionKindSchema,
+  disputeCaseWorkflowStatusSchema,
+  stripeDisputeStatusSchema,
+} from './dispute-case'
 
 export const disputeCaseSortFieldSchema = z.enum(['evidenceDueBy', 'stripeCreatedAt', 'amount'])
 export const disputeCaseSortDirectionSchema = z.enum(['asc', 'desc'])
@@ -24,6 +28,7 @@ export const disputeCaseListFiltersSchema = z.object({
 export const disputeCaseListItemSchema = z.object({
   disputeId: z.string().min(1),
   workflowStatus: disputeCaseWorkflowStatusSchema,
+  contestDecision: contestDecisionKindSchema,
   stripeStatus: stripeDisputeStatusSchema,
   reason: z.string().min(1),
   amount: moneySchema,

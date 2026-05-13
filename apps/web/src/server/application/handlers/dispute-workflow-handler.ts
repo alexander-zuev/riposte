@@ -28,10 +28,9 @@ type DisputeWorkflowCommandError =
   | ValidationError
 
 export type TriageDisputeCaseResult =
-  | { action: 'continue_to_enrichment' }
-  | { action: 'ignore'; reason: string }
-  | { action: 'needs_input'; reason: string }
-  | { action: 'deadline_missed'; reason: string }
+  | { action: 'contest' }
+  | { action: 'no_response'; reason: string }
+  | { action: 'await_human'; reason: string }
 
 // Temporary workflow skeleton outputs. Replace these with real evidence, packet,
 // review, and submission contracts as each command grows past logging/stub behavior.
@@ -103,8 +102,8 @@ export async function triageDisputeCaseHandler(
   if (saved.isErr()) return Result.err(saved.error)
 
   return Result.ok(
-    decision.action === 'continue_to_enrichment'
-      ? { action: 'continue_to_enrichment' }
+    decision.action === 'contest'
+      ? { action: 'contest' }
       : { action: decision.action, reason: decision.reason },
   )
 }

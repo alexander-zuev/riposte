@@ -52,18 +52,19 @@ export async function fetchStripeDisputeContext(
     const refunds = yield* Result.await(resolveRefunds(stripe, charge))
     const review = yield* Result.await(resolveReview(stripe, charge))
     const priorCharges = yield* Result.await(resolvePriorCharges(stripe, customer?.id ?? null))
+    const paymentMethods = yield* Result.await(resolvePaymentMethods(stripe, [charge, ...priorCharges]))
 
     return Result.ok({
       context: {
         disputeCaseId: disputeCase.id,
         charge: toChargeSnapshot(charge),
         customer: customer ? toCustomerSnapshot(customer) : null,
-        card: toCardSnapshot(charge),
+        card: toCardSnapshot(charge, paymentMethods.get(objectId(charge.payment_method) ?? '')),
         risk: toRiskSnapshot(charge, review),
         invoice: invoice ? toInvoiceSnapshot(invoice) : null,
         subscription: subscription ? toSubscriptionSnapshot(subscription) : null,
         refunds: refunds.map(toRefundSnapshot),
-        paymentHistory: toPaymentHistorySnapshot(priorCharges, charge.id),
+        paymentHistory: toPaymentHistorySnapshot(priorCharges, charge.id, paymentMethods),
       },
       stripeDispute: dispute,
     })
@@ -185,6 +186,31 @@ function resolvePriorCharges(
   })
 }
 
+async function resolvePaymentMethods(
+  stripe: Stripe,
+  charges: Stripe.Charge[],
+): Promise<Result<Map<string, Stripe.PaymentMethod>, StripeApiError>> {
+  const paymentMethodIds = new Set<string>()
+  for (const charge of charges) {
+    const paymentMethodId = objectId(charge.payment_method)
+    if (paymentMethodId) paymentMethodIds.add(paymentMethodId)
+  }
+
+  const paymentMethods = new Map<string, Stripe.PaymentMethod>()
+  for (const paymentMethodId of paymentMethodIds) {
+    const paymentMethod = await stripeRequest('paymentMethods.retrieve', async () => {
+      const found = await stripe.paymentMethods.retrieve(paymentMethodId)
+      logStripeResponse('paymentMethods.retrieve', paymentMethodId, found)
+      return found
+    })
+    if (paymentMethod.isErr()) return Result.err(paymentMethod.error)
+
+    paymentMethods.set(paymentMethodId, paymentMethod.value)
+  }
+
+  return Result.ok(paymentMethods)
+}
+
 function logStripeResponse(operation: string, id: string, response: unknown) {
   logger.debug('stripe_enrichment_response', {
     operation,
@@ -212,6 +238,8 @@ function summarizeStripeResponse(response: unknown) {
       return summarizeRefund(response as Stripe.Refund)
     case 'review':
       return summarizeReview(response as Stripe.Review)
+    case 'payment_method':
+      return summarizePaymentMethod(response as Stripe.PaymentMethod)
     case 'list':
       return summarizeList(response as Stripe.ApiList<unknown>)
     default:
@@ -350,6 +378,27 @@ function summarizeReview(review: Stripe.Review) {
   }
 }
 
+function summarizePaymentMethod(paymentMethod: Stripe.PaymentMethod) {
+  const card = paymentMethod.card
+
+  return {
+    object: paymentMethod.object,
+    id: paymentMethod.id,
+    type: paymentMethod.type,
+    card: card
+      ? {
+          brand: card.brand,
+          last4: card.last4,
+          country: card.country,
+          funding: card.funding,
+          expMonth: card.exp_month,
+          expYear: card.exp_year,
+          hasFingerprint: Boolean(card.fingerprint),
+        }
+      : null,
+  }
+}
+
 function summarizeList(list: Stripe.ApiList<unknown>) {
   const objectTypes = new Set<string>()
   for (const item of list.data) {
@@ -398,8 +447,12 @@ function toCustomerSnapshot(customer: Stripe.Customer): StripeCustomerSnapshot {
   }
 }
 
-function toCardSnapshot(charge: Stripe.Charge): StripeCardSnapshot | null {
+function toCardSnapshot(
+  charge: Stripe.Charge,
+  paymentMethod: Stripe.PaymentMethod | undefined,
+): StripeCardSnapshot | null {
   const card = charge.payment_method_details?.card
+  const paymentMethodCard = paymentMethod?.card
   if (!card) return null
 
   return {
@@ -407,7 +460,7 @@ function toCardSnapshot(charge: Stripe.Charge): StripeCardSnapshot | null {
     brand: card.brand,
     last4: card.last4,
     network: card.network,
-    fingerprint: card.fingerprint ?? null,
+    fingerprint: card?.fingerprint ?? paymentMethodCard?.fingerprint ?? null,
     country: card.country ?? null,
     funding: card.funding ?? null,
     expMonth: card.exp_month ?? null,
@@ -511,10 +564,11 @@ function toRefundSnapshot(refund: Stripe.Refund): StripeRefundSnapshot {
 function toPaymentHistorySnapshot(
   charges: Stripe.Charge[],
   disputedChargeId: string,
+  paymentMethods: Map<string, Stripe.PaymentMethod>,
 ): StripePaymentHistorySnapshot {
   const priorCharges = charges
     .filter((charge) => charge.id !== disputedChargeId)
-    .map(toPriorChargeSnapshot)
+    .map((charge) => toPriorChargeSnapshot(charge, paymentMethods))
 
   return {
     priorCharges,
@@ -522,8 +576,12 @@ function toPaymentHistorySnapshot(
   }
 }
 
-function toPriorChargeSnapshot(charge: Stripe.Charge): StripePriorChargeSnapshot {
+function toPriorChargeSnapshot(
+  charge: Stripe.Charge,
+  paymentMethods: Map<string, Stripe.PaymentMethod>,
+): StripePriorChargeSnapshot {
   const card = charge.payment_method_details?.card
+  const paymentMethod = paymentMethods.get(objectId(charge.payment_method) ?? '')
 
   return {
     id: charge.id,
@@ -539,7 +597,7 @@ function toPriorChargeSnapshot(charge: Stripe.Charge): StripePriorChargeSnapshot
       ? {
           last4: card.last4,
           network: card.network,
-          fingerprint: card.fingerprint ?? null,
+          fingerprint: card.fingerprint ?? paymentMethod?.card?.fingerprint ?? null,
         }
       : null,
     receiptUrl: charge.receipt_url,

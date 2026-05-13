@@ -1,21 +1,22 @@
 import type { DisputeCase } from './dispute-case.entity'
 
 export type DisputeTriageDecision =
-  | { action: 'continue_to_enrichment'; reason: 'card_fraud_adjacent' }
+  | { action: 'contest'; reason: 'supported_card_fraud_adjacent' }
   | {
-      action: 'ignore'
+      action: 'no_response'
       reason:
         | 'non_card_mvp'
         | 'no_normal_contest_path'
         | 'special_handling_out_of_mvp'
         | 'post_mvp_reason'
         | 'visa_10_5_no_remedy'
+        | 'no_usable_evidence_deadline'
+        | 'evidence_deadline_past'
     }
   | {
-      action: 'needs_input'
-      reason: 'general_reason' | 'review_only_reason' | 'no_usable_evidence_deadline'
+      action: 'await_human'
+      reason: 'general_reason' | 'review_only_reason'
     }
-  | { action: 'deadline_missed'; reason: 'evidence_deadline_past' }
 
 const coreFraudAdjacentReasons = new Set(['fraudulent', 'unrecognized'])
 const reviewOnlyReasons = new Set(['product_not_received', 'duplicate'])
@@ -51,48 +52,48 @@ function decideDisputeTriage(
   now: Date = new Date(),
 ): DisputeTriageDecision {
   if (disputeCase.paymentMethodDetailsType !== 'card') {
-    return { action: 'ignore', reason: 'non_card_mvp' }
+    return { action: 'no_response', reason: 'non_card_mvp' }
   }
 
   if (noNormalContestPathReasons.has(disputeCase.reason)) {
-    return { action: 'ignore', reason: 'no_normal_contest_path' }
+    return { action: 'no_response', reason: 'no_normal_contest_path' }
   }
 
   if (specialHandlingOutOfMvpReasons.has(disputeCase.reason)) {
-    return { action: 'ignore', reason: 'special_handling_out_of_mvp' }
+    return { action: 'no_response', reason: 'special_handling_out_of_mvp' }
   }
 
   if (postMvpReasons.has(disputeCase.reason)) {
-    return { action: 'ignore', reason: 'post_mvp_reason' }
+    return { action: 'no_response', reason: 'post_mvp_reason' }
   }
 
   // Visa 10.5 has no normal evidence remedy even though Stripe's API reason is fraudulent.
   if (disputeCase.paymentMethodDetailsCardNetworkReasonCode === '10.5') {
-    return { action: 'ignore', reason: 'visa_10_5_no_remedy' }
+    return { action: 'no_response', reason: 'visa_10_5_no_remedy' }
   }
 
   const evidenceDetailsDueBy = disputeCase.getEvidenceDetailsDueBy()
 
   if (!evidenceDetailsDueBy) {
-    return { action: 'needs_input', reason: 'no_usable_evidence_deadline' }
+    return { action: 'no_response', reason: 'no_usable_evidence_deadline' }
   }
 
   if (evidenceDetailsDueBy.getTime() <= now.getTime()) {
-    return { action: 'deadline_missed', reason: 'evidence_deadline_past' }
+    return { action: 'no_response', reason: 'evidence_deadline_past' }
   }
 
   if (coreFraudAdjacentReasons.has(disputeCase.reason)) {
-    return { action: 'continue_to_enrichment', reason: 'card_fraud_adjacent' }
+    return { action: 'contest', reason: 'supported_card_fraud_adjacent' }
   }
 
   if (reviewOnlyReasons.has(disputeCase.reason) || disputeCase.reason === 'general') {
     return {
-      action: 'needs_input',
+      action: 'await_human',
       reason: disputeCase.reason === 'general' ? 'general_reason' : 'review_only_reason',
     }
   }
 
-  return { action: 'ignore', reason: 'post_mvp_reason' }
+  return { action: 'no_response', reason: 'post_mvp_reason' }
 }
 
 function applyTriageDecision(
@@ -100,26 +101,32 @@ function applyTriageDecision(
   decision: DisputeTriageDecision,
   now: Date,
 ): void {
+  disputeCase.markEvaluated(now)
+
   switch (decision.action) {
-    case 'ignore':
-      disputeCase.markIgnored(decision.reason, now)
+    case 'contest':
+      disputeCase.setContestDecision('contest', decision.reason, now)
       return
-    case 'needs_input':
-      disputeCase.markNeedsInput(
-        [
-          {
-            code: decision.reason,
-            message: getTriageNeedsInputMessage(decision.reason),
-          },
-        ],
+    case 'no_response':
+      disputeCase.setContestDecision('no_response', decision.reason, now)
+      disputeCase.complete(
+        decision.reason === 'evidence_deadline_past' ? 'deadline_missed' : 'no_response',
         now,
       )
       return
-    case 'deadline_missed':
-      disputeCase.markDeadlineMissed(now)
-      return
-    case 'continue_to_enrichment':
-      disputeCase.markTriaged(now)
+    case 'await_human':
+      disputeCase.awaitHumanInput(
+        {
+          reason: 'missing_input',
+          missingEvidence: [
+            {
+              code: decision.reason,
+              message: getTriageNeedsInputMessage(decision.reason),
+            },
+          ],
+        },
+        now,
+      )
       return
     default:
       return assertNever(decision)
@@ -127,7 +134,7 @@ function applyTriageDecision(
 }
 
 function getTriageNeedsInputMessage(
-  reason: Extract<DisputeTriageDecision, { action: 'needs_input' }>['reason'],
+  reason: Extract<DisputeTriageDecision, { action: 'await_human' }>['reason'],
 ): string {
   switch (reason) {
     case 'general_reason':

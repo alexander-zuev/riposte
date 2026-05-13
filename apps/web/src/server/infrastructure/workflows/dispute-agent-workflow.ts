@@ -144,7 +144,7 @@ export function unwrapWorkflowStepResult<T>(step: string, result: Result<T, Work
   }
 
   logger.error('workflow_step_non_retryable_error', { step, error })
-  throw new NonRetryableError(error.message, error._tag)
+  throw new NonRetryableError(error.message)
 }
 
 export const DisputeAgentWorkflow = Sentry.instrumentWorkflowWithSentry(

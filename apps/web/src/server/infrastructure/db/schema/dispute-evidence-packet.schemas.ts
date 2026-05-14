@@ -1,4 +1,4 @@
-import type { SupportedEvidencePacketReason } from '@riposte/core'
+import type { EvidencePacketTemplate } from '@riposte/core'
 import type {
   DisputeEvidencePacketArtifact,
   DisputeEvidencePdfDocument,
@@ -21,10 +21,10 @@ export const disputeEvidencePackets = pgTable(
       .notNull()
       .references(() => disputeCases.id, { onDelete: 'cascade' }),
     version: integer('version').notNull(),
-    category: text('category')
-      .$type<SupportedEvidencePacketReason>()
+    template: text('category')
+      .$type<EvidencePacketTemplate>()
       .notNull()
-      .default('fraudulent'),
+      .default('fraudulent_digital_goods'),
     stripeEvidencePayload: jsonb('stripe_evidence_payload')
       .$type<FraudDigitalStripeEvidencePayload>()
       .notNull(),

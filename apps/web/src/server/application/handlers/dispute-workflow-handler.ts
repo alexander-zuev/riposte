@@ -184,8 +184,9 @@ export async function generateEvidencePacket(
     disputeContext: context.value,
     previousPacket: latest.value,
   })
+  if (packet.isErr()) return Result.err(packet.error)
 
-  const saved = await deps.repos.disputeEvidencePackets(tx).save(packet)
+  const saved = await deps.repos.disputeEvidencePackets(tx).save(packet.value)
   if (saved.isErr()) return Result.err(saved.error)
 
   logger.info('dispute_evidence_packet_generated', {

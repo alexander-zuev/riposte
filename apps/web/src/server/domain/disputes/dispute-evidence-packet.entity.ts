@@ -1,18 +1,19 @@
 import {
   DISPUTE_REASON_WORKFLOW,
+  ValidationError,
   createEvent,
-  supportedEvidencePacketReasonSchema,
   stripeDisputeReasonSchema,
 } from '@riposte/core'
-import type { SupportedEvidencePacketReason, UUIDv4 } from '@riposte/core'
+import type { EvidencePacketTemplate, UUIDv4 } from '@riposte/core'
 import { Entity } from '@server/domain/models/base.models'
+import { Result } from 'better-result'
 
 import type { DisputeCase, DisputeCaseId } from './dispute-case.entity'
 import type { StripeDisputeContext } from './stripe-dispute-context.entity'
 
 export type EvidencePdfArtifact = {
   kind: 'evidence_pdf'
-  category: SupportedEvidencePacketReason
+  template: EvidencePacketTemplate
   stripeEvidenceField: 'service_documentation'
   r2Key: string
   contentType: 'application/pdf'
@@ -52,7 +53,7 @@ export type DisputeEvidencePacketSnapshot = {
   userId: UUIDv4
   disputeCaseId: DisputeCaseId
   version: number
-  category: SupportedEvidencePacketReason
+  template: EvidencePacketTemplate
   stripeEvidencePayload: FraudDigitalStripeEvidencePayload
   pdfDocument: DisputeEvidencePdfDocument
   artifacts: DisputeEvidencePacketArtifact[]
@@ -73,7 +74,7 @@ export class DisputeEvidencePacket extends Entity<DisputeEvidencePacketSnapshot>
     readonly userId: UUIDv4,
     readonly disputeCaseId: DisputeCaseId,
     readonly version: number,
-    readonly category: SupportedEvidencePacketReason,
+    readonly template: EvidencePacketTemplate,
     readonly stripeEvidencePayload: FraudDigitalStripeEvidencePayload,
     readonly pdfDocument: DisputeEvidencePdfDocument,
     readonly artifacts: DisputeEvidencePacketArtifact[],
@@ -83,19 +84,28 @@ export class DisputeEvidencePacket extends Entity<DisputeEvidencePacketSnapshot>
     super()
   }
 
-  static create(input: CreateDisputeEvidencePacketInput): DisputeEvidencePacket {
+  static create(
+    input: CreateDisputeEvidencePacketInput,
+  ): Result<DisputeEvidencePacket, ValidationError> {
     const version = input.previousPacket ? input.previousPacket.version + 1 : 1
     const id = crypto.randomUUID() as UUIDv4
     const createdAt = new Date()
     const caseSnapshot = input.disputeCase.serialize()
-    const category = resolveSupportedEvidencePacketReason(caseSnapshot.reason)
+    const template = resolveEvidencePacketTemplate(caseSnapshot.reason)
+    if (template.isErr()) return Result.err(template.error)
+
     const stripeEvidencePayload = buildFraudDigitalStripeEvidencePayload(input)
     const pdfDocument = buildFraudEvidencePdfDocument(
       input.disputeCase,
       input.disputeContext,
       stripeEvidencePayload,
     )
-    const artifacts = buildFraudEvidencePacketArtifacts(input.disputeCase, category, version, id)
+    const artifacts = buildFraudEvidencePacketArtifacts(
+      input.disputeCase,
+      template.value,
+      version,
+      id,
+    )
     const evidenceQuality = assessEvidenceQuality(stripeEvidencePayload, input.disputeContext)
 
     const packet = new DisputeEvidencePacket(
@@ -103,7 +113,7 @@ export class DisputeEvidencePacket extends Entity<DisputeEvidencePacketSnapshot>
       input.disputeCase.userId,
       input.disputeCase.id,
       version,
-      category,
+      template.value,
       stripeEvidencePayload,
       pdfDocument,
       artifacts,
@@ -117,11 +127,11 @@ export class DisputeEvidencePacket extends Entity<DisputeEvidencePacketSnapshot>
         disputeCaseId: packet.disputeCaseId,
         userId: packet.userId,
         version: packet.version,
-        category: packet.category,
+        template: packet.template,
       }),
     )
 
-    return packet
+    return Result.ok(packet)
   }
 
   static deserialize(snapshot: DisputeEvidencePacketSnapshot): DisputeEvidencePacket {
@@ -130,7 +140,7 @@ export class DisputeEvidencePacket extends Entity<DisputeEvidencePacketSnapshot>
       snapshot.userId,
       snapshot.disputeCaseId,
       requirePositiveInteger(snapshot.version, 'version'),
-      snapshot.category,
+      snapshot.template,
       snapshot.stripeEvidencePayload,
       snapshot.pdfDocument,
       snapshot.artifacts.map((artifact) => ({ ...artifact })),
@@ -145,7 +155,7 @@ export class DisputeEvidencePacket extends Entity<DisputeEvidencePacketSnapshot>
       userId: this.userId,
       disputeCaseId: this.disputeCaseId,
       version: this.version,
-      category: this.category,
+      template: this.template,
       stripeEvidencePayload: this.stripeEvidencePayload,
       pdfDocument: this.pdfDocument,
       artifacts: this.artifacts.map((artifact) => ({ ...artifact })),
@@ -161,23 +171,43 @@ function requirePositiveInteger(value: number, path: string): number {
   throw new Error(`${path} must be a positive integer`)
 }
 
-function resolveSupportedEvidencePacketReason(reason: string): SupportedEvidencePacketReason {
+function resolveEvidencePacketTemplate(
+  reason: string,
+): Result<EvidencePacketTemplate, ValidationError> {
   const parsedReason = stripeDisputeReasonSchema.safeParse(reason)
   if (!parsedReason.success) {
-    throw new Error(`Unsupported Stripe dispute reason for evidence packet: ${reason}`)
+    return Result.err(
+      createEvidencePacketValidationError(
+        'unsupported_stripe_dispute_reason',
+        `Unsupported Stripe dispute reason for evidence packet: ${reason}`,
+      ),
+    )
   }
 
-  const supportedReason = supportedEvidencePacketReasonSchema.safeParse(parsedReason.data)
-  if (!supportedReason.success) {
-    throw new Error(`Unsupported evidence packet category for dispute reason: ${reason}`)
-  }
-
-  const workflow = DISPUTE_REASON_WORKFLOW[supportedReason.data]
+  const workflow = DISPUTE_REASON_WORKFLOW[parsedReason.data]
   if (workflow.evidencePacket.supported) {
-    return supportedReason.data
+    return Result.ok(workflow.evidencePacket.template)
   }
 
-  throw new Error(`Unsupported evidence packet category for dispute reason: ${reason}`)
+  return Result.err(
+    createEvidencePacketValidationError(
+      workflow.evidencePacket.code,
+      `Evidence packet template is not supported for Stripe dispute reason: ${reason}`,
+    ),
+  )
+}
+
+function createEvidencePacketValidationError(code: string, message: string): ValidationError {
+  return new ValidationError({
+    message,
+    issues: [
+      {
+        code,
+        path: ['reason'],
+        message,
+      },
+    ],
+  })
 }
 
 function buildFraudDigitalStripeEvidencePayload(
@@ -330,22 +360,22 @@ function buildFraudEvidencePdfDocument(
 
 function buildFraudEvidencePacketArtifacts(
   disputeCase: DisputeCase,
-  category: SupportedEvidencePacketReason,
+  template: EvidencePacketTemplate,
   version: number,
   packetId: UUIDv4,
 ): DisputeEvidencePacketArtifact[] {
-  return [buildFraudEvidencePdfArtifact(disputeCase, category, version, packetId)]
+  return [buildFraudEvidencePdfArtifact(disputeCase, template, version, packetId)]
 }
 
 function buildFraudEvidencePdfArtifact(
   disputeCase: DisputeCase,
-  category: SupportedEvidencePacketReason,
+  template: EvidencePacketTemplate,
   version: number,
   packetId: UUIDv4,
 ): EvidencePdfArtifact {
   return {
     kind: 'evidence_pdf',
-    category,
+    template,
     stripeEvidenceField: 'service_documentation',
     r2Key: buildFraudEvidencePdfR2Key(disputeCase.userId, disputeCase.id, version, packetId),
     contentType: 'application/pdf',

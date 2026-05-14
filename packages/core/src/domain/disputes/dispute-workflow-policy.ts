@@ -1,6 +1,9 @@
 import { z } from 'zod'
 
-import type { StripeDisputeReason, StripeDisputeReasonCodeCategory } from './stripe-dispute-taxonomy'
+import type {
+  StripeDisputeReason,
+  StripeDisputeReasonCodeCategory,
+} from './stripe-dispute-taxonomy'
 
 export const DISPUTE_CASE_WORKFLOW_STATUSES = [
   'received',
@@ -47,7 +50,10 @@ export const contestDecisionCodeSchema = z.enum(CONTEST_DECISION_CODES)
 
 export type DisputeContestPolicyDecision = Exclude<ContestDecisionKind, 'undecided'>
 
-export type EvidencePacketTemplate = 'fraudulent_digital_goods'
+export const EVIDENCE_PACKET_TEMPLATES = ['fraudulent_digital_goods'] as const
+
+export type EvidencePacketTemplate = (typeof EVIDENCE_PACKET_TEMPLATES)[number]
+export const evidencePacketTemplateSchema = z.enum(EVIDENCE_PACKET_TEMPLATES)
 export type EvidencePacketUnsupportedCode =
   | 'no_normal_contest_path'
   | 'not_implemented'
@@ -147,14 +153,6 @@ export const DISPUTE_REASON_WORKFLOW = {
     evidencePacket: { supported: true, template: 'fraudulent_digital_goods' },
   },
 } as const satisfies Record<StripeDisputeReason, DisputeReasonWorkflow>
-
-export const SUPPORTED_EVIDENCE_PACKET_REASONS = [
-  'fraudulent',
-  'unrecognized',
-] as const satisfies readonly StripeDisputeReason[]
-
-export type SupportedEvidencePacketReason = (typeof SUPPORTED_EVIDENCE_PACKET_REASONS)[number]
-export const supportedEvidencePacketReasonSchema = z.enum(SUPPORTED_EVIDENCE_PACKET_REASONS)
 
 export type ContestDecision =
   | { status: 'undecided' }

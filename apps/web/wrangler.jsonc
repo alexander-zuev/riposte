@@ -136,6 +136,7 @@
         "POSTHOG_API_KEY": "phc_nYQ6Wm37RsonpnciM4CkjVaFtgQwU3XBBducMjZTfA4K",
         "GOOGLE_CLIENT_ID": "189119872614-1ef29kgrij3mmc38sbbmh7tl358835bg.apps.googleusercontent.com",
         "GITHUB_CLIENT_ID": "Ov23lipY2ARnuolBpq4A",
+        "SLACK_CLIENT_ID": "11161638144816.11161656987616",
         "CURRENT_CREDENTIAL_ENCRYPTION_KEY_VERSION": "v1",
       },
       "secrets": {
@@ -149,7 +150,6 @@
           "STRIPE_WEBHOOK_SECRET",
           "STRIPE_APP_WEBHOOK_SECRET",
           "STRIPE_APP_SIGNING_SECRET",
-          "SLACK_CLIENT_ID",
           "SLACK_CLIENT_SECRET",
           "SLACK_SIGNING_SECRET",
           "CREDENTIAL_ENCRYPTION_KEY_V1",
@@ -245,6 +245,7 @@
         "POSTHOG_API_KEY": "phc_nYQ6Wm37RsonpnciM4CkjVaFtgQwU3XBBducMjZTfA4K",
         "GOOGLE_CLIENT_ID": "",
         "GITHUB_CLIENT_ID": "",
+        "SLACK_CLIENT_ID": "11161638144816.11161656987616",
         "CURRENT_CREDENTIAL_ENCRYPTION_KEY_VERSION": "v1",
       },
       "secrets": {
@@ -257,7 +258,6 @@
           "STRIPE_WEBHOOK_SECRET",
           "STRIPE_APP_WEBHOOK_SECRET",
           "STRIPE_APP_SIGNING_SECRET",
-          "SLACK_CLIENT_ID",
           "SLACK_CLIENT_SECRET",
           "SLACK_SIGNING_SECRET",
           "CREDENTIAL_ENCRYPTION_KEY_V1",
@@ -457,6 +457,7 @@
         "POSTHOG_API_KEY": "phc_nYQ6Wm37RsonpnciM4CkjVaFtgQwU3XBBducMjZTfA4K",
         "GOOGLE_CLIENT_ID": "189119872614-dmtnkqeoibjubc0frpkms8sptbn9j2h0.apps.googleusercontent.com",
         "GITHUB_CLIENT_ID": "Ov23litSGfhKN1kOckGN",
+        "SLACK_CLIENT_ID": "11161638144816.11161656987616",
         "CURRENT_CREDENTIAL_ENCRYPTION_KEY_VERSION": "v1",
       },
       "secrets": {
@@ -469,7 +470,6 @@
           "STRIPE_WEBHOOK_SECRET",
           "STRIPE_APP_WEBHOOK_SECRET",
           "STRIPE_APP_SIGNING_SECRET",
-          "SLACK_CLIENT_ID",
           "SLACK_CLIENT_SECRET",
           "SLACK_SIGNING_SECRET",
           "CREDENTIAL_ENCRYPTION_KEY_V1",

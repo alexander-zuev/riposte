@@ -47,6 +47,8 @@ catalog:
   '@sentry/cloudflare': ^10.52.0
   '@sentry/tanstackstart-react': ^10.52.0
   '@sentry/vite-plugin': ^5.2.1
+  '@slack/web-api': ^7.15.2
+  '@slack/webhook': ^7.0.9
   '@storybook/addon-themes': ^10.3.6
   '@storybook/builder-vite': ^10.3.4
   '@storybook/react-vite': ^10.3.6

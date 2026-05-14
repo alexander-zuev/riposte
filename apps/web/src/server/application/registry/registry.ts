@@ -16,6 +16,14 @@ import {
   triageDisputeCaseHandler,
 } from '@server/application/handlers/dispute-workflow-handler'
 import {
+  handleSlackAppUninstalled,
+  handleSlackOAuthCallback,
+  notifyOnDisputeCaseCompleted,
+  notifyOnDisputeCaseFailed,
+  notifyOnDisputeCaseReceived,
+  setNotificationChannelPreference,
+} from '@server/application/handlers/notification-handler'
+import {
   fanOutScheduledDisputeSync,
   getStripeAppSettings,
   syncDisputes,
@@ -47,6 +55,9 @@ export const COMMAND_HANDLERS = {
   HandleStripeAppAuthorized: handleStripeAppAuthorized,
   HandleStripeAppDeauthorized: handleStripeAppDeauthorized,
   HandleStripeOAuthCallback: handleStripeOAuthCallback,
+  HandleSlackOAuthCallback: handleSlackOAuthCallback,
+  HandleSlackAppUninstalled: handleSlackAppUninstalled,
+  SetNotificationChannelPreference: setNotificationChannelPreference,
   TriageDisputeCase: triageDisputeCaseHandler,
   EnrichDisputeContext: enrichDisputeContext,
   CollectDisputeEvidence: collectDisputeEvidence,
@@ -58,9 +69,14 @@ export const COMMAND_HANDLERS = {
 export const EVENT_HANDLERS = {
   DisputeCaseReceived: [
     { id: 'dispute.startDisputeAgentWorkflow', handle: startDisputeAgentWorkflow },
+    { id: 'notifications.notifyOnDisputeCaseReceived', handle: notifyOnDisputeCaseReceived },
   ],
-  DisputeCaseCompleted: [],
-  DisputeCaseFailed: [],
+  DisputeCaseCompleted: [
+    { id: 'notifications.notifyOnDisputeCaseCompleted', handle: notifyOnDisputeCaseCompleted },
+  ],
+  DisputeCaseFailed: [
+    { id: 'notifications.notifyOnDisputeCaseFailed', handle: notifyOnDisputeCaseFailed },
+  ],
   ScheduledDisputeSyncDue: [
     { id: 'stripeApp.fanOutScheduledDisputeSync', handle: fanOutScheduledDisputeSync },
   ],

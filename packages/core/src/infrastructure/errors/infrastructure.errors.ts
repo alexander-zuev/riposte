@@ -199,6 +199,46 @@ export class StripeApiError extends TaggedError('StripeApiError')<{
   }
 }
 
+export class SlackApiError extends TaggedError('SlackApiError')<{
+  message: string
+  operation: string
+  cause: unknown
+  retryable: boolean
+  slackErrorCode?: string
+  status?: number
+}>() {
+  constructor(args: {
+    operation: string
+    cause: unknown
+    retryable: boolean
+    message?: string
+    slackErrorCode?: string
+    status?: number
+  }) {
+    super({
+      message: args.message ?? getErrorMessage(args.cause) ?? `Slack ${args.operation} failed`,
+      operation: args.operation,
+      cause: args.cause,
+      retryable: args.retryable,
+      slackErrorCode: args.slackErrorCode,
+      status: args.status,
+    })
+  }
+}
+
+function getErrorMessage(cause: unknown): string | undefined {
+  if (cause instanceof Error) return cause.message
+  if (
+    typeof cause === 'object' &&
+    cause !== null &&
+    'message' in cause &&
+    typeof cause.message === 'string'
+  ) {
+    return cause.message
+  }
+  return undefined
+}
+
 type StripeConnectionUnavailableInput =
   | { reason: 'missing_account' }
   | { reason: 'unknown_account'; account: string }
@@ -248,6 +288,60 @@ export class StripeOAuthCallbackError extends TaggedError('StripeOAuthCallbackEr
       cause: args.cause,
       message: args.message ?? `Stripe OAuth callback failed: ${args.reason}`,
       retryable: false,
+    })
+  }
+}
+
+export class SlackOAuthCallbackError extends TaggedError('SlackOAuthCallbackError')<{
+  message: string
+  reason:
+    | 'invalid_state'
+    | 'oauth_token_failed'
+    | 'invalid_token_response'
+    | 'missing_incoming_webhook'
+    | 'persistence_failed'
+  cause?: unknown
+  retryable: false
+}>() {
+  constructor(args: {
+    reason:
+      | 'invalid_state'
+      | 'oauth_token_failed'
+      | 'invalid_token_response'
+      | 'missing_incoming_webhook'
+      | 'persistence_failed'
+    cause?: unknown
+    message?: string
+  }) {
+    super({
+      reason: args.reason,
+      cause: args.cause,
+      message: args.message ?? `Slack OAuth callback failed: ${args.reason}`,
+      retryable: false,
+    })
+  }
+}
+
+export class SlackWebhookError extends TaggedError('SlackWebhookError')<{
+  message: string
+  operation: 'send' | 'signature_verification'
+  cause?: unknown
+  status?: number
+  retryable: boolean
+}>() {
+  constructor(args: {
+    operation: 'send' | 'signature_verification'
+    cause?: unknown
+    status?: number
+    retryable?: boolean
+    message?: string
+  }) {
+    super({
+      operation: args.operation,
+      cause: args.cause,
+      status: args.status,
+      message: args.message ?? `Slack webhook ${args.operation} failed`,
+      retryable: args.retryable ?? args.operation === 'send',
     })
   }
 }

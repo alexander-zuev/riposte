@@ -39,6 +39,11 @@ export function getServerConfig() {
     },
 
     resendApiKey: env.RESEND_API_KEY,
+    slack: {
+      clientId: env.SLACK_CLIENT_ID,
+      clientSecret: env.SLACK_CLIENT_SECRET,
+      signingSecret: env.SLACK_SIGNING_SECRET,
+    },
 
     kvStorage: env.AUTH_KV,
     rateLimiter: env.AUTH_RATE_LIMITER as DurableObjectNamespace,

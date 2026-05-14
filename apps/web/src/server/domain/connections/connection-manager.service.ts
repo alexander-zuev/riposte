@@ -1,5 +1,9 @@
 import type { DatabaseError } from '@riposte/core'
-import type { IStripeConnectionRepository } from '@server/domain/repository/interfaces'
+import type {
+  INotificationPreferenceRepository,
+  ISlackConnectionRepository,
+  IStripeConnectionRepository,
+} from '@server/domain/repository/interfaces'
 import { Result } from 'better-result'
 
 import { createConnectionsStatus, type ConnectionsStatus } from './connection-status.types'
@@ -9,12 +13,28 @@ export interface IConnectionManager {
 }
 
 export class ConnectionManager implements IConnectionManager {
-  constructor(private readonly stripeConnections: IStripeConnectionRepository) {}
+  constructor(
+    private readonly stripeConnections: IStripeConnectionRepository,
+    private readonly slackConnections: ISlackConnectionRepository,
+    private readonly notificationPreferences: INotificationPreferenceRepository,
+  ) {}
 
   async getConnectionsStatus(userId: string): Promise<Result<ConnectionsStatus, DatabaseError>> {
-    const connection = await this.stripeConnections.findLatestByUserId(userId)
-    if (connection.isErr()) return Result.err(connection.error)
+    const stripeConnection = await this.stripeConnections.findLatestByUserId(userId)
+    if (stripeConnection.isErr()) return Result.err(stripeConnection.error)
 
-    return Result.ok(createConnectionsStatus({ stripeConnection: connection.value }))
+    const slackConnection = await this.slackConnections.findLatestByUserId(userId)
+    if (slackConnection.isErr()) return Result.err(slackConnection.error)
+
+    const preferences = await this.notificationPreferences.findForUser(userId)
+    if (preferences.isErr()) return Result.err(preferences.error)
+
+    return Result.ok(
+      createConnectionsStatus({
+        stripeConnection: stripeConnection.value,
+        slackConnection: slackConnection.value,
+        notificationPreferences: preferences.value,
+      }),
+    )
   }
 }

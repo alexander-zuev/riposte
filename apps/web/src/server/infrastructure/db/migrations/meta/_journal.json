@@ -176,6 +176,13 @@
       "when": 1778756335240,
       "tag": "0024_third_wolfpack",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1778775120751,
+      "tag": "0025_harsh_pestilence",
+      "breakpoints": true
     }
   ]
 }

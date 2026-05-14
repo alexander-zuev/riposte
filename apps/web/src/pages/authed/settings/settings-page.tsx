@@ -8,11 +8,12 @@ import {
   SpinnerIcon,
   WarningIcon,
 } from '@phosphor-icons/react'
-import { unwrapRpc } from '@riposte/core/client'
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { connectionsQueries } from '@web/entities/connections'
+import { useNotificationChannelToggleMutation } from '@web/pages/authed/settings/hooks/use-notification-channel-toggle-mutation'
+import { useSlackOAuthMutation } from '@web/pages/authed/settings/hooks/use-slack-oauth-mutation'
+import { useStripeOAuthMutation } from '@web/pages/authed/settings/hooks/use-stripe-oauth-mutation'
 import { PageHeader } from '@web/pages/authed/shared/page-header'
-import { getStripeOAuthUrl } from '@web/server/entrypoints/functions/stripe.fn'
 import { Badge } from '@web/ui/components/ui/badge'
 import { Button } from '@web/ui/components/ui/button'
 import {
@@ -23,8 +24,8 @@ import {
   CardHeader,
   CardTitle,
 } from '@web/ui/components/ui/card'
+import { Switch } from '@web/ui/components/ui/switch'
 import { useCallback, type ComponentProps, type ComponentType } from 'react'
-import { toast } from 'sonner'
 
 type BadgeVariant = ComponentProps<typeof Badge>['variant']
 
@@ -42,19 +43,9 @@ export function SettingsPage() {
   const stripeConnection = connectionsQuery.data?.stripe
   const isStripeConnected = stripeConnection?.status === 'connected'
   const isStripeRevoked = stripeConnection?.status === 'revoked'
-  const stripeOAuthMutation = useMutation({
-    mutationFn: async () => unwrapRpc(await getStripeOAuthUrl()),
-    onMutate: () => {
-      toast.loading('Redirecting to Stripe', { duration: Infinity, id: 'stripe-oauth' })
-    },
-    onSuccess: ({ url }) => {
-      window.location.assign(url)
-    },
-    onError: (error) => {
-      toast.dismiss('stripe-oauth')
-      toast.error(error instanceof Error ? error.message : 'Failed to start Stripe connection')
-    },
-  })
+  const stripeOAuthMutation = useStripeOAuthMutation()
+  const slackOAuthMutation = useSlackOAuthMutation()
+  const notificationToggleMutation = useNotificationChannelToggleMutation()
   const handleStripeAction = useCallback(() => {
     if (connectionsQuery.isError) {
       connectionsQuery.refetch().catch(() => undefined)
@@ -67,7 +58,6 @@ export function SettingsPage() {
     isLoading: connectionsQuery.isLoading,
     isError: connectionsQuery.isError,
     appDatabaseStatus: connectionsQuery.data?.appDatabase.status,
-    notificationStatus: connectionsQuery.data?.notifications.status,
     evidenceToolsStatus: connectionsQuery.data?.evidenceTools.status,
   })
 
@@ -143,6 +133,16 @@ export function SettingsPage() {
               </Button>
             </CardContent>
           </Card>
+
+          <NotificationsCard
+            isLoading={connectionsQuery.isLoading}
+            isError={connectionsQuery.isError}
+            channels={connectionsQuery.data?.notifications.channels ?? []}
+            isSlackPending={slackOAuthMutation.isPending}
+            isTogglePending={notificationToggleMutation.isPending}
+            onConnectSlack={() => slackOAuthMutation.mutate()}
+            onToggle={(channel, enabled) => notificationToggleMutation.mutate({ channel, enabled })}
+          />
 
           {connectionItems.map((item) => (
             <ConnectionCard key={item.label} item={item} />
@@ -246,7 +246,6 @@ function getConnectionItems(input: {
   isLoading: boolean
   isError: boolean
   appDatabaseStatus?: 'not_connected'
-  notificationStatus?: 'not_configured'
   evidenceToolsStatus?: 'not_defined'
 }): ConnectionItem[] {
   return [
@@ -268,23 +267,6 @@ function getConnectionItems(input: {
       action: 'Connect Postgres',
     },
     {
-      label: 'Notifications',
-      description: 'Escalations and outcome updates for urgent dispute work',
-      status: getConnectionStatusLabel({
-        isLoading: input.isLoading,
-        isError: input.isError,
-        status: input.notificationStatus,
-        labels: { not_configured: 'Not configured' },
-      }),
-      variant: getConnectionStatusVariant({
-        isLoading: input.isLoading,
-        isError: input.isError,
-        status: input.notificationStatus,
-      }),
-      icon: BellIcon,
-      action: 'Configure',
-    },
-    {
       label: 'Evidence tools',
       description: 'Runtime tools that collect product and customer proof',
       status: getConnectionStatusLabel({
@@ -302,6 +284,100 @@ function getConnectionItems(input: {
       action: 'View requirements',
     },
   ]
+}
+
+function NotificationsCard({
+  isLoading,
+  isError,
+  channels,
+  isSlackPending,
+  isTogglePending,
+  onConnectSlack,
+  onToggle,
+}: {
+  isLoading: boolean
+  isError: boolean
+  channels: Array<{
+    channel: 'email' | 'slack'
+    health: 'connected' | 'not_connected' | 'failed'
+    enabled: boolean
+    label: string
+    detail: string | null
+    failureReason: string | null
+  }>
+  isSlackPending: boolean
+  isTogglePending: boolean
+  onConnectSlack: () => void
+  onToggle: (channel: 'email' | 'slack', enabled: boolean) => void
+}) {
+  return (
+    <Card>
+      <CardHeader className="gap-3 sm:grid-cols-[1fr_auto]">
+        <div>
+          <CardTitle className="flex items-center gap-2">
+            <BellIcon className="size-4 text-muted-foreground" />
+            Notifications
+          </CardTitle>
+          <CardDescription>Dispute intake and workflow result notifications</CardDescription>
+        </div>
+        <CardAction className="static col-auto row-auto justify-self-start sm:justify-self-end">
+          <Badge variant={isError ? 'destructive' : 'secondary'}>
+            {isLoading ? 'Loading' : isError ? 'Error' : 'Configured'}
+          </Badge>
+        </CardAction>
+      </CardHeader>
+      <CardContent className="grid gap-3">
+        {channels.map((channel) => (
+          <div
+            key={channel.channel}
+            className="flex items-center justify-between gap-3 rounded-md border border-border p-3"
+          >
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium">{channel.label}</span>
+                <NotificationHealthBadge health={channel.health} />
+              </div>
+              <p className="mt-1 truncate text-sm text-muted-foreground">
+                {channel.failureReason ?? channel.detail ?? 'Not connected'}
+              </p>
+            </div>
+            {channel.channel === 'slack' && channel.health !== 'connected' ? (
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                disabled={isSlackPending || isLoading}
+                onClick={onConnectSlack}
+              >
+                {isSlackPending ? 'Connecting' : 'Connect'}
+              </Button>
+            ) : (
+              <Switch
+                size="sm"
+                checked={channel.enabled}
+                disabled={isTogglePending || isLoading || channel.health !== 'connected'}
+                onCheckedChange={(checked) => onToggle(channel.channel, checked)}
+                aria-label={`${channel.label} notifications`}
+              />
+            )}
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  )
+}
+
+function NotificationHealthBadge({ health }: { health: 'connected' | 'not_connected' | 'failed' }) {
+  switch (health) {
+    case 'connected':
+      return <Badge variant="success">Connected</Badge>
+    case 'failed':
+      return <Badge variant="destructive">Failed</Badge>
+    case 'not_connected':
+      return <Badge variant="warning">Needs connection</Badge>
+    default:
+      return <Badge variant="secondary">Unknown</Badge>
+  }
 }
 
 function getConnectionStatusLabel<TStatus extends string>(input: {

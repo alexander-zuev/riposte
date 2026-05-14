@@ -16,6 +16,16 @@ import type {
   StripeDisputeContext,
 } from '@server/domain/disputes'
 import type {
+  NotificationChannelPreference,
+  NotificationRecipient,
+  SetNotificationChannelPreferenceInput,
+} from '@server/domain/notifications'
+import type {
+  SlackConnection,
+  SlackConnectionWithCredentials,
+  UpsertSlackConnectionInput,
+} from '@server/domain/slack'
+import type {
   RefreshStripeCredentialsInput,
   StripeConnection,
   StripeConnectionWithCredentials,
@@ -76,6 +86,11 @@ export interface IStripeDisputeContextRepository {
  * ------------------------------------------------------------------------------------------------- */
 
 export interface IDisputeEvidencePacketRepository {
+  findByIdForCase: (input: {
+    userId: UUIDv4
+    disputeCaseId: string
+    evidencePacketId: UUIDv4
+  }) => Promise<Result<DisputeEvidencePacket | null, DatabaseError>>
   findLatestByDisputeCaseId: (input: {
     userId: UUIDv4
     disputeCaseId: string
@@ -100,7 +115,14 @@ export type DisputeEvidenceArtifactBlob = {
   etag: string
 }
 
+export type DisputeEvidenceArtifactBlobBody = DisputeEvidenceArtifactBlob & {
+  bytes: Uint8Array
+}
+
 export interface IDisputeEvidenceArtifactBlobRepository {
+  get: (input: {
+    r2Key: string
+  }) => Promise<Result<DisputeEvidenceArtifactBlobBody | null, BlobStorageError>>
   save: (
     input: SaveDisputeEvidenceArtifactBlobInput,
   ) => Promise<Result<DisputeEvidenceArtifactBlob, BlobStorageError>>
@@ -136,6 +158,46 @@ export interface IStripeConnectionRepository {
   refreshCredentials: (
     input: RefreshStripeCredentialsInput,
   ) => Promise<Result<StripeConnectionWithCredentials, DatabaseError | CredentialEncryptionError>>
+}
+
+/* -------------------------------------------------------------------------------------------------
+ * Slack Connection Repository
+ * ------------------------------------------------------------------------------------------------- */
+
+export interface ISlackConnectionRepository {
+  upsertInstalledConnection: (
+    input: UpsertSlackConnectionInput,
+  ) => Promise<Result<SlackConnection, DatabaseError | CredentialEncryptionError>>
+
+  findLatestByUserId: (userId: string) => Promise<Result<SlackConnection | null, DatabaseError>>
+
+  findWithCredentialsByUserId: (
+    userId: string,
+  ) => Promise<
+    Result<SlackConnectionWithCredentials | null, DatabaseError | CredentialEncryptionError>
+  >
+
+  markFailedByTeamId: (input: {
+    teamId: string
+    failureReason: string
+    failedAt: Date
+  }) => Promise<Result<SlackConnection[], DatabaseError>>
+}
+
+/* -------------------------------------------------------------------------------------------------
+ * Notification Preference Repository
+ * ------------------------------------------------------------------------------------------------- */
+
+export interface INotificationPreferenceRepository {
+  findForUser: (userId: string) => Promise<Result<NotificationChannelPreference[], DatabaseError>>
+
+  findRecipientByUserId: (
+    userId: string,
+  ) => Promise<Result<NotificationRecipient | null, DatabaseError>>
+
+  setChannelEnabled: (
+    input: SetNotificationChannelPreferenceInput,
+  ) => Promise<Result<NotificationChannelPreference, DatabaseError>>
 }
 
 /* -------------------------------------------------------------------------------------------------

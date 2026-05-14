@@ -1,4 +1,5 @@
 import type {
+  DatabaseError,
   EmailServiceError,
   GetSessionStatus,
   SendMagicLink,
@@ -54,9 +55,16 @@ export const sendMagicLink: CommandHandler<SendMagicLink, void, EmailServiceErro
   return Result.ok()
 }
 
-export const handleUserSignedUp: EventHandler<UserSignedUp> = async (event, _ctx) => {
+export const handleUserSignedUp: EventHandler<UserSignedUp, DatabaseError> = async (event, ctx) => {
   logger.info('UserSignedUp', { userId: event.userId, email: event.email })
-  // TODO: implement post-signup logic
+
+  const preference = await ctx.deps.repos.notificationPreferences(ctx.tx).setChannelEnabled({
+    userId: event.userId,
+    channel: 'email',
+    enabled: true,
+  })
+  if (preference.isErr()) return Result.err(preference.error)
+
   return Result.ok()
 }
 

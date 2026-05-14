@@ -49,6 +49,8 @@
     "@riposte/core": "workspace:*",
     "@sentry/cloudflare": "catalog:",
     "@sentry/tanstackstart-react": "catalog:",
+    "@slack/web-api": "catalog:",
+    "@slack/webhook": "catalog:",
     "@tailwindcss/vite": "catalog:",
     "@tanstack/react-form": "catalog:",
     "@tanstack/react-query": "catalog:",

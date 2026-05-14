@@ -29,6 +29,11 @@ import {
   scheduledDisputeSyncDueSchema,
 } from '../disputes/dispute.events'
 import { getStripeAppSettingsSchema, listDisputeCasesSchema } from '../disputes/dispute.queries'
+import {
+  handleSlackAppUninstalledSchema,
+  handleSlackOAuthCallbackSchema,
+  setNotificationChannelPreferenceSchema,
+} from '../notifications'
 import { r2EventSchema, r2EventTransform } from '../storage/r2.messages'
 import {
   handleStripeAppAuthorizedSchema,
@@ -60,6 +65,9 @@ export const domainCommandSchema = z.discriminatedUnion('name', [
   handleStripeAppAuthorizedSchema,
   handleStripeAppDeauthorizedSchema,
   handleStripeOAuthCallbackSchema,
+  handleSlackOAuthCallbackSchema,
+  handleSlackAppUninstalledSchema,
+  setNotificationChannelPreferenceSchema,
 ])
 
 export type DomainCommand = z.infer<typeof domainCommandSchema>

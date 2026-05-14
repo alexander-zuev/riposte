@@ -30,12 +30,14 @@ import { Route as DevEmailsIndexRouteImport } from './../../routes/dev/emails/in
 import { Route as DevEvidencePacketsPdfRouteImport } from './../../routes/dev/evidence-packets/pdf'
 import { Route as DevEmailsPreviewRouteImport } from './../../routes/dev/emails/preview'
 import { Route as ApiStripeWebhookRouteImport } from './../../routes/api/stripe/webhook'
+import { Route as ApiSlackEventsRouteImport } from './../../routes/api/slack/events'
 import { Route as ApiCacheImagesRouteImport } from './../../routes/api/cache/images'
 import { Route as ApiAuthSplatRouteImport } from './../../routes/api/auth/$'
 import { Route as AuthedDisputesDisputeIdRouteImport } from './../../routes/_authed/disputes.$disputeId'
 import { Route as ApiStripeOauthCallbackRouteImport } from './../../routes/api/stripe/oauth/callback'
 import { Route as ApiStripeAppSyncRouteImport } from './../../routes/api/stripe/app/sync'
 import { Route as ApiStripeAppSettingsRouteImport } from './../../routes/api/stripe/app/settings'
+import { Route as ApiSlackOauthCallbackRouteImport } from './../../routes/api/slack/oauth/callback'
 import { Route as ApiDevEmailsPreviewRouteImport } from './../../routes/api/dev/emails/preview'
 
 const DevRouteRoute = DevRouteRouteImport.update({
@@ -141,6 +143,11 @@ const ApiStripeWebhookRoute = ApiStripeWebhookRouteImport.update({
   path: '/api/stripe/webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiSlackEventsRoute = ApiSlackEventsRouteImport.update({
+  id: '/api/slack/events',
+  path: '/api/slack/events',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiCacheImagesRoute = ApiCacheImagesRouteImport.update({
   id: '/api/cache/images',
   path: '/api/cache/images',
@@ -171,6 +178,11 @@ const ApiStripeAppSettingsRoute = ApiStripeAppSettingsRouteImport.update({
   path: '/api/stripe/app/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiSlackOauthCallbackRoute = ApiSlackOauthCallbackRouteImport.update({
+  id: '/api/slack/oauth/callback',
+  path: '/api/slack/oauth/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiDevEmailsPreviewRoute = ApiDevEmailsPreviewRouteImport.update({
   id: '/api/dev/emails/preview',
   path: '/api/dev/emails/preview',
@@ -196,11 +208,13 @@ export interface FileRoutesByFullPath {
   '/disputes/$disputeId': typeof AuthedDisputesDisputeIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/cache/images': typeof ApiCacheImagesRoute
+  '/api/slack/events': typeof ApiSlackEventsRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
   '/dev/emails/preview': typeof DevEmailsPreviewRoute
   '/dev/evidence-packets/pdf': typeof DevEvidencePacketsPdfRoute
   '/dev/emails/': typeof DevEmailsIndexRoute
   '/api/dev/emails/preview': typeof ApiDevEmailsPreviewRoute
+  '/api/slack/oauth/callback': typeof ApiSlackOauthCallbackRoute
   '/api/stripe/app/settings': typeof ApiStripeAppSettingsRoute
   '/api/stripe/app/sync': typeof ApiStripeAppSyncRoute
   '/api/stripe/oauth/callback': typeof ApiStripeOauthCallbackRoute
@@ -222,11 +236,13 @@ export interface FileRoutesByTo {
   '/disputes/$disputeId': typeof AuthedDisputesDisputeIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/cache/images': typeof ApiCacheImagesRoute
+  '/api/slack/events': typeof ApiSlackEventsRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
   '/dev/emails/preview': typeof DevEmailsPreviewRoute
   '/dev/evidence-packets/pdf': typeof DevEvidencePacketsPdfRoute
   '/dev/emails': typeof DevEmailsIndexRoute
   '/api/dev/emails/preview': typeof ApiDevEmailsPreviewRoute
+  '/api/slack/oauth/callback': typeof ApiSlackOauthCallbackRoute
   '/api/stripe/app/settings': typeof ApiStripeAppSettingsRoute
   '/api/stripe/app/sync': typeof ApiStripeAppSyncRoute
   '/api/stripe/oauth/callback': typeof ApiStripeOauthCallbackRoute
@@ -253,11 +269,13 @@ export interface FileRoutesById {
   '/_authed/disputes/$disputeId': typeof AuthedDisputesDisputeIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/cache/images': typeof ApiCacheImagesRoute
+  '/api/slack/events': typeof ApiSlackEventsRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
   '/dev/emails/preview': typeof DevEmailsPreviewRoute
   '/dev/evidence-packets/pdf': typeof DevEvidencePacketsPdfRoute
   '/dev/emails/': typeof DevEmailsIndexRoute
   '/api/dev/emails/preview': typeof ApiDevEmailsPreviewRoute
+  '/api/slack/oauth/callback': typeof ApiSlackOauthCallbackRoute
   '/api/stripe/app/settings': typeof ApiStripeAppSettingsRoute
   '/api/stripe/app/sync': typeof ApiStripeAppSyncRoute
   '/api/stripe/oauth/callback': typeof ApiStripeOauthCallbackRoute
@@ -283,11 +301,13 @@ export interface FileRouteTypes {
     | '/disputes/$disputeId'
     | '/api/auth/$'
     | '/api/cache/images'
+    | '/api/slack/events'
     | '/api/stripe/webhook'
     | '/dev/emails/preview'
     | '/dev/evidence-packets/pdf'
     | '/dev/emails/'
     | '/api/dev/emails/preview'
+    | '/api/slack/oauth/callback'
     | '/api/stripe/app/settings'
     | '/api/stripe/app/sync'
     | '/api/stripe/oauth/callback'
@@ -309,11 +329,13 @@ export interface FileRouteTypes {
     | '/disputes/$disputeId'
     | '/api/auth/$'
     | '/api/cache/images'
+    | '/api/slack/events'
     | '/api/stripe/webhook'
     | '/dev/emails/preview'
     | '/dev/evidence-packets/pdf'
     | '/dev/emails'
     | '/api/dev/emails/preview'
+    | '/api/slack/oauth/callback'
     | '/api/stripe/app/settings'
     | '/api/stripe/app/sync'
     | '/api/stripe/oauth/callback'
@@ -339,11 +361,13 @@ export interface FileRouteTypes {
     | '/_authed/disputes/$disputeId'
     | '/api/auth/$'
     | '/api/cache/images'
+    | '/api/slack/events'
     | '/api/stripe/webhook'
     | '/dev/emails/preview'
     | '/dev/evidence-packets/pdf'
     | '/dev/emails/'
     | '/api/dev/emails/preview'
+    | '/api/slack/oauth/callback'
     | '/api/stripe/app/settings'
     | '/api/stripe/app/sync'
     | '/api/stripe/oauth/callback'
@@ -355,8 +379,10 @@ export interface RootRouteChildren {
   DevRouteRoute: typeof DevRouteRouteWithChildren
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiCacheImagesRoute: typeof ApiCacheImagesRoute
+  ApiSlackEventsRoute: typeof ApiSlackEventsRoute
   ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
   ApiDevEmailsPreviewRoute: typeof ApiDevEmailsPreviewRoute
+  ApiSlackOauthCallbackRoute: typeof ApiSlackOauthCallbackRoute
   ApiStripeAppSettingsRoute: typeof ApiStripeAppSettingsRoute
   ApiStripeAppSyncRoute: typeof ApiStripeAppSyncRoute
   ApiStripeOauthCallbackRoute: typeof ApiStripeOauthCallbackRoute
@@ -511,6 +537,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiStripeWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/slack/events': {
+      id: '/api/slack/events'
+      path: '/api/slack/events'
+      fullPath: '/api/slack/events'
+      preLoaderRoute: typeof ApiSlackEventsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/cache/images': {
       id: '/api/cache/images'
       path: '/api/cache/images'
@@ -551,6 +584,13 @@ declare module '@tanstack/react-router' {
       path: '/api/stripe/app/settings'
       fullPath: '/api/stripe/app/settings'
       preLoaderRoute: typeof ApiStripeAppSettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/slack/oauth/callback': {
+      id: '/api/slack/oauth/callback'
+      path: '/api/slack/oauth/callback'
+      fullPath: '/api/slack/oauth/callback'
+      preLoaderRoute: typeof ApiSlackOauthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/dev/emails/preview': {
@@ -664,8 +704,10 @@ const rootRouteChildren: RootRouteChildren = {
   DevRouteRoute: DevRouteRouteWithChildren,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiCacheImagesRoute: ApiCacheImagesRoute,
+  ApiSlackEventsRoute: ApiSlackEventsRoute,
   ApiStripeWebhookRoute: ApiStripeWebhookRoute,
   ApiDevEmailsPreviewRoute: ApiDevEmailsPreviewRoute,
+  ApiSlackOauthCallbackRoute: ApiSlackOauthCallbackRoute,
   ApiStripeAppSettingsRoute: ApiStripeAppSettingsRoute,
   ApiStripeAppSyncRoute: ApiStripeAppSyncRoute,
   ApiStripeOauthCallbackRoute: ApiStripeOauthCallbackRoute,

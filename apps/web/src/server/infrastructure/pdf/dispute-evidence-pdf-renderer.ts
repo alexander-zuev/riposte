@@ -40,6 +40,12 @@ export type RenderDisputeEvidencePdfInput = {
   document: DisputeEvidencePdfDocument
   branding: DisputeEvidencePdfBranding
   generatedAt: Date
+  constraints?: Partial<DisputeEvidencePdfRenderConstraints>
+}
+
+export type DisputeEvidencePdfRenderConstraints = {
+  maxPages: number
+  maxBytes: number
 }
 
 type RenderContext = {
@@ -56,6 +62,9 @@ type RenderContext = {
 export async function renderDisputeEvidencePdf(
   input: RenderDisputeEvidencePdfInput,
 ): Promise<Result<Uint8Array, EvidencePdfRenderError>> {
+  const validatedDocument = validateEvidencePdfDocument(input.document)
+  if (validatedDocument.isErr()) return Result.err(validatedDocument.error)
+
   const rendered = await Result.tryPromise({
     try: () => renderDisputeEvidencePdfUnsafe(input),
     catch: (cause) => new EvidencePdfRenderError({ reason: 'render_failed', cause }),
@@ -65,9 +74,120 @@ export async function renderDisputeEvidencePdf(
   return rendered.value
 }
 
+function validateEvidencePdfDocument(
+  document: DisputeEvidencePdfDocument,
+): Result<void, EvidencePdfRenderError> {
+  const issues: { path: string; message: string }[] = []
+
+  requireText(issues, 'title', document.title)
+  requireText(issues, 'subtitle', document.subtitle)
+  requireText(issues, 'finding.value', document.finding.value)
+
+  if (document.sections.length === 0) {
+    issues.push({ path: 'sections', message: 'At least one section is required' })
+  }
+
+  for (let sectionIndex = 0; sectionIndex < document.sections.length; sectionIndex += 1) {
+    const section = document.sections[sectionIndex]
+    if (!section) continue
+
+    requireText(issues, `sections.${sectionIndex}.heading`, section.heading)
+    if (section.blocks.length === 0) {
+      issues.push({
+        path: `sections.${sectionIndex}.blocks`,
+        message: 'At least one block is required',
+      })
+    }
+
+    for (let blockIndex = 0; blockIndex < section.blocks.length; blockIndex += 1) {
+      const block = section.blocks[blockIndex]
+      if (!block) continue
+
+      validateEvidencePdfBlock(issues, `sections.${sectionIndex}.blocks.${blockIndex}`, block)
+    }
+  }
+
+  if (issues.length > 0) {
+    return Result.err(new EvidencePdfRenderError({ reason: 'invalid_document', issues }))
+  }
+
+  return Result.ok(undefined)
+}
+
+function validateEvidencePdfBlock(
+  issues: { path: string; message: string }[],
+  path: string,
+  block: DisputeEvidencePdfBlock,
+): void {
+  switch (block.kind) {
+    case 'callout':
+      requireText(issues, `${path}.body`, block.body)
+      break
+    case 'key_value_grid':
+      if (block.items.length === 0) {
+        issues.push({ path: `${path}.items`, message: 'At least one item is required' })
+      }
+      for (let itemIndex = 0; itemIndex < block.items.length; itemIndex += 1) {
+        const item = block.items[itemIndex]
+        if (!item) continue
+
+        requireText(issues, `${path}.items.${itemIndex}.label`, item.label)
+      }
+      break
+    case 'timeline':
+      if (block.items.length === 0) {
+        issues.push({ path: `${path}.items`, message: 'At least one item is required' })
+      }
+      for (let itemIndex = 0; itemIndex < block.items.length; itemIndex += 1) {
+        const item = block.items[itemIndex]
+        if (!item) continue
+
+        requireText(issues, `${path}.items.${itemIndex}.label`, item.label)
+      }
+      break
+    case 'table':
+      if (block.rows.length > 0 && block.columns.length === 0) {
+        issues.push({ path: `${path}.columns`, message: 'Columns are required when rows exist' })
+      }
+      for (let columnIndex = 0; columnIndex < block.columns.length; columnIndex += 1) {
+        const column = block.columns[columnIndex]
+        if (!column) continue
+
+        requireText(issues, `${path}.columns.${columnIndex}.key`, column.key)
+        requireText(issues, `${path}.columns.${columnIndex}.label`, column.label)
+      }
+      break
+    case 'image_grid':
+      for (let imageIndex = 0; imageIndex < block.images.length; imageIndex += 1) {
+        const image = block.images[imageIndex]
+        if (!image) continue
+
+        requireText(issues, `${path}.images.${imageIndex}.label`, image.label)
+        requireText(issues, `${path}.images.${imageIndex}.alt`, image.alt)
+      }
+      break
+    case 'text':
+      requireText(issues, `${path}.body`, block.body)
+      break
+    default:
+      block satisfies never
+      issues.push({ path, message: 'Unsupported block kind' })
+  }
+}
+
+function requireText(
+  issues: { path: string; message: string }[],
+  path: string,
+  value: string,
+): void {
+  if (value.trim()) return
+  issues.push({ path, message: 'Required text is missing' })
+}
+
 async function renderDisputeEvidencePdfUnsafe(
   input: RenderDisputeEvidencePdfInput,
 ): Promise<Result<Uint8Array, EvidencePdfRenderError>> {
+  const constraints = resolveRenderConstraints(input.constraints)
   const pdf = PDF.create()
   pdf.setTitle(input.document.title)
   pdf.setAuthor(input.branding.merchantName)
@@ -102,12 +222,12 @@ async function renderDisputeEvidencePdfUnsafe(
   }
 
   const pageCount = pdf.getPageCount()
-  if (pageCount > STRIPE_DISPUTE_EVIDENCE_MAX_PAGES) {
+  if (pageCount > constraints.maxPages) {
     return Result.err(
       new EvidencePdfRenderError({
         reason: 'page_limit_exceeded',
         actual: pageCount,
-        limit: STRIPE_DISPUTE_EVIDENCE_MAX_PAGES,
+        limit: constraints.maxPages,
       }),
     )
   }
@@ -118,17 +238,35 @@ async function renderDisputeEvidencePdfUnsafe(
     subsetFonts: true,
   })
 
-  if (bytes.byteLength > STRIPE_DISPUTE_EVIDENCE_RECOMMENDED_MAX_BYTES) {
+  if (bytes.byteLength > constraints.maxBytes) {
     return Result.err(
       new EvidencePdfRenderError({
         reason: 'byte_limit_exceeded',
         actual: bytes.byteLength,
-        limit: STRIPE_DISPUTE_EVIDENCE_RECOMMENDED_MAX_BYTES,
+        limit: constraints.maxBytes,
       }),
     )
   }
 
   return Result.ok(bytes)
+}
+
+function resolveRenderConstraints(
+  constraints: Partial<DisputeEvidencePdfRenderConstraints> | undefined,
+): DisputeEvidencePdfRenderConstraints {
+  const resolved = {
+    maxPages: constraints?.maxPages ?? STRIPE_DISPUTE_EVIDENCE_MAX_PAGES,
+    maxBytes: constraints?.maxBytes ?? STRIPE_DISPUTE_EVIDENCE_RECOMMENDED_MAX_BYTES,
+  }
+
+  if (!Number.isInteger(resolved.maxPages) || resolved.maxPages <= 0) {
+    throw new Error('Evidence PDF maxPages constraint must be a positive integer')
+  }
+  if (!Number.isInteger(resolved.maxBytes) || resolved.maxBytes <= 0) {
+    throw new Error('Evidence PDF maxBytes constraint must be a positive integer')
+  }
+
+  return resolved
 }
 
 function addPage(input: {

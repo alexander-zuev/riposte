@@ -13,20 +13,19 @@ import { fetchStripeSignature } from '@stripe/ui-extension-sdk/utils'
 import React from 'react'
 
 type RequestStatus = 'idle' | 'loading' | 'syncing' | 'started' | 'error'
+type RequestErrorKind = 'network' | 'auth' | 'server' | 'unknown'
 
 type SettingsResponse = {
   lastSyncAt?: string | null
-  setupUrl?: string | null
 }
-
-const DEFAULT_SETUP_URL = 'https://riposte.sh/setup'
 
 export default function AppSettings({ environment, userContext }: ExtensionContextValue) {
   const [lastSyncAt, setLastSyncAt] = React.useState<string | null>(null)
-  const [setupUrl, setSetupUrl] = React.useState(DEFAULT_SETUP_URL)
   const [status, setStatus] = React.useState<RequestStatus>('idle')
+  const [errorKind, setErrorKind] = React.useState<RequestErrorKind>('unknown')
 
   const apiBase = getApiBase(environment.constants?.API_BASE)
+  const setupUrl = `${apiBase}/setup`
   const userId = userContext.id
   const accountId = userContext.account.id
   const livemode = environment.mode === 'live'
@@ -37,24 +36,20 @@ export default function AppSettings({ environment, userContext }: ExtensionConte
     async function loadSettings() {
       setStatus('loading')
       try {
-        const response = await signedStripeAppRequest(
-          `${apiBase}/api/stripe/app/settings`,
+        const response = await signedStripeAppRequest({
+          url: `${apiBase}/api/stripe/app/settings`,
           userId,
           accountId,
           livemode,
-        )
-
-        if (!response.ok) throw new Error(`Settings request failed: ${response.status}`)
-
+        })
         const settings = (await response.json()) as SettingsResponse
         if (cancelled) return
 
         setLastSyncAt(settings.lastSyncAt ?? null)
-        setSetupUrl(settings.setupUrl ?? DEFAULT_SETUP_URL)
         setStatus('idle')
       } catch (error) {
         if (cancelled) return
-        console.error(error)
+        setErrorKind(classifyRequestError(error))
         setStatus('error')
       }
     }
@@ -69,18 +64,16 @@ export default function AppSettings({ environment, userContext }: ExtensionConte
   async function startSync() {
     setStatus('syncing')
     try {
-      const response = await signedStripeAppRequest(
-        `${apiBase}/api/stripe/app/sync`,
+      await signedStripeAppRequest({
+        url: `${apiBase}/api/stripe/app/sync`,
         userId,
         accountId,
         livemode,
-      )
-
-      if (!response.ok) throw new Error(`Sync request failed: ${response.status}`)
+      })
 
       setStatus('started')
     } catch (error) {
-      console.error(error)
+      setErrorKind(classifyRequestError(error))
       setStatus('error')
     }
   }
@@ -91,8 +84,8 @@ export default function AppSettings({ environment, userContext }: ExtensionConte
         {status === 'error' && (
           <Banner
             type="critical"
-            title="Riposte could not reach the backend"
-            description="Try again, or open Riposte setup to finish configuration"
+            title={getErrorTitle(errorKind)}
+            description={getErrorDescription(errorKind)}
           />
         )}
 
@@ -148,27 +141,47 @@ export default function AppSettings({ environment, userContext }: ExtensionConte
   )
 }
 
-async function signedStripeAppRequest(
-  url: string,
-  userId: string | undefined,
-  accountId: string,
-  livemode: boolean,
-): Promise<Response> {
+async function signedStripeAppRequest(args: {
+  accountId: string
+  livemode: boolean
+  url: string
+  userId: string | undefined
+}): Promise<Response> {
+  const { accountId, livemode, url, userId } = args
   if (!userId) throw new Error('Missing Stripe user context')
 
   const payload = { livemode }
-  return fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Stripe-Signature': await fetchStripeSignature(payload),
-    },
-    body: JSON.stringify({
-      ...payload,
-      user_id: userId,
-      account_id: accountId,
-    }),
-  })
+  let response: Response
+  try {
+    response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Stripe-Signature': await fetchStripeSignature(payload),
+      },
+      body: JSON.stringify({
+        ...payload,
+        user_id: userId,
+        account_id: accountId,
+      }),
+    })
+  } catch (error) {
+    console.error('stripe_app_request_network_failed', { error, url })
+    throw new StripeAppRequestError('network')
+  }
+
+  if (!response.ok) {
+    const body = await readResponseBody(response)
+    console.error('stripe_app_request_failed', {
+      body,
+      status: response.status,
+      statusText: response.statusText,
+      url,
+    })
+    throw new StripeAppRequestError(classifyStatus(response.status))
+  }
+
+  return response
 }
 
 function getApiBase(value: unknown): string {
@@ -181,4 +194,56 @@ function formatLastSync(value: string | null): string {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return value
   return date.toLocaleString()
+}
+
+async function readResponseBody(response: Response): Promise<string | undefined> {
+  try {
+    return await response.clone().text()
+  } catch {
+    return undefined
+  }
+}
+
+function classifyStatus(status: number): RequestErrorKind {
+  if (status === 401 || status === 403) return 'auth'
+  if (status >= 500) return 'server'
+  return 'unknown'
+}
+
+function classifyRequestError(error: unknown): RequestErrorKind {
+  if (error instanceof StripeAppRequestError) return error.kind
+  console.error('stripe_app_request_unexpected_error', { error })
+  return 'unknown'
+}
+
+function getErrorTitle(kind: RequestErrorKind): string {
+  switch (kind) {
+    case 'network':
+      return 'Riposte could not be reached'
+    case 'auth':
+      return 'Riposte rejected the Stripe App request'
+    case 'server':
+      return 'Riposte hit a backend error'
+    case 'unknown':
+      return 'Riposte could not complete the request'
+  }
+}
+
+function getErrorDescription(kind: RequestErrorKind): string {
+  switch (kind) {
+    case 'network':
+      return 'Check the app backend URL, CORS, and content security policy'
+    case 'auth':
+      return 'Check the Stripe App signing secret and reinstall the current app version'
+    case 'server':
+      return 'Open Riposte to check setup, then try again'
+    case 'unknown':
+      return 'Try again, or open Riposte setup to finish configuration'
+  }
+}
+
+class StripeAppRequestError extends Error {
+  constructor(readonly kind: RequestErrorKind) {
+    super(`Stripe App request failed: ${kind}`)
+  }
 }

@@ -250,13 +250,20 @@ export class StripeOAuthCallbackError extends TaggedError('StripeOAuthCallbackEr
 }
 
 export type EvidencePdfRenderFailureReason =
+  | 'invalid_document'
   | 'page_limit_exceeded'
   | 'byte_limit_exceeded'
   | 'render_failed'
 
+export type EvidencePdfRenderIssue = {
+  path: string
+  message: string
+}
+
 export class EvidencePdfRenderError extends TaggedError('EvidencePdfRenderError')<{
   message: string
   reason: EvidencePdfRenderFailureReason
+  issues?: EvidencePdfRenderIssue[]
   actual?: number
   limit?: number
   cause?: unknown
@@ -264,6 +271,7 @@ export class EvidencePdfRenderError extends TaggedError('EvidencePdfRenderError'
 }>() {
   constructor(args: {
     reason: EvidencePdfRenderFailureReason
+    issues?: EvidencePdfRenderIssue[]
     actual?: number
     limit?: number
     cause?: unknown
@@ -271,6 +279,7 @@ export class EvidencePdfRenderError extends TaggedError('EvidencePdfRenderError'
   }) {
     super({
       reason: args.reason,
+      issues: args.issues,
       actual: args.actual,
       limit: args.limit,
       cause: args.cause,
@@ -286,6 +295,8 @@ function evidencePdfRenderErrorMessage(args: {
   limit?: number
 }): string {
   switch (args.reason) {
+    case 'invalid_document':
+      return 'Evidence PDF document is invalid'
     case 'page_limit_exceeded':
       return `Evidence PDF exceeds page limit: ${args.actual ?? 'unknown'} > ${args.limit ?? 'unknown'}`
     case 'byte_limit_exceeded':

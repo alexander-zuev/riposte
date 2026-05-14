@@ -245,7 +245,7 @@ function buildEvidencePdfSection(
       return buildRefundsCommunicationsPriorRelationshipSection(section, input)
     default:
       section.key satisfies never
-      throw new Error(`Unsupported evidence PDF section: ${section.key}`)
+      throw new Error('Unsupported evidence PDF section')
   }
 }
 

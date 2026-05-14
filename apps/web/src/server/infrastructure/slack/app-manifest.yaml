@@ -5,7 +5,7 @@ _metadata:
 display_information:
   name: Riposte
   description: Stripe dispute notifications for Riposte
-  long_description: Riposte helps merchants handle Stripe disputes and sends Slack notifications when new disputes arrive or workflow outcomes are ready.
+  long_description: Riposte turns Stripe disputes and merchant app activity into evidence packets, then notifies your team when new disputes arrive or workflows finish.
   background_color: "#1F2937"
 
 features:

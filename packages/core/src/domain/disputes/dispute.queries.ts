@@ -5,8 +5,8 @@ import { moneySchema, TimestamptzSchema, UserIdSchema } from '../primitives'
 import {
   contestDecisionKindSchema,
   disputeCaseWorkflowStatusSchema,
-  stripeDisputeStatusSchema,
-} from './dispute-case'
+} from './dispute-workflow-policy'
+import { stripeDisputeStatusSchema } from './stripe-dispute-taxonomy'
 
 export const disputeCaseSortFieldSchema = z.enum(['evidenceDueBy', 'stripeCreatedAt', 'amount'])
 export const disputeCaseSortDirectionSchema = z.enum(['asc', 'desc'])

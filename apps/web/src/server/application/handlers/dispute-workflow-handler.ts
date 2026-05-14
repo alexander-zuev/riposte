@@ -89,7 +89,7 @@ export async function triageDisputeCaseHandler(
     paymentMethodDetailsCardNetworkReasonCode:
       found.value.paymentMethodDetailsCardNetworkReasonCode,
     paymentMethodDetailsType: found.value.paymentMethodDetailsType,
-    reason: decision.reason,
+    reason: decision.code,
     stripeReason: found.value.reason,
   })
 
@@ -179,11 +179,10 @@ export async function generateEvidencePacket(
   })
   if (latest.isErr()) return Result.err(latest.error)
 
-  const packet = DisputeEvidencePacket.createFromDispute({
+  const packet = DisputeEvidencePacket.create({
     disputeCase: found.value,
     disputeContext: context.value,
     previousPacket: latest.value,
-    now: new Date(),
   })
 
   const saved = await deps.repos.disputeEvidencePackets(tx).save(packet)

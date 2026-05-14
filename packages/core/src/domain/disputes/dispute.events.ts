@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 import { baseEventSchema } from '../base/base.messages'
+import { supportedEvidencePacketReasonSchema } from './dispute-workflow-policy'
 
 export const disputeCaseReceivedSchema = baseEventSchema.extend({
   name: z.literal('DisputeCaseReceived'),
@@ -27,6 +28,17 @@ export const disputeCaseFailedSchema = baseEventSchema.extend({
 })
 
 export type DisputeCaseFailed = z.infer<typeof disputeCaseFailedSchema>
+
+export const disputeEvidencePacketCreatedSchema = baseEventSchema.extend({
+  name: z.literal('DisputeEvidencePacketCreated'),
+  disputeEvidencePacketId: z.uuid(),
+  disputeCaseId: z.string().min(1),
+  userId: z.uuid(),
+  version: z.number().int().positive(),
+  category: supportedEvidencePacketReasonSchema,
+})
+
+export type DisputeEvidencePacketCreated = z.infer<typeof disputeEvidencePacketCreatedSchema>
 
 export const scheduledDisputeSyncDueSchema = baseEventSchema.extend({
   name: z.literal('ScheduledDisputeSyncDue'),

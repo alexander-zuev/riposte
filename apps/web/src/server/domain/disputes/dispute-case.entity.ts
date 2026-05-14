@@ -1,17 +1,14 @@
 import {
-  STRIPE_DISPUTE_REASONS_FRAUD_ADJACENT,
-  STRIPE_DISPUTE_REASONS_NO_NORMAL_CONTEST_PATH,
-  STRIPE_DISPUTE_REASONS_POST_MVP,
-  STRIPE_DISPUTE_REASONS_REVIEW_ONLY,
-  STRIPE_DISPUTE_REASONS_SPECIAL_HANDLING_OUT_OF_MVP,
+  DISPUTE_REASON_WORKFLOW,
   ValidationError,
   createEvent,
   currencyCodeSchema,
+  stripeDisputeReasonSchema,
   stripeDisputeStatusSchema,
 } from '@riposte/core'
 import type {
   ContestDecision,
-  ContestDecisionReason,
+  ContestDecisionCode,
   CurrencyCode,
   DisputeCaseWorkflowStatus,
   StripeDisputeStatus,
@@ -65,9 +62,9 @@ export type DisputeCaseWorkflowState =
   | { status: 'failed'; reason: string }
 
 export type DisputeCaseEvaluation =
-  | { action: 'contest'; reason: ContestDecisionReason }
-  | { action: 'no_response'; reason: ContestDecisionReason }
-  | { action: 'await_human'; reason: ContestDecisionReason }
+  | { action: 'contest'; code: ContestDecisionCode; canGenerateEvidencePacket: boolean }
+  | { action: 'accept'; code: ContestDecisionCode }
+  | { action: 'no_response'; code: ContestDecisionCode }
 
 export type DisputeCaseSnapshot = {
   id: DisputeCaseId
@@ -356,32 +353,35 @@ export class DisputeCase extends Entity<DisputeCaseSnapshot> {
 
     switch (decision.action) {
       case 'contest':
-        this.recordContestDecision('contest', decision.reason, now)
-        this.state = { status: 'evaluated', evaluatedAt: cloneDate(now) }
+        this.recordContestDecision('contest', decision.code, now)
+        if (decision.canGenerateEvidencePacket) {
+          this.state = { status: 'evaluated', evaluatedAt: cloneDate(now) }
+        } else {
+          this.state = {
+            status: 'awaiting_human',
+            reason: 'missing_input',
+            missingEvidence: [
+              {
+                code: decision.code,
+                message: getEvaluationHumanInputMessage(decision.code),
+              },
+            ],
+            evidencePacketId: null,
+            requestedAt: cloneDate(now),
+          }
+        }
         this.touch(now)
         return decision
       case 'no_response':
-        this.recordContestDecision('no_response', decision.reason, now)
+        this.recordContestDecision('no_response', decision.code, now)
         this.markCompleted(
-          decision.reason === 'evidence_deadline_past' ? 'deadline_missed' : 'no_response',
+          decision.code === 'evidence_deadline_past' ? 'deadline_missed' : 'no_response',
           now,
         )
         return decision
-      case 'await_human':
-        this.recordContestDecision('contest', decision.reason, now)
-        this.state = {
-          status: 'awaiting_human',
-          reason: 'missing_input',
-          missingEvidence: [
-            {
-              code: decision.reason,
-              message: getEvaluationHumanInputMessage(decision.reason),
-            },
-          ],
-          evidencePacketId: null,
-          requestedAt: cloneDate(now),
-        }
-        this.touch(now)
+      case 'accept':
+        this.recordContestDecision('accept', decision.code, now)
+        this.markCompleted('accept_submitted', now)
         return decision
       default:
         return assertNever(decision)
@@ -390,47 +390,37 @@ export class DisputeCase extends Entity<DisputeCaseSnapshot> {
 
   private determineEvaluation(now: Date): DisputeCaseEvaluation {
     if (this.paymentMethodDetailsType !== 'card') {
-      return { action: 'no_response', reason: 'non_card_mvp' }
-    }
-
-    if (includes(STRIPE_DISPUTE_REASONS_NO_NORMAL_CONTEST_PATH, this.reason)) {
-      return { action: 'no_response', reason: 'no_normal_contest_path' }
-    }
-
-    if (includes(STRIPE_DISPUTE_REASONS_SPECIAL_HANDLING_OUT_OF_MVP, this.reason)) {
-      return { action: 'no_response', reason: 'special_handling_out_of_mvp' }
-    }
-
-    if (includes(STRIPE_DISPUTE_REASONS_POST_MVP, this.reason)) {
-      return { action: 'no_response', reason: 'post_mvp_reason' }
+      return { action: 'no_response', code: 'non_card_mvp' }
     }
 
     if (this.paymentMethodDetailsCardNetworkReasonCode === '10.5') {
-      return { action: 'no_response', reason: 'visa_10_5_no_remedy' }
+      return { action: 'no_response', code: 'visa_10_5_no_remedy' }
     }
 
     const evidenceDetailsDueBy = this.getEvidenceDetailsDueBy()
 
     if (!evidenceDetailsDueBy) {
-      return { action: 'no_response', reason: 'no_usable_evidence_deadline' }
+      return { action: 'no_response', code: 'no_usable_evidence_deadline' }
     }
 
     if (evidenceDetailsDueBy.getTime() <= now.getTime()) {
-      return { action: 'no_response', reason: 'evidence_deadline_past' }
+      return { action: 'no_response', code: 'evidence_deadline_past' }
     }
 
-    if (includes(STRIPE_DISPUTE_REASONS_FRAUD_ADJACENT, this.reason)) {
-      return { action: 'contest', reason: 'supported_card_fraud_adjacent' }
-    }
+    const parsedReason = stripeDisputeReasonSchema.safeParse(this.reason)
+    if (!parsedReason.success) return { action: 'no_response', code: 'post_mvp_reason' }
 
-    if (includes(STRIPE_DISPUTE_REASONS_REVIEW_ONLY, this.reason) || this.reason === 'general') {
+    const workflow = DISPUTE_REASON_WORKFLOW[parsedReason.data]
+    const policy = workflow.contestPolicy
+    if (policy.decision === 'contest') {
       return {
-        action: 'await_human',
-        reason: this.reason === 'general' ? 'general_reason' : 'review_only_reason',
+        action: 'contest',
+        code: policy.code,
+        canGenerateEvidencePacket: workflow.evidencePacket.supported,
       }
     }
 
-    return { action: 'no_response', reason: 'post_mvp_reason' }
+    return { action: policy.decision, code: policy.code }
   }
 
   startEvidenceCollection(now: Date = new Date()): void {
@@ -538,12 +528,12 @@ export class DisputeCase extends Entity<DisputeCaseSnapshot> {
 
   private recordContestDecision(
     status: Exclude<ContestDecision['status'], 'undecided'>,
-    reason: ContestDecisionReason,
+    code: ContestDecisionCode,
     now: Date,
   ): void {
     this.contestDecision = {
       status,
-      reason,
+      code,
       decidedAt: cloneDate(now),
     }
   }
@@ -622,14 +612,14 @@ function includes<const T extends readonly string[]>(values: T, value: string): 
   return values.includes(value)
 }
 
-function getEvaluationHumanInputMessage(reason: ContestDecisionReason): string {
-  switch (reason) {
+function getEvaluationHumanInputMessage(code: ContestDecisionCode): string {
+  switch (code) {
     case 'general_reason':
       return 'Stripe dispute reason is too general for autopilot'
     case 'review_only_reason':
       return 'Dispute reason is review-only for MVP'
     default:
-      return `Merchant input is required for contest decision reason: ${reason}`
+      return `Merchant input is required for contest decision code: ${code}`
   }
 }
 

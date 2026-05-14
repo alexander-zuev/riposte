@@ -2,6 +2,7 @@ import {
   AuthenticationError,
   AuthorizationError,
   EntityNotFoundError,
+  InternalServerError,
   RateLimitError,
   ValidationError,
   createLogger,
@@ -45,6 +46,11 @@ export function apiErrorResponse(error: unknown): Response {
 
   if (RateLimitError.is(error)) {
     return Response.json({ error: error.message }, { status: 429 })
+  }
+
+  if (InternalServerError.is(error)) {
+    logger.error('api_internal_server_error', { error })
+    return Response.json({ error: 'Internal server error' }, { status: 500 })
   }
 
   if (isRetryable(error)) {

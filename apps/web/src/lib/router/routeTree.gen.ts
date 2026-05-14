@@ -9,9 +9,12 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './../../routes/__root'
+import { Route as DevRouteRouteImport } from './../../routes/dev/route'
 import { Route as PublicRouteRouteImport } from './../../routes/_public/route'
 import { Route as AuthedRouteRouteImport } from './../../routes/_authed/route'
+import { Route as DevIndexRouteImport } from './../../routes/dev/index'
 import { Route as PublicIndexRouteImport } from './../../routes/_public/index'
+import { Route as DevEvidencePacketsRouteImport } from './../../routes/dev/evidence-packets'
 import { Route as DevEmailsRouteImport } from './../../routes/dev/emails'
 import { Route as PublicTermsRouteImport } from './../../routes/_public/terms'
 import { Route as PublicSubProcessorsRouteImport } from './../../routes/_public/sub-processors'
@@ -23,6 +26,9 @@ import { Route as AuthedDisputesRouteImport } from './../../routes/_authed/dispu
 import { Route as AuthedDashboardRouteImport } from './../../routes/_authed/dashboard'
 import { Route as AuthedBillingRouteImport } from './../../routes/_authed/billing'
 import { Route as AuthedAccountRouteImport } from './../../routes/_authed/account'
+import { Route as DevEmailsIndexRouteImport } from './../../routes/dev/emails/index'
+import { Route as DevEvidencePacketsPdfRouteImport } from './../../routes/dev/evidence-packets/pdf'
+import { Route as DevEmailsPreviewRouteImport } from './../../routes/dev/emails/preview'
 import { Route as ApiStripeWebhookRouteImport } from './../../routes/api/stripe/webhook'
 import { Route as ApiCacheImagesRouteImport } from './../../routes/api/cache/images'
 import { Route as ApiAuthSplatRouteImport } from './../../routes/api/auth/$'
@@ -30,7 +36,13 @@ import { Route as AuthedDisputesDisputeIdRouteImport } from './../../routes/_aut
 import { Route as ApiStripeOauthCallbackRouteImport } from './../../routes/api/stripe/oauth/callback'
 import { Route as ApiStripeAppSyncRouteImport } from './../../routes/api/stripe/app/sync'
 import { Route as ApiStripeAppSettingsRouteImport } from './../../routes/api/stripe/app/settings'
+import { Route as ApiDevEmailsPreviewRouteImport } from './../../routes/api/dev/emails/preview'
 
+const DevRouteRoute = DevRouteRouteImport.update({
+  id: '/dev',
+  path: '/dev',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PublicRouteRoute = PublicRouteRouteImport.update({
   id: '/_public',
   getParentRoute: () => rootRouteImport,
@@ -39,15 +51,25 @@ const AuthedRouteRoute = AuthedRouteRouteImport.update({
   id: '/_authed',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DevIndexRoute = DevIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DevRouteRoute,
+} as any)
 const PublicIndexRoute = PublicIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => PublicRouteRoute,
 } as any)
+const DevEvidencePacketsRoute = DevEvidencePacketsRouteImport.update({
+  id: '/evidence-packets',
+  path: '/evidence-packets',
+  getParentRoute: () => DevRouteRoute,
+} as any)
 const DevEmailsRoute = DevEmailsRouteImport.update({
-  id: '/dev/emails',
-  path: '/dev/emails',
-  getParentRoute: () => rootRouteImport,
+  id: '/emails',
+  path: '/emails',
+  getParentRoute: () => DevRouteRoute,
 } as any)
 const PublicTermsRoute = PublicTermsRouteImport.update({
   id: '/terms',
@@ -99,6 +121,21 @@ const AuthedAccountRoute = AuthedAccountRouteImport.update({
   path: '/account',
   getParentRoute: () => AuthedRouteRoute,
 } as any)
+const DevEmailsIndexRoute = DevEmailsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DevEmailsRoute,
+} as any)
+const DevEvidencePacketsPdfRoute = DevEvidencePacketsPdfRouteImport.update({
+  id: '/pdf',
+  path: '/pdf',
+  getParentRoute: () => DevEvidencePacketsRoute,
+} as any)
+const DevEmailsPreviewRoute = DevEmailsPreviewRouteImport.update({
+  id: '/preview',
+  path: '/preview',
+  getParentRoute: () => DevEmailsRoute,
+} as any)
 const ApiStripeWebhookRoute = ApiStripeWebhookRouteImport.update({
   id: '/api/stripe/webhook',
   path: '/api/stripe/webhook',
@@ -134,9 +171,15 @@ const ApiStripeAppSettingsRoute = ApiStripeAppSettingsRouteImport.update({
   path: '/api/stripe/app/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiDevEmailsPreviewRoute = ApiDevEmailsPreviewRouteImport.update({
+  id: '/api/dev/emails/preview',
+  path: '/api/dev/emails/preview',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof PublicIndexRoute
+  '/dev': typeof DevRouteRouteWithChildren
   '/account': typeof AuthedAccountRoute
   '/billing': typeof AuthedBillingRoute
   '/dashboard': typeof AuthedDashboardRoute
@@ -147,11 +190,17 @@ export interface FileRoutesByFullPath {
   '/sign-in': typeof PublicSignInRoute
   '/sub-processors': typeof PublicSubProcessorsRoute
   '/terms': typeof PublicTermsRoute
-  '/dev/emails': typeof DevEmailsRoute
+  '/dev/emails': typeof DevEmailsRouteWithChildren
+  '/dev/evidence-packets': typeof DevEvidencePacketsRouteWithChildren
+  '/dev/': typeof DevIndexRoute
   '/disputes/$disputeId': typeof AuthedDisputesDisputeIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/cache/images': typeof ApiCacheImagesRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
+  '/dev/emails/preview': typeof DevEmailsPreviewRoute
+  '/dev/evidence-packets/pdf': typeof DevEvidencePacketsPdfRoute
+  '/dev/emails/': typeof DevEmailsIndexRoute
+  '/api/dev/emails/preview': typeof ApiDevEmailsPreviewRoute
   '/api/stripe/app/settings': typeof ApiStripeAppSettingsRoute
   '/api/stripe/app/sync': typeof ApiStripeAppSyncRoute
   '/api/stripe/oauth/callback': typeof ApiStripeOauthCallbackRoute
@@ -168,11 +217,16 @@ export interface FileRoutesByTo {
   '/sign-in': typeof PublicSignInRoute
   '/sub-processors': typeof PublicSubProcessorsRoute
   '/terms': typeof PublicTermsRoute
-  '/dev/emails': typeof DevEmailsRoute
+  '/dev/evidence-packets': typeof DevEvidencePacketsRouteWithChildren
+  '/dev': typeof DevIndexRoute
   '/disputes/$disputeId': typeof AuthedDisputesDisputeIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/cache/images': typeof ApiCacheImagesRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
+  '/dev/emails/preview': typeof DevEmailsPreviewRoute
+  '/dev/evidence-packets/pdf': typeof DevEvidencePacketsPdfRoute
+  '/dev/emails': typeof DevEmailsIndexRoute
+  '/api/dev/emails/preview': typeof ApiDevEmailsPreviewRoute
   '/api/stripe/app/settings': typeof ApiStripeAppSettingsRoute
   '/api/stripe/app/sync': typeof ApiStripeAppSyncRoute
   '/api/stripe/oauth/callback': typeof ApiStripeOauthCallbackRoute
@@ -181,6 +235,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authed': typeof AuthedRouteRouteWithChildren
   '/_public': typeof PublicRouteRouteWithChildren
+  '/dev': typeof DevRouteRouteWithChildren
   '/_authed/account': typeof AuthedAccountRoute
   '/_authed/billing': typeof AuthedBillingRoute
   '/_authed/dashboard': typeof AuthedDashboardRoute
@@ -191,12 +246,18 @@ export interface FileRoutesById {
   '/_public/sign-in': typeof PublicSignInRoute
   '/_public/sub-processors': typeof PublicSubProcessorsRoute
   '/_public/terms': typeof PublicTermsRoute
-  '/dev/emails': typeof DevEmailsRoute
+  '/dev/emails': typeof DevEmailsRouteWithChildren
+  '/dev/evidence-packets': typeof DevEvidencePacketsRouteWithChildren
   '/_public/': typeof PublicIndexRoute
+  '/dev/': typeof DevIndexRoute
   '/_authed/disputes/$disputeId': typeof AuthedDisputesDisputeIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/cache/images': typeof ApiCacheImagesRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
+  '/dev/emails/preview': typeof DevEmailsPreviewRoute
+  '/dev/evidence-packets/pdf': typeof DevEvidencePacketsPdfRoute
+  '/dev/emails/': typeof DevEmailsIndexRoute
+  '/api/dev/emails/preview': typeof ApiDevEmailsPreviewRoute
   '/api/stripe/app/settings': typeof ApiStripeAppSettingsRoute
   '/api/stripe/app/sync': typeof ApiStripeAppSyncRoute
   '/api/stripe/oauth/callback': typeof ApiStripeOauthCallbackRoute
@@ -205,6 +266,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/dev'
     | '/account'
     | '/billing'
     | '/dashboard'
@@ -216,10 +278,16 @@ export interface FileRouteTypes {
     | '/sub-processors'
     | '/terms'
     | '/dev/emails'
+    | '/dev/evidence-packets'
+    | '/dev/'
     | '/disputes/$disputeId'
     | '/api/auth/$'
     | '/api/cache/images'
     | '/api/stripe/webhook'
+    | '/dev/emails/preview'
+    | '/dev/evidence-packets/pdf'
+    | '/dev/emails/'
+    | '/api/dev/emails/preview'
     | '/api/stripe/app/settings'
     | '/api/stripe/app/sync'
     | '/api/stripe/oauth/callback'
@@ -236,11 +304,16 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/sub-processors'
     | '/terms'
-    | '/dev/emails'
+    | '/dev/evidence-packets'
+    | '/dev'
     | '/disputes/$disputeId'
     | '/api/auth/$'
     | '/api/cache/images'
     | '/api/stripe/webhook'
+    | '/dev/emails/preview'
+    | '/dev/evidence-packets/pdf'
+    | '/dev/emails'
+    | '/api/dev/emails/preview'
     | '/api/stripe/app/settings'
     | '/api/stripe/app/sync'
     | '/api/stripe/oauth/callback'
@@ -248,6 +321,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/_authed'
     | '/_public'
+    | '/dev'
     | '/_authed/account'
     | '/_authed/billing'
     | '/_authed/dashboard'
@@ -259,11 +333,17 @@ export interface FileRouteTypes {
     | '/_public/sub-processors'
     | '/_public/terms'
     | '/dev/emails'
+    | '/dev/evidence-packets'
     | '/_public/'
+    | '/dev/'
     | '/_authed/disputes/$disputeId'
     | '/api/auth/$'
     | '/api/cache/images'
     | '/api/stripe/webhook'
+    | '/dev/emails/preview'
+    | '/dev/evidence-packets/pdf'
+    | '/dev/emails/'
+    | '/api/dev/emails/preview'
     | '/api/stripe/app/settings'
     | '/api/stripe/app/sync'
     | '/api/stripe/oauth/callback'
@@ -272,10 +352,11 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   AuthedRouteRoute: typeof AuthedRouteRouteWithChildren
   PublicRouteRoute: typeof PublicRouteRouteWithChildren
-  DevEmailsRoute: typeof DevEmailsRoute
+  DevRouteRoute: typeof DevRouteRouteWithChildren
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiCacheImagesRoute: typeof ApiCacheImagesRoute
   ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
+  ApiDevEmailsPreviewRoute: typeof ApiDevEmailsPreviewRoute
   ApiStripeAppSettingsRoute: typeof ApiStripeAppSettingsRoute
   ApiStripeAppSyncRoute: typeof ApiStripeAppSyncRoute
   ApiStripeOauthCallbackRoute: typeof ApiStripeOauthCallbackRoute
@@ -283,6 +364,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/dev': {
+      id: '/dev'
+      path: '/dev'
+      fullPath: '/dev'
+      preLoaderRoute: typeof DevRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_public': {
       id: '/_public'
       path: ''
@@ -297,6 +385,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dev/': {
+      id: '/dev/'
+      path: '/'
+      fullPath: '/dev/'
+      preLoaderRoute: typeof DevIndexRouteImport
+      parentRoute: typeof DevRouteRoute
+    }
     '/_public/': {
       id: '/_public/'
       path: '/'
@@ -304,12 +399,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicIndexRouteImport
       parentRoute: typeof PublicRouteRoute
     }
+    '/dev/evidence-packets': {
+      id: '/dev/evidence-packets'
+      path: '/evidence-packets'
+      fullPath: '/dev/evidence-packets'
+      preLoaderRoute: typeof DevEvidencePacketsRouteImport
+      parentRoute: typeof DevRouteRoute
+    }
     '/dev/emails': {
       id: '/dev/emails'
-      path: '/dev/emails'
+      path: '/emails'
       fullPath: '/dev/emails'
       preLoaderRoute: typeof DevEmailsRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof DevRouteRoute
     }
     '/_public/terms': {
       id: '/_public/terms'
@@ -381,6 +483,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedAccountRouteImport
       parentRoute: typeof AuthedRouteRoute
     }
+    '/dev/emails/': {
+      id: '/dev/emails/'
+      path: '/'
+      fullPath: '/dev/emails/'
+      preLoaderRoute: typeof DevEmailsIndexRouteImport
+      parentRoute: typeof DevEmailsRoute
+    }
+    '/dev/evidence-packets/pdf': {
+      id: '/dev/evidence-packets/pdf'
+      path: '/pdf'
+      fullPath: '/dev/evidence-packets/pdf'
+      preLoaderRoute: typeof DevEvidencePacketsPdfRouteImport
+      parentRoute: typeof DevEvidencePacketsRoute
+    }
+    '/dev/emails/preview': {
+      id: '/dev/emails/preview'
+      path: '/preview'
+      fullPath: '/dev/emails/preview'
+      preLoaderRoute: typeof DevEmailsPreviewRouteImport
+      parentRoute: typeof DevEmailsRoute
+    }
     '/api/stripe/webhook': {
       id: '/api/stripe/webhook'
       path: '/api/stripe/webhook'
@@ -428,6 +551,13 @@ declare module '@tanstack/react-router' {
       path: '/api/stripe/app/settings'
       fullPath: '/api/stripe/app/settings'
       preLoaderRoute: typeof ApiStripeAppSettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/dev/emails/preview': {
+      id: '/api/dev/emails/preview'
+      path: '/api/dev/emails/preview'
+      fullPath: '/api/dev/emails/preview'
+      preLoaderRoute: typeof ApiDevEmailsPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -487,13 +617,55 @@ const PublicRouteRouteWithChildren = PublicRouteRoute._addFileChildren(
   PublicRouteRouteChildren,
 )
 
+interface DevEmailsRouteChildren {
+  DevEmailsPreviewRoute: typeof DevEmailsPreviewRoute
+  DevEmailsIndexRoute: typeof DevEmailsIndexRoute
+}
+
+const DevEmailsRouteChildren: DevEmailsRouteChildren = {
+  DevEmailsPreviewRoute: DevEmailsPreviewRoute,
+  DevEmailsIndexRoute: DevEmailsIndexRoute,
+}
+
+const DevEmailsRouteWithChildren = DevEmailsRoute._addFileChildren(
+  DevEmailsRouteChildren,
+)
+
+interface DevEvidencePacketsRouteChildren {
+  DevEvidencePacketsPdfRoute: typeof DevEvidencePacketsPdfRoute
+}
+
+const DevEvidencePacketsRouteChildren: DevEvidencePacketsRouteChildren = {
+  DevEvidencePacketsPdfRoute: DevEvidencePacketsPdfRoute,
+}
+
+const DevEvidencePacketsRouteWithChildren =
+  DevEvidencePacketsRoute._addFileChildren(DevEvidencePacketsRouteChildren)
+
+interface DevRouteRouteChildren {
+  DevEmailsRoute: typeof DevEmailsRouteWithChildren
+  DevEvidencePacketsRoute: typeof DevEvidencePacketsRouteWithChildren
+  DevIndexRoute: typeof DevIndexRoute
+}
+
+const DevRouteRouteChildren: DevRouteRouteChildren = {
+  DevEmailsRoute: DevEmailsRouteWithChildren,
+  DevEvidencePacketsRoute: DevEvidencePacketsRouteWithChildren,
+  DevIndexRoute: DevIndexRoute,
+}
+
+const DevRouteRouteWithChildren = DevRouteRoute._addFileChildren(
+  DevRouteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   AuthedRouteRoute: AuthedRouteRouteWithChildren,
   PublicRouteRoute: PublicRouteRouteWithChildren,
-  DevEmailsRoute: DevEmailsRoute,
+  DevRouteRoute: DevRouteRouteWithChildren,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiCacheImagesRoute: ApiCacheImagesRoute,
   ApiStripeWebhookRoute: ApiStripeWebhookRoute,
+  ApiDevEmailsPreviewRoute: ApiDevEmailsPreviewRoute,
   ApiStripeAppSettingsRoute: ApiStripeAppSettingsRoute,
   ApiStripeAppSyncRoute: ApiStripeAppSyncRoute,
   ApiStripeOauthCallbackRoute: ApiStripeOauthCallbackRoute,

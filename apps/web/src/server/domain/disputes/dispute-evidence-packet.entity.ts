@@ -17,11 +17,13 @@ import { buildEvidencePdfDocument } from './dispute-evidence-packet-template.ser
 import type { DisputeEvidencePdfDocument } from './dispute-evidence-packet-template.service'
 import type { StripeDisputeContext } from './stripe-dispute-context.entity'
 
+export const EVIDENCE_PDF_STRIPE_EVIDENCE_FIELD = 'service_documentation' as const
+
 export type EvidencePdfArtifact = {
   kind: 'evidence_pdf'
   reasonCodeCategory: StripeDisputeReasonCodeCategory
   productType: StripeDisputeEvidenceProductType
-  stripeEvidenceField: 'uncategorized_file'
+  stripeEvidenceField: typeof EVIDENCE_PDF_STRIPE_EVIDENCE_FIELD
   r2Key: string
   contentType: 'application/pdf'
 }
@@ -34,7 +36,6 @@ export type FraudDigitalStripeEvidencePayload = {
   customer_email_address: string | null
   access_activity_log: string | null
   uncategorized_text: string | null
-  service_documentation: null
 }
 
 export type EvidenceQuality = 'low' | 'medium' | 'high'
@@ -102,7 +103,7 @@ export class DisputeEvidencePacket extends Entity<DisputeEvidencePacketSnapshot>
       stripeEvidencePayload,
     })
     if (pdfDocument.isErr()) return Result.err(pdfDocument.error)
-    const artifacts = buildFraudEvidencePacketArtifacts(
+    const artifacts = buildEvidencePacketArtifacts(
       input.disputeCase,
       reasonCodeCategory,
       productType,
@@ -243,11 +244,10 @@ function buildFraudDigitalStripeEvidencePayload(
     customer_email_address: customerEmail,
     access_activity_log: nonEmptyString(input.collectedEvidence?.accessActivityLog),
     uncategorized_text: nonEmptyString(input.collectedEvidence?.merchantPosition),
-    service_documentation: null,
   }
 }
 
-function buildFraudEvidencePacketArtifacts(
+function buildEvidencePacketArtifacts(
   disputeCase: DisputeCase,
   reasonCodeCategory: StripeDisputeReasonCodeCategory,
   productType: StripeDisputeEvidenceProductType,
@@ -255,11 +255,11 @@ function buildFraudEvidencePacketArtifacts(
   packetId: UUIDv4,
 ): DisputeEvidencePacketArtifact[] {
   return [
-    buildFraudEvidencePdfArtifact(disputeCase, reasonCodeCategory, productType, version, packetId),
+    buildEvidencePdfArtifact(disputeCase, reasonCodeCategory, productType, version, packetId),
   ]
 }
 
-function buildFraudEvidencePdfArtifact(
+function buildEvidencePdfArtifact(
   disputeCase: DisputeCase,
   reasonCodeCategory: StripeDisputeReasonCodeCategory,
   productType: StripeDisputeEvidenceProductType,
@@ -270,8 +270,15 @@ function buildFraudEvidencePdfArtifact(
     kind: 'evidence_pdf',
     reasonCodeCategory,
     productType,
-    stripeEvidenceField: 'uncategorized_file',
-    r2Key: buildFraudEvidencePdfR2Key(disputeCase.userId, disputeCase.id, version, packetId),
+    stripeEvidenceField: EVIDENCE_PDF_STRIPE_EVIDENCE_FIELD,
+    r2Key: buildEvidencePdfR2Key(
+      disputeCase.userId,
+      disputeCase.id,
+      reasonCodeCategory,
+      productType,
+      version,
+      packetId,
+    ),
     contentType: 'application/pdf',
   }
 }
@@ -287,13 +294,15 @@ function assessEvidenceQuality(
   return 'medium'
 }
 
-function buildFraudEvidencePdfR2Key(
+function buildEvidencePdfR2Key(
   userId: UUIDv4,
   disputeCaseId: string,
+  reasonCodeCategory: StripeDisputeReasonCodeCategory,
+  productType: StripeDisputeEvidenceProductType,
   version: number,
   packetId: UUIDv4,
 ): string {
-  return `users/${userId}/disputes/${disputeCaseId}/evidence-packets/v${version}/${packetId}/fraud-evidence.pdf`
+  return `users/${userId}/disputes/${disputeCaseId}/evidence-packets/v${version}/${packetId}/${reasonCodeCategory}-${productType}-service-documentation.pdf`
 }
 
 function stripeEvidenceString(value: unknown): string | null {

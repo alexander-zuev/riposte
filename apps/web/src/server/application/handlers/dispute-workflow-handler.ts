@@ -1,19 +1,22 @@
 import type {
+  BlobStorageError,
   CollectDisputeEvidence,
   DatabaseError,
   DisputeCaseReceived,
   EnrichDisputeContext,
+  EvidencePdfRenderError,
   GenerateEvidencePacket,
   RouteDisputeSubmissionPolicy,
   SubmitDisputeResponse,
   TriageDisputeCase,
-  ValidationError,
   WorkflowError,
+  ValidationError as ValidationErrorType,
 } from '@riposte/core'
-import { createLogger, EntityNotFoundError } from '@riposte/core'
+import { createLogger, EntityNotFoundError, ValidationError } from '@riposte/core'
 import type { HandlerContext } from '@server/application/registry/types'
 import { DisputeEvidencePacket, StripeDisputeContext } from '@server/domain/disputes'
 import type { DisputeCaseEvaluation } from '@server/domain/disputes'
+import { renderDisputeEvidencePdf } from '@server/infrastructure/pdf/dispute-evidence-pdf-renderer'
 import type { GetClientError } from '@server/infrastructure/stripe/stripe-client-provider'
 import { fetchStripeDisputeContext } from '@server/infrastructure/stripe/stripe-dispute-enrichment'
 import { Result } from 'better-result'
@@ -25,7 +28,9 @@ type DisputeWorkflowCommandError =
   | DatabaseError
   | EntityNotFoundError
   | GetClientError
-  | ValidationError
+  | ValidationErrorType
+  | EvidencePdfRenderError
+  | BlobStorageError
 
 // Temporary post-evaluation workflow contracts. Keep the action shape stable as
 // evidence collection, packet generation, policy routing, and submission become real.
@@ -185,6 +190,43 @@ export async function generateEvidencePacket(
     previousPacket: latest.value,
   })
   if (packet.isErr()) return Result.err(packet.error)
+
+  const stripeConnection = await deps.repos
+    .stripeConnections(tx)
+    .findByStripeAccountId(found.value.stripeAccountId)
+  if (stripeConnection.isErr()) return Result.err(stripeConnection.error)
+
+  const renderedPdf = await renderDisputeEvidencePdf({
+    document: packet.value.pdfDocument,
+    branding: {
+      merchantName: stripeConnection.value?.stripeBusinessName ?? found.value.stripeAccountId,
+    },
+    generatedAt: packet.value.createdAt,
+  })
+  if (renderedPdf.isErr()) return Result.err(renderedPdf.error)
+
+  const pdfArtifact = packet.value.artifacts.find((artifact) => artifact.kind === 'evidence_pdf')
+  if (!pdfArtifact) {
+    return Result.err(
+      new ValidationError({
+        message: 'Evidence packet PDF artifact is missing',
+        issues: [
+          {
+            code: 'missing_required',
+            path: ['artifacts'],
+            message: 'Evidence packet PDF artifact is missing',
+          },
+        ],
+      }),
+    )
+  }
+
+  const savedBlob = await deps.repos.disputeEvidenceArtifactBlobs().save({
+    r2Key: pdfArtifact.r2Key,
+    bytes: renderedPdf.value,
+    contentType: pdfArtifact.contentType,
+  })
+  if (savedBlob.isErr()) return Result.err(savedBlob.error)
 
   const saved = await deps.repos.disputeEvidencePackets(tx).save(packet.value)
   if (saved.isErr()) return Result.err(saved.error)

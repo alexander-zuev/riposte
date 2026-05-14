@@ -73,6 +73,12 @@
           "id": "bb86e16ef25d43cabcad08f2d3ae8fb3",
         },
       ],
+      "r2_buckets": [
+        {
+          "binding": "RIPOSTE_BUCKET",
+          "bucket_name": "riposte-bucket-dev",
+        },
+      ],
       "queues": {
         "producers": [
           {
@@ -171,6 +177,12 @@
         {
           "binding": "CACHE_KV",
           "id": "bb86e16ef25d43cabcad08f2d3ae8fb3",
+        },
+      ],
+      "r2_buckets": [
+        {
+          "binding": "RIPOSTE_BUCKET",
+          "bucket_name": "riposte-bucket-staging",
         },
       ],
       "queues": {
@@ -292,6 +304,12 @@
           "id": "test-cache-kv",
         },
       ],
+      "r2_buckets": [
+        {
+          "binding": "RIPOSTE_BUCKET",
+          "bucket_name": "riposte-bucket-test",
+        },
+      ],
       "queues": {
         "producers": [
           {
@@ -365,6 +383,12 @@
         {
           "binding": "CACHE_KV",
           "id": "bb86e16ef25d43cabcad08f2d3ae8fb3",
+        },
+      ],
+      "r2_buckets": [
+        {
+          "binding": "RIPOSTE_BUCKET",
+          "bucket_name": "riposte-bucket-prod",
         },
       ],
       "queues": {

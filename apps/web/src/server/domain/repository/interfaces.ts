@@ -1,4 +1,5 @@
 import type {
+  BlobStorageError,
   CredentialEncryptionError,
   DatabaseError,
   DomainEvent,
@@ -80,6 +81,29 @@ export interface IDisputeEvidencePacketRepository {
     disputeCaseId: string
   }) => Promise<Result<DisputeEvidencePacket | null, DatabaseError>>
   save: (packet: DisputeEvidencePacket) => Promise<Result<DisputeEvidencePacket, DatabaseError>>
+}
+
+/* -------------------------------------------------------------------------------------------------
+ * Dispute Evidence Artifact Blob Repository
+ * ------------------------------------------------------------------------------------------------- */
+
+export type SaveDisputeEvidenceArtifactBlobInput = {
+  r2Key: string
+  bytes: Uint8Array
+  contentType: string
+}
+
+export type DisputeEvidenceArtifactBlob = {
+  r2Key: string
+  contentType: string
+  byteSize: number
+  etag: string
+}
+
+export interface IDisputeEvidenceArtifactBlobRepository {
+  save: (
+    input: SaveDisputeEvidenceArtifactBlobInput,
+  ) => Promise<Result<DisputeEvidenceArtifactBlob, BlobStorageError>>
 }
 
 /* -------------------------------------------------------------------------------------------------

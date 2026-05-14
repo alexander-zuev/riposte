@@ -1,5 +1,8 @@
 import { TaggedError } from 'better-result'
 
+import type { BlobStorageError } from './bucket.errors'
+import type { DatabaseError } from './database.errors'
+
 export class DuplicateMessageError extends TaggedError('DuplicateMessageError')<{
   messageId: string
   message: string
@@ -325,5 +328,4 @@ export type InfrastructureError =
   | StripeConnectionUnavailableError
   | StripeOAuthCallbackError
   | EvidencePdfRenderError
-
-import { DatabaseError } from './database.errors'
+  | BlobStorageError

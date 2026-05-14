@@ -29,13 +29,22 @@ export const Route = createFileRoute('/dev/evidence-packets/pdf')({
         const category = isDevEvidencePdfCategory(categoryParam) ? categoryParam : 'fraudulent'
         const preview = buildDevEvidencePdfPreview(category)
 
-        const bytes = await renderDisputeEvidencePdf({
+        const rendered = await renderDisputeEvidencePdf({
           document: preview.document,
           branding: preview.branding,
           generatedAt: preview.generatedAt,
         })
+        if (rendered.isErr()) {
+          return new Response(rendered.error.message, {
+            status: 500,
+            headers: {
+              'Content-Type': 'text/plain; charset=utf-8',
+              'Cache-Control': 'no-store',
+            },
+          })
+        }
 
-        return new Response(toResponseArrayBuffer(bytes), {
+        return new Response(toResponseArrayBuffer(rendered.value), {
           headers: {
             'Content-Type': 'application/pdf',
             'Content-Disposition': `inline; filename="riposte-${category}-evidence.pdf"`,

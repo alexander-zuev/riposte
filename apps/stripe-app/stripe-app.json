@@ -2,7 +2,7 @@
   "$schema": "https://stripe.com/stripe-app.schema.json",
   "id": "app.riposte.sh",
   "name": "Riposte",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "icon": "./riposte_icon_512.png",
   "ui_extension": {
     "views": [
@@ -14,9 +14,7 @@
     "content_security_policy": {
       "connect-src": [
         "https://riposte.sh/api/stripe/app/settings",
-        "https://riposte.sh/api/stripe/app/sync",
-        "https://tunnel.riposte.sh/api/stripe/app/settings",
-        "https://tunnel.riposte.sh/api/stripe/app/sync"
+        "https://riposte.sh/api/stripe/app/sync"
       ],
       "purpose": "Allow Riposte settings to read sync status and start dispute sync jobs"
     }
@@ -79,10 +77,7 @@
   "constants": {
     "API_BASE": "https://riposte.sh"
   },
-  "allowed_redirect_uris": [
-    "https://tunnel.riposte.sh/api/stripe/oauth/callback",
-    "https://riposte.sh/api/stripe/oauth/callback"
-  ],
+  "allowed_redirect_uris": ["https://riposte.sh/api/stripe/oauth/callback"],
   "distribution_type": "public",
   "stripe_api_access_type": "oauth",
   "sandbox_install_compatible": true

@@ -1,5 +1,6 @@
 import type { ExtensionContextValue } from '@stripe/ui-extension-sdk/context'
 import {
+  Badge,
   Banner,
   Box,
   Button,
@@ -85,7 +86,7 @@ export default function AppSettings({ environment, userContext }: ExtensionConte
   }
 
   return (
-    <SettingsView statusMessage={getStatusMessage(status)}>
+    <SettingsView>
       <Box css={{ stack: 'y', gap: 'large', padding: 'medium', maxWidth: 720, width: 'fill' }}>
         {status === 'error' && (
           <Banner
@@ -95,21 +96,21 @@ export default function AppSettings({ environment, userContext }: ExtensionConte
           />
         )}
 
-        {status === 'started' && (
-          <Banner
-            type="default"
-            title="Sync queued"
-            description="Riposte will sync recent disputes in the background"
-          />
-        )}
-
         <Box css={{ stack: 'y', gap: 'small', width: 'fill' }}>
-          <Box css={{ font: 'heading' }}>Dispute sync</Box>
+          <Box css={{ stack: 'x', gap: 'small', alignY: 'center' }}>
+            <Box css={{ font: 'heading' }}>Dispute sync</Box>
+            {status === 'started' && <Badge type="info">Queued</Badge>}
+          </Box>
           <Box css={{ font: 'body', color: 'secondary' }}>
-            Import recent Stripe disputes so Riposte can create or update local cases
+            {status === 'started'
+              ? 'Import requested. Open Riposte to review setup and disputes'
+              : 'Import recent Stripe disputes so Riposte can create or update local cases'}
           </Box>
           <PropertyList>
-            <PropertyListItem label="Last sync" value={formatLastSync(lastSyncAt)} />
+            <PropertyListItem
+              label="Last sync"
+              value={status === 'loading' ? 'Loading...' : formatLastSync(lastSyncAt)}
+            />
           </PropertyList>
         </Box>
 
@@ -139,7 +140,7 @@ export default function AppSettings({ environment, userContext }: ExtensionConte
             Connect app data, define evidence rules, and approve how Riposte handles live disputes
           </Box>
           <Link href={setupUrl} external target="_blank">
-            Open setup checklist
+            {status === 'started' ? 'Open Riposte' : 'Open setup checklist'}
           </Link>
         </Box>
       </Box>
@@ -173,21 +174,6 @@ async function signedStripeAppRequest(
 function getApiBase(value: unknown): string {
   if (typeof value === 'string' && value.length > 0) return value
   return 'https://riposte.sh'
-}
-
-function getStatusMessage(status: RequestStatus): string {
-  switch (status) {
-    case 'loading':
-      return 'Loading...'
-    case 'syncing':
-      return 'Starting sync...'
-    case 'started':
-      return 'Sync queued'
-    case 'error':
-      return 'Error'
-    case 'idle':
-      return ''
-  }
 }
 
 function formatLastSync(value: string | null): string {

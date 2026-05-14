@@ -1,7 +1,10 @@
 import { z } from 'zod'
 
 import { baseEventSchema } from '../base/base.messages'
-import { evidencePacketTemplateSchema } from './dispute-workflow-policy'
+import {
+  stripeDisputeEvidenceProductTypeSchema,
+  stripeDisputeReasonCodeCategorySchema,
+} from './stripe-dispute-taxonomy'
 
 export const disputeCaseReceivedSchema = baseEventSchema.extend({
   name: z.literal('DisputeCaseReceived'),
@@ -35,7 +38,8 @@ export const disputeEvidencePacketCreatedSchema = baseEventSchema.extend({
   disputeCaseId: z.string().min(1),
   userId: z.uuid(),
   version: z.number().int().positive(),
-  template: evidencePacketTemplateSchema,
+  reasonCodeCategory: stripeDisputeReasonCodeCategorySchema,
+  productType: stripeDisputeEvidenceProductTypeSchema,
 })
 
 export type DisputeEvidencePacketCreated = z.infer<typeof disputeEvidencePacketCreatedSchema>

@@ -5,17 +5,31 @@ import {
   measureText,
   PDF,
   type PDFPage,
-  rgb,
-  StandardFonts,
 } from '@libpdf/core'
-import type { DisputeEvidencePdfDocument } from '@server/domain/disputes'
+import { EvidencePdfRenderError } from '@riposte/core'
+import type {
+  DisputeEvidencePdfBlock,
+  DisputeEvidencePdfDocument,
+  DisputeEvidencePdfFact,
+  DisputeEvidencePdfImage,
+  DisputeEvidencePdfTableColumn,
+  DisputeEvidencePdfTableRow,
+  DisputeEvidencePdfTimelineItem,
+} from '@server/domain/disputes'
+import { Result } from 'better-result'
 
-// First-pass renderer scaffold.
-// Dirty by design: proves backend PDF generation and Stripe-shaped constraints before the final
-// evidence layout, font pipeline, icon system, merchant branding, and packet-specific sections
-// are designed properly. This file is up for grabs once the real PDF art direction lands.
-export const STRIPE_DISPUTE_EVIDENCE_MAX_PAGES = 50
-export const STRIPE_DISPUTE_EVIDENCE_RECOMMENDED_MAX_BYTES = 4_500_000
+import { createDefaultEvidencePdfAssets, type EvidencePdfAssets } from './pdf-assets'
+import {
+  EVIDENCE_PDF_FONT as FONT,
+  EVIDENCE_PDF_PAGE as PAGE,
+  EVIDENCE_PDF_SPACE as SPACE,
+  EVIDENCE_PDF_TYPE as TYPE,
+  type EvidencePdfTheme,
+  evidencePdfTheme,
+  STRIPE_DISPUTE_EVIDENCE_MAX_PAGES,
+  STRIPE_DISPUTE_EVIDENCE_RECOMMENDED_MAX_BYTES,
+} from './pdf-theme'
+import type { PdfIconName } from './phosphor-paths'
 
 export type DisputeEvidencePdfBranding = {
   merchantName: string
@@ -28,16 +42,6 @@ export type RenderDisputeEvidencePdfInput = {
   generatedAt: Date
 }
 
-type PdfTheme = {
-  text: Color
-  muted: Color
-  border: Color
-  surface: Color
-  accent: Color
-  success: Color
-  successSurface: Color
-}
-
 type RenderContext = {
   pdf: PDF
   page: PDFPage
@@ -45,70 +49,25 @@ type RenderContext = {
   y: number
   branding: DisputeEvidencePdfBranding
   generatedAt: Date
-  theme: PdfTheme
+  theme: EvidencePdfTheme
+  assets: EvidencePdfAssets
 }
-
-const PAGE = {
-  width: 612,
-  height: 792,
-  marginX: 42,
-  headerTop: 750,
-  contentTop: 694,
-  footerY: 26,
-  contentBottom: 58,
-  contentWidth: 528,
-}
-
-const FONT = {
-  body: StandardFonts.Helvetica,
-  bold: StandardFonts.HelveticaBold,
-  mono: StandardFonts.Courier,
-}
-
-const TYPE = {
-  title: 18,
-  subtitle: 12,
-  section: 13,
-  body: 12,
-  small: 9,
-}
-
-const SPACE = {
-  headerAfter: 24,
-  sectionBefore: 12,
-  headingToRows: 16,
-  sectionAfter: 10,
-  rowLineOffset: 7,
-  rowTextOffset: 12,
-  rowLineHeight: 15,
-  rowPaddingY: 13,
-}
-
-// Phosphor regular path data copied from @phosphor-icons/react. Kept local because this
-// backend renderer should not import React component modules just to draw static PDF icons.
-const ICONS = {
-  checkCircle:
-    'M173.66,98.34a8,8,0,0,1,0,11.32l-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35A8,8,0,0,1,173.66,98.34ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z',
-  creditCard:
-    'M224,48H32A16,16,0,0,0,16,64V192a16,16,0,0,0,16,16H224a16,16,0,0,0,16-16V64A16,16,0,0,0,224,48Zm0,16V88H32V64Zm0,128H32V104H224v88Zm-16-24a8,8,0,0,1-8,8H168a8,8,0,0,1,0-16h32A8,8,0,0,1,208,168Zm-64,0a8,8,0,0,1-8,8H120a8,8,0,0,1,0-16h16A8,8,0,0,1,144,168Z',
-  fileText:
-    'M213.66,82.34l-56-56A8,8,0,0,0,152,24H56A16,16,0,0,0,40,40V216a16,16,0,0,0,16,16H200a16,16,0,0,0,16-16V88A8,8,0,0,0,213.66,82.34ZM160,51.31,188.69,80H160ZM200,216H56V40h88V88a8,8,0,0,0,8,8h48V216Zm-32-80a8,8,0,0,1-8,8H96a8,8,0,0,1,0-16h64A8,8,0,0,1,168,136Zm0,32a8,8,0,0,1-8,8H96a8,8,0,0,1,0-16h64A8,8,0,0,1,168,168Z',
-  handshake:
-    'M254.3,107.91,228.78,56.85a16,16,0,0,0-21.47-7.15L182.44,62.13,130.05,48.27a8.14,8.14,0,0,0-4.1,0L73.56,62.13,48.69,49.7a16,16,0,0,0-21.47,7.15L1.7,107.9a16,16,0,0,0,7.15,21.47l27,13.51,55.49,39.63a8.06,8.06,0,0,0,2.71,1.25l64,16a8,8,0,0,0,7.6-2.1l55.07-55.08,26.42-13.21a16,16,0,0,0,7.15-21.46Zm-54.89,33.37L165,113.72a8,8,0,0,0-10.68.61C136.51,132.27,116.66,130,104,122L147.24,80h31.81l27.21,54.41ZM41.53,64,62,74.22,36.43,125.27,16,115.06Zm116,119.13L99.42,168.61l-49.2-35.14,28-56L128,64.28l9.8,2.59-45,43.68-.08.09a16,16,0,0,0,2.72,24.81c20.56,13.13,45.37,11,64.91-5L188,152.66Zm62-57.87-25.52-51L214.47,64,240,115.06Zm-87.75,92.67a8,8,0,0,1-7.75,6.06,8.13,8.13,0,0,1-1.95-.24L80.41,213.33a7.89,7.89,0,0,1-2.71-1.25L51.35,193.26a8,8,0,0,1,9.3-13l25.11,17.94L126,208.24A8,8,0,0,1,131.82,217.94Z',
-  receipt:
-    'M72,104a8,8,0,0,1,8-8h96a8,8,0,0,1,0,16H80A8,8,0,0,1,72,104Zm8,40h96a8,8,0,0,0,0-16H80a8,8,0,0,0,0,16ZM232,56V208a8,8,0,0,1-11.58,7.15L192,200.94l-28.42,14.21a8,8,0,0,1-7.16,0L128,200.94,99.58,215.15a8,8,0,0,1-7.16,0L64,200.94,35.58,215.15A8,8,0,0,1,24,208V56A16,16,0,0,1,40,40H216A16,16,0,0,1,232,56Zm-16,0H40V195.06l20.42-10.22a8,8,0,0,1,7.16,0L96,199.06l28.42-14.22a8,8,0,0,1,7.16,0L160,199.06l28.42-14.22a8,8,0,0,1,7.16,0L216,195.06Z',
-  shield:
-    'M208,40H48A16,16,0,0,0,32,56v56c0,52.72,25.52,84.67,46.93,102.19,23.06,18.86,46,25.27,47,25.53a8,8,0,0,0,4.2,0c1-.26,23.91-6.67,47-25.53C198.48,196.67,224,164.72,224,112V56A16,16,0,0,0,208,40Zm0,72c0,37.07-13.66,67.16-40.6,89.42A129.3,129.3,0,0,1,128,223.62a128.25,128.25,0,0,1-38.92-21.81C61.82,179.51,48,149.3,48,112l0-56,160,0Z',
-  shieldCheck:
-    'M208,40H48A16,16,0,0,0,32,56v56c0,52.72,25.52,84.67,46.93,102.19,23.06,18.86,46,25.26,47,25.53a8,8,0,0,0,4.2,0c1-.27,23.91-6.67,47-25.53C198.48,196.67,224,164.72,224,112V56A16,16,0,0,0,208,40Zm0,72c0,37.07-13.66,67.16-40.6,89.42A129.3,129.3,0,0,1,128,223.62a128.25,128.25,0,0,1-38.92-21.81C61.82,179.51,48,149.3,48,112l0-56,160,0ZM82.34,141.66a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32l-56,56a8,8,0,0,1-11.32,0Z',
-  user: 'M230.92,212c-15.23-26.33-38.7-45.21-66.09-54.16a72,72,0,1,0-73.66,0C63.78,166.78,40.31,185.66,25.08,212a8,8,0,1,0,13.85,8c18.84-32.56,52.14-52,89.07-52s70.23,19.44,89.07,52a8,8,0,1,0,13.85-8ZM72,96a56,56,0,1,1,56,56A56.06,56.06,0,0,1,72,96Z',
-} as const
-
-type PdfIconName = keyof typeof ICONS
 
 export async function renderDisputeEvidencePdf(
   input: RenderDisputeEvidencePdfInput,
-): Promise<Uint8Array> {
+): Promise<Result<Uint8Array, EvidencePdfRenderError>> {
+  const rendered = await Result.tryPromise({
+    try: () => renderDisputeEvidencePdfUnsafe(input),
+    catch: (cause) => new EvidencePdfRenderError({ reason: 'render_failed', cause }),
+  })
+  if (rendered.isErr()) return Result.err(rendered.error)
+
+  return rendered.value
+}
+
+async function renderDisputeEvidencePdfUnsafe(
+  input: RenderDisputeEvidencePdfInput,
+): Promise<Result<Uint8Array, EvidencePdfRenderError>> {
   const pdf = PDF.create()
   pdf.setTitle(input.document.title)
   pdf.setAuthor(input.branding.merchantName)
@@ -118,13 +77,15 @@ export async function renderDisputeEvidencePdf(
   pdf.setCreationDate(input.generatedAt)
   pdf.setModificationDate(input.generatedAt)
 
-  const theme = pdfTheme(input.branding.primaryColor)
+  const theme = evidencePdfTheme(input.branding.primaryColor)
+  const assets = createDefaultEvidencePdfAssets()
   const context = addPage({
     pdf,
     pageNumber: 1,
     branding: input.branding,
     generatedAt: input.generatedAt,
     theme,
+    assets,
   })
 
   drawReportHeader(context, input.document)
@@ -133,8 +94,8 @@ export async function renderDisputeEvidencePdf(
     ensureSpace(context, 88)
     drawSectionHeading(context, section.heading)
 
-    for (const row of section.rows) {
-      drawRow(context, row.label, row.value)
+    for (const block of section.blocks) {
+      drawBlock(context, block)
     }
 
     context.y -= SPACE.sectionAfter
@@ -142,7 +103,13 @@ export async function renderDisputeEvidencePdf(
 
   const pageCount = pdf.getPageCount()
   if (pageCount > STRIPE_DISPUTE_EVIDENCE_MAX_PAGES) {
-    throw new Error(`Dispute evidence PDF exceeds ${STRIPE_DISPUTE_EVIDENCE_MAX_PAGES} pages`)
+    return Result.err(
+      new EvidencePdfRenderError({
+        reason: 'page_limit_exceeded',
+        actual: pageCount,
+        limit: STRIPE_DISPUTE_EVIDENCE_MAX_PAGES,
+      }),
+    )
   }
 
   const bytes = await pdf.save({
@@ -152,12 +119,16 @@ export async function renderDisputeEvidencePdf(
   })
 
   if (bytes.byteLength > STRIPE_DISPUTE_EVIDENCE_RECOMMENDED_MAX_BYTES) {
-    throw new Error(
-      `Dispute evidence PDF exceeds ${STRIPE_DISPUTE_EVIDENCE_RECOMMENDED_MAX_BYTES} bytes`,
+    return Result.err(
+      new EvidencePdfRenderError({
+        reason: 'byte_limit_exceeded',
+        actual: bytes.byteLength,
+        limit: STRIPE_DISPUTE_EVIDENCE_RECOMMENDED_MAX_BYTES,
+      }),
     )
   }
 
-  return bytes
+  return Result.ok(bytes)
 }
 
 function addPage(input: {
@@ -165,7 +136,8 @@ function addPage(input: {
   pageNumber: number
   branding: DisputeEvidencePdfBranding
   generatedAt: Date
-  theme: PdfTheme
+  theme: EvidencePdfTheme
+  assets: EvidencePdfAssets
 }): RenderContext {
   const page = input.pdf.addPage({ size: 'letter', orientation: 'portrait' })
   const context: RenderContext = {
@@ -176,6 +148,7 @@ function addPage(input: {
     branding: input.branding,
     generatedAt: input.generatedAt,
     theme: input.theme,
+    assets: input.assets,
   }
 
   drawPageChrome(context)
@@ -256,26 +229,26 @@ function drawReportHeader(context: RenderContext, document: DisputeEvidencePdfDo
     size: TYPE.title,
     color: theme.text,
   })
-  page.drawText('Transaction Security Analysis & Verification', {
+  page.drawText(document.subtitle, {
     x: PAGE.marginX + 42,
     y: cardY + headerHeight - 50,
     font: FONT.body,
     size: TYPE.subtitle,
     color: theme.accent,
   })
-  drawStatusBadge(
+  drawFindingBadge(
     context,
-    PAGE.width - PAGE.marginX - 142,
+    PAGE.width - PAGE.marginX - 158,
     cardY + headerHeight - 38,
-    'Verified Legitimate',
+    document.finding.value,
   )
 
   context.y -= headerHeight + SPACE.headerAfter
 }
 
-function drawStatusBadge(context: RenderContext, x: number, y: number, label: string): void {
+function drawFindingBadge(context: RenderContext, x: number, y: number, label: string): void {
   const { page, theme } = context
-  const width = 142
+  const width = 158
   const height = 24
 
   page.drawRectangle({
@@ -283,18 +256,19 @@ function drawStatusBadge(context: RenderContext, x: number, y: number, label: st
     y,
     width,
     height,
-    color: theme.successSurface,
-    borderColor: theme.success,
+    color: theme.accentSurface,
+    borderColor: theme.border,
     borderWidth: 0.5,
     cornerRadius: 12,
   })
-  const textWidth = measureText(label, FONT.bold, TYPE.body)
-  page.drawText(label, {
+  const displayLabel = fitSingleLine(label, FONT.bold, TYPE.small, width - 18)
+  const textWidth = measureText(displayLabel, FONT.bold, TYPE.small)
+  page.drawText(displayLabel, {
     x: x + (width - textWidth) / 2,
-    y: y + 6,
+    y: y + 7,
     font: FONT.bold,
-    size: TYPE.body,
-    color: theme.success,
+    size: TYPE.small,
+    color: theme.accent,
   })
 }
 
@@ -315,50 +289,465 @@ function drawSectionHeading(context: RenderContext, heading: string): void {
   context.y -= SPACE.headingToRows
 }
 
-function drawRow(context: RenderContext, label: string, value: string): void {
-  const labelWidth = 144
-  const gap = 16
-  const valueWidth = PAGE.contentWidth - labelWidth - gap
-  const valueFont = isSystemValue(value) ? FONT.mono : FONT.body
-  const valueLines = layoutText(
-    value || 'Not provided',
-    valueFont,
+function drawBlock(context: RenderContext, block: DisputeEvidencePdfBlock): void {
+  switch (block.kind) {
+    case 'callout':
+      drawCallout(context, block)
+      break
+    case 'key_value_grid':
+      drawKeyValueGrid(context, block.items, block.columns)
+      break
+    case 'timeline':
+      drawTimeline(context, block.items)
+      break
+    case 'table':
+      drawTable(context, block.columns, block.rows)
+      break
+    case 'image_grid':
+      drawImageGrid(context, block.title, block.images)
+      break
+    case 'text':
+      drawTextBlock(context, block.body)
+      break
+    default:
+      block satisfies never
+      throw new Error('Unsupported evidence PDF block')
+  }
+
+  context.y -= SPACE.blockAfter
+}
+
+function drawCallout(
+  context: RenderContext,
+  block: Extract<DisputeEvidencePdfBlock, { kind: 'callout' }>,
+): void {
+  const paddingX = 12
+  const paddingY = 10
+  const bodyWidth = PAGE.contentWidth - paddingX * 2
+  const titleLines = block.title
+    ? layoutText(block.title, FONT.bold, TYPE.body, bodyWidth, SPACE.rowLineHeight).lines
+    : []
+  const bodyLines = layoutText(
+    block.body,
+    FONT.body,
     TYPE.body,
-    valueWidth,
+    bodyWidth,
     SPACE.rowLineHeight,
   ).lines
-  const rowHeight = Math.max(26, valueLines.length * SPACE.rowLineHeight + SPACE.rowPaddingY)
+  const titleHeight = titleLines.length * SPACE.rowLineHeight
+  const titleGap = titleLines.length > 0 ? 4 : 0
+  const bodyHeight = bodyLines.length * SPACE.rowLineHeight
+  const height = Math.max(34, paddingY * 2 + titleHeight + titleGap + bodyHeight)
 
-  ensureSpace(context, rowHeight + 6)
+  ensureSpace(context, height + 4)
 
-  const top = context.y
-  context.page.drawLine({
-    start: { x: PAGE.marginX, y: top + SPACE.rowLineOffset },
-    end: { x: PAGE.width - PAGE.marginX, y: top + SPACE.rowLineOffset },
-    color: context.theme.border,
-    thickness: 0.4,
-  })
-  context.page.drawText(label, {
+  const tone = calloutTone(context.theme, block.tone)
+  const y = context.y - height
+  context.page.drawRectangle({
     x: PAGE.marginX,
-    y: top - SPACE.rowTextOffset,
-    font: FONT.bold,
-    size: TYPE.body,
-    color: context.theme.muted,
+    y,
+    width: PAGE.contentWidth,
+    height,
+    color: tone.surface,
+    borderColor: tone.border,
+    borderWidth: 0.6,
+    cornerRadius: 6,
   })
 
-  let lineY = top - SPACE.rowTextOffset
-  for (const line of valueLines) {
+  let textY = context.y - paddingY - TYPE.body
+  for (const line of titleLines) {
     context.page.drawText(line.text, {
-      x: PAGE.marginX + labelWidth + gap,
+      x: PAGE.marginX + paddingX,
+      y: textY,
+      font: FONT.bold,
+      size: TYPE.body,
+      color: tone.text,
+    })
+    textY -= SPACE.rowLineHeight
+  }
+  if (titleGap) textY -= titleGap
+  for (const line of bodyLines) {
+    context.page.drawText(line.text, {
+      x: PAGE.marginX + paddingX,
+      y: textY,
+      font: FONT.body,
+      size: TYPE.body,
+      color: context.theme.text,
+    })
+    textY -= SPACE.rowLineHeight
+  }
+
+  context.y = y
+}
+
+function drawKeyValueGrid(
+  context: RenderContext,
+  items: DisputeEvidencePdfFact[],
+  columns: 2 | 3,
+): void {
+  if (items.length === 0) {
+    drawCallout(context, {
+      kind: 'callout',
+      tone: 'warning',
+      body: 'Missing evidence: no facts provided for this section',
+    })
+    return
+  }
+
+  const gap = 10
+  const cardWidth = (PAGE.contentWidth - gap * (columns - 1)) / columns
+  const paddingX = 10
+  const paddingY = 9
+
+  for (let index = 0; index < items.length; index += columns) {
+    const row = items.slice(index, index + columns)
+    const measured = row.map((item) => {
+      const valueFont = isSystemValue(item.value) ? FONT.mono : FONT.body
+      const valueLines = layoutText(
+        item.value || 'Not provided',
+        valueFont,
+        TYPE.body,
+        cardWidth - paddingX * 2,
+        SPACE.rowLineHeight,
+      ).lines
+      return {
+        item,
+        valueFont,
+        valueLines,
+        height: Math.max(56, paddingY * 2 + 12 + 5 + valueLines.length * SPACE.rowLineHeight),
+      }
+    })
+    const rowHeight = Math.max(...measured.map((item) => item.height))
+
+    ensureSpace(context, rowHeight + 4)
+
+    const y = context.y - rowHeight
+    for (let columnIndex = 0; columnIndex < measured.length; columnIndex += 1) {
+      const cell = measured[columnIndex]
+      if (!cell) continue
+
+      const x = PAGE.marginX + columnIndex * (cardWidth + gap)
+      context.page.drawRectangle({
+        x,
+        y,
+        width: cardWidth,
+        height: rowHeight,
+        color: context.theme.surface,
+        borderColor: context.theme.border,
+        borderWidth: 0.5,
+        cornerRadius: 5,
+      })
+      context.page.drawText(cell.item.label, {
+        x: x + paddingX,
+        y: context.y - paddingY - 10,
+        font: FONT.bold,
+        size: TYPE.small,
+        color: context.theme.muted,
+      })
+
+      let lineY = context.y - paddingY - 28
+      for (const line of cell.valueLines) {
+        context.page.drawText(line.text, {
+          x: x + paddingX,
+          y: lineY,
+          font: cell.valueFont,
+          size: TYPE.body,
+          color: valueColor(context, cell.item.value),
+        })
+        lineY -= SPACE.rowLineHeight
+      }
+    }
+
+    context.y = y - 8
+  }
+}
+
+function drawTextBlock(context: RenderContext, body: string): void {
+  const lines = layoutText(body, FONT.body, TYPE.body, PAGE.contentWidth, SPACE.rowLineHeight).lines
+  const blockHeight = Math.max(24, lines.length * SPACE.rowLineHeight + SPACE.rowPaddingY)
+
+  ensureSpace(context, blockHeight + 6)
+
+  let lineY = context.y - SPACE.rowTextOffset
+  for (const line of lines) {
+    context.page.drawText(line.text, {
+      x: PAGE.marginX,
       y: lineY,
-      font: valueFont,
+      font: FONT.body,
       size: TYPE.body,
       color: context.theme.text,
     })
     lineY -= SPACE.rowLineHeight
   }
 
-  context.y -= rowHeight
+  context.y -= blockHeight
+}
+
+function drawTimeline(context: RenderContext, items: DisputeEvidencePdfTimelineItem[]): void {
+  if (items.length === 0) {
+    drawCallout(context, {
+      kind: 'callout',
+      tone: 'warning',
+      body: 'Missing evidence: no timeline events provided',
+    })
+    return
+  }
+
+  const railX = PAGE.marginX + 6
+  const bodyX = PAGE.marginX + 24
+  const bodyWidth = PAGE.contentWidth - 24
+
+  for (const [index, item] of items.entries()) {
+    const valueLines = layoutText(
+      item.value,
+      isSystemValue(item.value) ? FONT.mono : FONT.body,
+      TYPE.body,
+      bodyWidth,
+      SPACE.rowLineHeight,
+    ).lines
+    const height = Math.max(42, 18 + valueLines.length * SPACE.rowLineHeight + 12)
+
+    ensureSpace(context, height + 4)
+
+    const top = context.y
+    const bottom = top - height
+    if (index < items.length - 1) {
+      context.page.drawLine({
+        start: { x: railX, y: top - 12 },
+        end: { x: railX, y: bottom + 2 },
+        color: context.theme.border,
+        thickness: 0.8,
+      })
+    }
+    context.page.drawCircle({
+      x: railX,
+      y: top - 10,
+      radius: 3.5,
+      color: context.theme.accent,
+    })
+    context.page.drawText(item.label, {
+      x: bodyX,
+      y: top - 13,
+      font: FONT.bold,
+      size: TYPE.body,
+      color: context.theme.text,
+    })
+
+    let lineY = top - 30
+    const valueFont = isSystemValue(item.value) ? FONT.mono : FONT.body
+    for (const line of valueLines) {
+      context.page.drawText(line.text, {
+        x: bodyX,
+        y: lineY,
+        font: valueFont,
+        size: TYPE.body,
+        color: valueColor(context, item.value),
+      })
+      lineY -= SPACE.rowLineHeight
+    }
+
+    context.y = bottom
+  }
+}
+
+function drawTable(
+  context: RenderContext,
+  columns: DisputeEvidencePdfTableColumn[],
+  rows: DisputeEvidencePdfTableRow[],
+): void {
+  if (columns.length === 0 || rows.length === 0) {
+    drawCallout(context, {
+      kind: 'callout',
+      tone: 'warning',
+      body: 'Missing evidence: no table data provided',
+    })
+    return
+  }
+
+  const columnWidth = PAGE.contentWidth / columns.length
+  drawTableHeader(context, columns, columnWidth)
+
+  for (const row of rows) {
+    const measuredCells = columns.map(
+      (column) =>
+        layoutText(row[column.key] ?? '', FONT.body, TYPE.small, columnWidth - 12, 12).lines,
+    )
+    const rowHeight = Math.max(
+      28,
+      16 + Math.max(...measuredCells.map((lines) => lines.length)) * 12,
+    )
+
+    if (context.y - rowHeight < PAGE.contentBottom) {
+      const next = addPage({
+        pdf: context.pdf,
+        pageNumber: context.pageNumber + 1,
+        branding: context.branding,
+        generatedAt: context.generatedAt,
+        theme: context.theme,
+        assets: context.assets,
+      })
+      context.page = next.page
+      context.pageNumber = next.pageNumber
+      context.y = next.y
+      drawTableHeader(context, columns, columnWidth)
+    }
+
+    const y = context.y - rowHeight
+    context.page.drawRectangle({
+      x: PAGE.marginX,
+      y,
+      width: PAGE.contentWidth,
+      height: rowHeight,
+      borderColor: context.theme.border,
+      borderWidth: 0.4,
+    })
+
+    for (let index = 0; index < columns.length; index += 1) {
+      const x = PAGE.marginX + index * columnWidth
+      if (index > 0) {
+        context.page.drawLine({
+          start: { x, y },
+          end: { x, y: y + rowHeight },
+          color: context.theme.border,
+          thickness: 0.3,
+        })
+      }
+
+      let lineY = context.y - 14
+      for (const line of measuredCells[index] ?? []) {
+        context.page.drawText(line.text, {
+          x: x + 6,
+          y: lineY,
+          font: FONT.body,
+          size: TYPE.small,
+          color: context.theme.text,
+        })
+        lineY -= 12
+      }
+    }
+
+    context.y = y
+  }
+}
+
+function drawTableHeader(
+  context: RenderContext,
+  columns: DisputeEvidencePdfTableColumn[],
+  columnWidth: number,
+): void {
+  const height = 24
+  ensureSpace(context, height + 10)
+
+  const y = context.y - height
+  context.page.drawRectangle({
+    x: PAGE.marginX,
+    y,
+    width: PAGE.contentWidth,
+    height,
+    color: context.theme.surface,
+    borderColor: context.theme.border,
+    borderWidth: 0.5,
+  })
+
+  for (let index = 0; index < columns.length; index += 1) {
+    const x = PAGE.marginX + index * columnWidth
+    context.page.drawText(columns[index]?.label ?? '', {
+      x: x + 6,
+      y: context.y - 15,
+      font: FONT.bold,
+      size: TYPE.small,
+      color: context.theme.muted,
+    })
+  }
+
+  context.y = y
+}
+
+function drawImageGrid(
+  context: RenderContext,
+  title: string | undefined,
+  images: DisputeEvidencePdfImage[],
+): void {
+  if (title) {
+    ensureSpace(context, 34)
+    context.page.drawText(title, {
+      x: PAGE.marginX,
+      y: context.y - 4,
+      font: FONT.bold,
+      size: TYPE.body,
+      color: context.theme.text,
+    })
+    context.y -= 24
+  }
+
+  if (images.length === 0) {
+    drawCallout(context, {
+      kind: 'callout',
+      tone: 'warning',
+      body: 'Missing evidence: product-specific delivered output images or files',
+    })
+    return
+  }
+
+  const columns = 2
+  const gap = 10
+  const cardWidth = (PAGE.contentWidth - gap) / columns
+  const cardHeight = 116
+
+  for (let index = 0; index < images.length; index += columns) {
+    const row = images.slice(index, index + columns)
+    ensureSpace(context, cardHeight + 8)
+
+    const y = context.y - cardHeight
+    for (let columnIndex = 0; columnIndex < row.length; columnIndex += 1) {
+      const image = row[columnIndex]
+      if (!image) continue
+
+      const x = PAGE.marginX + columnIndex * (cardWidth + gap)
+      context.page.drawRectangle({
+        x,
+        y,
+        width: cardWidth,
+        height: cardHeight,
+        color: context.theme.surface,
+        borderColor: context.theme.border,
+        borderWidth: 0.5,
+        cornerRadius: 5,
+      })
+      drawIconOnTextBaseline(context, 'imageSquare', {
+        x: x + 10,
+        baselineY: context.y - 22,
+        size: 14,
+      })
+      context.page.drawText(fitSingleLine(image.label, FONT.bold, TYPE.body, cardWidth - 42), {
+        x: x + 30,
+        y: context.y - 24,
+        font: FONT.bold,
+        size: TYPE.body,
+        color: context.theme.text,
+      })
+
+      const details = [
+        image.caption,
+        image.objectKey ? `${image.source}: ${image.objectKey}` : `${image.source}: pending`,
+        image.alt,
+      ].filter((value): value is string => Boolean(value?.trim()))
+      const lines = layoutText(details.join('\n'), FONT.body, TYPE.small, cardWidth - 20, 12).lines
+      let lineY = context.y - 46
+      for (const line of lines.slice(0, 5)) {
+        context.page.drawText(line.text, {
+          x: x + 10,
+          y: lineY,
+          font: FONT.body,
+          size: TYPE.small,
+          color: context.theme.muted,
+        })
+        lineY -= 12
+      }
+    }
+
+    context.y = y - 8
+  }
 }
 
 function drawIconOnTextBaseline(
@@ -368,7 +757,7 @@ function drawIconOnTextBaseline(
 ): void {
   const visualTopY = at.baselineY + at.size * 0.95
 
-  context.page.drawSvgPath(ICONS[icon], {
+  context.page.drawSvgPath(context.assets.icons[icon], {
     x: at.x,
     y: visualTopY,
     scale: at.size / 256,
@@ -376,20 +765,43 @@ function drawIconOnTextBaseline(
   })
 }
 
+function calloutTone(
+  theme: EvidencePdfTheme,
+  tone: Extract<DisputeEvidencePdfBlock, { kind: 'callout' }>['tone'],
+): { surface: Color; border: Color; text: Color } {
+  switch (tone) {
+    case 'strong':
+      return { surface: theme.strongSurface, border: theme.strong, text: theme.strong }
+    case 'warning':
+      return { surface: theme.warningSurface, border: theme.warning, text: theme.warning }
+    case 'neutral':
+      return { surface: theme.accentSurface, border: theme.border, text: theme.accent }
+    default:
+      tone satisfies never
+      return { surface: theme.surface, border: theme.border, text: theme.text }
+  }
+}
+
+function valueColor(context: RenderContext, value: string): Color {
+  return value.startsWith('Missing evidence:') ? context.theme.warning : context.theme.text
+}
+
 function sectionIconForHeading(heading: string): PdfIconName {
   switch (heading) {
-    case 'Investigation Summary':
+    case 'Executive Summary':
       return 'shield'
-    case 'Transaction Details':
-      return 'receipt'
-    case 'Payment Method Verification':
-      return 'creditCard'
-    case 'Customer Verification':
-      return 'user'
-    case 'Prior Relationship':
-      return 'handshake'
-    case 'Investigation Conclusion':
-      return 'checkCircle'
+    case 'Customer & Payment Match':
+      return 'userCheck'
+    case 'Authorization Signals':
+      return 'shieldCheck'
+    case 'Digital Product Delivered':
+      return 'downloadSimple'
+    case 'Usage Timeline':
+      return 'clockCounterClockwise'
+    case 'Delivered Outputs':
+      return 'imageSquare'
+    case 'Refunds, Communications & Prior Relationship':
+      return 'chatCircleText'
     default:
       return 'fileText'
   }
@@ -404,6 +816,7 @@ function ensureSpace(context: RenderContext, requiredHeight: number): void {
     branding: context.branding,
     generatedAt: context.generatedAt,
     theme: context.theme,
+    assets: context.assets,
   })
 
   context.page = next.page
@@ -411,26 +824,14 @@ function ensureSpace(context: RenderContext, requiredHeight: number): void {
   context.y = next.y
 }
 
-function pdfTheme(primaryColor?: string): PdfTheme {
-  return {
-    text: hex('#111827'),
-    muted: hex('#6B7280'),
-    border: hex('#D7DEE8'),
-    surface: hex('#F8FAFC'),
-    accent: primaryColor ? hex(primaryColor) : hex('#2563EB'),
-    success: hex('#16A34A'),
-    successSurface: hex('#ECFDF3'),
+function fitSingleLine(text: string, font: FontInput, size: number, maxWidth: number): string {
+  if (measureText(text, font, size) <= maxWidth) return text
+
+  let fitted = text
+  while (fitted.length > 1 && measureText(`${fitted}...`, font, size) > maxWidth) {
+    fitted = fitted.slice(0, -1)
   }
-}
-
-function hex(value: string): Color {
-  const normalized = value.replace('#', '')
-  if (!/^[0-9a-fA-F]{6}$/.test(normalized)) return rgb(0.15, 0.39, 0.92)
-
-  const r = Number.parseInt(normalized.slice(0, 2), 16) / 255
-  const g = Number.parseInt(normalized.slice(2, 4), 16) / 255
-  const b = Number.parseInt(normalized.slice(4, 6), 16) / 255
-  return rgb(r, g, b)
+  return `${fitted}...`
 }
 
 function isSystemValue(value: string): boolean {

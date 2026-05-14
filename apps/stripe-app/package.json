@@ -1,17 +1,16 @@
 {
   "name": "@riposte/stripe-app",
   "version": "0.0.1",
-  "description": "Riposte Stripe App manifest",
   "private": true,
+  "description": "Riposte Stripe App manifest",
   "license": "AGPL-3.0-only",
-  "engines": {
-    "node": ">=22.0.0"
-  },
   "scripts": {
     "prepare-package": "npm install --package-lock-only --ignore-scripts",
+    "prepare-upload": "node scripts/prepare-upload.mjs",
     "typecheck": "tsc --noEmit",
-    "upload": "npm install --package-lock-only --ignore-scripts && stripe apps upload ",
-    "upload:dev": "npm install --package-lock-only --ignore-scripts && stripe -p riposte-dev apps upload",
+    "upload": "npm run upload:prod",
+    "upload:prod": "npm run prepare-package && npm run prepare-upload -- stripe-app.json .build/upload/prod && stripe -p riposte apps upload .build/upload/prod",
+    "upload:dev": "npm run prepare-package && npm run prepare-upload -- stripe-app.dev.json .build/upload/dev && stripe -p riposte-dev apps upload .build/upload/dev",
     "start": "stripe -p riposte-dev apps start --manifest stripe-app.dev.json"
   },
   "dependencies": {
@@ -20,5 +19,8 @@
   },
   "devDependencies": {
     "@types/react": "18.3.28"
+  },
+  "engines": {
+    "node": ">=24.0.0"
   }
 }

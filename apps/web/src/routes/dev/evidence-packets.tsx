@@ -1,15 +1,5 @@
-import {
-  CheckCircleIcon,
-  FilePdfIcon,
-  LockSimpleIcon,
-  ShieldCheckIcon,
-} from '@phosphor-icons/react'
-import {
-  DISPUTE_REASON_WORKFLOW,
-  STRIPE_DISPUTE_REASON_CODE_CATEGORIES,
-  STRIPE_DISPUTE_REASON_CODE_CATEGORY_DETAILS,
-  type StripeDisputeReasonCodeCategory,
-} from '@riposte/core/client'
+import { CheckCircleIcon, FilePdfIcon, ShieldCheckIcon } from '@phosphor-icons/react'
+import type { DevEvidencePdfCategory } from '@server/infrastructure/pdf/dev-dispute-evidence-pdf-fixtures'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { Button } from '@web/ui/components/ui/button'
 import {
@@ -20,27 +10,31 @@ import {
   CardTitle,
 } from '@web/ui/components/ui/card'
 
-const VISUAL_EVIDENCE_CATEGORIES = STRIPE_DISPUTE_REASON_CODE_CATEGORIES.filter(
-  (category) => STRIPE_DISPUTE_REASON_CODE_CATEGORY_DETAILS[category].hasVisualEvidenceGuidelines,
-)
-
 type EvidencePacketSearch = {
-  category: StripeDisputeReasonCodeCategory
+  category: DevEvidencePdfCategory
 }
 
-function isSupportedEvidencePacketReason(
-  category: StripeDisputeReasonCodeCategory,
-): boolean {
-  const workflow = DISPUTE_REASON_WORKFLOW[category]
-  return workflow.evidencePacket.supported
-}
+const DEV_EVIDENCE_PDF_PREVIEWS = [
+  {
+    category: 'fraudulent',
+    label: 'Fraudulent',
+    description: 'Preview the fraud evidence packet generated from domain dispute facts',
+  },
+  {
+    category: 'unrecognized',
+    label: 'Unrecognized',
+    description: 'Preview the unrecognized-payment evidence packet using the fraud-adjacent shape',
+  },
+] as const satisfies readonly {
+  category: DevEvidencePdfCategory
+  label: string
+  description: string
+}[]
 
 export const Route = createFileRoute('/dev/evidence-packets')({
   validateSearch: (search: Record<string, unknown>): EvidencePacketSearch => {
-    const category = VISUAL_EVIDENCE_CATEGORIES.includes(
-      search.category as StripeDisputeReasonCodeCategory,
-    )
-      ? (search.category as StripeDisputeReasonCodeCategory)
+    const category = DEV_EVIDENCE_PDF_PREVIEWS.some((item) => item.category === search.category)
+      ? (search.category as DevEvidencePdfCategory)
       : 'fraudulent'
 
     return { category }
@@ -50,9 +44,8 @@ export const Route = createFileRoute('/dev/evidence-packets')({
 
 function EvidencePacketsDevPage() {
   const { category } = Route.useSearch()
-  const supported = isSupportedEvidencePacketReason(category)
-  const previewCategory = supported ? category : 'fraudulent'
-  const pdfSrc = `/dev/evidence-packets/pdf?category=${previewCategory}`
+  const descriptor = DEV_EVIDENCE_PDF_PREVIEWS.find((item) => item.category === category)
+  const pdfSrc = `/dev/evidence-packets/pdf?category=${category}`
 
   return (
     <section className="grid gap-6">
@@ -77,44 +70,35 @@ function EvidencePacketsDevPage() {
 
       <div className="grid gap-4 lg:grid-cols-[280px_1fr]">
         <div className="grid content-start gap-3">
-          {VISUAL_EVIDENCE_CATEGORIES.map((item) => {
-            const itemSupported = isSupportedEvidencePacketReason(item)
-            const Icon = itemSupported ? ShieldCheckIcon : LockSimpleIcon
-
+          {DEV_EVIDENCE_PDF_PREVIEWS.map((item) => {
             return (
               <Link
-                key={item}
+                key={item.category}
                 to="/dev/evidence-packets"
-                search={{ category: item }}
+                search={{ category: item.category }}
                 className="block no-underline hover:no-underline"
               >
                 <Card
                   size="sm"
                   className={
-                    item === category
+                    item.category === category
                       ? 'bg-surface-hover ring-primary'
-                      : itemSupported
-                        ? 'transition-colors hover:bg-surface-hover'
-                        : 'opacity-55'
+                      : 'transition-colors hover:bg-surface-hover'
                   }
                 >
                   <CardHeader>
                     <CardTitle className="flex items-center justify-between gap-3">
                       <span className="flex min-w-0 items-center gap-2">
-                        <Icon className="size-4 shrink-0 text-muted-foreground" />
-                        <span className="truncate">
-                          {STRIPE_DISPUTE_REASON_CODE_CATEGORY_DETAILS[item].label}
-                        </span>
+                        <ShieldCheckIcon className="size-4 shrink-0 text-muted-foreground" />
+                        <span className="truncate">{item.label}</span>
                       </span>
-                      {itemSupported && <CheckCircleIcon className="size-4 text-primary" />}
+                      <CheckCircleIcon className="size-4 text-primary" />
                     </CardTitle>
-                    <CardDescription>
-                      {STRIPE_DISPUTE_REASON_CODE_CATEGORY_DETAILS[item].internalHandlingNote}
-                    </CardDescription>
+                    <CardDescription>{item.description}</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <p className="m-0 text-xs text-muted-foreground">
-                      {itemSupported ? 'Supported preview' : 'Not implemented yet'}
+                      {item.category}/digital_product_or_service
                     </p>
                   </CardContent>
                 </Card>
@@ -124,25 +108,22 @@ function EvidencePacketsDevPage() {
         </div>
 
         <Card className="min-h-[78vh] p-0">
-          {supported ? (
-            <iframe
-              title={`${STRIPE_DISPUTE_REASON_CODE_CATEGORY_DETAILS[previewCategory].label} evidence PDF preview`}
-              src={pdfSrc}
-              className="h-[78vh] w-full border-0 bg-background"
-            />
-          ) : (
+          <object
+            title={`${descriptor?.label ?? category} evidence PDF preview`}
+            data={pdfSrc}
+            type="application/pdf"
+            className="h-[78vh] w-full bg-background"
+          >
             <div className="grid min-h-[78vh] place-items-center p-8 text-center">
               <div className="grid max-w-sm gap-2">
-                <LockSimpleIcon className="mx-auto size-6 text-muted-foreground" />
-                <h3 className="m-0">
-                  {STRIPE_DISPUTE_REASON_CODE_CATEGORY_DETAILS[category].label} is not implemented
-                </h3>
+                <FilePdfIcon className="mx-auto size-6 text-muted-foreground" />
+                <h3 className="m-0">PDF preview unavailable</h3>
                 <p className="m-0 text-muted-foreground">
-                  Fraudulent is the only evidence PDF category wired into generation right now.
+                  Open the PDF in a new tab to review the generated evidence packet.
                 </p>
               </div>
             </div>
-          )}
+          </object>
         </Card>
       </div>
     </section>

@@ -249,6 +249,55 @@ export class StripeOAuthCallbackError extends TaggedError('StripeOAuthCallbackEr
   }
 }
 
+export type EvidencePdfRenderFailureReason =
+  | 'page_limit_exceeded'
+  | 'byte_limit_exceeded'
+  | 'render_failed'
+
+export class EvidencePdfRenderError extends TaggedError('EvidencePdfRenderError')<{
+  message: string
+  reason: EvidencePdfRenderFailureReason
+  actual?: number
+  limit?: number
+  cause?: unknown
+  retryable: false
+}>() {
+  constructor(args: {
+    reason: EvidencePdfRenderFailureReason
+    actual?: number
+    limit?: number
+    cause?: unknown
+    message?: string
+  }) {
+    super({
+      reason: args.reason,
+      actual: args.actual,
+      limit: args.limit,
+      cause: args.cause,
+      message: args.message ?? evidencePdfRenderErrorMessage(args),
+      retryable: false,
+    })
+  }
+}
+
+function evidencePdfRenderErrorMessage(args: {
+  reason: EvidencePdfRenderFailureReason
+  actual?: number
+  limit?: number
+}): string {
+  switch (args.reason) {
+    case 'page_limit_exceeded':
+      return `Evidence PDF exceeds page limit: ${args.actual ?? 'unknown'} > ${args.limit ?? 'unknown'}`
+    case 'byte_limit_exceeded':
+      return `Evidence PDF exceeds byte limit: ${args.actual ?? 'unknown'} > ${args.limit ?? 'unknown'}`
+    case 'render_failed':
+      return 'Evidence PDF render failed'
+    default:
+      args.reason satisfies never
+      return 'Evidence PDF render failed'
+  }
+}
+
 export type InfrastructureError =
   | DatabaseError
   | DuplicateMessageError
@@ -264,5 +313,6 @@ export type InfrastructureError =
   | StripeApiError
   | StripeConnectionUnavailableError
   | StripeOAuthCallbackError
+  | EvidencePdfRenderError
 
 import { DatabaseError } from './database.errors'

@@ -4,17 +4,24 @@ import {
   createEvent,
   stripeDisputeReasonSchema,
 } from '@riposte/core'
-import type { EvidencePacketTemplate, UUIDv4 } from '@riposte/core'
+import type {
+  StripeDisputeEvidenceProductType,
+  StripeDisputeReasonCodeCategory,
+  UUIDv4,
+} from '@riposte/core'
 import { Entity } from '@server/domain/models/base.models'
 import { Result } from 'better-result'
 
 import type { DisputeCase, DisputeCaseId } from './dispute-case.entity'
+import { buildEvidencePdfDocument } from './dispute-evidence-packet-template.service'
+import type { DisputeEvidencePdfDocument } from './dispute-evidence-packet-template.service'
 import type { StripeDisputeContext } from './stripe-dispute-context.entity'
 
 export type EvidencePdfArtifact = {
   kind: 'evidence_pdf'
-  template: EvidencePacketTemplate
-  stripeEvidenceField: 'service_documentation'
+  reasonCodeCategory: StripeDisputeReasonCodeCategory
+  productType: StripeDisputeEvidenceProductType
+  stripeEvidenceField: 'uncategorized_file'
   r2Key: string
   contentType: 'application/pdf'
 }
@@ -25,27 +32,16 @@ export type FraudDigitalStripeEvidencePayload = {
   customer_purchase_ip: string | null
   customer_name: string | null
   customer_email_address: string | null
-  access_activity_log: string
-  uncategorized_text: string
+  access_activity_log: string | null
+  uncategorized_text: string | null
   service_documentation: null
-}
-
-export type DisputeEvidencePdfDocument = {
-  title: string
-  sections: {
-    heading: string
-    rows: {
-      label: string
-      value: string
-    }[]
-  }[]
 }
 
 export type EvidenceQuality = 'low' | 'medium' | 'high'
 
 export type CollectedDisputeEvidence = {
   accessActivityLog: string | null
-  rebuttalText: string | null
+  merchantPosition: string | null
 }
 
 export type DisputeEvidencePacketSnapshot = {
@@ -53,7 +49,8 @@ export type DisputeEvidencePacketSnapshot = {
   userId: UUIDv4
   disputeCaseId: DisputeCaseId
   version: number
-  template: EvidencePacketTemplate
+  reasonCodeCategory: StripeDisputeReasonCodeCategory
+  productType: StripeDisputeEvidenceProductType
   stripeEvidencePayload: FraudDigitalStripeEvidencePayload
   pdfDocument: DisputeEvidencePdfDocument
   artifacts: DisputeEvidencePacketArtifact[]
@@ -74,7 +71,8 @@ export class DisputeEvidencePacket extends Entity<DisputeEvidencePacketSnapshot>
     readonly userId: UUIDv4,
     readonly disputeCaseId: DisputeCaseId,
     readonly version: number,
-    readonly template: EvidencePacketTemplate,
+    readonly reasonCodeCategory: StripeDisputeReasonCodeCategory,
+    readonly productType: StripeDisputeEvidenceProductType,
     readonly stripeEvidencePayload: FraudDigitalStripeEvidencePayload,
     readonly pdfDocument: DisputeEvidencePdfDocument,
     readonly artifacts: DisputeEvidencePacketArtifact[],
@@ -91,18 +89,23 @@ export class DisputeEvidencePacket extends Entity<DisputeEvidencePacketSnapshot>
     const id = crypto.randomUUID() as UUIDv4
     const createdAt = new Date()
     const caseSnapshot = input.disputeCase.serialize()
-    const template = resolveEvidencePacketTemplate(caseSnapshot.reason)
-    if (template.isErr()) return Result.err(template.error)
+    const evidencePacketSupport = resolveSupportedEvidencePacket(caseSnapshot.reason)
+    if (evidencePacketSupport.isErr()) return Result.err(evidencePacketSupport.error)
+    const { productType, reasonCodeCategory } = evidencePacketSupport.value
 
     const stripeEvidencePayload = buildFraudDigitalStripeEvidencePayload(input)
-    const pdfDocument = buildFraudEvidencePdfDocument(
-      input.disputeCase,
-      input.disputeContext,
+    const pdfDocument = buildEvidencePdfDocument({
+      reasonCodeCategory,
+      productType,
+      disputeCase: input.disputeCase,
+      disputeContext: input.disputeContext,
       stripeEvidencePayload,
-    )
+    })
+    if (pdfDocument.isErr()) return Result.err(pdfDocument.error)
     const artifacts = buildFraudEvidencePacketArtifacts(
       input.disputeCase,
-      template.value,
+      reasonCodeCategory,
+      productType,
       version,
       id,
     )
@@ -113,9 +116,10 @@ export class DisputeEvidencePacket extends Entity<DisputeEvidencePacketSnapshot>
       input.disputeCase.userId,
       input.disputeCase.id,
       version,
-      template.value,
+      reasonCodeCategory,
+      productType,
       stripeEvidencePayload,
-      pdfDocument,
+      pdfDocument.value,
       artifacts,
       evidenceQuality,
       createdAt,
@@ -127,7 +131,8 @@ export class DisputeEvidencePacket extends Entity<DisputeEvidencePacketSnapshot>
         disputeCaseId: packet.disputeCaseId,
         userId: packet.userId,
         version: packet.version,
-        template: packet.template,
+        reasonCodeCategory: packet.reasonCodeCategory,
+        productType: packet.productType,
       }),
     )
 
@@ -140,7 +145,8 @@ export class DisputeEvidencePacket extends Entity<DisputeEvidencePacketSnapshot>
       snapshot.userId,
       snapshot.disputeCaseId,
       requirePositiveInteger(snapshot.version, 'version'),
-      snapshot.template,
+      snapshot.reasonCodeCategory,
+      snapshot.productType,
       snapshot.stripeEvidencePayload,
       snapshot.pdfDocument,
       snapshot.artifacts.map((artifact) => ({ ...artifact })),
@@ -155,7 +161,8 @@ export class DisputeEvidencePacket extends Entity<DisputeEvidencePacketSnapshot>
       userId: this.userId,
       disputeCaseId: this.disputeCaseId,
       version: this.version,
-      template: this.template,
+      reasonCodeCategory: this.reasonCodeCategory,
+      productType: this.productType,
       stripeEvidencePayload: this.stripeEvidencePayload,
       pdfDocument: this.pdfDocument,
       artifacts: this.artifacts.map((artifact) => ({ ...artifact })),
@@ -171,9 +178,13 @@ function requirePositiveInteger(value: number, path: string): number {
   throw new Error(`${path} must be a positive integer`)
 }
 
-function resolveEvidencePacketTemplate(
-  reason: string,
-): Result<EvidencePacketTemplate, ValidationError> {
+function resolveSupportedEvidencePacket(reason: string): Result<
+  {
+    reasonCodeCategory: StripeDisputeReasonCodeCategory
+    productType: StripeDisputeEvidenceProductType
+  },
+  ValidationError
+> {
   const parsedReason = stripeDisputeReasonSchema.safeParse(reason)
   if (!parsedReason.success) {
     return Result.err(
@@ -186,13 +197,16 @@ function resolveEvidencePacketTemplate(
 
   const workflow = DISPUTE_REASON_WORKFLOW[parsedReason.data]
   if (workflow.evidencePacket.supported) {
-    return Result.ok(workflow.evidencePacket.template)
+    return Result.ok({
+      reasonCodeCategory: workflow.evidencePacket.reasonCodeCategory,
+      productType: workflow.evidencePacket.productType,
+    })
   }
 
   return Result.err(
     createEvidencePacketValidationError(
       workflow.evidencePacket.code,
-      `Evidence packet template is not supported for Stripe dispute reason: ${reason}`,
+      `Evidence packet is not supported for Stripe dispute reason: ${reason}`,
     ),
   )
 }
@@ -227,199 +241,50 @@ function buildFraudDigitalStripeEvidencePayload(
     customer_purchase_ip: caseSnapshot.customerPurchaseIp,
     customer_name: customerName,
     customer_email_address: customerEmail,
-    access_activity_log:
-      nonEmptyString(input.collectedEvidence?.accessActivityLog) ??
-      buildAccessActivityLog(input.disputeContext),
-    uncategorized_text:
-      nonEmptyString(input.collectedEvidence?.rebuttalText) ??
-      buildFraudRebuttalText(input.disputeCase, input.disputeContext),
+    access_activity_log: nonEmptyString(input.collectedEvidence?.accessActivityLog),
+    uncategorized_text: nonEmptyString(input.collectedEvidence?.merchantPosition),
     service_documentation: null,
-  }
-}
-
-function buildFraudEvidencePdfDocument(
-  disputeCase: DisputeCase,
-  context: StripeDisputeContext,
-  stripeEvidencePayload: FraudDigitalStripeEvidencePayload,
-): DisputeEvidencePdfDocument {
-  const caseSnapshot = disputeCase.serialize()
-  const priorCharges = context.paymentHistory.priorCharges
-  const priorNonDisputedCharges = priorCharges.filter((charge) => !charge.disputed)
-  const refundTotal = context.refunds.reduce((total, refund) => total + refund.amount, 0)
-  const cardFingerprint = context.card?.fingerprint ?? 'Not provided'
-
-  return {
-    title: 'Fraud Investigation Report',
-    sections: [
-      {
-        heading: 'Investigation Summary',
-        rows: [
-          {
-            label: 'Conclusion',
-            value:
-              'The transaction is legitimate and authorized. The available security, payment, and usage signals are consistent with the cardholder and previous account activity.',
-          },
-          { label: 'Dispute reason', value: titleCase(caseSnapshot.reason) },
-          {
-            label: 'Network reason code',
-            value: caseSnapshot.paymentMethodDetailsCardNetworkReasonCode ?? 'Not provided',
-          },
-        ],
-      },
-      {
-        heading: 'Transaction Details',
-        rows: [
-          { label: 'Dispute ID', value: disputeCase.id },
-          { label: 'Payment ID', value: context.charge.paymentIntent ?? 'Not provided' },
-          { label: 'Charge ID', value: context.charge.id },
-          { label: 'Amount', value: formatMoney(context.charge.amount, context.charge.currency) },
-          {
-            label: 'Statement descriptor',
-            value: context.charge.calculatedStatementDescriptor ?? 'Not provided',
-          },
-        ],
-      },
-      {
-        heading: 'Payment Method Verification',
-        rows: [
-          { label: 'Brand', value: context.card?.brand ?? 'Not provided' },
-          { label: 'Network', value: context.card?.network ?? 'Not provided' },
-          { label: 'Last four', value: context.card?.last4 ?? 'Not provided' },
-          { label: 'Fingerprint', value: cardFingerprint },
-          {
-            label: 'Address check',
-            value: context.card?.checks?.addressPostalCodeCheck ?? 'Not provided',
-          },
-          { label: 'CVC check', value: context.card?.checks?.cvcCheck ?? 'Not provided' },
-          { label: '3D Secure', value: context.card?.threeDSecure?.result ?? 'Not provided' },
-          { label: 'Risk level', value: context.risk.level ?? 'Not provided' },
-          {
-            label: 'Risk outcome',
-            value: context.risk.outcomeType ?? 'Not provided',
-          },
-        ],
-      },
-      {
-        heading: 'Customer Verification',
-        rows: [
-          { label: 'Customer', value: stripeEvidencePayload.customer_name ?? 'Not provided' },
-          { label: 'Email', value: stripeEvidencePayload.customer_email_address ?? 'Not provided' },
-          {
-            label: 'Purchase IP',
-            value: stripeEvidencePayload.customer_purchase_ip ?? 'Not provided',
-          },
-          {
-            label: 'Access activity',
-            value: stripeEvidencePayload.access_activity_log,
-          },
-        ],
-      },
-      {
-        heading: 'Prior Relationship',
-        rows: [
-          {
-            label: 'Prior charges',
-            value: `${priorNonDisputedCharges.length} prior successful payment(s)`,
-          },
-          {
-            label: 'Prior disputes',
-            value:
-              priorCharges.length === priorNonDisputedCharges.length
-                ? 'No prior disputes found for this payment method'
-                : `${priorCharges.length - priorNonDisputedCharges.length} prior disputed payment(s) found`,
-          },
-          {
-            label: 'Pattern',
-            value:
-              'The disputed payment is consistent with previous purchase behavior, card fingerprint, account identity, and product usage.',
-          },
-        ],
-      },
-      {
-        heading: 'Refunds',
-        rows: [
-          { label: 'Refund count', value: String(context.refunds.length) },
-          {
-            label: 'Refund total',
-            value: formatMoney(refundTotal, caseSnapshot.currency),
-          },
-        ],
-      },
-      {
-        heading: 'Investigation Conclusion',
-        rows: [
-          {
-            label: 'Summary',
-            value: stripeEvidencePayload.uncategorized_text,
-          },
-        ],
-      },
-    ],
   }
 }
 
 function buildFraudEvidencePacketArtifacts(
   disputeCase: DisputeCase,
-  template: EvidencePacketTemplate,
+  reasonCodeCategory: StripeDisputeReasonCodeCategory,
+  productType: StripeDisputeEvidenceProductType,
   version: number,
   packetId: UUIDv4,
 ): DisputeEvidencePacketArtifact[] {
-  return [buildFraudEvidencePdfArtifact(disputeCase, template, version, packetId)]
+  return [
+    buildFraudEvidencePdfArtifact(disputeCase, reasonCodeCategory, productType, version, packetId),
+  ]
 }
 
 function buildFraudEvidencePdfArtifact(
   disputeCase: DisputeCase,
-  template: EvidencePacketTemplate,
+  reasonCodeCategory: StripeDisputeReasonCodeCategory,
+  productType: StripeDisputeEvidenceProductType,
   version: number,
   packetId: UUIDv4,
 ): EvidencePdfArtifact {
   return {
     kind: 'evidence_pdf',
-    template,
-    stripeEvidenceField: 'service_documentation',
+    reasonCodeCategory,
+    productType,
+    stripeEvidenceField: 'uncategorized_file',
     r2Key: buildFraudEvidencePdfR2Key(disputeCase.userId, disputeCase.id, version, packetId),
     contentType: 'application/pdf',
   }
 }
 
 function assessEvidenceQuality(
-  _stripeEvidencePayload: FraudDigitalStripeEvidencePayload,
+  stripeEvidencePayload: FraudDigitalStripeEvidencePayload,
   _context: StripeDisputeContext,
 ): EvidenceQuality {
+  if (!stripeEvidencePayload.access_activity_log || !stripeEvidencePayload.uncategorized_text) {
+    return 'low'
+  }
+
   return 'medium'
-}
-
-function buildAccessActivityLog(context: StripeDisputeContext): string {
-  const priorNonDisputedCharges = context.paymentHistory.priorCharges.filter(
-    (charge) => !charge.disputed,
-  )
-
-  return [
-    `Stripe charge ${context.charge.id} was created at ${context.charge.created.toISOString()}.`,
-    `The card fingerprint is ${context.card?.fingerprint ?? 'not available'}.`,
-    `Stripe payment history shows ${priorNonDisputedCharges.length} prior non-disputed charge(s) for this customer context.`,
-  ].join('\n')
-}
-
-function buildFraudRebuttalText(disputeCase: DisputeCase, context: StripeDisputeContext): string {
-  const caseSnapshot = disputeCase.serialize()
-  const customerEmail =
-    stripeEvidenceString(caseSnapshot.evidence.customer_email_address) ??
-    context.customer?.email ??
-    null
-  const refundCount = context.refunds.length
-  const priorNonDisputedCharges = context.paymentHistory.priorCharges.filter(
-    (charge) => !charge.disputed,
-  ).length
-
-  return [
-    `Riposte is contesting dispute ${disputeCase.id} for a ${caseSnapshot.currency.toUpperCase()} ${caseSnapshot.amountMinor} charge.`,
-    `Stripe facts link the payment to customer ${customerEmail ?? context.customer?.id ?? 'unknown customer'} and purchase IP ${caseSnapshot.customerPurchaseIp ?? 'not provided'}.`,
-    `The card fingerprint is ${context.card?.fingerprint ?? 'not available'} and Stripe reports ${priorNonDisputedCharges} prior non-disputed charge(s) in the payment history context.`,
-    refundCount === 0
-      ? 'Stripe refund records show no refunds for the disputed charge at packet generation time.'
-      : `Stripe refund records show ${refundCount} refund(s) for the disputed charge at packet generation time.`,
-  ].join('\n')
 }
 
 function buildFraudEvidencePdfR2Key(
@@ -437,18 +302,4 @@ function stripeEvidenceString(value: unknown): string | null {
 
 function nonEmptyString(value: string | null | undefined): string | null {
   return typeof value === 'string' && value.trim() ? value : null
-}
-
-function formatMoney(amountMinor: number, currency: string): string {
-  return `${(amountMinor / 100).toLocaleString('en-US', {
-    style: 'currency',
-    currency: currency.toUpperCase(),
-  })} ${currency.toUpperCase()}`
-}
-
-function titleCase(value: string): string {
-  return value
-    .split('_')
-    .map((part) => (part ? `${part[0]?.toUpperCase()}${part.slice(1)}` : part))
-    .join(' ')
 }

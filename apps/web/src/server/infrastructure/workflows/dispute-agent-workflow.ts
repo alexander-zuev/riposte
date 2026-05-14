@@ -51,6 +51,17 @@ class DisputeAgentWorkflowBase extends AgentWorkflow<DisputeAgent, DisputeAgentW
     })
 
     if (triage.action !== 'contest') return { disputeCaseId }
+    if (!triage.canGenerateEvidencePacket) {
+      logger.info('dispute_agent_workflow_waiting_for_human_after_triage', {
+        code: triage.code,
+        disputeCaseId,
+        reason: 'evidence_packet_template_not_supported',
+      })
+
+      // TODO: Resume from an explicit human-input domain event instead of ending this run.
+      // Triage has already persisted the DisputeCase as awaiting_human with missing evidence.
+      return { disputeCaseId }
+    }
 
     await step.do('enrich dispute context', externalStepConfig, async () => {
       const command = createCommand(

@@ -1,0 +1,1 @@
+ALTER TABLE "dispute_evidence_packets" ADD COLUMN "product_type" text DEFAULT 'digital_product_or_service' NOT NULL;

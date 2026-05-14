@@ -169,6 +169,13 @@
       "when": 1778702238990,
       "tag": "0023_whole_loki",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1778756335240,
+      "tag": "0024_third_wolfpack",
+      "breakpoints": true
     }
   ]
 }

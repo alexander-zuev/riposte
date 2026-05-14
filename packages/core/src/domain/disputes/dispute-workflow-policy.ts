@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 import type {
+  StripeDisputeEvidenceProductType,
   StripeDisputeReason,
   StripeDisputeReasonCodeCategory,
 } from './stripe-dispute-taxonomy'
@@ -50,14 +51,31 @@ export const contestDecisionCodeSchema = z.enum(CONTEST_DECISION_CODES)
 
 export type DisputeContestPolicyDecision = Exclude<ContestDecisionKind, 'undecided'>
 
-export const EVIDENCE_PACKET_TEMPLATES = ['fraudulent_digital_goods'] as const
-
-export type EvidencePacketTemplate = (typeof EVIDENCE_PACKET_TEMPLATES)[number]
-export const evidencePacketTemplateSchema = z.enum(EVIDENCE_PACKET_TEMPLATES)
 export type EvidencePacketUnsupportedCode =
   | 'no_normal_contest_path'
   | 'not_implemented'
   | 'special_handling'
+
+export const MERCHANT_DISPUTE_FINDING_OUTCOMES = [
+  'supports_merchant_position',
+  'does_not_support_merchant_position',
+  'needs_more_evidence',
+] as const
+
+export type MerchantDisputeFindingOutcome = (typeof MERCHANT_DISPUTE_FINDING_OUTCOMES)[number]
+export const merchantDisputeFindingOutcomeSchema = z.enum(MERCHANT_DISPUTE_FINDING_OUTCOMES)
+
+export const MERCHANT_DISPUTE_FINDING_OUTCOME_DETAILS = {
+  supports_merchant_position: {
+    label: 'Merchant position supported',
+  },
+  does_not_support_merchant_position: {
+    label: 'Merchant position not supported',
+  },
+  needs_more_evidence: {
+    label: 'Needs more evidence',
+  },
+} as const satisfies Record<MerchantDisputeFindingOutcome, { label: string }>
 
 export type DisputeReasonWorkflow = {
   reasonCodeCategory: StripeDisputeReasonCodeCategory | null
@@ -68,7 +86,8 @@ export type DisputeReasonWorkflow = {
   evidencePacket:
     | {
         supported: true
-        template: EvidencePacketTemplate
+        reasonCodeCategory: StripeDisputeReasonCodeCategory
+        productType: StripeDisputeEvidenceProductType
       }
     | {
         supported: false
@@ -110,7 +129,11 @@ export const DISPUTE_REASON_WORKFLOW = {
   fraudulent: {
     reasonCodeCategory: 'fraudulent',
     contestPolicy: { decision: 'contest', code: 'supported_card_fraud_adjacent' },
-    evidencePacket: { supported: true, template: 'fraudulent_digital_goods' },
+    evidencePacket: {
+      supported: true,
+      reasonCodeCategory: 'fraudulent',
+      productType: 'digital_product_or_service',
+    },
   },
   general: {
     reasonCodeCategory: 'general',
@@ -150,7 +173,11 @@ export const DISPUTE_REASON_WORKFLOW = {
   unrecognized: {
     reasonCodeCategory: 'unrecognized',
     contestPolicy: { decision: 'contest', code: 'supported_card_fraud_adjacent' },
-    evidencePacket: { supported: true, template: 'fraudulent_digital_goods' },
+    evidencePacket: {
+      supported: true,
+      reasonCodeCategory: 'unrecognized',
+      productType: 'digital_product_or_service',
+    },
   },
 } as const satisfies Record<StripeDisputeReason, DisputeReasonWorkflow>
 

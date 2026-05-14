@@ -1,4 +1,7 @@
-import type { EvidencePacketTemplate } from '@riposte/core'
+import type {
+  StripeDisputeEvidenceProductType,
+  StripeDisputeReasonCodeCategory,
+} from '@riposte/core'
 import {
   DisputeCase,
   DisputeEvidencePacket,
@@ -6,12 +9,13 @@ import {
   type DisputeEvidencePdfDocument,
 } from '@server/domain/disputes'
 
-export type DevEvidencePdfCategory = 'fraudulent'
+export type DevEvidencePdfCategory = 'fraudulent' | 'unrecognized'
 
-export const DEV_EVIDENCE_PDF_CATEGORIES: DevEvidencePdfCategory[] = ['fraudulent']
+export const DEV_EVIDENCE_PDF_CATEGORIES: DevEvidencePdfCategory[] = ['fraudulent', 'unrecognized']
 
 export type DevEvidencePdfCategoryDescriptor = {
-  template: EvidencePacketTemplate
+  reasonCodeCategory: StripeDisputeReasonCodeCategory
+  productType: StripeDisputeEvidenceProductType
   label: string
   description: string
   supported: true
@@ -19,9 +23,17 @@ export type DevEvidencePdfCategoryDescriptor = {
 
 export const DEV_EVIDENCE_PDF_CATEGORY_DESCRIPTORS: DevEvidencePdfCategoryDescriptor[] = [
   {
-    template: 'fraudulent_digital_goods',
+    reasonCodeCategory: 'fraudulent',
+    productType: 'digital_product_or_service',
     label: 'Fraudulent',
     description: 'Preview the fraud evidence packet generated from domain dispute facts',
+    supported: true,
+  },
+  {
+    reasonCodeCategory: 'unrecognized',
+    productType: 'digital_product_or_service',
+    label: 'Unrecognized',
+    description: 'Preview the unrecognized-payment evidence packet using the fraud-adjacent shape',
     supported: true,
   },
 ]
@@ -46,15 +58,17 @@ export function buildDevEvidencePdfPreview(
 ): DevEvidencePdfPreview {
   switch (category) {
     case 'fraudulent':
-      return buildDevFraudEvidencePdfPreview()
+      return buildDevFraudEvidencePdfPreview('fraudulent')
+    case 'unrecognized':
+      return buildDevFraudEvidencePdfPreview('unrecognized')
     default:
       category satisfies never
-      return buildDevFraudEvidencePdfPreview()
+      return buildDevFraudEvidencePdfPreview('fraudulent')
   }
 }
 
-function buildDevFraudEvidencePdfPreview(): DevEvidencePdfPreview {
-  const disputeCase = buildDevFraudDisputeCase()
+function buildDevFraudEvidencePdfPreview(category: DevEvidencePdfCategory): DevEvidencePdfPreview {
+  const disputeCase = buildDevFraudDisputeCase(category)
   const disputeContext = buildDevFraudDisputeContext(disputeCase.id)
   const evidencePacket = DisputeEvidencePacket.create({
     disputeCase,
@@ -62,7 +76,7 @@ function buildDevFraudEvidencePdfPreview(): DevEvidencePdfPreview {
     collectedEvidence: {
       accessActivityLog:
         'The customer account accessed the digital service after payment. Server activity shows authenticated access from a consistent device and network profile after the charge succeeded.',
-      rebuttalText:
+      merchantPosition:
         'Based on payment method verification, customer identity signals, account access, and prior transaction history, the evidence supports that the legitimate cardholder authorized and used the purchased service.',
     },
     previousPacket: null,
@@ -70,7 +84,7 @@ function buildDevFraudEvidencePdfPreview(): DevEvidencePdfPreview {
   if (evidencePacket.isErr()) throw evidencePacket.error
 
   return {
-    category: 'fraudulent',
+    category,
     disputeCase,
     disputeContext,
     evidencePacket: evidencePacket.value,
@@ -83,7 +97,7 @@ function buildDevFraudEvidencePdfPreview(): DevEvidencePdfPreview {
   }
 }
 
-function buildDevFraudDisputeCase(): DisputeCase {
+function buildDevFraudDisputeCase(category: DevEvidencePdfCategory): DisputeCase {
   const received = DisputeCase.receiveStripeDispute({
     userId: '018f5b64-196b-7b6c-b001-6e1a62f98a01',
     stripeAccountId: 'acct_1Rsq0qDGi8KWRsUN',
@@ -111,7 +125,7 @@ function buildDevFraudDisputeCase(): DisputeCase {
           network_reason_code: '10.4',
         },
       },
-      reason: 'fraudulent',
+      reason: category,
       status: 'needs_response',
       evidence_details: {
         due_by: Math.floor(new Date('2026-05-22T00:00:00.000Z').getTime() / 1000),

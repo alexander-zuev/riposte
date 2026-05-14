@@ -60,6 +60,18 @@ export const STRIPE_DISPUTE_REASON_CODE_CATEGORIES = [
 export type StripeDisputeReasonCodeCategory = (typeof STRIPE_DISPUTE_REASON_CODE_CATEGORIES)[number]
 export const stripeDisputeReasonCodeCategorySchema = z.enum(STRIPE_DISPUTE_REASON_CODE_CATEGORIES)
 
+// Stripe visual evidence product-type selector.
+// Source: https://docs.stripe.com/disputes/visual-evidence
+export const STRIPE_DISPUTE_EVIDENCE_PRODUCT_TYPES = [
+  'physical_product',
+  'digital_product_or_service',
+  'offline_service',
+] as const
+
+export type StripeDisputeEvidenceProductType =
+  (typeof STRIPE_DISPUTE_EVIDENCE_PRODUCT_TYPES)[number]
+export const stripeDisputeEvidenceProductTypeSchema = z.enum(STRIPE_DISPUTE_EVIDENCE_PRODUCT_TYPES)
+
 export const STRIPE_DISPUTE_REASON_CODE_CATEGORY_DETAILS = {
   credit_not_processed: {
     label: 'Credit not processed',

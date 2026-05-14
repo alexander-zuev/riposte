@@ -1,5 +1,9 @@
 {
   "extends": "stripe-app.json",
+  "id": "app.dev.riposte.sh",
+  "name": "Riposte Dev",
+  "version": "0.0.1",
+  "distribution_type": "private",
   "ui_extension": {
     "content_security_policy": {
       "connect-src": [
@@ -11,5 +15,10 @@
   },
   "constants": {
     "API_BASE": "https://tunnel.riposte.sh"
-  }
+  },
+  "post_install_action": {
+    "type": "external",
+    "url": "https://tunnel.riposte.sh/settings"
+  },
+  "allowed_redirect_uris": ["https://tunnel.riposte.sh/api/stripe/oauth/callback"]
 }

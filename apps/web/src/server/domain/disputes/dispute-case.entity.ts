@@ -30,16 +30,11 @@ export type MissingEvidence = {
   message: string
 }
 
-export const DISPUTE_HUMAN_REQUEST_KINDS = [
-  'triage_review',
-  'submission_approval',
-] as const
+export const DISPUTE_HUMAN_REQUEST_KINDS = ['triage_review', 'submission_approval'] as const
 
 export type DisputeHumanRequestKind = (typeof DISPUTE_HUMAN_REQUEST_KINDS)[number]
 
-export type DisputeSubmissionApprovalCode =
-  | 'evidence_quality_low'
-  | 'evidence_quality_medium'
+export type DisputeSubmissionApprovalCode = 'evidence_quality_low' | 'evidence_quality_medium'
 
 type ApprovalRequiredEvidenceQuality = Exclude<EvidenceQuality, 'high'>
 
@@ -470,8 +465,7 @@ export class DisputeCase extends Entity<DisputeCaseSnapshot> {
       status: 'awaiting_human',
       request: {
         kind: 'submission_approval',
-        code:
-          args.evidenceQuality === 'low' ? 'evidence_quality_low' : 'evidence_quality_medium',
+        code: args.evidenceQuality === 'low' ? 'evidence_quality_low' : 'evidence_quality_medium',
         evidencePacketId: requireNonBlank(args.evidencePacketId, 'evidencePacketId') as UUIDv4,
         requestedAt: now,
         allowedResponses: ['submit', 'replace_packet', 'decline'],

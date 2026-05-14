@@ -37,11 +37,13 @@ type DisputeWorkflowCommandError =
 
 // Temporary post-evaluation workflow contracts. Keep the action shape stable as
 // evidence collection, packet generation, policy routing, and submission become real.
-export type CollectDisputeEvidenceResult =
-  { action: 'collected' }
+export type CollectDisputeEvidenceResult = { action: 'collected' }
 
-export type GenerateEvidencePacketResult =
-  { action: 'generated'; evidencePacketId: string; quality: EvidenceQuality }
+export type GenerateEvidencePacketResult = {
+  action: 'generated'
+  evidencePacketId: string
+  quality: EvidenceQuality
+}
 
 export type RouteDisputeSubmissionPolicyResult =
   | { route: 'submit'; evidencePacketId: string }

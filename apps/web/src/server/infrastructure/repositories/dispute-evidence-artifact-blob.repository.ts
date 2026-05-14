@@ -11,9 +11,9 @@ import { Result } from 'better-result'
 export class DisputeEvidenceArtifactBlobRepository implements IDisputeEvidenceArtifactBlobRepository {
   constructor(private readonly bucket: R2Bucket) {}
 
-  async get(
-    input: { r2Key: string },
-  ): Promise<Result<DisputeEvidenceArtifactBlobBody | null, BlobStorageError>> {
+  async get(input: {
+    r2Key: string
+  }): Promise<Result<DisputeEvidenceArtifactBlobBody | null, BlobStorageError>> {
     const found = await Result.tryPromise(
       {
         try: async () => this.bucket.get(input.r2Key),

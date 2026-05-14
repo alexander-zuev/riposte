@@ -166,7 +166,11 @@ async function signedStripeAppRequest(args: {
       }),
     })
   } catch (error) {
-    console.error('stripe_app_request_network_failed', { error, url })
+    console.error('stripe_app_request_network_failed', {
+      error,
+      hint: 'Check backend URL, CORS, CSP, tunnel availability, and network reachability',
+      url,
+    })
     throw new StripeAppRequestError('network')
   }
 
@@ -174,6 +178,8 @@ async function signedStripeAppRequest(args: {
     const body = await readResponseBody(response)
     console.error('stripe_app_request_failed', {
       body,
+      errorKind: classifyStatus(response.status),
+      hint: 'Check backend logs, Stripe App signing secret, installed app version, and API route response',
       status: response.status,
       statusText: response.statusText,
       url,
@@ -232,11 +238,11 @@ function getErrorTitle(kind: RequestErrorKind): string {
 function getErrorDescription(kind: RequestErrorKind): string {
   switch (kind) {
     case 'network':
-      return 'Check the app backend URL, CORS, and content security policy'
+      return 'Try again, or open Riposte setup'
     case 'auth':
-      return 'Check the Stripe App signing secret and reinstall the current app version'
+      return 'Try reinstalling the app, or open Riposte setup'
     case 'server':
-      return 'Open Riposte to check setup, then try again'
+      return 'Open Riposte setup, then try again'
     case 'unknown':
       return 'Try again, or open Riposte setup to finish configuration'
   }

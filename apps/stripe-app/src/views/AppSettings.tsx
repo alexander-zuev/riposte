@@ -8,6 +8,7 @@ import {
   PropertyListItem,
   SettingsView,
 } from '@stripe/ui-extension-sdk/ui'
+import { fetchStripeSignature } from '@stripe/ui-extension-sdk/utils'
 import React from 'react'
 
 type RequestStatus = 'idle' | 'loading' | 'syncing' | 'started' | 'error'
@@ -25,6 +26,7 @@ export default function AppSettings({ environment, userContext }: ExtensionConte
   const [status, setStatus] = React.useState<RequestStatus>('idle')
 
   const apiBase = getApiBase(environment.constants?.API_BASE)
+  const userId = userContext.id
   const accountId = userContext.account.id
   const livemode = environment.mode === 'live'
 
@@ -34,11 +36,11 @@ export default function AppSettings({ environment, userContext }: ExtensionConte
     async function loadSettings() {
       setStatus('loading')
       try {
-        const response = await fetch(
-          `${apiBase}/api/stripe/app/settings?${new URLSearchParams({
-            account_id: accountId,
-            livemode: String(livemode),
-          }).toString()}`,
+        const response = await signedStripeAppRequest(
+          `${apiBase}/api/stripe/app/settings`,
+          userId,
+          accountId,
+          livemode,
         )
 
         if (!response.ok) throw new Error(`Settings request failed: ${response.status}`)
@@ -61,21 +63,17 @@ export default function AppSettings({ environment, userContext }: ExtensionConte
     return () => {
       cancelled = true
     }
-  }, [accountId, apiBase, livemode])
+  }, [accountId, apiBase, livemode, userId])
 
   async function startSync() {
     setStatus('syncing')
     try {
-      const response = await fetch(`${apiBase}/api/stripe/app/sync`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          accountId,
-          livemode,
-        }),
-      })
+      const response = await signedStripeAppRequest(
+        `${apiBase}/api/stripe/app/sync`,
+        userId,
+        accountId,
+        livemode,
+      )
 
       if (!response.ok) throw new Error(`Sync request failed: ${response.status}`)
 
@@ -147,6 +145,29 @@ export default function AppSettings({ environment, userContext }: ExtensionConte
       </Box>
     </SettingsView>
   )
+}
+
+async function signedStripeAppRequest(
+  url: string,
+  userId: string | undefined,
+  accountId: string,
+  livemode: boolean,
+): Promise<Response> {
+  if (!userId) throw new Error('Missing Stripe user context')
+
+  const payload = { livemode }
+  return fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Stripe-Signature': await fetchStripeSignature(payload),
+    },
+    body: JSON.stringify({
+      ...payload,
+      user_id: userId,
+      account_id: accountId,
+    }),
+  })
 }
 
 function getApiBase(value: unknown): string {

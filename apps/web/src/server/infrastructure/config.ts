@@ -7,6 +7,10 @@ type DevEnv = typeof env & {
   STRIPE_TEST_SECRET_KEY: string
 }
 
+type StripeAppEnv = typeof env & {
+  STRIPE_APP_SIGNING_SECRET?: string
+}
+
 /**
  * Must be called inside a request handler — cloudflare:workers env
  * is not populated during Vite SSR module evaluation.
@@ -46,6 +50,7 @@ export function getServerConfig() {
     secretKey: env.STRIPE_SECRET_KEY,
     webhookSecret: env.STRIPE_WEBHOOK_SECRET,
     appWebhookSecret: env.STRIPE_APP_WEBHOOK_SECRET,
+    appSigningSecret: (env as StripeAppEnv).STRIPE_APP_SIGNING_SECRET,
   }
 
   if (mode === 'development' || mode === 'test') {

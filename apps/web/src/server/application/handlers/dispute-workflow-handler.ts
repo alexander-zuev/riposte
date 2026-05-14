@@ -7,6 +7,7 @@ import type {
   EvidencePdfRenderError,
   GenerateEvidencePacket,
   RouteDisputeSubmissionPolicy,
+  StripeApiError,
   SubmitDisputeResponse,
   TriageDisputeCase,
   WorkflowError,
@@ -15,10 +16,11 @@ import type {
 import { createLogger, EntityNotFoundError, ValidationError } from '@riposte/core'
 import type { HandlerContext } from '@server/application/registry/types'
 import { DisputeEvidencePacket, StripeDisputeContext } from '@server/domain/disputes'
-import type { DisputeCaseEvaluation } from '@server/domain/disputes'
+import type { DisputeCase, DisputeCaseEvaluation, EvidenceQuality } from '@server/domain/disputes'
 import { renderDisputeEvidencePdf } from '@server/infrastructure/pdf/dispute-evidence-pdf-renderer'
 import type { GetClientError } from '@server/infrastructure/stripe/stripe-client-provider'
 import { fetchStripeDisputeContext } from '@server/infrastructure/stripe/stripe-dispute-enrichment'
+import { submitStripeDisputeEvidence } from '@server/infrastructure/stripe/stripe-dispute-submission'
 import { Result } from 'better-result'
 
 const logger = createLogger('dispute-workflow-handler')
@@ -31,27 +33,19 @@ type DisputeWorkflowCommandError =
   | ValidationErrorType
   | EvidencePdfRenderError
   | BlobStorageError
+  | StripeApiError
 
 // Temporary post-evaluation workflow contracts. Keep the action shape stable as
 // evidence collection, packet generation, policy routing, and submission become real.
 export type CollectDisputeEvidenceResult =
-  | { action: 'collected' }
-  | { action: 'await_human'; reason: string; missingEvidence: unknown[] }
-  | { action: 'failed'; reason: string }
-
-export type EvidenceQuality = 'low' | 'medium' | 'high'
+  { action: 'collected' }
 
 export type GenerateEvidencePacketResult =
-  | { action: 'generated'; evidencePacketId: string; quality: EvidenceQuality }
-  | { action: 'await_human'; reason: string; evidencePacketId: string | null }
-  | { action: 'failed'; reason: string }
+  { action: 'generated'; evidencePacketId: string; quality: EvidenceQuality }
 
 export type RouteDisputeSubmissionPolicyResult =
-  | { action: 'await_human'; reason: string; evidencePacketId: string | null }
-  | { action: 'submit'; evidencePacketId: string }
-  | { action: 'accept'; reason: string }
-  | { action: 'no_response'; reason: string }
-  | { action: 'failed'; reason: string }
+  | { route: 'submit'; evidencePacketId: string }
+  | { route: 'await_human'; requestKind: 'submission_approval'; evidencePacketId: string }
 
 export type SubmitDisputeResponseResult = {
   action: 'submitted'
@@ -247,25 +241,214 @@ export async function generateEvidencePacket(
 
 export async function routeDisputeSubmissionPolicy(
   command: RouteDisputeSubmissionPolicy,
-): Promise<Result<RouteDisputeSubmissionPolicyResult, never>> {
-  logger.info('dispute_submission_policy_review_first', {
+  { deps, tx }: HandlerContext,
+): Promise<Result<RouteDisputeSubmissionPolicyResult, DisputeWorkflowCommandError>> {
+  const disputeCaseResult = await deps.repos.disputeCases(tx).findById(command.disputeCaseId)
+  if (disputeCaseResult.isErr()) return Result.err(disputeCaseResult.error)
+
+  if (!disputeCaseResult.value) {
+    return Result.err(new EntityNotFoundError({ entity: 'DisputeCase', id: command.disputeCaseId }))
+  }
+  const disputeCase = disputeCaseResult.value
+
+  const evidencePacketResult = await deps.repos.disputeEvidencePackets(tx).findByIdForCase({
+    userId: disputeCase.userId,
+    disputeCaseId: disputeCase.id,
+    evidencePacketId: command.evidencePacketId,
+  })
+  if (evidencePacketResult.isErr()) return Result.err(evidencePacketResult.error)
+
+  if (!evidencePacketResult.value) {
+    return Result.err(
+      new EntityNotFoundError({
+        entity: 'DisputeEvidencePacket',
+        id: command.evidencePacketId,
+      }),
+    )
+  }
+  const evidencePacket = evidencePacketResult.value
+
+  // TODO(submission-policy): Replace this first-pass quality gate with an explicit
+  // policy object that can account for merchant approval settings, dispute amount,
+  // evidence completeness, agent confidence, and category-specific submission rules.
+  if (evidencePacket.evidenceQuality === 'high') {
+    logger.info('dispute_submission_policy_auto_submit', {
+      disputeCaseId: command.disputeCaseId,
+      evidencePacketId: command.evidencePacketId,
+      evidenceQuality: evidencePacket.evidenceQuality,
+    })
+
+    return Result.ok({ route: 'submit', evidencePacketId: command.evidencePacketId })
+  }
+
+  // TODO(submission-policy): Replace this rough stop with a policy service that evaluates
+  // user-defined mode (autopilot/manual review), dispute facts, and evidence facts, then
+  // returns a first-class route such as submit, requireApproval, accept, or noResponse.
+  disputeCase.awaitSubmissionApproval({
+    evidencePacketId: evidencePacket.id,
+    evidenceQuality: evidencePacket.evidenceQuality,
+  })
+
+  const saved = await deps.repos.disputeCases(tx).save(disputeCase)
+  if (saved.isErr()) return Result.err(saved.error)
+
+  logger.info('dispute_submission_policy_review_required', {
     disputeCaseId: command.disputeCaseId,
     evidencePacketId: command.evidencePacketId,
+    evidenceQuality: evidencePacket.evidenceQuality,
   })
 
   return Result.ok({
-    action: 'await_human',
-    reason: 'review_first_policy',
+    route: 'await_human',
+    requestKind: 'submission_approval',
     evidencePacketId: command.evidencePacketId,
   })
 }
 
 export async function submitDisputeResponse(
   command: SubmitDisputeResponse,
-): Promise<Result<SubmitDisputeResponseResult, never>> {
-  logger.info('dispute_response_submission_pending', {
+  { deps, tx }: HandlerContext,
+): Promise<Result<SubmitDisputeResponseResult, DisputeWorkflowCommandError>> {
+  const found = await deps.repos.disputeCases(tx).findById(command.disputeCaseId)
+  if (found.isErr()) return Result.err(found.error)
+
+  if (!found.value) {
+    return Result.err(new EntityNotFoundError({ entity: 'DisputeCase', id: command.disputeCaseId }))
+  }
+
+  const canSubmit = validateDisputeCanBeSubmitted(found.value)
+  if (canSubmit.isErr()) return Result.err(canSubmit.error)
+
+  const packet = await deps.repos.disputeEvidencePackets(tx).findByIdForCase({
+    userId: found.value.userId,
+    disputeCaseId: found.value.id,
+    evidencePacketId: command.evidencePacketId,
+  })
+  if (packet.isErr()) return Result.err(packet.error)
+
+  if (!packet.value) {
+    return Result.err(
+      new EntityNotFoundError({
+        entity: 'DisputeEvidencePacket',
+        id: command.evidencePacketId,
+      }),
+    )
+  }
+
+  // TODO: 1) didn't we previously validate? And this repeats the submission policy? do we not trust it?
+  if (packet.value.evidenceQuality !== 'high') {
+    return Result.err(
+      validationError(
+        'approval_required',
+        ['evidenceQuality'],
+        `Cannot auto-submit ${packet.value.evidenceQuality} quality evidence without merchant approval`,
+      ),
+    )
+  }
+  // OK for now so we have to go through artifacts to retrieve them one by one
+  const pdfArtifact = packet.value.artifacts.find((artifact) => artifact.kind === 'evidence_pdf')
+  if (!pdfArtifact) {
+    return Result.err(
+      validationError('missing_required', ['artifacts'], 'Evidence packet PDF artifact is missing'),
+    )
+  }
+
+  const blob = await deps.repos.disputeEvidenceArtifactBlobs().get({ r2Key: pdfArtifact.r2Key })
+  if (blob.isErr()) return Result.err(blob.error)
+
+  if (!blob.value) {
+    return Result.err(
+      new EntityNotFoundError({
+        entity: 'DisputeEvidenceArtifactBlob',
+        id: pdfArtifact.r2Key,
+      }),
+    )
+  }
+
+  const stripe = await deps.services
+    .stripeClientProvider()
+    .getForAccount(found.value.stripeAccountId)
+  if (stripe.isErr()) return Result.err(stripe.error)
+
+  const submitted = await submitStripeDisputeEvidence({
+    stripe: stripe.value,
+    disputeCase: found.value,
+    packet: packet.value,
+    artifactBlobs: [{ artifact: pdfArtifact, blob: blob.value }],
+  })
+  if (submitted.isErr()) return Result.err(submitted.error)
+
+  const refreshed = found.value.refreshStripeDisputeFacts(submitted.value.stripeDispute)
+  if (refreshed.isErr()) return Result.err(refreshed.error)
+
+  found.value.complete('contest_submitted')
+  const saved = await deps.repos.disputeCases(tx).save(found.value)
+  if (saved.isErr()) return Result.err(saved.error)
+
+  logger.info('dispute_response_submitted', {
     disputeCaseId: command.disputeCaseId,
+    evidencePacketId: command.evidencePacketId,
+    uploadedFiles: submitted.value.uploadedFiles.map((file) => ({
+      artifactKind: file.artifactKind,
+      stripeEvidenceField: file.stripeEvidenceField,
+      fileId: file.fileId,
+    })),
   })
 
   return Result.ok({ action: 'submitted' })
+}
+
+function validateDisputeCanBeSubmitted(
+  disputeCase: DisputeCase,
+): Result<void, ValidationErrorType> {
+  const snapshot = disputeCase.serialize()
+
+  if (!['needs_response', 'warning_needs_response'].includes(snapshot.stripeStatus)) {
+    return Result.err(
+      validationError(
+        'invalid_state',
+        ['stripeStatus'],
+        `Cannot submit evidence when Stripe dispute status is ${snapshot.stripeStatus}`,
+      ),
+    )
+  }
+
+  if (!snapshot.evidenceDetailsDueBy) {
+    return Result.err(
+      validationError(
+        'missing_required',
+        ['evidenceDetailsDueBy'],
+        'Cannot submit evidence without a Stripe evidence deadline',
+      ),
+    )
+  }
+
+  if (snapshot.evidenceDetailsPastDue || snapshot.evidenceDetailsDueBy.getTime() <= Date.now()) {
+    return Result.err(
+      validationError(
+        'deadline_past',
+        ['evidenceDetailsDueBy'],
+        'Cannot submit evidence after the Stripe evidence deadline',
+      ),
+    )
+  }
+
+  if (snapshot.evidenceDetailsSubmissionCount > 0) {
+    return Result.err(
+      validationError(
+        'already_submitted',
+        ['evidenceDetailsSubmissionCount'],
+        'Cannot submit evidence because Stripe already records an evidence submission',
+      ),
+    )
+  }
+
+  return Result.ok(undefined)
+}
+
+function validationError(code: string, path: Array<string | number>, message: string) {
+  return new ValidationError({
+    message,
+    issues: [{ code, path, message }],
+  })
 }

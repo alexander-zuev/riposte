@@ -254,9 +254,7 @@ function buildEvidencePacketArtifacts(
   version: number,
   packetId: UUIDv4,
 ): DisputeEvidencePacketArtifact[] {
-  return [
-    buildEvidencePdfArtifact(disputeCase, reasonCodeCategory, productType, version, packetId),
-  ]
+  return [buildEvidencePdfArtifact(disputeCase, reasonCodeCategory, productType, version, packetId)]
 }
 
 function buildEvidencePdfArtifact(
@@ -285,11 +283,24 @@ function buildEvidencePdfArtifact(
 
 function assessEvidenceQuality(
   stripeEvidencePayload: FraudDigitalStripeEvidencePayload,
-  _context: StripeDisputeContext,
+  context: StripeDisputeContext,
 ): EvidenceQuality {
   if (!stripeEvidencePayload.access_activity_log || !stripeEvidencePayload.uncategorized_text) {
     return 'low'
   }
+
+  const hasCustomerIdentity =
+    Boolean(stripeEvidencePayload.customer_name) ||
+    Boolean(stripeEvidencePayload.customer_email_address)
+  const hasAuthorizationSignal =
+    Boolean(stripeEvidencePayload.customer_purchase_ip) ||
+    Boolean(context.card?.checks?.addressLine1Check) ||
+    Boolean(context.card?.checks?.addressPostalCodeCheck) ||
+    Boolean(context.card?.checks?.cvcCheck) ||
+    Boolean(context.card?.threeDSecure) ||
+    context.paymentHistory.priorCharges.some((charge) => charge.paid && !charge.disputed)
+
+  if (hasCustomerIdentity && hasAuthorizationSignal) return 'high'
 
   return 'medium'
 }

@@ -19,6 +19,7 @@ import { Result } from 'better-result'
 import { z } from 'zod'
 
 import { Deadline } from './deadline.vo'
+import type { EvidenceQuality } from './dispute-evidence-packet.entity'
 import { type StripeDisputeId, stripeDisputeIdSchema } from './dispute.schemas'
 import { Money } from './money.vo'
 
@@ -29,14 +30,41 @@ export type MissingEvidence = {
   message: string
 }
 
-export const DISPUTE_CASE_HUMAN_ACTION_REASONS = [
-  'missing_input',
-  'approval_required',
-  'connection_repair',
-  'submission_failed_retryable',
+export const DISPUTE_HUMAN_REQUEST_KINDS = [
+  'triage_review',
+  'submission_approval',
 ] as const
 
-export type DisputeCaseHumanActionReason = (typeof DISPUTE_CASE_HUMAN_ACTION_REASONS)[number]
+export type DisputeHumanRequestKind = (typeof DISPUTE_HUMAN_REQUEST_KINDS)[number]
+
+export type DisputeSubmissionApprovalCode =
+  | 'evidence_quality_low'
+  | 'evidence_quality_medium'
+
+type ApprovalRequiredEvidenceQuality = Exclude<EvidenceQuality, 'high'>
+
+export type DisputeHumanRequest =
+  | {
+      kind: 'triage_review'
+      code: ContestDecisionCode
+      requestedAt: Date
+      allowedResponses: readonly ['continue', 'no_response']
+    }
+  | {
+      kind: 'submission_approval'
+      code: DisputeSubmissionApprovalCode
+      evidencePacketId: UUIDv4
+      requestedAt: Date
+      allowedResponses: readonly ['submit', 'replace_packet', 'decline']
+    }
+
+export type DisputeHumanResponse =
+  | { kind: 'triage_review'; action: 'continue' | 'no_response' }
+  | {
+      kind: 'submission_approval'
+      action: 'submit' | 'no_response'
+      evidencePacketId: UUIDv4
+    }
 
 export const DISPUTE_CASE_COMPLETION_REASONS = [
   'contest_submitted',
@@ -53,10 +81,7 @@ export type DisputeCaseWorkflowState =
   | { status: 'collecting_evidence'; startedAt: Date }
   | {
       status: 'awaiting_human'
-      reason: DisputeCaseHumanActionReason
-      missingEvidence: MissingEvidence[]
-      evidencePacketId: UUIDv4 | null
-      requestedAt: Date
+      request: DisputeHumanRequest
     }
   | { status: 'completed'; reason: DisputeCaseCompletionReason; completedAt: Date }
   | { status: 'failed'; reason: string }
@@ -326,12 +351,8 @@ export class DisputeCase extends Entity<DisputeCaseSnapshot> {
     return this.state
   }
 
-  getMissingEvidence(): MissingEvidence[] {
-    return this.state.status === 'awaiting_human' ? [...this.state.missingEvidence] : []
-  }
-
-  getEvidencePacketId(): UUIDv4 | null {
-    return this.state.status === 'awaiting_human' ? this.state.evidencePacketId : null
+  getHumanRequest(): DisputeHumanRequest | null {
+    return this.state.status === 'awaiting_human' ? this.state.request : null
   }
 
   getFailureReason(): string | null {
@@ -359,15 +380,12 @@ export class DisputeCase extends Entity<DisputeCaseSnapshot> {
         } else {
           this.state = {
             status: 'awaiting_human',
-            reason: 'missing_input',
-            missingEvidence: [
-              {
-                code: decision.code,
-                message: getEvaluationHumanInputMessage(decision.code),
-              },
-            ],
-            evidencePacketId: null,
-            requestedAt: cloneDate(now),
+            request: {
+              kind: 'triage_review',
+              code: decision.code,
+              requestedAt: now,
+              allowedResponses: ['continue', 'no_response'],
+            },
           }
         }
         this.touch(now)
@@ -429,25 +447,35 @@ export class DisputeCase extends Entity<DisputeCaseSnapshot> {
     this.touch(now)
   }
 
-  awaitHumanInput(
-    args: {
-      reason: DisputeCaseHumanActionReason
-      missingEvidence?: MissingEvidence[]
-      evidencePacketId?: UUIDv4 | null
-    },
-    now: Date = new Date(),
-  ): void {
-    this.ensureStatus(['evaluated', 'collecting_evidence'], 'await human input')
-    const missingEvidence = args.missingEvidence ?? []
+  awaitTriageReview(code: ContestDecisionCode, now: Date = new Date()): void {
+    this.ensureStatus(['evaluated', 'collecting_evidence'], 'await triage review')
     this.state = {
       status: 'awaiting_human',
-      reason: args.reason,
-      missingEvidence: missingEvidence.map((item) => ({
-        code: requireNonBlank(item.code, 'missingEvidence.code'),
-        message: requireNonBlank(item.message, 'missingEvidence.message'),
-      })),
-      evidencePacketId: args.evidencePacketId ?? null,
-      requestedAt: cloneDate(now),
+      request: {
+        kind: 'triage_review',
+        code,
+        requestedAt: now,
+        allowedResponses: ['continue', 'no_response'],
+      },
+    }
+    this.touch(now)
+  }
+
+  awaitSubmissionApproval(
+    args: { evidencePacketId: UUIDv4; evidenceQuality: ApprovalRequiredEvidenceQuality },
+    now: Date = new Date(),
+  ): void {
+    this.ensureStatus(['evaluated', 'collecting_evidence'], 'await submission approval')
+    this.state = {
+      status: 'awaiting_human',
+      request: {
+        kind: 'submission_approval',
+        code:
+          args.evidenceQuality === 'low' ? 'evidence_quality_low' : 'evidence_quality_medium',
+        evidencePacketId: requireNonBlank(args.evidencePacketId, 'evidencePacketId') as UUIDv4,
+        requestedAt: now,
+        allowedResponses: ['submit', 'replace_packet', 'decline'],
+      },
     }
     this.touch(now)
   }

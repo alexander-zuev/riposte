@@ -72,6 +72,7 @@ export const routeDisputeSubmissionPolicySchema = disputeWorkflowCommandBase.ext
 
 export const submitDisputeResponseSchema = disputeWorkflowCommandBase.extend({
   name: z.literal('SubmitDisputeResponse'),
+  evidencePacketId: z.string().min(1),
 })
 
 export type TriageDisputeCase = z.infer<typeof triageDisputeCaseSchema>

@@ -9,6 +9,34 @@ import { and, desc, eq } from 'drizzle-orm'
 export class DisputeEvidencePacketRepository implements IDisputeEvidencePacketRepository {
   constructor(private readonly db: DrizzleDb) {}
 
+  async findByIdForCase(input: {
+    userId: string
+    disputeCaseId: string
+    evidencePacketId: string
+  }): Promise<Result<DisputeEvidencePacket | null, DatabaseError>> {
+    const found = await Result.tryPromise({
+      try: async () => {
+        const [row] = await this.db
+          .select()
+          .from(disputeEvidencePackets)
+          .where(
+            and(
+              eq(disputeEvidencePackets.id, input.evidencePacketId),
+              eq(disputeEvidencePackets.userId, input.userId),
+              eq(disputeEvidencePackets.disputeCaseId, input.disputeCaseId),
+            ),
+          )
+          .limit(1)
+
+        return row ?? null
+      },
+      catch: (cause) =>
+        new DatabaseError({ message: 'Failed to find dispute evidence packet by id', cause }),
+    })
+
+    return found.map((row) => (row ? DisputeEvidencePacket.deserialize(row) : null))
+  }
+
   async findLatestByDisputeCaseId(input: {
     userId: string
     disputeCaseId: string

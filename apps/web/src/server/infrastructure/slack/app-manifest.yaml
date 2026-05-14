@@ -1,0 +1,34 @@
+_metadata:
+  major_version: 2
+  minor_version: 1
+
+display_information:
+  name: Riposte
+  description: Stripe dispute notifications for Riposte
+  long_description: Riposte helps merchants handle Stripe disputes and sends Slack notifications when new disputes arrive or workflow outcomes are ready.
+  background_color: "#1F2937"
+
+features:
+  bot_user:
+    display_name: Riposte
+    always_online: false
+
+oauth_config:
+  redirect_urls:
+    - https://riposte.sh/api/slack/oauth/callback
+    - https://staging.riposte.sh/api/slack/oauth/callback
+    - https://tunnel.riposte.sh/api/slack/oauth/callback
+  scopes:
+    bot:
+      - incoming-webhook
+
+settings:
+  org_deploy_enabled: false
+  socket_mode_enabled: false
+  token_rotation_enabled: false
+  incoming_webhooks:
+    incoming_webhooks_enabled: true
+  event_subscriptions:
+    request_url: https://riposte.sh/api/slack/events
+    bot_events:
+      - app_uninstalled

@@ -107,11 +107,6 @@ export function SettingsPage() {
                   <span>{stripeConnection.connection.livemode ? 'Live mode' : 'Test mode'}</span>
                 </div>
               )}
-              {connectionsQuery.isError && (
-                <p className="text-sm text-destructive-muted-foreground">
-                  Could not load Stripe connection status
-                </p>
-              )}
               <Button
                 type="button"
                 size="lg"
@@ -131,6 +126,11 @@ export function SettingsPage() {
                   })}
                 />
               </Button>
+              {connectionsQuery.isError && (
+                <p className="text-sm text-destructive-muted-foreground">
+                  Could not load Stripe connection status
+                </p>
+              )}
             </CardContent>
           </Card>
 
@@ -211,7 +211,7 @@ function getStripeActionLabel(input: {
   isRevoked: boolean
 }) {
   if (input.isLoading) return 'Loading status'
-  if (input.isError) return 'Retry status'
+  if (input.isError) return 'Try again'
   if (input.isConnected) return 'Reconnect'
   if (input.isRevoked) return 'Connect again'
 

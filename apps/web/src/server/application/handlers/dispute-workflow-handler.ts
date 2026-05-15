@@ -270,41 +270,16 @@ export async function routeDisputeSubmissionPolicy(
   }
   const evidencePacket = evidencePacketResult.value
 
-  // TODO(submission-policy): Replace this first-pass quality gate with an explicit
-  // policy object that can account for merchant approval settings, dispute amount,
-  // evidence completeness, agent confidence, and category-specific submission rules.
-  if (evidencePacket.evidenceQuality === 'high') {
-    logger.info('dispute_submission_policy_auto_submit', {
-      disputeCaseId: command.disputeCaseId,
-      evidencePacketId: command.evidencePacketId,
-      evidenceQuality: evidencePacket.evidenceQuality,
-    })
-
-    return Result.ok({ route: 'submit', evidencePacketId: command.evidencePacketId })
-  }
-
-  // TODO(submission-policy): Replace this rough stop with a policy service that evaluates
-  // user-defined mode (autopilot/manual review), dispute facts, and evidence facts, then
-  // returns a first-class route such as submit, requireApproval, accept, or noResponse.
-  disputeCase.awaitSubmissionApproval({
-    evidencePacketId: evidencePacket.id,
-    evidenceQuality: evidencePacket.evidenceQuality,
-  })
-
-  const saved = await deps.repos.disputeCases(tx).save(disputeCase)
-  if (saved.isErr()) return Result.err(saved.error)
-
-  logger.info('dispute_submission_policy_review_required', {
+  // TODO(submission-policy): TEMPORARY FLOW TEST OVERRIDE. Revert this before real
+  // autopilot: low/medium quality packets must require merchant approval or stronger
+  // evidence policy instead of auto-submitting.
+  logger.info('dispute_submission_policy_temporary_auto_submit', {
     disputeCaseId: command.disputeCaseId,
     evidencePacketId: command.evidencePacketId,
     evidenceQuality: evidencePacket.evidenceQuality,
   })
 
-  return Result.ok({
-    route: 'await_human',
-    requestKind: 'submission_approval',
-    evidencePacketId: command.evidencePacketId,
-  })
+  return Result.ok({ route: 'submit', evidencePacketId: command.evidencePacketId })
 }
 
 export async function submitDisputeResponse(
@@ -337,16 +312,8 @@ export async function submitDisputeResponse(
     )
   }
 
-  // TODO: 1) didn't we previously validate? And this repeats the submission policy? do we not trust it?
-  if (packet.value.evidenceQuality !== 'high') {
-    return Result.err(
-      validationError(
-        'approval_required',
-        ['evidenceQuality'],
-        `Cannot auto-submit ${packet.value.evidenceQuality} quality evidence without merchant approval`,
-      ),
-    )
-  }
+  // TODO(submission-policy): TEMPORARY FLOW TEST OVERRIDE. Reintroduce a submission
+  // quality guard once the full Stripe submission path is verified end to end.
   // OK for now so we have to go through artifacts to retrieve them one by one
   const pdfArtifact = packet.value.artifacts.find((artifact) => artifact.kind === 'evidence_pdf')
   if (!pdfArtifact) {

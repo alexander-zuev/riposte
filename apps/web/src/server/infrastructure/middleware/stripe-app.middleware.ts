@@ -134,7 +134,7 @@ export async function verifyStripeAppRequest(
   try {
     await signatureVerifier.verifyHeaderAsync(signedPayload, signature, appSigningSecret)
   } catch (error) {
-    logger.warn('stripe_app_signature_invalid', {
+    logger.error('stripe_app_signature_invalid', {
       error,
       accountId: parsed.data.account_id,
       userId: parsed.data.user_id,

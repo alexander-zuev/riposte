@@ -24,6 +24,8 @@ export default function AppSettings({ environment, userContext }: ExtensionConte
   const [status, setStatus] = React.useState<RequestStatus>('idle')
   const [errorKind, setErrorKind] = React.useState<RequestErrorKind>('unknown')
 
+  // TODO: Before publishing the production version, set API_BASE and post_install_action.url
+  // in stripe-app.json back to https://riposte.sh.
   const apiBase = getApiBase(environment.constants?.API_BASE)
   const setupUrl = `${apiBase}/setup`
   const userId = userContext.id

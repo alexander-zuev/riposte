@@ -8,10 +8,8 @@
     "prepare-package": "npm install --package-lock-only --ignore-scripts",
     "prepare-upload": "node scripts/prepare-upload.mjs",
     "typecheck": "tsc --noEmit",
-    "upload": "npm run upload:prod",
-    "upload:prod": "npm run prepare-package && npm run prepare-upload -- stripe-app.json .build/upload/prod && stripe -p riposte apps upload .build/upload/prod",
-    "upload:dev": "npm run prepare-package && npm run prepare-upload -- stripe-app.dev.json .build/upload/dev && stripe -p riposte-dev apps upload .build/upload/dev",
-    "start": "stripe -p riposte-dev apps start --manifest stripe-app.dev.json"
+    "upload": "npm run prepare-package && npm run prepare-upload -- stripe-app.json .build/upload/prod && stripe -p riposte apps upload .build/upload/prod",
+    "start": "stripe -p riposte apps start --manifest stripe-app.json"
   },
   "dependencies": {
     "@stripe/ui-extension-sdk": "9.1.0",

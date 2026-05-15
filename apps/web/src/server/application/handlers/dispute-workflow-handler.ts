@@ -2,10 +2,12 @@ import type {
   BlobStorageError,
   CollectDisputeEvidence,
   DatabaseError,
+  DeclineDisputeSubmission,
   DisputeCaseReceived,
   EnrichDisputeContext,
   EvidencePdfRenderError,
   GenerateEvidencePacket,
+  ReplaceDisputeEvidencePacket,
   RouteDisputeSubmissionPolicy,
   StripeApiError,
   SubmitDisputeResponse,
@@ -16,10 +18,18 @@ import type {
 import { createLogger, EntityNotFoundError, ValidationError } from '@riposte/core'
 import type { HandlerContext } from '@server/application/registry/types'
 import { DisputeEvidencePacket, StripeDisputeContext } from '@server/domain/disputes'
-import type { DisputeCase, DisputeCaseEvaluation, EvidenceQuality } from '@server/domain/disputes'
+import type {
+  DisputeCaseEvaluation,
+  DisputeEvidencePacketArtifact,
+  EvidenceQuality,
+} from '@server/domain/disputes'
+import type { DisputeEvidenceArtifactBlobBody } from '@server/domain/repository/interfaces'
 import { renderDisputeEvidencePdf } from '@server/infrastructure/pdf/dispute-evidence-pdf-renderer'
 import type { GetClientError } from '@server/infrastructure/stripe/stripe-client-provider'
-import { fetchStripeDisputeContext } from '@server/infrastructure/stripe/stripe-dispute-enrichment'
+import {
+  fetchStripeDispute,
+  fetchStripeDisputeContext,
+} from '@server/infrastructure/stripe/stripe-dispute-enrichment'
 import { submitStripeDisputeEvidence } from '@server/infrastructure/stripe/stripe-dispute-submission'
 import { Result } from 'better-result'
 
@@ -51,6 +61,14 @@ export type RouteDisputeSubmissionPolicyResult =
 
 export type SubmitDisputeResponseResult = {
   action: 'submitted'
+}
+
+export type DeclineDisputeSubmissionResult = {
+  action: 'declined'
+}
+
+export type ReplaceDisputeEvidencePacketResult = {
+  action: 'replaced'
 }
 
 export async function startDisputeAgentWorkflow(
@@ -282,6 +300,33 @@ export async function routeDisputeSubmissionPolicy(
   return Result.ok({ route: 'submit', evidencePacketId: command.evidencePacketId })
 }
 
+/**
+ * Submits the evidence packet to Stripe as the merchant's contest response.
+ *
+ * Flow:
+ * - Load case + packet (404 if missing).
+ * - Domain validation: `disputeCase.assertCanSubmitContest()` — owns the Stripe-fact guards
+ *   (stripeStatus in needs_response set, deadline future, submission_count === 0) and the
+ *   state-machine check. No handler-local validation.
+ * - Refresh Stripe state, then re-validate. HITL can sleep up to 7 days; closes the staleness
+ *   window (deadline elapsed, Dashboard already submitted, dispute already closed) before we
+ *   spend file uploads + a submit call. Idempotency keys are deterministic so re-runs are safe.
+ * - Retrieve artifact blobs from R2.
+ * - Upload files to Stripe Files API → file IDs (idempotent via deterministic key).
+ * - Call `disputes.update({ evidence, submit: true })` with text fields + file IDs
+ *   (idempotent via deterministic key).
+ * - Single domain transition: `disputeCase.complete({ reason: 'contest_submitted',
+ *   stripeDispute, evidencePacketId, uploadedFiles })`. Internally refreshes facts from the
+ *   Stripe response, records the response audit (evidencePacketId, uploadedFiles, submittedAt)
+ *   on the `completed/contest_submitted` workflow state, and emits `DisputeCaseCompleted`.
+ * - Save case; outbox emits `DisputeCaseCompleted`.
+ *
+ * Notes:
+ * - File IDs live on the case response record, NOT on the packet. Packets are immutable; file
+ *   IDs are response artifacts. See product-spec.md `DisputeResponse.challenge_submitted`.
+ * - Quality gate is not checked here — submission policy already decided this packet is
+ *   acceptable. Re-checking would duplicate `RouteDisputeSubmissionPolicy`.
+ */
 export async function submitDisputeResponse(
   command: SubmitDisputeResponse,
   { deps, tx }: HandlerContext,
@@ -292,9 +337,6 @@ export async function submitDisputeResponse(
   if (!found.value) {
     return Result.err(new EntityNotFoundError({ entity: 'DisputeCase', id: command.disputeCaseId }))
   }
-
-  const canSubmit = validateDisputeCanBeSubmitted(found.value)
-  if (canSubmit.isErr()) return Result.err(canSubmit.error)
 
   const packet = await deps.repos.disputeEvidencePackets(tx).findByIdForCase({
     userId: found.value.userId,
@@ -312,45 +354,60 @@ export async function submitDisputeResponse(
     )
   }
 
-  // TODO(submission-policy): TEMPORARY FLOW TEST OVERRIDE. Reintroduce a submission
-  // quality guard once the full Stripe submission path is verified end to end.
-  // OK for now so we have to go through artifacts to retrieve them one by one
-  const pdfArtifact = packet.value.artifacts.find((artifact) => artifact.kind === 'evidence_pdf')
-  if (!pdfArtifact) {
-    return Result.err(
-      validationError('missing_required', ['artifacts'], 'Evidence packet PDF artifact is missing'),
-    )
-  }
-
-  const blob = await deps.repos.disputeEvidenceArtifactBlobs().get({ r2Key: pdfArtifact.r2Key })
-  if (blob.isErr()) return Result.err(blob.error)
-
-  if (!blob.value) {
-    return Result.err(
-      new EntityNotFoundError({
-        entity: 'DisputeEvidenceArtifactBlob',
-        id: pdfArtifact.r2Key,
-      }),
-    )
-  }
-
   const stripe = await deps.services
     .stripeClientProvider()
     .getForAccount(found.value.stripeAccountId)
   if (stripe.isErr()) return Result.err(stripe.error)
 
+  const freshDispute = await fetchStripeDispute(stripe.value, found.value.id)
+  if (freshDispute.isErr()) return Result.err(freshDispute.error)
+
+  const refreshedBeforeSubmit = found.value.refreshStripeDisputeFacts(freshDispute.value)
+  if (refreshedBeforeSubmit.isErr()) return Result.err(refreshedBeforeSubmit.error)
+
+  const canSubmit = found.value.canSubmitContest()
+  if (canSubmit.isErr()) return Result.err(canSubmit.error)
+
+  const blobLookups = await Promise.all(
+    packet.value.artifacts.map(async (artifact) => ({
+      artifact,
+      result: await deps.repos.disputeEvidenceArtifactBlobs().get({ r2Key: artifact.r2Key }),
+    })),
+  )
+
+  const artifactBlobs: Array<{
+    artifact: DisputeEvidencePacketArtifact
+    blob: DisputeEvidenceArtifactBlobBody
+  }> = []
+  for (const { artifact, result } of blobLookups) {
+    if (result.isErr()) return Result.err(result.error)
+    if (!result.value) {
+      return Result.err(
+        new EntityNotFoundError({
+          entity: 'DisputeEvidenceArtifactBlob',
+          id: artifact.r2Key,
+        }),
+      )
+    }
+    artifactBlobs.push({ artifact, blob: result.value })
+  }
+
   const submitted = await submitStripeDisputeEvidence({
     stripe: stripe.value,
     disputeCase: found.value,
     packet: packet.value,
-    artifactBlobs: [{ artifact: pdfArtifact, blob: blob.value }],
+    artifactBlobs,
   })
   if (submitted.isErr()) return Result.err(submitted.error)
 
-  const refreshed = found.value.refreshStripeDisputeFacts(submitted.value.stripeDispute)
-  if (refreshed.isErr()) return Result.err(refreshed.error)
+  const completed = found.value.complete({
+    reason: 'contest_submitted',
+    stripeDispute: submitted.value.stripeDispute,
+    evidencePacketId: command.evidencePacketId,
+    uploadedFiles: submitted.value.uploadedFiles,
+  })
+  if (completed.isErr()) return Result.err(completed.error)
 
-  found.value.complete('contest_submitted')
   const saved = await deps.repos.disputeCases(tx).save(found.value)
   if (saved.isErr()) return Result.err(saved.error)
 
@@ -367,57 +424,43 @@ export async function submitDisputeResponse(
   return Result.ok({ action: 'submitted' })
 }
 
-function validateDisputeCanBeSubmitted(
-  disputeCase: DisputeCase,
-): Result<void, ValidationErrorType> {
-  const snapshot = disputeCase.serialize()
+// TODO(hitl): Record decline on DisputeCase, complete as no_response.
+export async function declineDisputeSubmission(
+  command: DeclineDisputeSubmission,
+  { deps, tx }: HandlerContext,
+): Promise<Result<DeclineDisputeSubmissionResult, DisputeWorkflowCommandError>> {
+  const found = await deps.repos.disputeCases(tx).findById(command.disputeCaseId)
+  if (found.isErr()) return Result.err(found.error)
 
-  if (!['needs_response', 'warning_needs_response'].includes(snapshot.stripeStatus)) {
-    return Result.err(
-      validationError(
-        'invalid_state',
-        ['stripeStatus'],
-        `Cannot submit evidence when Stripe dispute status is ${snapshot.stripeStatus}`,
-      ),
-    )
+  if (!found.value) {
+    return Result.err(new EntityNotFoundError({ entity: 'DisputeCase', id: command.disputeCaseId }))
   }
 
-  if (!snapshot.evidenceDetailsDueBy) {
-    return Result.err(
-      validationError(
-        'missing_required',
-        ['evidenceDetailsDueBy'],
-        'Cannot submit evidence without a Stripe evidence deadline',
-      ),
-    )
-  }
+  logger.info('dispute_submission_declined', {
+    disputeCaseId: command.disputeCaseId,
+    evidencePacketId: command.evidencePacketId,
+  })
 
-  if (snapshot.evidenceDetailsPastDue || snapshot.evidenceDetailsDueBy.getTime() <= Date.now()) {
-    return Result.err(
-      validationError(
-        'deadline_past',
-        ['evidenceDetailsDueBy'],
-        'Cannot submit evidence after the Stripe evidence deadline',
-      ),
-    )
-  }
-
-  if (snapshot.evidenceDetailsSubmissionCount > 0) {
-    return Result.err(
-      validationError(
-        'already_submitted',
-        ['evidenceDetailsSubmissionCount'],
-        'Cannot submit evidence because Stripe already records an evidence submission',
-      ),
-    )
-  }
-
-  return Result.ok(undefined)
+  return Result.ok({ action: 'declined' })
 }
 
-function validationError(code: string, path: Array<string | number>, message: string) {
-  return new ValidationError({
-    message,
-    issues: [{ code, path, message }],
+// TODO(hitl): Reroute submission policy for the replacement packet, then submit if allowed.
+export async function replaceDisputeEvidencePacket(
+  command: ReplaceDisputeEvidencePacket,
+  { deps, tx }: HandlerContext,
+): Promise<Result<ReplaceDisputeEvidencePacketResult, DisputeWorkflowCommandError>> {
+  const found = await deps.repos.disputeCases(tx).findById(command.disputeCaseId)
+  if (found.isErr()) return Result.err(found.error)
+
+  if (!found.value) {
+    return Result.err(new EntityNotFoundError({ entity: 'DisputeCase', id: command.disputeCaseId }))
+  }
+
+  logger.info('dispute_evidence_packet_replacement_requested', {
+    disputeCaseId: command.disputeCaseId,
+    evidencePacketId: command.evidencePacketId,
+    replacementEvidencePacketId: command.replacementEvidencePacketId,
   })
+
+  return Result.ok({ action: 'replaced' })
 }

@@ -75,9 +75,22 @@ export const submitDisputeResponseSchema = disputeWorkflowCommandBase.extend({
   evidencePacketId: z.string().min(1),
 })
 
+export const declineDisputeSubmissionSchema = disputeWorkflowCommandBase.extend({
+  name: z.literal('DeclineDisputeSubmission'),
+  evidencePacketId: z.string().min(1),
+})
+
+export const replaceDisputeEvidencePacketSchema = disputeWorkflowCommandBase.extend({
+  name: z.literal('ReplaceDisputeEvidencePacket'),
+  evidencePacketId: z.string().min(1),
+  replacementEvidencePacketId: z.string().min(1),
+})
+
 export type TriageDisputeCase = z.infer<typeof triageDisputeCaseSchema>
 export type EnrichDisputeContext = z.infer<typeof enrichDisputeContextSchema>
 export type CollectDisputeEvidence = z.infer<typeof collectDisputeEvidenceSchema>
 export type GenerateEvidencePacket = z.infer<typeof generateEvidencePacketSchema>
 export type RouteDisputeSubmissionPolicy = z.infer<typeof routeDisputeSubmissionPolicySchema>
 export type SubmitDisputeResponse = z.infer<typeof submitDisputeResponseSchema>
+export type DeclineDisputeSubmission = z.infer<typeof declineDisputeSubmissionSchema>
+export type ReplaceDisputeEvidencePacket = z.infer<typeof replaceDisputeEvidencePacketSchema>

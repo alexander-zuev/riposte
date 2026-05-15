@@ -19,7 +19,10 @@ import { Result } from 'better-result'
 import { z } from 'zod'
 
 import { Deadline } from './deadline.vo'
-import type { EvidenceQuality } from './dispute-evidence-packet.entity'
+import type {
+  DisputeEvidencePacketArtifact,
+  EvidenceQuality,
+} from './dispute-evidence-packet.entity'
 import { type StripeDisputeId, stripeDisputeIdSchema } from './dispute.schemas'
 import { Money } from './money.vo'
 
@@ -69,6 +72,22 @@ export const DISPUTE_CASE_COMPLETION_REASONS = [
 ] as const
 
 export type DisputeCaseCompletionReason = (typeof DISPUTE_CASE_COMPLETION_REASONS)[number]
+export type DisputeCaseNonContestCompletionReason = Exclude<
+  DisputeCaseCompletionReason,
+  'contest_submitted'
+>
+
+export type DisputeCaseUploadedFile = {
+  artifactKind: DisputeEvidencePacketArtifact['kind']
+  stripeEvidenceField: DisputeEvidencePacketArtifact['stripeEvidenceField']
+  fileId: string
+}
+
+export type DisputeCaseContestSubmittedResponse = {
+  evidencePacketId: UUIDv4
+  uploadedFiles: ReadonlyArray<DisputeCaseUploadedFile>
+  submittedAt: Date
+}
 
 export type DisputeCaseWorkflowState =
   | { status: 'received' }
@@ -78,7 +97,17 @@ export type DisputeCaseWorkflowState =
       status: 'awaiting_human'
       request: DisputeHumanRequest
     }
-  | { status: 'completed'; reason: DisputeCaseCompletionReason; completedAt: Date }
+  | {
+      status: 'completed'
+      reason: 'contest_submitted'
+      completedAt: Date
+      response: DisputeCaseContestSubmittedResponse
+    }
+  | {
+      status: 'completed'
+      reason: DisputeCaseNonContestCompletionReason
+      completedAt: Date
+    }
   | { status: 'failed'; reason: string }
 
 export type DisputeCaseEvaluation =
@@ -387,14 +416,16 @@ export class DisputeCase extends Entity<DisputeCaseSnapshot> {
         return decision
       case 'no_response':
         this.recordContestDecision('no_response', decision.code, now)
-        this.markCompleted(
-          decision.code === 'evidence_deadline_past' ? 'deadline_missed' : 'no_response',
+        this.complete(
+          {
+            reason: decision.code === 'evidence_deadline_past' ? 'deadline_missed' : 'no_response',
+          },
           now,
         )
         return decision
       case 'accept':
         this.recordContestDecision('accept', decision.code, now)
-        this.markCompleted('accept_submitted', now)
+        this.complete({ reason: 'accept_submitted' }, now)
         return decision
       default:
         return assertNever(decision)
@@ -474,9 +505,107 @@ export class DisputeCase extends Entity<DisputeCaseSnapshot> {
     this.touch(now)
   }
 
-  complete(reason: DisputeCaseCompletionReason, now: Date = new Date()): void {
-    this.ensureStatus(['evaluated', 'collecting_evidence', 'awaiting_human'], 'complete')
-    this.markCompleted(reason, now)
+  complete(
+    input:
+      | {
+          reason: 'contest_submitted'
+          stripeDispute: unknown
+          evidencePacketId: UUIDv4
+          uploadedFiles: ReadonlyArray<DisputeCaseUploadedFile>
+        }
+      | { reason: DisputeCaseNonContestCompletionReason },
+    now: Date = new Date(),
+  ): Result<void, ValidationError> {
+    this.ensureStatus(
+      ['received', 'evaluated', 'collecting_evidence', 'awaiting_human'],
+      'complete',
+    )
+
+    if (input.reason === 'contest_submitted') {
+      const refreshed = this.refreshStripeDisputeFacts(input.stripeDispute, now)
+      if (refreshed.isErr()) return Result.err(refreshed.error)
+
+      this.state = {
+        status: 'completed',
+        reason: 'contest_submitted',
+        completedAt: cloneDate(now),
+        response: {
+          evidencePacketId: input.evidencePacketId,
+          uploadedFiles: input.uploadedFiles,
+          submittedAt: cloneDate(now),
+        },
+      }
+    } else {
+      this.state = {
+        status: 'completed',
+        reason: input.reason,
+        completedAt: cloneDate(now),
+      }
+    }
+
+    this.addEvent(
+      createEvent('DisputeCaseCompleted', {
+        disputeCaseId: this.id,
+        userId: this.userId,
+        reason: input.reason,
+      }),
+    )
+    this.touch(now)
+
+    return Result.ok(undefined)
+  }
+
+  /**
+   * Stripe-fact guards for contest submission. Caller should refresh dispute facts from Stripe
+   * first (HITL pause can stale the cached state).
+   *
+   * Allowed statuses: `needs_response` and `warning_needs_response` — the only states where
+   * Stripe is actively waiting for a response. See dispute status enum:
+   * https://docs.stripe.com/api/disputes/object#dispute_object-status
+   */
+  canSubmitContest(now: Date = new Date()): Result<void, ValidationError> {
+    if (!['needs_response', 'warning_needs_response'].includes(this.stripeStatus)) {
+      return Result.err(
+        validationError(
+          'stripeStatus',
+          `Cannot submit evidence when Stripe dispute status is ${this.stripeStatus}`,
+          'invalid_state',
+        ),
+      )
+    }
+
+    const evidenceDetailsDueBy = this.getEvidenceDetailsDueBy()
+    if (!evidenceDetailsDueBy) {
+      return Result.err(
+        validationError(
+          'evidenceDetailsDueBy',
+          'Cannot submit evidence without a Stripe evidence deadline',
+          'missing_required',
+        ),
+      )
+    }
+
+    if (this.evidenceDetailsPastDue || evidenceDetailsDueBy.getTime() <= now.getTime()) {
+      return Result.err(
+        validationError(
+          'evidenceDetailsDueBy',
+          'Cannot submit evidence after the Stripe evidence deadline',
+          'deadline_past',
+        ),
+      )
+    }
+
+    if (this.evidenceDetailsSubmissionCount > 0) {
+      return Result.err(
+        validationError(
+          'evidenceDetailsSubmissionCount',
+          'Cannot submit evidence because Stripe already records an evidence submission',
+          'already_submitted',
+        ),
+      )
+    }
+
+    return Result.ok(undefined)
   }
 
   markFailed(reason: string, now: Date = new Date()): void {
@@ -559,18 +688,6 @@ export class DisputeCase extends Entity<DisputeCaseSnapshot> {
       decidedAt: cloneDate(now),
     }
   }
-
-  private markCompleted(reason: DisputeCaseCompletionReason, now: Date): void {
-    this.state = { status: 'completed', reason, completedAt: cloneDate(now) }
-    this.addEvent(
-      createEvent('DisputeCaseCompleted', {
-        disputeCaseId: this.id,
-        userId: this.userId,
-        reason,
-      }),
-    )
-    this.touch(now)
-  }
 }
 
 function requireNonBlank(value: string, path: string): string {
@@ -614,11 +731,15 @@ function stringOrNull(value: unknown): string | null {
   return typeof value === 'string' && value.trim() ? value : null
 }
 
-function validationError(path: string, message: string): ValidationError {
+function validationError(
+  path: string,
+  message: string,
+  code: string = 'invalid_dispute_case',
+): ValidationError {
   return new ValidationError({
     issues: [
       {
-        code: 'invalid_dispute_case',
+        code,
         path: [path],
         message,
       },

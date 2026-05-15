@@ -92,16 +92,28 @@ function buildDisputeEvidence(
   const payload = packet.stripeEvidencePayload
   const evidence: Stripe.DisputeUpdateParams.Evidence = {}
 
+  setIfPresent(evidence, 'product_description', payload.product_description)
+  setIfPresent(evidence, 'service_date', payload.service_date)
+  setIfPresent(evidence, 'billing_address', payload.billing_address)
   setIfPresent(evidence, 'customer_name', payload.customer_name)
   setIfPresent(evidence, 'customer_email_address', payload.customer_email_address)
   setIfPresent(evidence, 'customer_purchase_ip', payload.customer_purchase_ip)
   setIfPresent(evidence, 'access_activity_log', payload.access_activity_log)
+  // TODO(agent:evidence_collection): When customer withdrawal is source-backed, set the
+  // "Why should you win this dispute?" route in uncategorized_text and the generated PDF.
   setIfPresent(evidence, 'uncategorized_text', payload.uncategorized_text)
+  setIfPresent(evidence, 'refund_policy_disclosure', payload.refund_policy_disclosure)
+  setIfPresent(evidence, 'cancellation_policy_disclosure', payload.cancellation_policy_disclosure)
+  setIfPresent(evidence, 'refund_refusal_explanation', payload.refund_refusal_explanation)
+  setIfPresent(evidence, 'cancellation_rebuttal', payload.cancellation_rebuttal)
 
-  // TODO(agent): Add product_description and service_date only after merchant product/service
-  // facts are sourced. Do not submit placeholders.
   // TODO(agent): Add receipt and customer_communication file artifacts only when we own those
   // source-backed artifacts and can map them to Stripe file fields.
+
+  // TODO(visa-ce3): Add enhanced_evidence.visa_compelling_evidence_3 for Visa fraud disputes.
+  // Highest-impact missing evidence — requires prior undisputed transaction history from Stripe.
+  // Excluded from v1 per spec, but significantly increases win rate when eligible.
+
   for (const file of uploadedFiles) {
     evidence[file.stripeEvidenceField] = file.fileId
   }

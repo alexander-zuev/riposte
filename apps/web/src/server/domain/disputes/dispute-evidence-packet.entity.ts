@@ -31,10 +31,29 @@ export type EvidencePdfArtifact = {
 export type DisputeEvidencePacketArtifact = EvidencePdfArtifact
 
 export type FraudDigitalStripeEvidencePayload = {
+  // TODO(agent/onboarding): product_description must come from merchant-approved
+  // product/service context captured during onboarding. Do not use Stripe charge.description here.
+  product_description: string | null
+  // Source(stripe:fallback): service_date is Stripe charge.created until an
+  // agent:evidence_collection app service/access timestamp exists.
+  service_date: string | null
+  // Source(stripe): preserve Stripe dispute evidence billing_address when present.
+  // Do not synthesize it from card country.
+  billing_address: string | null
+  // Source(agent/onboarding): policy disclosure text comes from merchant-approved setup context.
+  refund_policy_disclosure: string | null
+  // Source(agent/onboarding): policy disclosure text comes from merchant-approved setup context.
+  cancellation_policy_disclosure: string | null
+  // Source(agent:evidence_collection): support/refund evidence decides this field.
+  refund_refusal_explanation: string | null
+  // Source(agent:evidence_collection): cancellation and usage evidence decides this field.
+  cancellation_rebuttal: string | null
   customer_purchase_ip: string | null
   customer_name: string | null
   customer_email_address: string | null
+  // Source(agent:evidence_collection): merchant app usage/activity evidence tool.
   access_activity_log: string | null
+  // Source(agent:evidence_collection): concise argument generated only from verified facts.
   uncategorized_text: string | null
 }
 
@@ -238,7 +257,32 @@ function buildFraudDigitalStripeEvidencePayload(
     input.disputeContext.customer?.email ??
     null
 
+  // TODO(contest-rationale): Add a ContestRationale value object (rightful_cardholder |
+  // cardholder_refunded | cardholder_withdrew) resolved deterministically from Stripe facts.
+  // If charge.refunded or charge.amountRefunded > 0 → cardholder_refunded.
+  // If merchant provides withdrawal confirmation → cardholder_withdrew (post-MVP, human input).
+  // Default for fraud/unrecognized → rightful_cardholder.
+  // Domain code resolves the rationale and passes it + refund/withdrawal facts to the agent as
+  // structured context. The agent composes uncategorized_text using the rationale as a constraint
+  // (e.g. "lead with refund proof"). Domain code validates the output.
+  // See product-spec.md "Dashboard-Only Fields and Evidence Gap Notes".
+
+  // TODO(refund-evidence): Check input.disputeContext.charge.refunded / .amountRefunded /
+  // .refunds[]. If a refund exists, include refund amount, date, and refund ID in
+  // uncategorized_text and the evidence PDF. Proving a prior refund is among the strongest
+  // evidence for fraud disputes. The data is already on StripeDisputeContext but unused here.
+
   return {
+    // TODO(onboarding): product_description, refund_policy_disclosure, and
+    // cancellation_policy_disclosure must come from merchant-approved onboarding setup facts.
+    // See product-spec.md "Required product-scoped setup facts" table.
+    product_description: null,
+    service_date: formatStripeServiceDate(input.disputeContext.charge.created),
+    billing_address: stripeEvidenceString(caseSnapshot.evidence.billing_address),
+    refund_policy_disclosure: null,
+    cancellation_policy_disclosure: null,
+    refund_refusal_explanation: null,
+    cancellation_rebuttal: null,
     customer_purchase_ip: caseSnapshot.customerPurchaseIp,
     customer_name: customerName,
     customer_email_address: customerEmail,
@@ -285,6 +329,8 @@ function assessEvidenceQuality(
   stripeEvidencePayload: FraudDigitalStripeEvidencePayload,
   context: StripeDisputeContext,
 ): EvidenceQuality {
+  // TODO(refund-evidence): Refund state should factor into quality assessment. A charge with
+  // a prior refund and proof is strong evidence that could elevate quality.
   if (!stripeEvidencePayload.access_activity_log || !stripeEvidencePayload.uncategorized_text) {
     return 'low'
   }
@@ -308,12 +354,12 @@ function assessEvidenceQuality(
 function buildEvidencePdfR2Key(
   userId: UUIDv4,
   disputeCaseId: string,
-  reasonCodeCategory: StripeDisputeReasonCodeCategory,
-  productType: StripeDisputeEvidenceProductType,
+  _reasonCodeCategory: StripeDisputeReasonCodeCategory,
+  _productType: StripeDisputeEvidenceProductType,
   version: number,
   packetId: UUIDv4,
 ): string {
-  return `users/${userId}/disputes/${disputeCaseId}/evidence-packets/v${version}/${packetId}/${reasonCodeCategory}-${productType}-service-documentation.pdf`
+  return `users/${userId}/disputes/${disputeCaseId}/evidence-packets/v${version}/${packetId}/${disputeCaseId}-service-documentation.pdf`
 }
 
 function stripeEvidenceString(value: unknown): string | null {
@@ -322,4 +368,8 @@ function stripeEvidenceString(value: unknown): string | null {
 
 function nonEmptyString(value: string | null | undefined): string | null {
   return typeof value === 'string' && value.trim() ? value : null
+}
+
+function formatStripeServiceDate(date: Date): string {
+  return date.toISOString().slice(0, 10)
 }

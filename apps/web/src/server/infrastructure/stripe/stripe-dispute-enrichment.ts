@@ -24,6 +24,19 @@ export type FetchStripeDisputeContextResult = {
   stripeDispute: Stripe.Dispute
 }
 
+export async function fetchStripeDispute(
+  stripe: Stripe,
+  disputeCaseId: string,
+): Promise<Result<Stripe.Dispute, StripeApiError>> {
+  const dispute = await stripeRequest('disputes.retrieve', () =>
+    stripe.disputes.retrieve(disputeCaseId),
+  )
+  if (dispute.isErr()) return Result.err(dispute.error)
+  logStripeResponse('disputes.retrieve', disputeCaseId, dispute.value)
+
+  return Result.ok(dispute.value)
+}
+
 export async function fetchStripeDisputeContext(
   stripe: Stripe,
   disputeCase: DisputeCase,
@@ -52,7 +65,9 @@ export async function fetchStripeDisputeContext(
     const refunds = yield* Result.await(resolveRefunds(stripe, charge))
     const review = yield* Result.await(resolveReview(stripe, charge))
     const priorCharges = yield* Result.await(resolvePriorCharges(stripe, customer?.id ?? null))
-    const paymentMethods = yield* Result.await(resolvePaymentMethods(stripe, [charge, ...priorCharges]))
+    const paymentMethods = yield* Result.await(
+      resolvePaymentMethods(stripe, [charge, ...priorCharges]),
+    )
 
     return Result.ok({
       context: {

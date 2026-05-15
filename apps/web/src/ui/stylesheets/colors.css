@@ -106,6 +106,10 @@
   --border-destructive-interactive: var(--red-7);
   --border-destructive-interactive-strong: var(--red-8);
 
+  --border-success-non-interactive: var(--jade-6);
+  --border-warning-non-interactive: var(--orange-6);
+  --border-info-non-interactive: var(--iris-6);
+
   /* UI MAPPINGS */
   --primary: var(--foreground);
   --primary-foreground: var(--background);
@@ -254,6 +258,11 @@
   --color-border-destructive-non-interactive: var(--border-destructive-non-interactive);
   --color-border-destructive-interactive: var(--border-destructive-interactive);
   --color-border-destructive-interactive-strong: var(--border-destructive-interactive-strong);
+
+  /* Semantic border states */
+  --color-border-success-non-interactive: var(--border-success-non-interactive);
+  --color-border-warning-non-interactive: var(--border-warning-non-interactive);
+  --color-border-info-non-interactive: var(--border-info-non-interactive);
 }
 
 @layer base {

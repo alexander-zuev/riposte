@@ -3,6 +3,7 @@ import * as Sentry from '@sentry/cloudflare'
 import handler, { createServerEntry } from '@tanstack/react-start/server-entry'
 import { queue } from '@web/server/entrypoints/queue'
 import { scheduled } from '@web/server/entrypoints/scheduled'
+import { createAppDeps } from '@web/server/infrastructure/app-deps'
 import { waitUntil } from 'cloudflare:workers'
 export { DisputeAgent } from '@web/server/infrastructure/agents/dispute-agent'
 export { DisputeAgentWorkflow } from '@web/server/infrastructure/workflows/dispute-agent-workflow'
@@ -24,6 +25,10 @@ export default Sentry.withSentry((env: Env) => createSentryOptions(env), {
   fetch(request, _env, _ctx) {
     return serverEntry.fetch(request, { context: {} })
   },
-  queue,
-  scheduled,
+  queue(batch, env, ctx) {
+    return queue(batch, createAppDeps(env, ctx))
+  },
+  scheduled(controller, env, ctx) {
+    return scheduled(controller, createAppDeps(env, ctx))
+  },
 }) satisfies ExportedHandler<Env>

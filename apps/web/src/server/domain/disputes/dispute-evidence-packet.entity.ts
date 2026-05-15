@@ -11,6 +11,7 @@ import type {
 } from '@riposte/core'
 import { Entity } from '@server/domain/models/base.models'
 import { Result } from 'better-result'
+import type Stripe from 'stripe'
 
 import type { DisputeCase, DisputeCaseId } from './dispute-case.entity'
 import { buildEvidencePdfDocument } from './dispute-evidence-packet-template.service'
@@ -25,6 +26,7 @@ export type EvidencePdfArtifact = {
   productType: StripeDisputeEvidenceProductType
   stripeEvidenceField: typeof EVIDENCE_PDF_STRIPE_EVIDENCE_FIELD
   r2Key: string
+  fileName: string
   contentType: 'application/pdf'
 }
 
@@ -190,6 +192,32 @@ export class DisputeEvidencePacket extends Entity<DisputeEvidencePacketSnapshot>
       createdAt: this.createdAt,
     }
   }
+
+  /**
+   * Maps this packet's evidence payload + uploaded file IDs into the Stripe
+   * `disputes.update` evidence shape. Drops empty/whitespace text fields and
+   * assigns each file to its target Stripe evidence field.
+   */
+  toStripeEvidenceFields(
+    uploadedFiles: ReadonlyArray<{
+      stripeEvidenceField: DisputeEvidencePacketArtifact['stripeEvidenceField']
+      fileId: string
+    }>,
+  ): Stripe.DisputeUpdateParams.Evidence {
+    const evidence: Record<string, string> = {}
+
+    for (const [key, value] of Object.entries(this.stripeEvidencePayload)) {
+      if (typeof value === 'string' && value.trim()) {
+        evidence[key] = value
+      }
+    }
+
+    for (const file of uploadedFiles) {
+      evidence[file.stripeEvidenceField] = file.fileId
+    }
+
+    return evidence
+  }
 }
 
 function requirePositiveInteger(value: number, path: string): number {
@@ -308,19 +336,14 @@ function buildEvidencePdfArtifact(
   version: number,
   packetId: UUIDv4,
 ): EvidencePdfArtifact {
+  const fileName = buildArtifactFileName(disputeCase.id, 'evidence_pdf')
   return {
     kind: 'evidence_pdf',
     reasonCodeCategory,
     productType,
     stripeEvidenceField: EVIDENCE_PDF_STRIPE_EVIDENCE_FIELD,
-    r2Key: buildEvidencePdfR2Key(
-      disputeCase.userId,
-      disputeCase.id,
-      reasonCodeCategory,
-      productType,
-      version,
-      packetId,
-    ),
+    r2Key: buildEvidencePdfR2Key(disputeCase.userId, disputeCase.id, version, packetId, fileName),
+    fileName,
     contentType: 'application/pdf',
   }
 }
@@ -351,15 +374,25 @@ function assessEvidenceQuality(
   return 'medium'
 }
 
+const ARTIFACT_FILE_LABEL: Record<DisputeEvidencePacketArtifact['kind'], string> = {
+  evidence_pdf: 'service-documentation',
+}
+
+function buildArtifactFileName(
+  disputeCaseId: string,
+  kind: DisputeEvidencePacketArtifact['kind'],
+): string {
+  return `${disputeCaseId}-${ARTIFACT_FILE_LABEL[kind]}.pdf`
+}
+
 function buildEvidencePdfR2Key(
   userId: UUIDv4,
   disputeCaseId: string,
-  _reasonCodeCategory: StripeDisputeReasonCodeCategory,
-  _productType: StripeDisputeEvidenceProductType,
   version: number,
   packetId: UUIDv4,
+  fileName: string,
 ): string {
-  return `users/${userId}/disputes/${disputeCaseId}/evidence-packets/v${version}/${packetId}/${disputeCaseId}-service-documentation.pdf`
+  return `users/${userId}/disputes/${disputeCaseId}/evidence-packets/v${version}/${packetId}/${fileName}`
 }
 
 function stripeEvidenceString(value: unknown): string | null {

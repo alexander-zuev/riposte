@@ -394,7 +394,7 @@ export async function submitDisputeResponse(
 
   const submitted = await submitStripeDisputeEvidence({
     stripe: stripe.value,
-    disputeCase: found.value,
+    disputeCaseId: found.value.id,
     packet: packet.value,
     artifactBlobs,
   })
@@ -414,11 +414,7 @@ export async function submitDisputeResponse(
   logger.info('dispute_response_submitted', {
     disputeCaseId: command.disputeCaseId,
     evidencePacketId: command.evidencePacketId,
-    uploadedFiles: submitted.value.uploadedFiles.map((file) => ({
-      artifactKind: file.artifactKind,
-      stripeEvidenceField: file.stripeEvidenceField,
-      fileId: file.fileId,
-    })),
+    uploadedFiles: submitted.value.uploadedFiles,
   })
 
   return Result.ok({ action: 'submitted' })

@@ -1,6 +1,6 @@
 import type { StripeApiError } from '@riposte/core'
 import type {
-  DisputeCase,
+  DisputeCaseId,
   DisputeEvidencePacket,
   DisputeEvidencePacketArtifact,
 } from '@server/domain/disputes'
@@ -11,7 +11,7 @@ import type Stripe from 'stripe'
 
 export type SubmitStripeDisputeEvidenceInput = {
   stripe: Stripe
-  disputeCase: DisputeCase
+  disputeCaseId: DisputeCaseId
   packet: DisputeEvidencePacket
   artifactBlobs: Array<{
     artifact: DisputeEvidencePacketArtifact
@@ -31,18 +31,22 @@ export type SubmitStripeDisputeEvidenceResult = {
 export async function submitStripeDisputeEvidence(
   input: SubmitStripeDisputeEvidenceInput,
 ): Promise<Result<SubmitStripeDisputeEvidenceResult, StripeApiError>> {
-  const uploadedFiles: SubmitStripeDisputeEvidenceResult['uploadedFiles'] = []
+  const uploads = await Promise.all(
+    input.artifactBlobs.map((artifactBlob) =>
+      uploadDisputeEvidenceFile(input.stripe, input.packet, artifactBlob),
+    ),
+  )
 
-  for (const artifactBlob of input.artifactBlobs) {
-    const uploaded = await uploadDisputeEvidenceFile(input.stripe, input.packet, artifactBlob)
-    if (uploaded.isErr()) return Result.err(uploaded.error)
-    uploadedFiles.push(uploaded.value)
+  const uploadedFiles: SubmitStripeDisputeEvidenceResult['uploadedFiles'] = []
+  for (const upload of uploads) {
+    if (upload.isErr()) return Result.err(upload.error)
+    uploadedFiles.push(upload.value)
   }
 
-  const evidence = buildDisputeEvidence(input.packet, uploadedFiles)
+  const evidence = input.packet.toStripeEvidenceFields(uploadedFiles)
   const submitted = await stripeRequest('disputes.update', () =>
     input.stripe.disputes.update(
-      input.disputeCase.id,
+      input.disputeCaseId,
       { evidence, submit: true },
       { idempotencyKey: disputeSubmitIdempotencyKey(input.packet) },
     ),
@@ -69,7 +73,7 @@ async function uploadDisputeEvidenceFile(
         purpose: 'dispute_evidence',
         file: {
           data: artifactBlob.blob.bytes,
-          name: fileNameFromR2Key(artifactBlob.artifact.r2Key),
+          name: artifactBlob.artifact.fileName,
           type: artifactBlob.artifact.contentType,
         },
       },
@@ -85,51 +89,6 @@ async function uploadDisputeEvidenceFile(
   })
 }
 
-function buildDisputeEvidence(
-  packet: DisputeEvidencePacket,
-  uploadedFiles: SubmitStripeDisputeEvidenceResult['uploadedFiles'],
-): Stripe.DisputeUpdateParams.Evidence {
-  const payload = packet.stripeEvidencePayload
-  const evidence: Stripe.DisputeUpdateParams.Evidence = {}
-
-  setIfPresent(evidence, 'product_description', payload.product_description)
-  setIfPresent(evidence, 'service_date', payload.service_date)
-  setIfPresent(evidence, 'billing_address', payload.billing_address)
-  setIfPresent(evidence, 'customer_name', payload.customer_name)
-  setIfPresent(evidence, 'customer_email_address', payload.customer_email_address)
-  setIfPresent(evidence, 'customer_purchase_ip', payload.customer_purchase_ip)
-  setIfPresent(evidence, 'access_activity_log', payload.access_activity_log)
-  // TODO(agent:evidence_collection): When customer withdrawal is source-backed, set the
-  // "Why should you win this dispute?" route in uncategorized_text and the generated PDF.
-  setIfPresent(evidence, 'uncategorized_text', payload.uncategorized_text)
-  setIfPresent(evidence, 'refund_policy_disclosure', payload.refund_policy_disclosure)
-  setIfPresent(evidence, 'cancellation_policy_disclosure', payload.cancellation_policy_disclosure)
-  setIfPresent(evidence, 'refund_refusal_explanation', payload.refund_refusal_explanation)
-  setIfPresent(evidence, 'cancellation_rebuttal', payload.cancellation_rebuttal)
-
-  // TODO(agent): Add receipt and customer_communication file artifacts only when we own those
-  // source-backed artifacts and can map them to Stripe file fields.
-
-  // TODO(visa-ce3): Add enhanced_evidence.visa_compelling_evidence_3 for Visa fraud disputes.
-  // Highest-impact missing evidence — requires prior undisputed transaction history from Stripe.
-  // Excluded from v1 per spec, but significantly increases win rate when eligible.
-
-  for (const file of uploadedFiles) {
-    evidence[file.stripeEvidenceField] = file.fileId
-  }
-
-  return evidence
-}
-
-function setIfPresent<K extends keyof Stripe.DisputeUpdateParams.Evidence>(
-  evidence: Stripe.DisputeUpdateParams.Evidence,
-  key: K,
-  value: string | null,
-): void {
-  if (!value?.trim()) return
-  evidence[key] = value as Stripe.DisputeUpdateParams.Evidence[K]
-}
-
 function fileUploadIdempotencyKey(
   packet: DisputeEvidencePacket,
   artifact: DisputeEvidencePacketArtifact,
@@ -139,8 +98,4 @@ function fileUploadIdempotencyKey(
 
 function disputeSubmitIdempotencyKey(packet: DisputeEvidencePacket): string {
   return `dispute-submit:${packet.disputeCaseId}:${packet.id}`
-}
-
-function fileNameFromR2Key(r2Key: string): string {
-  return r2Key.split('/').at(-1) ?? 'dispute-evidence.pdf'
 }

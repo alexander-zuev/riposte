@@ -405,9 +405,7 @@ function SlackChannelCard({
   const health = channel?.health ?? 'not_connected'
   const isConnected = health === 'connected'
   const status = getSlackStatus(isLoading, health)
-  const detail = isConnected
-    ? channel?.detail
-    : channel?.failureReason ?? 'Not connected'
+  const detail = isConnected ? channel?.detail : (channel?.failureReason ?? 'Not connected')
 
   return (
     <ConnectionStatusCard

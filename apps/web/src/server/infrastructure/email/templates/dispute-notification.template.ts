@@ -1,4 +1,8 @@
 import type { DisputeCaseSnapshot } from '@server/domain/disputes'
+import {
+  disputeNotificationCopy,
+  type DisputeNotificationKind,
+} from '@server/infrastructure/notifications/dispute-notification-copy'
 
 import {
   emailButton,
@@ -10,7 +14,7 @@ import {
   emailWrapper,
 } from './email-design-system'
 
-export type DisputeNotificationKind = 'received' | 'completed' | 'failed'
+export type { DisputeNotificationKind }
 
 export function disputeNotificationEmailTemplate(args: {
   appUrl: string
@@ -19,61 +23,31 @@ export function disputeNotificationEmailTemplate(args: {
   reason?: string
 }) {
   const disputeUrl = `${args.appUrl}/disputes/${args.dispute.id}`
-  const amount = formatAmount(args.dispute.amountMinor, args.dispute.currency)
-  const title = getTitle(args.kind)
-  const summary = getSummary(args)
+  const copy = disputeNotificationCopy({
+    kind: args.kind,
+    stripeReason: args.dispute.reason,
+    amount: formatAmount(args.dispute.amountMinor, args.dispute.currency),
+    completionReason: args.reason,
+  })
 
   return {
-    subject: title,
+    subject: copy.title,
     html: emailWrapper(`
 ${emailLogo()}
 ${emailCard(`
-              ${emailH1(title)}
-              ${emailP(summary)}
-              ${emailP(`Dispute ${args.dispute.id} for ${amount}`)}
+              ${emailH1(copy.title)}
+              ${emailP(copy.summary)}
               ${emailButton('Open dispute', disputeUrl, 'dispute-notification')}
 `)}
 ${emailFooter()}
     `),
-    text: `${title}
+    text: `${copy.title}
 
-${summary}
-
-Dispute ${args.dispute.id} for ${amount}
+${copy.summary}
 
 Open dispute:
 ${disputeUrl}`,
     tags: ['disputes', `dispute-${args.kind}`],
-  }
-}
-
-function getTitle(kind: DisputeNotificationKind): string {
-  switch (kind) {
-    case 'received':
-      return 'New Stripe dispute received'
-    case 'completed':
-      return 'Stripe dispute completed'
-    case 'failed':
-      return 'Stripe dispute workflow failed'
-    default:
-      return 'Stripe dispute update'
-  }
-}
-
-function getSummary(args: {
-  kind: DisputeNotificationKind
-  dispute: DisputeCaseSnapshot
-  reason?: string
-}): string {
-  switch (args.kind) {
-    case 'received':
-      return `Riposte received a ${args.dispute.reason} dispute and started the response workflow.`
-    case 'completed':
-      return `Riposte finished the dispute workflow: ${args.reason ?? 'completed'}.`
-    case 'failed':
-      return `Riposte could not finish the dispute workflow: ${args.reason ?? 'failed'}.`
-    default:
-      return 'Riposte updated a Stripe dispute.'
   }
 }
 

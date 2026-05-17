@@ -1,7 +1,9 @@
 import type { DisputeCaseSnapshot } from '@server/domain/disputes'
 import type { SlackWebhookMessage } from '@server/infrastructure/slack/slack-webhook-notifier'
 
-export type SlackDisputeNotificationKind = 'received' | 'completed' | 'failed'
+import { disputeNotificationCopy, type DisputeNotificationKind } from './dispute-notification-copy'
+
+export type SlackDisputeNotificationKind = DisputeNotificationKind
 
 export function slackDisputeNotificationTemplate(args: {
   appUrl: string
@@ -9,35 +11,25 @@ export function slackDisputeNotificationTemplate(args: {
   dispute: DisputeCaseSnapshot
   reason?: string
 }): SlackWebhookMessage {
-  const title = getTitle(args.kind)
   const disputeUrl = `${args.appUrl}/disputes/${args.dispute.id}`
-  const amount = formatAmount(args.dispute.amountMinor, args.dispute.currency)
-  const reasonText = args.reason ? `\nReason: ${args.reason}` : ''
+  const copy = disputeNotificationCopy({
+    kind: args.kind,
+    stripeReason: args.dispute.reason,
+    amount: formatAmount(args.dispute.amountMinor, args.dispute.currency),
+    completionReason: args.reason,
+  })
 
   return {
-    text: `${title}: ${args.dispute.id}`,
+    text: copy.title,
     blocks: [
       {
         type: 'section',
         text: {
           type: 'mrkdwn',
-          text: `*${title}*\n<${disputeUrl}|${args.dispute.id}> for ${amount}${reasonText}`,
+          text: `*${copy.title}*\n${copy.summary} <${disputeUrl}|Open in Riposte>`,
         },
       },
     ],
-  }
-}
-
-function getTitle(kind: SlackDisputeNotificationKind): string {
-  switch (kind) {
-    case 'received':
-      return 'New Stripe dispute received'
-    case 'completed':
-      return 'Stripe dispute completed'
-    case 'failed':
-      return 'Stripe dispute workflow failed'
-    default:
-      return 'Stripe dispute update'
   }
 }
 

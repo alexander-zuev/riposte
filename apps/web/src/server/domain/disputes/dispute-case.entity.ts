@@ -497,7 +497,7 @@ export class DisputeCase extends Entity<DisputeCaseSnapshot> {
       request: {
         kind: 'submission_approval',
         code: args.evidenceQuality === 'low' ? 'evidence_quality_low' : 'evidence_quality_medium',
-        evidencePacketId: requireNonBlank(args.evidencePacketId, 'evidencePacketId') as UUIDv4,
+        evidencePacketId: requireNonBlank(args.evidencePacketId, 'evidencePacketId'),
         requestedAt: now,
         allowedResponses: ['submit', 'replace_packet', 'decline'],
       },

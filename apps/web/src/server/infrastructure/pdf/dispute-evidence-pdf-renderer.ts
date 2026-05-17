@@ -66,7 +66,7 @@ export async function renderDisputeEvidencePdf(
   if (validatedDocument.isErr()) return Result.err(validatedDocument.error)
 
   const rendered = await Result.tryPromise({
-    try: () => renderDisputeEvidencePdfUnsafe(input),
+    try: async () => renderDisputeEvidencePdfUnsafe(input),
     catch: (cause) => new EvidencePdfRenderError({ reason: 'render_failed', cause }),
   })
   if (rendered.isErr()) return Result.err(rendered.error)

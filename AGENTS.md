@@ -188,7 +188,7 @@ Avoid `unwrap()` in normal application code. It throws on Err. Use it only after
 Use `TaggedError` for typed errors with `_tag`, structured fields, `.is(...)`, and serialization:
 
 ```typescript
-class DuplicateMessageError extends TaggedError("DuplicateMessageError")<{
+class DuplicateMessageError extends TaggedError('DuplicateMessageError')<{
   messageId: string
   message: string
   retryable: false

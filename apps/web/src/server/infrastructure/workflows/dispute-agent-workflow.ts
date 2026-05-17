@@ -251,7 +251,7 @@ export function unwrapWorkflowStepResult<T>(
 
   const { error } = result
 
-  if (error.retryable === true) {
+  if (error.retryable) {
     logger.warn('workflow_step_retryable_error', { step, error })
     throw error
   }

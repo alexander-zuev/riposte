@@ -47,7 +47,7 @@ export async function handleStripeOAuthCallback(
     httpClient: StripeClient.createFetchHttpClient(),
   })
 
-  const tokenResult = await stripeRequest('oauth.token', () =>
+  const tokenResult = await stripeRequest('oauth.token', async () =>
     stripe.oauth.token({
       grant_type: 'authorization_code',
       code: command.code,
@@ -99,7 +99,7 @@ export async function handleStripeOAuthCallback(
   const oauthStripe = new StripeClient(tokenFields.accessToken, {
     httpClient: StripeClient.createFetchHttpClient(),
   })
-  const accountResult = await stripeRequest('accounts.retrieve', () =>
+  const accountResult = await stripeRequest('accounts.retrieve', async () =>
     oauthStripe.accounts.retrieve(tokenFields.stripeAccountId),
   )
   if (accountResult.isErr()) {

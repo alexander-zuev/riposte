@@ -51,7 +51,8 @@
     "node/no-process-env": "off",
     "typescript/explicit-member-accessibility": "off",
     "typescript/explicit-module-boundary-types": "off",
-    "react/forbid-component-props": "off"
+    "react/forbid-component-props": "off",
+    "jsx-a11y/prefer-tag-over-role": "off"
   },
   "ignorePatterns": [
     "**/node_modules/**",

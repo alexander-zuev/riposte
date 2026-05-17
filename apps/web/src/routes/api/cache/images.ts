@@ -56,7 +56,7 @@ export const Route = createFileRoute('/api/cache/images')({
           const upstream = yield* Result.await(
             Result.tryPromise(
               {
-                try: () =>
+                try: async () =>
                   fetch(url, {
                     headers: { 'User-Agent': 'Riposte-Image-Proxy/1.0' },
                     signal: AbortSignal.timeout(10000),
@@ -88,7 +88,7 @@ export const Route = createFileRoute('/api/cache/images')({
 
           const imageBuffer = yield* Result.await(
             Result.tryPromise({
-              try: () => upstream.arrayBuffer(),
+              try: async () => upstream.arrayBuffer(),
               catch: (cause) => new ImageFetchFailedError({ cause }),
             }),
           )

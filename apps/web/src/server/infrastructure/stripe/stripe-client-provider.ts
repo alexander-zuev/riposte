@@ -127,7 +127,7 @@ export class StripeClientProvider implements IStripeClientProvider {
       expiresAt: connection.accessTokenExpiresAt.toISOString(),
     })
 
-    const tokenResult = await stripeRequest('oauth.token.refresh', () =>
+    const tokenResult = await stripeRequest('oauth.token.refresh', async () =>
       platformStripe.oauth.token({
         grant_type: 'refresh_token',
         refresh_token: connection.refreshToken,

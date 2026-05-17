@@ -25,10 +25,10 @@ export default Sentry.withSentry((env: Env) => createSentryOptions(env), {
   fetch(request, _env, _ctx) {
     return serverEntry.fetch(request, { context: {} })
   },
-  queue(batch, env, ctx) {
+  async queue(batch, env, ctx) {
     return queue(batch, createAppDeps(env, ctx))
   },
-  scheduled(controller, env, ctx) {
+  async scheduled(controller, env, ctx) {
     return scheduled(controller, createAppDeps(env, ctx))
   },
 }) satisfies ExportedHandler<Env>

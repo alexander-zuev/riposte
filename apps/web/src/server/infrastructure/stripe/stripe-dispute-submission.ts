@@ -32,7 +32,7 @@ export async function submitStripeDisputeEvidence(
   input: SubmitStripeDisputeEvidenceInput,
 ): Promise<Result<SubmitStripeDisputeEvidenceResult, StripeApiError>> {
   const uploads = await Promise.all(
-    input.artifactBlobs.map((artifactBlob) =>
+    input.artifactBlobs.map(async (artifactBlob) =>
       uploadDisputeEvidenceFile(input.stripe, input.packet, artifactBlob),
     ),
   )
@@ -44,7 +44,7 @@ export async function submitStripeDisputeEvidence(
   }
 
   const evidence = input.packet.toStripeEvidenceFields(uploadedFiles)
-  const submitted = await stripeRequest('disputes.update', () =>
+  const submitted = await stripeRequest('disputes.update', async () =>
     input.stripe.disputes.update(
       input.disputeCaseId,
       { evidence, submit: true },
@@ -67,7 +67,7 @@ async function uploadDisputeEvidenceFile(
     blob: DisputeEvidenceArtifactBlobBody
   },
 ): Promise<Result<SubmitStripeDisputeEvidenceResult['uploadedFiles'][number], StripeApiError>> {
-  const uploaded = await stripeRequest('files.create', () =>
+  const uploaded = await stripeRequest('files.create', async () =>
     stripe.files.create(
       {
         purpose: 'dispute_evidence',

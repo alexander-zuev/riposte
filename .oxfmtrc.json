@@ -19,6 +19,7 @@
     "**/*.gen.tsx",
     "**/worker-configuration.d.ts",
     "**/pnpm-lock.yaml",
-    "**/coverage/**"
+    "**/coverage/**",
+    "**/migrations/**"
   ]
 }

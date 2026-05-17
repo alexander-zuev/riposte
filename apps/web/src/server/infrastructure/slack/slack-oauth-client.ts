@@ -39,7 +39,7 @@ export async function exchangeSlackOAuthCode(
     )
   }
 
-  const payload = response.value as OauthV2AccessResponse
+  const payload = response.value
   if (!payload.team?.id) {
     return Result.err(new SlackOAuthCallbackError({ reason: 'invalid_token_response' }))
   }

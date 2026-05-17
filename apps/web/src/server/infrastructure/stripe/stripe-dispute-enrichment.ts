@@ -28,7 +28,7 @@ export async function fetchStripeDispute(
   stripe: Stripe,
   disputeCaseId: string,
 ): Promise<Result<Stripe.Dispute, StripeApiError>> {
-  const dispute = await stripeRequest('disputes.retrieve', () =>
+  const dispute = await stripeRequest('disputes.retrieve', async () =>
     stripe.disputes.retrieve(disputeCaseId),
   )
   if (dispute.isErr()) return Result.err(dispute.error)
@@ -43,7 +43,7 @@ export async function fetchStripeDisputeContext(
 ): Promise<Result<FetchStripeDisputeContextResult, StripeApiError>> {
   return await Result.gen(async function* () {
     const dispute = yield* Result.await(
-      stripeRequest('disputes.retrieve', () =>
+      stripeRequest('disputes.retrieve', async () =>
         stripe.disputes.retrieve(disputeCase.id, {
           expand: ['charge', 'charge.customer', 'charge.payment_intent', 'payment_intent'],
         }),
@@ -53,7 +53,7 @@ export async function fetchStripeDisputeContext(
 
     const chargeId = objectId(dispute.charge) ?? disputeCase.charge
     const charge = yield* Result.await(
-      stripeRequest('charges.retrieve', () =>
+      stripeRequest('charges.retrieve', async () =>
         stripe.charges.retrieve(chargeId, { expand: ['customer', 'payment_intent'] }),
       ),
     )
@@ -86,7 +86,7 @@ export async function fetchStripeDisputeContext(
   })
 }
 
-function resolveCustomer(
+async function resolveCustomer(
   stripe: Stripe,
   charge: Stripe.Charge,
 ): Promise<Result<Stripe.Customer | null, StripeApiError>> {
@@ -130,7 +130,7 @@ async function resolveInvoice(
   return Result.ok(invoice)
 }
 
-function resolveSubscription(
+async function resolveSubscription(
   stripe: Stripe,
   invoice: Stripe.Invoice | null,
 ): Promise<Result<Stripe.Subscription | null, StripeApiError>> {
@@ -167,7 +167,7 @@ async function resolveRefunds(
   return Result.ok(refunds.value.data)
 }
 
-function resolveReview(
+async function resolveReview(
   stripe: Stripe,
   charge: Stripe.Charge,
 ): Promise<Result<Stripe.Review | null, StripeApiError>> {
@@ -188,7 +188,7 @@ function resolveReview(
   })
 }
 
-function resolvePriorCharges(
+async function resolvePriorCharges(
   stripe: Stripe,
   customerId: string | null,
 ): Promise<Result<Stripe.Charge[], StripeApiError>> {

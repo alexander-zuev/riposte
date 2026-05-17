@@ -2,13 +2,12 @@ import type {
   BlobStorageError,
   CollectDisputeEvidence,
   DatabaseError,
-  DeclineDisputeSubmission,
+  DecideDisputeSubmissionPolicy,
   DisputeCaseReceived,
   EnrichDisputeContext,
   EvidencePdfRenderError,
   GenerateEvidencePacket,
-  ReplaceDisputeEvidencePacket,
-  RouteDisputeSubmissionPolicy,
+  HandleDisputeSubmissionApprovalResponse,
   StripeApiError,
   SubmitDisputeResponse,
   TriageDisputeCase,
@@ -55,21 +54,17 @@ export type GenerateEvidencePacketResult = {
   quality: EvidenceQuality
 }
 
-export type RouteDisputeSubmissionPolicyResult =
-  | { route: 'submit'; evidencePacketId: string }
-  | { route: 'await_human'; requestKind: 'submission_approval'; evidencePacketId: string }
+export type DecideDisputeSubmissionPolicyResult =
+  | { decision: 'submit'; evidencePacketId: string }
+  | { decision: 'await_human'; requestKind: 'submission_approval'; evidencePacketId: string }
 
 export type SubmitDisputeResponseResult = {
   action: 'submitted'
 }
 
-export type DeclineDisputeSubmissionResult = {
-  action: 'declined'
-}
-
-export type ReplaceDisputeEvidencePacketResult = {
-  action: 'replaced'
-}
+export type HandleDisputeSubmissionApprovalResponseResult =
+  | { action: 'submit'; evidencePacketId: string }
+  | { action: 'stop' }
 
 export async function startDisputeAgentWorkflow(
   event: DisputeCaseReceived,
@@ -259,10 +254,10 @@ export async function generateEvidencePacket(
   })
 }
 
-export async function routeDisputeSubmissionPolicy(
-  command: RouteDisputeSubmissionPolicy,
+export async function decideDisputeSubmissionPolicy(
+  command: DecideDisputeSubmissionPolicy,
   { deps, tx }: HandlerContext,
-): Promise<Result<RouteDisputeSubmissionPolicyResult, DisputeWorkflowCommandError>> {
+): Promise<Result<DecideDisputeSubmissionPolicyResult, DisputeWorkflowCommandError>> {
   const disputeCaseResult = await deps.repos.disputeCases(tx).findById(command.disputeCaseId)
   if (disputeCaseResult.isErr()) return Result.err(disputeCaseResult.error)
 
@@ -297,7 +292,7 @@ export async function routeDisputeSubmissionPolicy(
     evidenceQuality: evidencePacket.evidenceQuality,
   })
 
-  return Result.ok({ route: 'submit', evidencePacketId: command.evidencePacketId })
+  return Result.ok({ decision: 'submit', evidencePacketId: command.evidencePacketId })
 }
 
 /**
@@ -325,7 +320,7 @@ export async function routeDisputeSubmissionPolicy(
  * - File IDs live on the case response record, NOT on the packet. Packets are immutable; file
  *   IDs are response artifacts. See product-spec.md `DisputeResponse.challenge_submitted`.
  * - Quality gate is not checked here — submission policy already decided this packet is
- *   acceptable. Re-checking would duplicate `RouteDisputeSubmissionPolicy`.
+ *   acceptable. Re-checking would duplicate `DecideDisputeSubmissionPolicy`.
  */
 export async function submitDisputeResponse(
   command: SubmitDisputeResponse,
@@ -420,11 +415,10 @@ export async function submitDisputeResponse(
   return Result.ok({ action: 'submitted' })
 }
 
-// TODO(hitl): Record decline on DisputeCase, complete as no_response.
-export async function declineDisputeSubmission(
-  command: DeclineDisputeSubmission,
+export async function handleDisputeSubmissionApprovalResponse(
+  command: HandleDisputeSubmissionApprovalResponse,
   { deps, tx }: HandlerContext,
-): Promise<Result<DeclineDisputeSubmissionResult, DisputeWorkflowCommandError>> {
+): Promise<Result<HandleDisputeSubmissionApprovalResponseResult, DisputeWorkflowCommandError>> {
   const found = await deps.repos.disputeCases(tx).findById(command.disputeCaseId)
   if (found.isErr()) return Result.err(found.error)
 
@@ -432,31 +426,72 @@ export async function declineDisputeSubmission(
     return Result.err(new EntityNotFoundError({ entity: 'DisputeCase', id: command.disputeCaseId }))
   }
 
-  logger.info('dispute_submission_declined', {
-    disputeCaseId: command.disputeCaseId,
-    evidencePacketId: command.evidencePacketId,
-  })
-
-  return Result.ok({ action: 'declined' })
-}
-
-// TODO(hitl): Reroute submission policy for the replacement packet, then submit if allowed.
-export async function replaceDisputeEvidencePacket(
-  command: ReplaceDisputeEvidencePacket,
-  { deps, tx }: HandlerContext,
-): Promise<Result<ReplaceDisputeEvidencePacketResult, DisputeWorkflowCommandError>> {
-  const found = await deps.repos.disputeCases(tx).findById(command.disputeCaseId)
-  if (found.isErr()) return Result.err(found.error)
-
-  if (!found.value) {
-    return Result.err(new EntityNotFoundError({ entity: 'DisputeCase', id: command.disputeCaseId }))
+  const disputeCase = found.value
+  const request = disputeCase.getHumanRequest()
+  if (request?.kind !== 'submission_approval') {
+    return Result.err(
+      new ValidationError({
+        message: 'Dispute case is not awaiting submission approval',
+        issues: [
+          {
+            code: 'invalid_state',
+            path: ['workflowState'],
+            message: 'Dispute case is not awaiting submission approval',
+          },
+        ],
+      }),
+    )
   }
 
-  logger.info('dispute_evidence_packet_replacement_requested', {
-    disputeCaseId: command.disputeCaseId,
-    evidencePacketId: command.evidencePacketId,
-    replacementEvidencePacketId: command.replacementEvidencePacketId,
-  })
+  if (request.evidencePacketId !== command.approvalResponse.evidencePacketId) {
+    return Result.err(
+      new ValidationError({
+        message: 'Submission response did not match evidence packet',
+        issues: [
+          {
+            code: 'invalid_value',
+            path: ['evidencePacketId'],
+            message: 'Submission response did not match evidence packet',
+          },
+        ],
+      }),
+    )
+  }
 
-  return Result.ok({ action: 'replaced' })
+  switch (command.approvalResponse.action) {
+    case 'approve':
+      return Result.ok({
+        action: 'submit',
+        evidencePacketId: command.approvalResponse.evidencePacketId,
+      })
+    case 'approve_replacement':
+      // TODO(HITL): Record the replacement packet choice, reroute submission policy for the
+      // replacement, then submit only if allowed.
+      logger.info('dispute_evidence_packet_replacement_requested', {
+        disputeCaseId: command.disputeCaseId,
+        evidencePacketId: command.approvalResponse.evidencePacketId,
+        replacementEvidencePacketId: command.approvalResponse.replacementEvidencePacketId,
+      })
+      return Result.ok({ action: 'stop' })
+    case 'decline':
+      // TODO(HITL): Record merchant decline and complete as no_response.
+      logger.info('dispute_submission_declined', {
+        disputeCaseId: command.disputeCaseId,
+        evidencePacketId: command.approvalResponse.evidencePacketId,
+      })
+      return Result.ok({ action: 'stop' })
+    default:
+      return Result.err(
+        new ValidationError({
+          message: 'Unknown submission response action',
+          issues: [
+            {
+              code: 'invalid_value',
+              path: ['action'],
+              message: 'Unknown submission response action',
+            },
+          ],
+        }),
+      )
+  }
 }

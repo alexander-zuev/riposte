@@ -1,5 +1,10 @@
-import { createCommand, createLogger, createSentryOptions } from '@riposte/core'
-import type { DomainCommand } from '@riposte/core'
+import {
+  createCommand,
+  createLogger,
+  createSentryOptions,
+  disputeSubmissionApprovalResponseSchema,
+} from '@riposte/core'
+import type { DisputeSubmissionApprovalResponse, DomainCommand } from '@riposte/core'
 import * as Sentry from '@sentry/cloudflare'
 import type { MessageBusError } from '@server/application/registry/message-result'
 import type { DisputeAgent } from '@server/infrastructure/agents/dispute-agent'
@@ -9,7 +14,6 @@ import { AgentWorkflow } from 'agents/workflows'
 import type { AgentWorkflowEvent, AgentWorkflowStep } from 'agents/workflows'
 import type { Result } from 'better-result'
 import { NonRetryableError } from 'cloudflare:workflows'
-import { z } from 'zod'
 
 const logger = createLogger('dispute-agent-workflow')
 const DISPUTE_HUMAN_RESPONSE_EVENT = 'dispute_human_response'
@@ -31,27 +35,6 @@ const externalStepConfig = {
 type DisputeAgentWorkflowOutput = {
   disputeCaseId: string
 }
-
-const hitlSubmissionApprovalResponseSchema = z.discriminatedUnion('action', [
-  z.object({
-    kind: z.literal('submission_approval'),
-    action: z.literal('submit'),
-    evidencePacketId: z.uuid(),
-  }),
-  z.object({
-    kind: z.literal('submission_approval'),
-    action: z.literal('replace_packet'),
-    evidencePacketId: z.uuid(),
-    replacementEvidencePacketId: z.uuid(),
-  }),
-  z.object({
-    kind: z.literal('submission_approval'),
-    action: z.literal('decline'),
-    evidencePacketId: z.uuid(),
-  }),
-])
-
-type HitlSubmissionApprovalResponse = z.infer<typeof hitlSubmissionApprovalResponseSchema>
 
 class DisputeAgentWorkflowBase extends AgentWorkflow<DisputeAgent, DisputeAgentWorkflowParams> {
   private readonly deps: AppDeps
@@ -124,90 +107,61 @@ class DisputeAgentWorkflowBase extends AgentWorkflow<DisputeAgent, DisputeAgentW
 
     if (packet.action !== 'generated') return { disputeCaseId }
 
-    const route = await step.do('route submission policy', internalStepConfig, async () => {
-      const command = createCommand(
-        'RouteDisputeSubmissionPolicy',
-        { disputeCaseId, evidencePacketId: packet.evidencePacketId },
-        `workflow:${event.instanceId}:route-submission-policy`,
-      )
-      const result = await this.deps.services.messageBus().handle(command)
-      return unwrapWorkflowStepResult('route submission policy', result)
-    })
+    const submissionDecision = await step.do(
+      'decide submission policy',
+      internalStepConfig,
+      async () => {
+        const command = createCommand(
+          'DecideDisputeSubmissionPolicy',
+          { disputeCaseId, evidencePacketId: packet.evidencePacketId },
+          `workflow:${event.instanceId}:decide-submission-policy`,
+        )
+        const result = await this.deps.services.messageBus().handle(command)
+        return unwrapWorkflowStepResult('decide submission policy', result)
+      },
+    )
 
     let evidencePacketIdToSubmit: string
 
-    switch (route.route) {
+    switch (submissionDecision.decision) {
       case 'submit':
-        evidencePacketIdToSubmit = route.evidencePacketId
+        evidencePacketIdToSubmit = submissionDecision.evidencePacketId
         break
       case 'await_human': {
         // The domain has persisted an awaiting-human request. The workflow pauses here until
         // UI/agent sends a matching approval event for this exact packet.
-        const approvalEvent = await step.waitForEvent<HitlSubmissionApprovalResponse>(
+        const approvalEvent = await step.waitForEvent<DisputeSubmissionApprovalResponse>(
           'wait for submission approval',
           SUBMISSION_APPROVAL_WAIT_EVENT,
         )
 
-        const response = parseHitlSubmissionApprovalResponse(approvalEvent.payload)
-        switch (response.action) {
-          case 'submit':
-            if (response.evidencePacketId !== route.evidencePacketId) {
-              logger.error('dispute_agent_workflow_submission_approval_packet_mismatch', {
-                disputeCaseId,
-                expectedEvidencePacketId: route.evidencePacketId,
-                receivedEvidencePacketId: response.evidencePacketId,
-              })
-              throw new NonRetryableError('Submission approval event did not match evidence packet')
-            }
-            evidencePacketIdToSubmit = response.evidencePacketId
-            break
-          case 'replace_packet':
-            if (response.evidencePacketId !== route.evidencePacketId) {
-              logger.error('dispute_agent_workflow_submission_replacement_packet_mismatch', {
-                disputeCaseId,
-                expectedEvidencePacketId: route.evidencePacketId,
-                receivedEvidencePacketId: response.evidencePacketId,
-                replacementEvidencePacketId: response.replacementEvidencePacketId,
-              })
-              throw new NonRetryableError(
-                'Submission replacement event did not match evidence packet',
-              )
-            }
-            // TODO(HITL): Add a command step that records the replacement packet choice,
-            // reroutes submission policy for the replacement, then submits only if allowed.
-            logger.info('dispute_agent_workflow_replace_packet_not_implemented', {
-              disputeCaseId,
-              evidencePacketId: response.evidencePacketId,
-              replacementEvidencePacketId: response.replacementEvidencePacketId,
-            })
-            return { disputeCaseId }
-          case 'decline':
-            if (response.evidencePacketId !== route.evidencePacketId) {
-              logger.error('dispute_agent_workflow_submission_decline_packet_mismatch', {
-                disputeCaseId,
-                expectedEvidencePacketId: route.evidencePacketId,
-                receivedEvidencePacketId: response.evidencePacketId,
-              })
-              throw new NonRetryableError('Submission decline event did not match evidence packet')
-            }
-            // TODO(HITL): Add a command step that records the merchant decline and completes
-            // the dispute case as no_response before ending the workflow.
-            logger.info('dispute_agent_workflow_decline_submission_not_implemented', {
-              disputeCaseId,
-              evidencePacketId: response.evidencePacketId,
-            })
-            return { disputeCaseId }
-          default:
-            logger.error('dispute_agent_workflow_unknown_submission_approval_action', {
-              disputeCaseId,
-              response,
-            })
-            throw new NonRetryableError('Unknown submission approval action')
+        const response = await step.do(
+          'handle submission approval response',
+          internalStepConfig,
+          async () => {
+            const approvalResponse = parseHitlSubmissionApprovalResponse(approvalEvent.payload)
+            const command = createCommand(
+              'HandleDisputeSubmissionApprovalResponse',
+              { disputeCaseId, approvalResponse },
+              `workflow:${event.instanceId}:handle-submission-approval-response`,
+            )
+            const result = await this.deps.services.messageBus().handle(command)
+            return unwrapWorkflowStepResult('handle submission approval response', result)
+          },
+        )
+
+        if (response.action === 'stop') {
+          return { disputeCaseId }
         }
+        evidencePacketIdToSubmit = response.evidencePacketId
         break
       }
       default:
-        route satisfies never
+        logger.error('dispute_agent_workflow_unknown_submission_policy_decision', {
+          disputeCaseId,
+          submissionDecision,
+        })
+        throw new NonRetryableError('Unknown submission policy decision')
     }
 
     const submitted = await step.do('submit dispute response', externalStepConfig, async () => {
@@ -230,8 +184,8 @@ class DisputeAgentWorkflowBase extends AgentWorkflow<DisputeAgent, DisputeAgentW
   }
 }
 
-function parseHitlSubmissionApprovalResponse(payload: unknown): HitlSubmissionApprovalResponse {
-  const parsed = hitlSubmissionApprovalResponseSchema.safeParse(payload)
+function parseHitlSubmissionApprovalResponse(payload: unknown): DisputeSubmissionApprovalResponse {
+  const parsed = disputeSubmissionApprovalResponseSchema.safeParse(payload)
   if (parsed.success) return parsed.data
 
   logger.error('dispute_agent_workflow_invalid_submission_approval_event', {

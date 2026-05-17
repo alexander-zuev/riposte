@@ -53,14 +53,14 @@ export type DisputeHumanRequest =
       code: DisputeSubmissionApprovalCode
       evidencePacketId: UUIDv4
       requestedAt: Date
-      allowedResponses: readonly ['submit', 'replace_packet', 'decline']
+      allowedResponses: readonly ['approve', 'approve_replacement', 'decline']
     }
 
 export type DisputeHumanResponse =
   | { kind: 'triage_review'; action: 'continue' | 'no_response' }
   | {
       kind: 'submission_approval'
-      action: 'submit' | 'no_response'
+      action: 'approve' | 'no_response'
       evidencePacketId: UUIDv4
     }
 
@@ -499,7 +499,7 @@ export class DisputeCase extends Entity<DisputeCaseSnapshot> {
         code: args.evidenceQuality === 'low' ? 'evidence_quality_low' : 'evidence_quality_medium',
         evidencePacketId: requireNonBlank(args.evidencePacketId, 'evidencePacketId'),
         requestedAt: now,
-        allowedResponses: ['submit', 'replace_packet', 'decline'],
+        allowedResponses: ['approve', 'approve_replacement', 'decline'],
       },
     }
     this.touch(now)

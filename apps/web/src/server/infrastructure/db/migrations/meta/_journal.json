@@ -183,6 +183,13 @@
       "when": 1778775120751,
       "tag": "0025_harsh_pestilence",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1779030406486,
+      "tag": "0026_crazy_amazoness",
+      "breakpoints": true
     }
   ]
 }

@@ -1,0 +1,228 @@
+import {
+  ValidationError,
+  createEvent,
+  createProductInputSchema,
+  updateProductInputSchema,
+} from '@riposte/core'
+import type {
+  CreateProductInput,
+  ProductStatus,
+  ProductType,
+  ServiceStartRule,
+  UUIDv4,
+  UpdateProductInput,
+} from '@riposte/core'
+import { Entity } from '@server/domain/models/base.models'
+import { Result } from 'better-result'
+
+export type ProductSnapshot = {
+  id: UUIDv4
+  userId: UUIDv4
+  name: string
+  url: string
+  productType: ProductType
+  productDescription: string | null
+  serviceStartRule: ServiceStartRule | null
+  refundPolicyDisclosure: string | null
+  cancellationPolicyDisclosure: string | null
+  status: ProductStatus
+  createdAt: Date
+  updatedAt: Date
+}
+
+export class Product extends Entity<ProductSnapshot> {
+  private constructor(
+    readonly id: UUIDv4,
+    readonly userId: UUIDv4,
+    public name: string,
+    public url: string,
+    public productType: ProductType,
+    public productDescription: string | null,
+    public serviceStartRule: ServiceStartRule | null,
+    public refundPolicyDisclosure: string | null,
+    public cancellationPolicyDisclosure: string | null,
+    private status: ProductStatus,
+    readonly createdAt: Date,
+    public updatedAt: Date,
+  ) {
+    super()
+  }
+
+  static create(
+    input: CreateProductInput,
+    now: Date = new Date(),
+  ): Result<Product, ValidationError> {
+    const parsed = createProductInputSchema.safeParse(input)
+    if (!parsed.success) {
+      return Result.err(
+        new ValidationError({
+          issues: parsed.error.issues.map((issue) => ({
+            code: issue.code,
+            path: issue.path.map(String),
+            message: issue.message,
+          })),
+        }),
+      )
+    }
+
+    const product = new Product(
+      crypto.randomUUID() as UUIDv4,
+      parsed.data.userId,
+      parsed.data.name,
+      parsed.data.url,
+      parsed.data.productType,
+      null,
+      null,
+      null,
+      null,
+      'setup_pending',
+      now,
+      now,
+    )
+
+    product.addEvent(
+      createEvent('ProductCreated', {
+        productId: product.id,
+        userId: product.userId,
+        productType: product.productType,
+      }),
+    )
+
+    return Result.ok(product)
+  }
+
+  static deserialize(snapshot: ProductSnapshot): Product {
+    return new Product(
+      snapshot.id,
+      snapshot.userId,
+      snapshot.name,
+      snapshot.url,
+      snapshot.productType,
+      snapshot.productDescription,
+      snapshot.serviceStartRule,
+      snapshot.refundPolicyDisclosure,
+      snapshot.cancellationPolicyDisclosure,
+      snapshot.status,
+      snapshot.createdAt,
+      snapshot.updatedAt,
+    )
+  }
+
+  update(input: UpdateProductInput): Result<void, ValidationError> {
+    const parsed = updateProductInputSchema.safeParse(input)
+    if (!parsed.success) {
+      return Result.err(
+        new ValidationError({
+          issues: parsed.error.issues.map((issue) => ({
+            code: issue.code,
+            path: issue.path.map(String),
+            message: issue.message,
+          })),
+        }),
+      )
+    }
+
+    Object.assign(this, parsed.data)
+    this.updatedAt = new Date()
+
+    return Result.ok(undefined)
+  }
+
+  completeSetup(): Result<void, ValidationError> {
+    if (this.status !== 'setup_pending') {
+      return Result.err(
+        new ValidationError({
+          issues: [
+            {
+              code: 'invalid_product',
+              path: ['status'],
+              message: `Cannot complete setup when status is ${this.status}`,
+            },
+          ],
+        }),
+      )
+    }
+    if (!this.productDescription) {
+      return Result.err(
+        new ValidationError({
+          issues: [
+            {
+              code: 'invalid_product',
+              path: ['productDescription'],
+              message: 'productDescription is required to complete setup',
+            },
+          ],
+        }),
+      )
+    }
+
+    this.status = 'setup_complete'
+    this.updatedAt = new Date()
+    this.addEvent(createEvent('ProductSetupCompleted', { productId: this.id, userId: this.userId }))
+
+    return Result.ok(undefined)
+  }
+
+  disable(): Result<void, ValidationError> {
+    if (this.status !== 'setup_complete') {
+      return Result.err(
+        new ValidationError({
+          issues: [
+            {
+              code: 'invalid_product',
+              path: ['status'],
+              message: `Cannot disable when status is ${this.status}`,
+            },
+          ],
+        }),
+      )
+    }
+
+    this.status = 'disabled'
+    this.updatedAt = new Date()
+
+    return Result.ok(undefined)
+  }
+
+  enable(): Result<void, ValidationError> {
+    if (this.status !== 'disabled') {
+      return Result.err(
+        new ValidationError({
+          issues: [
+            {
+              code: 'invalid_product',
+              path: ['status'],
+              message: `Cannot enable when status is ${this.status}`,
+            },
+          ],
+        }),
+      )
+    }
+
+    this.status = 'setup_complete'
+    this.updatedAt = new Date()
+
+    return Result.ok(undefined)
+  }
+
+  getStatus(): ProductStatus {
+    return this.status
+  }
+
+  serialize(): ProductSnapshot {
+    return {
+      id: this.id,
+      userId: this.userId,
+      name: this.name,
+      url: this.url,
+      productType: this.productType,
+      productDescription: this.productDescription,
+      serviceStartRule: this.serviceStartRule,
+      refundPolicyDisclosure: this.refundPolicyDisclosure,
+      cancellationPolicyDisclosure: this.cancellationPolicyDisclosure,
+      status: this.status,
+      createdAt: this.createdAt,
+      updatedAt: this.updatedAt,
+    }
+  }
+}

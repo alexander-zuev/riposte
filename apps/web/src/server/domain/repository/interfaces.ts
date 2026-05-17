@@ -20,6 +20,7 @@ import type {
   NotificationRecipient,
   SetNotificationChannelPreferenceInput,
 } from '@server/domain/notifications'
+import type { Product } from '@server/domain/products'
 import type {
   SlackConnection,
   SlackConnectionWithCredentials,
@@ -40,6 +41,15 @@ export type StripeDisputeSyncAccount = {
   userId: string
   stripeAccountId: string
   livemode: boolean
+}
+
+/* -------------------------------------------------------------------------------------------------
+ * Product Repository
+ * ------------------------------------------------------------------------------------------------- */
+
+export interface IProductRepository {
+  findById: (id: UUIDv4) => Promise<Result<Product | null, DatabaseError>>
+  save: (product: Product) => Promise<Result<Product, DatabaseError>>
 }
 
 /* -------------------------------------------------------------------------------------------------

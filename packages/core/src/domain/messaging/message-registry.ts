@@ -35,6 +35,7 @@ import {
   handleSlackOAuthCallbackSchema,
   setNotificationChannelPreferenceSchema,
 } from '../notifications'
+import { productCreatedSchema, productSetupCompletedSchema } from '../products'
 import { r2EventSchema, r2EventTransform } from '../storage/r2.messages'
 import {
   handleStripeAppAuthorizedSchema,
@@ -89,6 +90,8 @@ export const domainEventSchema = z.discriminatedUnion('name', [
   disputeCaseFailedSchema,
   disputeEvidencePacketCreatedSchema,
   scheduledDisputeSyncDueSchema,
+  productCreatedSchema,
+  productSetupCompletedSchema,
   r2EventSchema,
 ])
 

@@ -89,6 +89,10 @@
             "binding": "CRITICAL_QUEUE",
             "queue": "riposte-critical-staging",
           },
+          {
+            "binding": "DLQ",
+            "queue": "riposte-dlq-staging",
+          },
         ],
         "consumers": [
           {
@@ -101,7 +105,7 @@
           {
             "queue": "riposte-background-staging",
             "max_batch_size": 10,
-            "max_retries": 3,
+            "max_retries": 5,
             "dead_letter_queue": "riposte-dlq-staging",
           },
         ],
@@ -198,6 +202,10 @@
             "binding": "CRITICAL_QUEUE",
             "queue": "riposte-critical-staging",
           },
+          {
+            "binding": "DLQ",
+            "queue": "riposte-dlq-staging",
+          },
         ],
         "consumers": [
           {
@@ -210,7 +218,7 @@
           {
             "queue": "riposte-background-staging",
             "max_batch_size": 10,
-            "max_retries": 3,
+            "max_retries": 5,
             "dead_letter_queue": "riposte-dlq-staging",
           },
         ],
@@ -329,6 +337,10 @@
             "binding": "CRITICAL_QUEUE",
             "queue": "riposte-critical-test",
           },
+          {
+            "binding": "DLQ",
+            "queue": "riposte-dlq-test",
+          },
         ],
         "consumers": [
           {
@@ -341,7 +353,7 @@
           {
             "queue": "riposte-background-test",
             "max_batch_size": 10,
-            "max_retries": 3,
+            "max_retries": 5,
             "dead_letter_queue": "riposte-dlq-test",
           },
         ],
@@ -410,6 +422,10 @@
             "binding": "CRITICAL_QUEUE",
             "queue": "riposte-critical-prod",
           },
+          {
+            "binding": "DLQ",
+            "queue": "riposte-dlq-prod",
+          },
         ],
         "consumers": [
           {
@@ -417,13 +433,13 @@
             "max_batch_size": 1,
             "max_batch_timeout": 0,
             "max_retries": 5,
-            "dead_letter_queue": "riposte-dlq-prod-v2",
+            "dead_letter_queue": "riposte-dlq-prod",
           },
           {
             "queue": "riposte-background-prod",
             "max_batch_size": 10,
-            "max_retries": 3,
-            "dead_letter_queue": "riposte-dlq-prod-v2",
+            "max_retries": 5,
+            "dead_letter_queue": "riposte-dlq-prod",
           },
         ],
       },

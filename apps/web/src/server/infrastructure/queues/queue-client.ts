@@ -7,6 +7,7 @@ import { Result } from 'better-result'
 export interface IQueueClient {
   send: (message: DomainMessage) => Promise<Result<void, QueueError>>
   sendBatch: (messages: DomainMessage[]) => Promise<Result<void, QueueError>>
+  sendToDlq: (body: unknown) => Promise<Result<void, QueueError>>
 }
 
 const logger = createLogger('queue-client')
@@ -71,6 +72,24 @@ export class QueueClient implements IQueueClient {
           retryable: isTransientError(cause),
         }),
     })
+  }
+
+  async sendToDlq(body: unknown): Promise<Result<void, QueueError>> {
+    logger.debug('sending_to_dlq')
+    return Result.tryPromise(
+      {
+        try: async () => {
+          await this.env.DLQ.send(body)
+        },
+        catch: (cause) =>
+          new QueueError({
+            message: 'Failed to send DLQ message',
+            cause,
+            retryable: isTransientError(cause),
+          }),
+      },
+      RETRY.transient,
+    )
   }
 
   private getQueue(type: DomainMessage['type']): Queue<DomainMessage> {

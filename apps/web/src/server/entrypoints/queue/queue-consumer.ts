@@ -3,6 +3,7 @@ import { createLogger, queueMessageSchema, ValidationError } from '@riposte/core
 import * as Sentry from '@sentry/cloudflare'
 import type { IMessageBus } from '@server/application/message-bus/message-bus'
 import type { AppDeps } from '@server/infrastructure/app-deps'
+import type { IQueueClient } from '@server/infrastructure/queues/queue-client'
 import { isPanic, isTaggedError, Result } from 'better-result'
 
 const logger = createLogger('queue-consumer')
@@ -12,7 +13,10 @@ export class QueueConsumer {
   private static readonly BASE_RETRY_DELAY = 5
   private static readonly MAX_RETRY_DELAY = 120
 
-  constructor(private readonly messageBus: IMessageBus) {}
+  constructor(
+    private readonly messageBus: IMessageBus,
+    private readonly queueClient: IQueueClient,
+  ) {}
 
   async processBatch(batch: MessageBatch): Promise<void> {
     logger.debug('batch_received', { count: batch.messages.length })
@@ -34,7 +38,7 @@ export class QueueConsumer {
         }, this)
 
         if (result.isErr()) {
-          this.handleFailure(message, parsedMsg, result.error, {
+          await this.handleFailure(message, parsedMsg, result.error, {
             retryUnknown: isPanic(result.error),
           })
           return
@@ -43,7 +47,7 @@ export class QueueConsumer {
         message.ack()
         logger.info('processed', { name: result.value.name })
       } catch (error) {
-        this.handleFailure(message, parsedMsg, error, { retryUnknown: true })
+        await this.handleFailure(message, parsedMsg, error, { retryUnknown: true })
       }
     })
   }
@@ -66,12 +70,17 @@ export class QueueConsumer {
     return Result.ok(parsed.data)
   }
 
-  private handleFailure(
+  /**
+   * DLQ policy: only retryable-but-exhausted failures (and panics) reach the DLQ, because the DLQ
+   * exists for messages a human could replay after intervention. Non-retryable typed errors are
+   * final answers — log and ack instead.
+   */
+  private async handleFailure(
     message: Message,
     msg: DomainMessage | undefined,
     error: unknown,
     options?: { retryUnknown?: boolean },
-  ): void {
+  ): Promise<void> {
     const panicRetryable = isPanic(error)
     const taggedRetryable = isTaggedError(error) && 'retryable' in error && error.retryable === true
     const unknownRetryable = options?.retryUnknown === true && !isTaggedError(error)
@@ -89,13 +98,25 @@ export class QueueConsumer {
     }
 
     if (message.attempts >= QueueConsumer.MAX_ATTEMPTS) {
-      logger.error('dlq', {
-        error,
-        msg,
-        attempt: message.attempts,
-        retryable,
+      const sent = await this.queueClient.sendToDlq(message.body)
+      sent.match({
+        ok: () => {
+          logger.error('dlq_sent', { error, msg, attempt: message.attempts })
+          message.ack()
+        },
+        err: (dlqError) => {
+          // Fall back to platform-level dead_letter_queue routing: retry without ack so CF's
+          // consumer-config DLQ catches the message on the next failed attempt.
+          logger.error('dlq_send_failed', {
+            error,
+            dlqError,
+            msg,
+            attempt: message.attempts,
+          })
+          message.retry()
+        },
       })
-      throw toThrowable(error)
+      return
     }
 
     const delay = Math.min(
@@ -112,12 +133,7 @@ export class QueueConsumer {
   }
 }
 
-function toThrowable(error: unknown): Error {
-  if (error instanceof Error) return error
-  return new Error('Queue message failed', { cause: error })
-}
-
 export async function queue(batch: MessageBatch, deps: AppDeps): Promise<void> {
-  const processor = new QueueConsumer(deps.services.messageBus())
-  await processor.processBatch(batch)
+  const consumer = new QueueConsumer(deps.services.messageBus(), deps.services.queueClient())
+  await consumer.processBatch(batch)
 }

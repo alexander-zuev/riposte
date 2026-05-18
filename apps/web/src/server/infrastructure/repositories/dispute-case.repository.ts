@@ -89,6 +89,7 @@ export class DisputeCaseRepository extends BaseRepository implements IDisputeCas
             target: disputeCases.id,
             set: {
               userId: row.userId,
+              productId: row.productId,
               stripeAccountId: row.stripeAccountId,
               sourceStripeEventId: row.sourceStripeEventId,
               sourceStripeEventType: row.sourceStripeEventType,

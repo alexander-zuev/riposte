@@ -12,6 +12,7 @@ import {
 } from 'drizzle-orm/pg-core'
 
 import { user } from './auth.schemas'
+import { products } from './product.schemas'
 
 export const stripeConnections = pgTable(
   'stripe_connections',
@@ -23,6 +24,10 @@ export const stripeConnections = pgTable(
     userId: uuid('user_id')
       .notNull()
       .references(() => user.id),
+
+    productId: uuid('product_id')
+      .notNull()
+      .references(() => products.id),
 
     stripeAccountId: text('stripe_account_id').notNull(),
     stripeBusinessName: text('stripe_business_name'),
@@ -48,6 +53,7 @@ export const stripeConnections = pgTable(
   },
   (table) => [
     uniqueIndex('stripe_connections_account_mode_unique').on(table.stripeAccountId, table.livemode),
+    uniqueIndex('stripe_connections_product_id_unique').on(table.productId),
     index('stripe_connections_user_id_idx').on(table.userId),
     index('stripe_connections_status_idx').on(table.status),
     check('stripe_connections_status_check', sql`${table.status} in ('active', 'revoked')`),

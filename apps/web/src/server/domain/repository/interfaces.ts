@@ -10,6 +10,7 @@ import type {
   DisputeSyncState,
   UUIDv4,
 } from '@riposte/core'
+import type { DisputePlaybook } from '@server/domain/dispute-playbooks'
 import type {
   DisputeCase,
   DisputeEvidencePacket,
@@ -50,6 +51,17 @@ export type StripeDisputeSyncAccount = {
 export interface IProductRepository {
   findById: (id: UUIDv4) => Promise<Result<Product | null, DatabaseError>>
   save: (product: Product) => Promise<Result<Product, DatabaseError>>
+}
+
+/* -------------------------------------------------------------------------------------------------
+ * Dispute Playbook Repository
+ * ------------------------------------------------------------------------------------------------- */
+
+export interface IDisputePlaybookRepository {
+  save: (playbook: DisputePlaybook) => Promise<Result<DisputePlaybook, DatabaseError>>
+  findLatestForProduct: (
+    productId: UUIDv4,
+  ) => Promise<Result<DisputePlaybook | null, DatabaseError>>
 }
 
 /* -------------------------------------------------------------------------------------------------

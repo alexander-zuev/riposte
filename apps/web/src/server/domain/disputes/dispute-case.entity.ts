@@ -118,6 +118,7 @@ export type DisputeCaseEvaluation =
 export type DisputeCaseSnapshot = {
   id: DisputeCaseId
   userId: string
+  productId: UUIDv4
   stripeAccountId: string
   sourceStripeEventId: string
   sourceStripeEventType: string
@@ -152,6 +153,7 @@ export type DisputeCaseSnapshot = {
 
 export type ReceiveStripeDisputeInput = {
   userId: string
+  productId: UUIDv4
   stripeAccountId: string
   sourceStripeEventId: string
   sourceStripeEventType: string
@@ -159,10 +161,7 @@ export type ReceiveStripeDisputeInput = {
   now?: Date
 }
 
-const expandableIdSchema = z.union([
-  z.string().min(1),
-  z.object({ id: z.string().min(1) }).passthrough(),
-])
+const expandableIdSchema = z.union([z.string().min(1), z.object({ id: z.string().min(1) }).loose()])
 
 const stripeDisputeObjectSchema = z.object({
   id: z.string().min(1),
@@ -207,6 +206,7 @@ export class DisputeCase extends Entity<DisputeCaseSnapshot> {
   private constructor(
     readonly id: DisputeCaseId,
     readonly userId: string,
+    readonly productId: UUIDv4,
     readonly stripeAccountId: string,
     readonly sourceStripeEventId: string,
     readonly sourceStripeEventType: string,
@@ -253,6 +253,7 @@ export class DisputeCase extends Entity<DisputeCaseSnapshot> {
     const disputeCase = new DisputeCase(
       stripeDisputeIdSchema.parse(stripeDispute.id),
       requireNonBlank(input.userId, 'userId'),
+      z.uuidv4().parse(input.productId),
       requireNonBlank(input.stripeAccountId, 'stripeAccountId'),
       requireNonBlank(input.sourceStripeEventId, 'sourceStripeEventId'),
       requireNonBlank(input.sourceStripeEventType, 'sourceStripeEventType'),
@@ -301,6 +302,7 @@ export class DisputeCase extends Entity<DisputeCaseSnapshot> {
     return new DisputeCase(
       stripeDisputeIdSchema.parse(snapshot.id),
       requireNonBlank(snapshot.userId, 'userId'),
+      z.uuidv4().parse(snapshot.productId),
       requireNonBlank(snapshot.stripeAccountId, 'stripeAccountId'),
       requireNonBlank(snapshot.sourceStripeEventId, 'sourceStripeEventId'),
       requireNonBlank(snapshot.sourceStripeEventType, 'sourceStripeEventType'),
@@ -629,6 +631,7 @@ export class DisputeCase extends Entity<DisputeCaseSnapshot> {
     return {
       id: this.id,
       userId: this.userId,
+      productId: this.productId,
       stripeAccountId: this.stripeAccountId,
       sourceStripeEventId: this.sourceStripeEventId,
       sourceStripeEventType: this.sourceStripeEventType,

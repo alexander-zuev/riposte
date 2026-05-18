@@ -1,3 +1,4 @@
+import type { UUIDv4 } from '@riposte/core'
 import type { KVClient } from '@server/infrastructure/kv/kv-client'
 import { Result } from 'better-result'
 
@@ -6,14 +7,15 @@ const STATE_TTL_SECONDS = 600
 
 export type StripeOAuthState = {
   userId: string
+  productId: UUIDv4
 }
 
 export async function createOAuthState(
-  userId: string,
+  input: StripeOAuthState,
   kv: KVClient,
 ): Promise<Result<string, Error>> {
   const state = crypto.randomUUID()
-  const result = await kv.put(`${KV_PREFIX}${state}`, JSON.stringify({ userId }), {
+  const result = await kv.put(`${KV_PREFIX}${state}`, JSON.stringify(input), {
     ttl: STATE_TTL_SECONDS,
   })
 

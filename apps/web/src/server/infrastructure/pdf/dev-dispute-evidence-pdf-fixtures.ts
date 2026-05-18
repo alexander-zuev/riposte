@@ -1,6 +1,7 @@
 import type {
   StripeDisputeEvidenceProductType,
   StripeDisputeReasonCodeCategory,
+  UUIDv4,
 } from '@riposte/core'
 import {
   DisputeCase,
@@ -100,6 +101,7 @@ function buildDevFraudEvidencePdfPreview(category: DevEvidencePdfCategory): DevE
 function buildDevFraudDisputeCase(category: DevEvidencePdfCategory): DisputeCase {
   const received = DisputeCase.receiveStripeDispute({
     userId: '018f5b64-196b-7b6c-b001-6e1a62f98a01',
+    productId: 'a4f5b64f-196b-4b6c-b001-6e1a62f98a02' as UUIDv4,
     stripeAccountId: 'acct_1Rsq0qDGi8KWRsUN',
     sourceStripeEventId: 'evt_1TWeDuDGi8KWRsUNexample',
     sourceStripeEventType: 'charge.dispute.created',

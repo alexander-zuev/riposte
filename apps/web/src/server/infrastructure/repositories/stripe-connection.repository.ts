@@ -36,6 +36,7 @@ export class StripeConnectionRepository implements IStripeConnectionRepository {
           .insert(stripeConnections)
           .values({
             userId: input.userId,
+            productId: input.productId,
             stripeAccountId: input.stripeAccountId,
             stripeBusinessName: input.stripeBusinessName,
             livemode: input.livemode,
@@ -52,6 +53,7 @@ export class StripeConnectionRepository implements IStripeConnectionRepository {
             target: [stripeConnections.stripeAccountId, stripeConnections.livemode],
             set: {
               userId: input.userId,
+              productId: input.productId,
               stripeBusinessName: input.stripeBusinessName,
               status: 'active',
               scope: input.scope,
@@ -220,6 +222,7 @@ export class StripeConnectionRepository implements IStripeConnectionRepository {
     return {
       id: connection.id,
       userId: connection.userId,
+      productId: connection.productId,
       stripeAccountId: connection.stripeAccountId,
       stripeBusinessName: connection.stripeBusinessName,
       livemode: connection.livemode,

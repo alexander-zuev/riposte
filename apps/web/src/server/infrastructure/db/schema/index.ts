@@ -1,6 +1,7 @@
 export * from './auth.schemas'
 export * from './dispute-case.schemas'
 export * from './dispute-evidence-packet.schemas'
+export * from './dispute-playbook.schemas'
 export * from './notification-preference.schemas'
 export * from './outbox.schemas'
 export * from './product.schemas'

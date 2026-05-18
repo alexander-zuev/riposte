@@ -3,6 +3,7 @@ import type { DisputeCaseWorkflowState } from '@server/domain/disputes'
 import { boolean, index, integer, jsonb, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core'
 
 import { user } from './auth.schemas'
+import { products } from './product.schemas'
 
 export const disputeCases = pgTable(
   'dispute_cases',
@@ -12,6 +13,10 @@ export const disputeCases = pgTable(
     userId: uuid('user_id')
       .notNull()
       .references(() => user.id),
+
+    productId: uuid('product_id')
+      .notNull()
+      .references(() => products.id),
 
     stripeAccountId: text('stripe_account_id').notNull(),
     sourceStripeEventId: text('source_stripe_event_id').notNull(),
@@ -55,6 +60,7 @@ export const disputeCases = pgTable(
   },
   (table) => [
     index('dispute_cases_user_id_idx').on(table.userId),
+    index('dispute_cases_product_id_idx').on(table.productId),
     index('dispute_cases_stripe_account_id_idx').on(table.stripeAccountId),
     index('dispute_cases_stripe_status_idx').on(table.stripeStatus),
     index('dispute_cases_evidence_due_by_idx').on(table.evidenceDetailsDueBy),

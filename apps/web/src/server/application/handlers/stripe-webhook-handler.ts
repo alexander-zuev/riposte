@@ -95,6 +95,7 @@ export async function handleDisputeCreated(
 
   const disputeCase = DisputeCase.receiveStripeDispute({
     userId: connection.value.userId,
+    productId: connection.value.productId,
     stripeAccountId: connection.value.stripeAccountId,
     sourceStripeEventId: command.stripeEvent.id,
     sourceStripeEventType: command.stripeEvent.type,

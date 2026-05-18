@@ -12,9 +12,9 @@ export const stripeWebhookEventSchema = z
       .object({
         object: z.unknown(),
       })
-      .passthrough(),
+      .loose(),
   })
-  .passthrough()
+  .loose()
 
 const stripeWebhookCommandBase = baseCommandSchema.extend({
   stripeEvent: stripeWebhookEventSchema,

@@ -190,6 +190,20 @@
       "when": 1779030406486,
       "tag": "0026_crazy_amazoness",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1779036040444,
+      "tag": "0027_romantic_guardian",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1779082095555,
+      "tag": "0028_wakeful_prodigy",
+      "breakpoints": true
     }
   ]
 }

@@ -1,3 +1,5 @@
+import type { UUIDv4 } from '@riposte/core'
+
 export type StripeConnectionCredentials = {
   accessToken: string
   refreshToken: string
@@ -8,6 +10,7 @@ export type StripeConnectionStatus = 'active' | 'revoked'
 export type StripeConnection = {
   id: string
   userId: string
+  productId: UUIDv4
   stripeAccountId: string
   stripeBusinessName: string | null
   livemode: boolean
@@ -26,6 +29,7 @@ export type StripeConnectionWithCredentials = StripeConnection & StripeConnectio
 
 export type UpsertStripeConnectionInput = {
   userId: string
+  productId: UUIDv4
   stripeAccountId: string
   stripeBusinessName: string | null
   livemode: boolean

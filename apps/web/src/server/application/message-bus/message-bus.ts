@@ -89,7 +89,8 @@ export class MessageBus implements IMessageBus {
   }
 
   /**
-   * Handle an event - all handlers run in a single UoW (atomic)
+   * Handle an event - each subscriber runs in its own UoW in parallel; per-subscriber
+   * idempotency via `${event.id}:${handlerId}`. First Err returned; partial commits possible.
    */
   private async handleEvent<TName extends EventName>(
     event: EventMap[TName],

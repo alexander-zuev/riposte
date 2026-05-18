@@ -3,6 +3,7 @@ import {
   StripeOAuthCallbackError,
   type DatabaseError,
   type HandleStripeOAuthCallback,
+  type UUIDv4,
 } from '@riposte/core'
 import type { HandlerContext } from '@server/application/registry/types'
 import { getServerConfig } from '@server/infrastructure/config'
@@ -24,6 +25,7 @@ export async function handleStripeOAuthCallback(
   { deps, tx }: HandlerContext,
 ): Promise<Result<void, StripeOAuthHandlerError>> {
   let userId: string | undefined
+  let productId: UUIDv4 | undefined
 
   if (command.state) {
     const stored = await consumeOAuthState(command.state, deps.kv.auth)
@@ -35,6 +37,7 @@ export async function handleStripeOAuthCallback(
       return Result.err(new StripeOAuthCallbackError({ reason: 'invalid_state' }))
     }
     userId = stored.value.userId
+    productId = stored.value.productId
   }
 
   const config = getServerConfig()
@@ -88,12 +91,14 @@ export async function handleStripeOAuthCallback(
     return Result.err(new StripeOAuthCallbackError({ reason: 'invalid_token_response' }))
   }
 
-  if (!userId) {
+  if (!userId || !productId) {
     logger.warn('stripe_oauth_no_state_skip_persistence', {
       stripeAccountId: tokenFields.stripeAccountId,
       livemode: tokenFields.livemode,
+      hasUserId: !!userId,
+      hasProductId: !!productId,
     })
-    return Result.ok(undefined)
+    return Result.err(new StripeOAuthCallbackError({ reason: 'invalid_state' }))
   }
 
   const oauthStripe = new StripeClient(tokenFields.accessToken, {
@@ -122,6 +127,7 @@ export async function handleStripeOAuthCallback(
   const now = new Date()
   const saved = await deps.repos.stripeConnections(tx).upsertConnectedAccount({
     userId,
+    productId,
     stripeAccountId: tokenFields.stripeAccountId,
     stripeBusinessName,
     livemode: tokenFields.livemode,

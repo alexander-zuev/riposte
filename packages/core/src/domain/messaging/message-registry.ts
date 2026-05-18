@@ -7,6 +7,7 @@ import {
   userSignedUpSchema,
 } from '../auth/auth.messages'
 import { getConnectionsStatusSchema } from '../connections'
+import { disputePlaybookCreatedSchema } from '../dispute-playbooks'
 import {
   ingestDisputeClosedSchema,
   ingestDisputeCreatedSchema,
@@ -92,6 +93,7 @@ export const domainEventSchema = z.discriminatedUnion('name', [
   scheduledDisputeSyncDueSchema,
   productCreatedSchema,
   productSetupCompletedSchema,
+  disputePlaybookCreatedSchema,
   r2EventSchema,
 ])
 

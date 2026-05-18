@@ -50,6 +50,7 @@ export type StripeDisputeSyncAccount = {
 
 export interface IProductRepository {
   findById: (id: UUIDv4) => Promise<Result<Product | null, DatabaseError>>
+  findByUserId: (userId: string) => Promise<Result<Product[], DatabaseError>>
   save: (product: Product) => Promise<Result<Product, DatabaseError>>
 }
 

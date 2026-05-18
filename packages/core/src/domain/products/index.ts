@@ -1,3 +1,5 @@
+export * from './product.commands'
 export * from './product.events'
+export * from './product.queries'
 export * from './product.schemas'
 export * from './product.types'

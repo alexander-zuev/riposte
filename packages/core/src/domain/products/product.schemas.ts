@@ -8,12 +8,12 @@ export const STRIPE_EVIDENCE_TEXT_MAX_LENGTH = 20_000
 /** Max product display name length (Riposte-defined, UI-friendly). */
 export const PRODUCT_NAME_MAX_LENGTH = 200
 
-const productNameSchema = z.string().trim().min(1).max(PRODUCT_NAME_MAX_LENGTH)
+export const productNameSchema = z.string().trim().min(1).max(PRODUCT_NAME_MAX_LENGTH)
 const stripeTextSchema = z.string().trim().min(1).max(STRIPE_EVIDENCE_TEXT_MAX_LENGTH)
 
 export const createProductInputSchema = z.object({
   userId: z.uuidv4(),
-  name: productNameSchema,
+  productName: productNameSchema,
   url: z.httpUrl(),
   productType: z.enum(PRODUCT_TYPES),
 })
@@ -22,7 +22,7 @@ export type CreateProductInput = z.infer<typeof createProductInputSchema>
 
 export const updateProductInputSchema = z
   .object({
-    name: productNameSchema.optional(),
+    productName: productNameSchema.optional(),
     url: z.httpUrl().optional(),
     productType: z.enum(PRODUCT_TYPES).optional(),
     productDescription: stripeTextSchema.nullable().optional(),

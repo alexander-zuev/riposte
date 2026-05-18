@@ -204,6 +204,13 @@
       "when": 1779082095555,
       "tag": "0028_wakeful_prodigy",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1779097870765,
+      "tag": "0029_thick_firebird",
+      "breakpoints": true
     }
   ]
 }

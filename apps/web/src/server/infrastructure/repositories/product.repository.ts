@@ -4,7 +4,7 @@ import type { IProductRepository } from '@server/domain/repository/interfaces'
 import type { DbNewProduct, DrizzleDb } from '@server/infrastructure/db'
 import { products } from '@server/infrastructure/db'
 import { Result } from 'better-result'
-import { eq } from 'drizzle-orm'
+import { asc, eq } from 'drizzle-orm'
 
 import { BaseRepository } from './base.repository'
 
@@ -25,6 +25,23 @@ export class ProductRepository extends BaseRepository implements IProductReposit
     return found.map((row) => (row ? Product.deserialize(row) : null))
   }
 
+  async findByUserId(userId: string): Promise<Result<Product[], DatabaseError>> {
+    const found = await Result.tryPromise({
+      try: async () => {
+        const rows = await this.db
+          .select()
+          .from(products)
+          .where(eq(products.userId, userId))
+          .orderBy(asc(products.createdAt))
+
+        return rows
+      },
+      catch: (cause) => new DatabaseError({ message: 'Failed to list products', cause }),
+    })
+
+    return found.map((rows) => rows.map((row) => Product.deserialize(row)))
+  }
+
   async save(product: Product): Promise<Result<Product, DatabaseError>> {
     const productRow = product.serialize() satisfies DbNewProduct
 
@@ -36,7 +53,7 @@ export class ProductRepository extends BaseRepository implements IProductReposit
           .onConflictDoUpdate({
             target: products.id,
             set: {
-              name: productRow.name,
+              productName: productRow.productName,
               url: productRow.url,
               productType: productRow.productType,
               productDescription: productRow.productDescription,

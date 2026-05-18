@@ -25,6 +25,7 @@ import {
   notifyOnDisputeCaseReceived,
   setNotificationChannelPreference,
 } from '@server/application/handlers/notification-handler'
+import { createProduct, listProducts } from '@server/application/handlers/product-handler'
 import {
   fanOutScheduledDisputeSync,
   getStripeAppSettings,
@@ -68,6 +69,7 @@ export const COMMAND_HANDLERS = {
   SubmitDisputeResponse: submitDisputeResponse,
   HandleDisputeSubmissionApprovalResponse: handleDisputeSubmissionApprovalResponse,
   FailDisputeCase: failDisputeCase,
+  CreateProduct: createProduct,
 } satisfies CommandRegistry
 
 export const EVENT_HANDLERS = {
@@ -92,6 +94,7 @@ export const QUERY_HANDLERS = {
   GetConnectionsStatus: getConnectionsStatus,
   GetStripeAppSettings: getStripeAppSettings,
   ListDisputeCases: listDisputeCases,
+  ListProducts: listProducts,
 } satisfies QueryRegistry
 
 export const defaultRegistry = {

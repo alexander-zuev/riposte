@@ -18,7 +18,7 @@ import { Result } from 'better-result'
 export type ProductSnapshot = {
   id: UUIDv4
   userId: UUIDv4
-  name: string
+  productName: string
   url: string
   productType: ProductType
   productDescription: string | null
@@ -34,7 +34,7 @@ export class Product extends Entity<ProductSnapshot> {
   private constructor(
     readonly id: UUIDv4,
     readonly userId: UUIDv4,
-    public name: string,
+    public productName: string,
     public url: string,
     public productType: ProductType,
     public productDescription: string | null,
@@ -68,7 +68,7 @@ export class Product extends Entity<ProductSnapshot> {
     const product = new Product(
       crypto.randomUUID() as UUIDv4,
       parsed.data.userId,
-      parsed.data.name,
+      parsed.data.productName,
       parsed.data.url,
       parsed.data.productType,
       null,
@@ -95,7 +95,7 @@ export class Product extends Entity<ProductSnapshot> {
     return new Product(
       snapshot.id,
       snapshot.userId,
-      snapshot.name,
+      snapshot.productName,
       snapshot.url,
       snapshot.productType,
       snapshot.productDescription,
@@ -213,7 +213,7 @@ export class Product extends Entity<ProductSnapshot> {
     return {
       id: this.id,
       userId: this.userId,
-      name: this.name,
+      productName: this.productName,
       url: this.url,
       productType: this.productType,
       productDescription: this.productDescription,

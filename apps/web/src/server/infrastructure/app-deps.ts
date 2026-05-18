@@ -9,6 +9,7 @@ import type {
   IDisputeEvidencePacketRepository,
   INotificationPreferenceRepository,
   IOutboxRepository,
+  IProductRepository,
   ISlackConnectionRepository,
   IStripeConnectionRepository,
   IStripeDisputeContextRepository,
@@ -43,6 +44,7 @@ import { DisputeEvidenceArtifactBlobRepository } from '@server/infrastructure/re
 import { DisputeEvidencePacketRepository } from '@server/infrastructure/repositories/dispute-evidence-packet.repository'
 import { NotificationPreferenceRepository } from '@server/infrastructure/repositories/notification-preference.repository'
 import { OutboxRepository } from '@server/infrastructure/repositories/outbox.repository'
+import { ProductRepository } from '@server/infrastructure/repositories/product.repository'
 import { SlackConnectionRepository } from '@server/infrastructure/repositories/slack-connection.repository'
 import { StripeConnectionRepository } from '@server/infrastructure/repositories/stripe-connection.repository'
 import { StripeDisputeContextRepository } from '@server/infrastructure/repositories/stripe-dispute-context.repository'
@@ -77,6 +79,7 @@ export type AppDeps = {
     disputeEvidencePackets: (tx: DrizzleDb) => IDisputeEvidencePacketRepository
     notificationPreferences: (tx: DrizzleDb) => INotificationPreferenceRepository
     outbox: (tx: DrizzleDb) => IOutboxRepository
+    products: (tx: DrizzleDb) => IProductRepository
     slackConnections: (tx: DrizzleDb) => ISlackConnectionRepository
     stripeConnections: (tx: DrizzleDb) => IStripeConnectionRepository
     stripeDisputeContexts: (tx: DrizzleDb) => IStripeDisputeContextRepository
@@ -126,6 +129,7 @@ export function createAppDeps(env: Env, ctx: WaitUntilContext): AppDeps {
       disputeEvidencePackets: (tx) => new DisputeEvidencePacketRepository(tx),
       notificationPreferences: (tx) => new NotificationPreferenceRepository(tx),
       outbox: (tx) => new OutboxRepository(tx),
+      products: (tx) => new ProductRepository(tx),
       slackConnections: (tx) =>
         new SlackConnectionRepository(tx, deps.services.credentialEncryption()),
       stripeConnections: (tx) =>

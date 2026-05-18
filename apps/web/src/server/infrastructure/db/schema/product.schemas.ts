@@ -19,7 +19,7 @@ export const products = pgTable(
       .references(() => user.id),
 
     // Identity
-    name: text('name').notNull(),
+    productName: text('product_name').notNull(),
     url: text('url').notNull(),
 
     // Product type mirrors Stripe's dispute evidence product-type selector.

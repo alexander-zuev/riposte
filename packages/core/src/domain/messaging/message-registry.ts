@@ -37,7 +37,12 @@ import {
   handleSlackOAuthCallbackSchema,
   setNotificationChannelPreferenceSchema,
 } from '../notifications'
-import { productCreatedSchema, productSetupCompletedSchema } from '../products'
+import {
+  createProductSchema,
+  listProductsSchema,
+  productCreatedSchema,
+  productSetupCompletedSchema,
+} from '../products'
 import { r2EventSchema, r2EventTransform } from '../storage/r2.messages'
 import {
   handleStripeAppAuthorizedSchema,
@@ -74,6 +79,7 @@ export const domainCommandSchema = z.discriminatedUnion('name', [
   handleSlackOAuthCallbackSchema,
   handleSlackAppUninstalledSchema,
   setNotificationChannelPreferenceSchema,
+  createProductSchema,
 ])
 
 export type DomainCommand = z.infer<typeof domainCommandSchema>
@@ -114,6 +120,7 @@ export const domainQuerySchema = z.discriminatedUnion('name', [
   getConnectionsStatusSchema,
   getStripeAppSettingsSchema,
   listDisputeCasesSchema,
+  listProductsSchema,
 ])
 
 export type DomainQuery = z.infer<typeof domainQuerySchema>

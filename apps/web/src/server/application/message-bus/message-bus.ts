@@ -90,7 +90,9 @@ export class MessageBus implements IMessageBus {
 
   /**
    * Handle an event - each subscriber runs in its own UoW in parallel; per-subscriber
-   * idempotency via `${event.id}:${handlerId}`. First Err returned; partial commits possible.
+   * idempotency via `${event.id}:${handlerId}`. First failure is returned (upstream
+   * logs it); sibling failures are logged here so they don't vanish. Partial commits
+   * possible — independent UoWs mean some subscribers can commit while others fail.
    */
   private async handleEvent<TName extends EventName>(
     event: EventMap[TName],
@@ -124,14 +126,26 @@ export class MessageBus implements IMessageBus {
       }),
     )
 
-    const failed = results.find((result) => result.isErr())
-    if (failed?.isErr()) {
-      logger.warn('Event handler failed', {
+    // First failure is returned (upstream queue consumer logs it). Sibling failures
+    // would otherwise vanish — log them here with their handlerId for visibility.
+    let returnedErr: unknown
+    for (let i = 0; i < results.length; i++) {
+      const r = results[i]
+      if (!r || !r.isErr()) continue
+      if (returnedErr === undefined) {
+        returnedErr = r.error
+        continue
+      }
+      logger.warn('Event handler sibling failed', {
         event: event.name,
         eventId: event.id,
-        error: failed.error,
+        handlerId: handlers[i]?.id,
+        error: r.error,
       })
-      return Result.err(failed.error) as MessageResult<EventMap[TName]>
+    }
+
+    if (returnedErr !== undefined) {
+      return Result.err(returnedErr) as MessageResult<EventMap[TName]>
     }
 
     return Result.ok(undefined) as MessageResult<EventMap[TName]>

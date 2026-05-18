@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 import { baseCommandSchema } from '../base/base.messages'
-import { createProductInputSchema } from './product.schemas'
+import { createProductInputSchema } from './product.dto'
 
 export const createProductSchema = baseCommandSchema
   .extend({ name: z.literal('CreateProduct') })

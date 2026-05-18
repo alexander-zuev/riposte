@@ -72,9 +72,24 @@ export class RateLimitError extends TaggedError('RateLimitError')<{
   }
 }
 
+export class DuplicateProductUrlError extends TaggedError('DuplicateProductUrlError')<{
+  url: string
+  message: string
+  retryable: false
+}>() {
+  constructor(args: { url: string }) {
+    super({
+      url: args.url,
+      message: 'You already have a product with this URL',
+      retryable: false,
+    })
+  }
+}
+
 export type DomainError =
   | AuthenticationError
   | AuthorizationError
   | ValidationError
   | EntityNotFoundError
   | RateLimitError
+  | DuplicateProductUrlError

@@ -2,6 +2,7 @@ import type {
   CreateProduct,
   CreateProductResult,
   DatabaseError,
+  DuplicateProductUrlError,
   ListProducts,
   ListProductsResult,
   ValidationError,
@@ -35,7 +36,7 @@ export const listProducts: QueryHandler<ListProducts, ListProductsResult, Databa
 export const createProduct: CommandHandler<
   CreateProduct,
   CreateProductResult,
-  DatabaseError | ValidationError
+  DatabaseError | ValidationError | DuplicateProductUrlError
 > = async (command, ctx) => {
   const product = Product.create({
     userId: command.userId,

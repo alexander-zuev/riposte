@@ -1,4 +1,4 @@
-import { DatabaseError } from '@riposte/core'
+import { DatabaseError, DuplicateProductUrlError } from '@riposte/core'
 import { Product } from '@server/domain/products'
 import type { IProductRepository } from '@server/domain/repository/interfaces'
 import type { DbNewProduct, DrizzleDb } from '@server/infrastructure/db'
@@ -7,6 +7,8 @@ import { Result } from 'better-result'
 import { asc, eq } from 'drizzle-orm'
 
 import { BaseRepository } from './base.repository'
+
+const PRODUCTS_URL_UNIQUE_CONSTRAINT = 'products_user_id_url_uniq'
 
 export class ProductRepository extends BaseRepository implements IProductRepository {
   constructor(private readonly db: DrizzleDb) {
@@ -42,10 +44,13 @@ export class ProductRepository extends BaseRepository implements IProductReposit
     return found.map((rows) => rows.map((row) => Product.deserialize(row)))
   }
 
-  async save(product: Product): Promise<Result<Product, DatabaseError>> {
+  async save(product: Product): Promise<Result<Product, DatabaseError | DuplicateProductUrlError>> {
     const productRow = product.serialize() satisfies DbNewProduct
 
-    const saved = await Result.tryPromise({
+    const saved = await Result.tryPromise<
+      typeof products.$inferSelect,
+      DatabaseError | DuplicateProductUrlError
+    >({
       try: async () => {
         const [savedProductRow] = await this.db
           .insert(products)
@@ -70,7 +75,16 @@ export class ProductRepository extends BaseRepository implements IProductReposit
         this.dispatchEvents(product)
         return savedProductRow
       },
-      catch: (cause) => new DatabaseError({ message: 'Failed to save product', cause }),
+      catch: (cause) => {
+        const dbError = new DatabaseError({ message: 'Failed to save product', cause })
+        if (
+          dbError.pg?.code === '23505' &&
+          dbError.pg.constraint === PRODUCTS_URL_UNIQUE_CONSTRAINT
+        ) {
+          return new DuplicateProductUrlError({ url: productRow.url })
+        }
+        return dbError
+      },
     })
 
     return saved.map((savedProductRow) => Product.deserialize(savedProductRow))

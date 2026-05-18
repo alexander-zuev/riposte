@@ -1,7 +1,7 @@
 import type { ProductStatus, ProductType, ServiceStartRule } from '@server/domain/products'
 import { PRODUCT_TYPES } from '@server/domain/products'
 import { sql } from 'drizzle-orm'
-import { check, index, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core'
+import { check, index, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core'
 
 import { user } from './auth.schemas'
 
@@ -45,6 +45,7 @@ export const products = pgTable(
   },
   (table) => [
     index('products_user_id_idx').on(table.userId),
+    uniqueIndex('products_user_id_url_uniq').on(table.userId, table.url),
     check(
       'products_status_check',
       sql`${table.status} in ('setup_pending', 'setup_complete', 'disabled')`,

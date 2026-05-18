@@ -10,6 +10,7 @@ import {
   collectDisputeEvidence,
   decideDisputeSubmissionPolicy,
   enrichDisputeContext,
+  failDisputeCase,
   generateEvidencePacket,
   handleDisputeSubmissionApprovalResponse,
   startDisputeAgentWorkflow,
@@ -66,6 +67,7 @@ export const COMMAND_HANDLERS = {
   DecideDisputeSubmissionPolicy: decideDisputeSubmissionPolicy,
   SubmitDisputeResponse: submitDisputeResponse,
   HandleDisputeSubmissionApprovalResponse: handleDisputeSubmissionApprovalResponse,
+  FailDisputeCase: failDisputeCase,
 } satisfies CommandRegistry
 
 export const EVENT_HANDLERS = {

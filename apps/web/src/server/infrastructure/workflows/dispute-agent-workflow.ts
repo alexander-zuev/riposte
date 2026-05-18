@@ -48,6 +48,28 @@ class DisputeAgentWorkflowBase extends AgentWorkflow<DisputeAgent, DisputeAgentW
     event: AgentWorkflowEvent<DisputeAgentWorkflowParams>,
     step: AgentWorkflowStep,
   ): Promise<DisputeAgentWorkflowOutput> {
+    try {
+      return await this.orchestrate(event, step)
+    } catch (err) {
+      // Unexpected error: transition the case to `failed` so it isn't left stuck.
+      await step.do('fail dispute case', internalStepConfig, async () => {
+        const command = createCommand(
+          'FailDisputeCase',
+          { disputeCaseId: event.payload.disputeCaseId, reason: 'workflow_unexpected_error' },
+          `workflow:${event.instanceId}:fail`,
+        )
+        const result = await this.deps.services.messageBus().handle(command)
+        return unwrapWorkflowStepResult('fail dispute case', result)
+      })
+
+      throw err
+    }
+  }
+
+  private async orchestrate(
+    event: AgentWorkflowEvent<DisputeAgentWorkflowParams>,
+    step: AgentWorkflowStep,
+  ): Promise<DisputeAgentWorkflowOutput> {
     const { disputeCaseId } = event.payload
 
     const triage = await step.do('triage dispute', internalStepConfig, async () => {
@@ -128,8 +150,8 @@ class DisputeAgentWorkflowBase extends AgentWorkflow<DisputeAgent, DisputeAgentW
         evidencePacketIdToSubmit = submissionDecision.evidencePacketId
         break
       case 'await_human': {
-        // The domain has persisted an awaiting-human request. The workflow pauses here until
-        // UI/agent sends a matching approval event for this exact packet.
+        // Pauses until UI/agent sends a matching approval event for this packet.
+        // TODO(product, P0): decide timeout behavior. Today the case is left in `awaiting_human` forever.
         const approvalEvent = await step.waitForEvent<DisputeSubmissionApprovalResponse>(
           'wait for submission approval',
           SUBMISSION_APPROVAL_WAIT_EVENT,

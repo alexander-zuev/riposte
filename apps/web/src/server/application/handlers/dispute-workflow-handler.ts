@@ -6,6 +6,7 @@ import type {
   DisputeCaseReceived,
   EnrichDisputeContext,
   EvidencePdfRenderError,
+  FailDisputeCase,
   GenerateEvidencePacket,
   HandleDisputeSubmissionApprovalResponse,
   StripeApiError,
@@ -65,6 +66,8 @@ export type SubmitDisputeResponseResult = {
 export type HandleDisputeSubmissionApprovalResponseResult =
   | { action: 'submit'; evidencePacketId: string }
   | { action: 'stop' }
+
+export type FailDisputeCaseResult = { action: 'failed'; reason: string }
 
 export async function startDisputeAgentWorkflow(
   event: DisputeCaseReceived,
@@ -494,4 +497,33 @@ export async function handleDisputeSubmissionApprovalResponse(
         }),
       )
   }
+}
+
+/**
+ * Transitions the case to `failed`. Use for unrecoverable workflow errors and
+ * (future) stuck-case reconciliation — NOT for expected business outcomes.
+ * No-ops if the case is already in a terminal state.
+ */
+export async function failDisputeCase(
+  command: FailDisputeCase,
+  { deps, tx }: HandlerContext,
+): Promise<Result<FailDisputeCaseResult, DisputeWorkflowCommandError>> {
+  const found = await deps.repos.disputeCases(tx).findById(command.disputeCaseId)
+  if (found.isErr()) return Result.err(found.error)
+
+  if (!found.value) {
+    return Result.err(new EntityNotFoundError({ entity: 'DisputeCase', id: command.disputeCaseId }))
+  }
+
+  found.value.markFailed(command.reason)
+
+  const saved = await deps.repos.disputeCases(tx).save(found.value)
+  if (saved.isErr()) return Result.err(saved.error)
+
+  logger.info('dispute_marked_failed', {
+    disputeCaseId: command.disputeCaseId,
+    reason: command.reason,
+  })
+
+  return Result.ok({ action: 'failed', reason: command.reason })
 }

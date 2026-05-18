@@ -99,6 +99,18 @@ export const handleDisputeSubmissionApprovalResponseSchema = disputeWorkflowComm
   approvalResponse: disputeSubmissionApprovalResponseSchema,
 })
 
+/**
+ * Transitions a dispute case to `failed`. Reason is a structured string for
+ * triage (e.g. 'workflow_unexpected_error'); message is optional human detail.
+ * Used by the workflow top-level catch and (future) cron reconciler — NOT for
+ * expected business outcomes.
+ */
+export const failDisputeCaseSchema = disputeWorkflowCommandBase.extend({
+  name: z.literal('FailDisputeCase'),
+  reason: z.string().min(1),
+  message: z.string().optional(),
+})
+
 export type TriageDisputeCase = z.infer<typeof triageDisputeCaseSchema>
 export type EnrichDisputeContext = z.infer<typeof enrichDisputeContextSchema>
 export type CollectDisputeEvidence = z.infer<typeof collectDisputeEvidenceSchema>
@@ -111,3 +123,4 @@ export type DisputeSubmissionApprovalResponse = z.infer<
 export type HandleDisputeSubmissionApprovalResponse = z.infer<
   typeof handleDisputeSubmissionApprovalResponseSchema
 >
+export type FailDisputeCase = z.infer<typeof failDisputeCaseSchema>

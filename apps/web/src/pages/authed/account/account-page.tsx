@@ -1,6 +1,8 @@
+import { UserCircleIcon } from '@phosphor-icons/react'
 import type { AuthUser } from '@web/entities/auth/auth-user'
+import { PageHeader } from '@web/pages/authed/shared/page-header'
 import { UserAvatar } from '@web/pages/authed/shared/user-dropdown'
-import { Card, CardContent, CardHeader, CardTitle } from '@web/ui/components/ui/card'
+import { Card, CardContent } from '@web/ui/components/ui/card'
 
 interface AccountPageProps {
   user: AuthUser
@@ -8,21 +10,27 @@ interface AccountPageProps {
 
 export function AccountPage({ user }: AccountPageProps) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Account</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="flex items-start gap-4">
-          <UserAvatar user={user} className="size-16" />
-          <dl className="grid min-w-0 flex-1 gap-4 sm:grid-cols-3">
-            <AccountField label="Name" value={user.displayName ?? 'Not set'} />
-            <AccountField label="Email" value={user.email} />
-            <AccountField label="Date registered" value={formatRegisteredDate(user.createdAt)} />
-          </dl>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="grid gap-6 text-foreground">
+      <PageHeader
+        title="Account"
+        description="Personal profile and sign-in details for your Riposte workspace user"
+        eyebrow="Workspace"
+        icon={UserCircleIcon}
+      />
+
+      <Card>
+        <CardContent>
+          <div className="flex items-start gap-4">
+            <UserAvatar user={user} className="size-16" />
+            <dl className="grid min-w-0 flex-1 gap-4 sm:grid-cols-3">
+              <AccountField label="Name" value={user.displayName ?? 'Not set'} />
+              <AccountField label="Email" value={user.email} />
+              <AccountField label="Date registered" value={formatRegisteredDate(user.createdAt)} />
+            </dl>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   )
 }
 

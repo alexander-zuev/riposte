@@ -124,8 +124,13 @@ export class Product extends Entity<ProductSnapshot> {
 
     Object.assign(this, parsed.data)
     this.updatedAt = new Date()
+    this.addEvent(createEvent('ProductUpdated', { productId: this.id, userId: this.userId }))
 
     return Result.ok(undefined)
+  }
+
+  markDeleted(): void {
+    this.addEvent(createEvent('ProductDeleted', { productId: this.id, userId: this.userId }))
   }
 
   completeSetup(): Result<void, ValidationError> {
@@ -180,6 +185,7 @@ export class Product extends Entity<ProductSnapshot> {
 
     this.status = 'disabled'
     this.updatedAt = new Date()
+    this.addEvent(createEvent('ProductDisabled', { productId: this.id, userId: this.userId }))
 
     return Result.ok(undefined)
   }
@@ -201,6 +207,7 @@ export class Product extends Entity<ProductSnapshot> {
 
     this.status = 'setup_complete'
     this.updatedAt = new Date()
+    this.addEvent(createEvent('ProductEnabled', { productId: this.id, userId: this.userId }))
 
     return Result.ok(undefined)
   }

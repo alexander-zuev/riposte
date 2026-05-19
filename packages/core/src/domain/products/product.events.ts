@@ -19,3 +19,35 @@ export const productSetupCompletedSchema = baseEventSchema.extend({
 })
 
 export type ProductSetupCompleted = z.infer<typeof productSetupCompletedSchema>
+
+export const productUpdatedSchema = baseEventSchema.extend({
+  name: z.literal('ProductUpdated'),
+  productId: z.uuidv4(),
+  userId: z.uuidv4(),
+})
+
+export type ProductUpdated = z.infer<typeof productUpdatedSchema>
+
+export const productDeletedSchema = baseEventSchema.extend({
+  name: z.literal('ProductDeleted'),
+  productId: z.uuidv4(),
+  userId: z.uuidv4(),
+})
+
+export type ProductDeleted = z.infer<typeof productDeletedSchema>
+
+export const productDisabledSchema = baseEventSchema.extend({
+  name: z.literal('ProductDisabled'),
+  productId: z.uuidv4(),
+  userId: z.uuidv4(),
+})
+
+export type ProductDisabled = z.infer<typeof productDisabledSchema>
+
+export const productEnabledSchema = baseEventSchema.extend({
+  name: z.literal('ProductEnabled'),
+  productId: z.uuidv4(),
+  userId: z.uuidv4(),
+})
+
+export type ProductEnabled = z.infer<typeof productEnabledSchema>

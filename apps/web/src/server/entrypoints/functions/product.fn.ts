@@ -1,4 +1,10 @@
-import { createCommand, createProductInputSchema, createQuery, toServerFnRpc } from '@riposte/core'
+import {
+  createCommand,
+  createProductInputSchema,
+  createQuery,
+  toServerFnRpc,
+  updateProductFieldsSchema,
+} from '@riposte/core'
 import { requireAuth } from '@server/infrastructure/middleware/auth.middleware'
 import { createServerFn } from '@tanstack/react-start'
 import { z } from 'zod'
@@ -6,6 +12,14 @@ import { z } from 'zod'
 const createProductFnInputSchema = createProductInputSchema.omit({ userId: true })
 
 const getProductSetupStateFnInputSchema = z.object({
+  productId: z.uuidv4(),
+})
+
+const updateProductFnInputSchema = updateProductFieldsSchema.extend({
+  productId: z.uuidv4(),
+})
+
+const deleteProductFnInputSchema = z.object({
   productId: z.uuidv4(),
 })
 
@@ -40,6 +54,34 @@ export const createProduct = createServerFn({ method: 'POST' })
       productName: data.productName,
       url: data.url,
       productType: data.productType,
+    })
+    const result = await context.deps.services.messageBus().handle(command)
+
+    return toServerFnRpc(result)
+  })
+
+export const updateProduct = createServerFn({ method: 'POST' })
+  .middleware([requireAuth])
+  .inputValidator(updateProductFnInputSchema)
+  .handler(async ({ data, context }) => {
+    const { productId, ...fields } = data
+    const command = createCommand('UpdateProduct', {
+      userId: context.user.id,
+      productId,
+      ...fields,
+    })
+    const result = await context.deps.services.messageBus().handle(command)
+
+    return toServerFnRpc(result)
+  })
+
+export const deleteProduct = createServerFn({ method: 'POST' })
+  .middleware([requireAuth])
+  .inputValidator(deleteProductFnInputSchema)
+  .handler(async ({ data, context }) => {
+    const command = createCommand('DeleteProduct', {
+      userId: context.user.id,
+      productId: data.productId,
     })
     const result = await context.deps.services.messageBus().handle(command)
 

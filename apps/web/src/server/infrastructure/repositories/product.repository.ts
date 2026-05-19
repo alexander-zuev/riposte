@@ -4,7 +4,7 @@ import type { IProductRepository } from '@server/domain/repository/interfaces'
 import type { DbNewProduct, DrizzleDb } from '@server/infrastructure/db'
 import { products } from '@server/infrastructure/db'
 import { Result } from 'better-result'
-import { asc, eq } from 'drizzle-orm'
+import { and, asc, eq } from 'drizzle-orm'
 
 import { BaseRepository } from './base.repository'
 
@@ -88,5 +88,18 @@ export class ProductRepository extends BaseRepository implements IProductReposit
     })
 
     return saved.map((savedProductRow) => Product.deserialize(savedProductRow))
+  }
+
+  async delete(product: Product): Promise<Result<void, DatabaseError>> {
+    return await Result.tryPromise({
+      try: async () => {
+        await this.db
+          .delete(products)
+          .where(and(eq(products.id, product.id), eq(products.userId, product.userId)))
+        this.dispatchEvents(product)
+        return undefined
+      },
+      catch: (cause) => new DatabaseError({ message: 'Failed to delete product', cause }),
+    })
   }
 }

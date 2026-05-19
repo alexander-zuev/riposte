@@ -22,7 +22,7 @@ export const disputePlaybooks = pgTable(
 
     productId: uuid('product_id')
       .notNull()
-      .references(() => products.id),
+      .references(() => products.id, { onDelete: 'cascade' }),
 
     version: integer('version').notNull(),
 

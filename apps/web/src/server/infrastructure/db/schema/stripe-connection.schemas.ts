@@ -27,7 +27,7 @@ export const stripeConnections = pgTable(
 
     productId: uuid('product_id')
       .notNull()
-      .references(() => products.id),
+      .references(() => products.id, { onDelete: 'cascade' }),
 
     stripeAccountId: text('stripe_account_id').notNull(),
     stripeBusinessName: text('stripe_business_name'),

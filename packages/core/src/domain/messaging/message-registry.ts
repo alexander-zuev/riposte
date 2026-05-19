@@ -39,10 +39,16 @@ import {
 } from '../notifications'
 import {
   createProductSchema,
+  deleteProductSchema,
   getProductSetupStateSchema,
   listProductsSchema,
   productCreatedSchema,
+  productDeletedSchema,
+  productDisabledSchema,
+  productEnabledSchema,
   productSetupCompletedSchema,
+  productUpdatedSchema,
+  updateProductSchema,
 } from '../products'
 import { r2EventSchema, r2EventTransform } from '../storage/r2.messages'
 import {
@@ -81,6 +87,8 @@ export const domainCommandSchema = z.discriminatedUnion('name', [
   handleSlackAppUninstalledSchema,
   setNotificationChannelPreferenceSchema,
   createProductSchema,
+  updateProductSchema,
+  deleteProductSchema,
 ])
 
 export type DomainCommand = z.infer<typeof domainCommandSchema>
@@ -101,6 +109,10 @@ export const domainEventSchema = z.discriminatedUnion('name', [
   disputeEvidencePacketCreatedSchema,
   scheduledDisputeSyncDueSchema,
   productCreatedSchema,
+  productUpdatedSchema,
+  productDeletedSchema,
+  productDisabledSchema,
+  productEnabledSchema,
   productSetupCompletedSchema,
   disputePlaybookCreatedSchema,
   r2EventSchema,

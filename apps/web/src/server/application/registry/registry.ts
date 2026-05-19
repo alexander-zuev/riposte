@@ -27,8 +27,10 @@ import {
 } from '@server/application/handlers/notification-handler'
 import {
   createProduct,
+  deleteProduct,
   getProductSetupState,
   listProducts,
+  updateProduct,
 } from '@server/application/handlers/product-handler'
 import {
   fanOutScheduledDisputeSync,
@@ -74,6 +76,8 @@ export const COMMAND_HANDLERS = {
   HandleDisputeSubmissionApprovalResponse: handleDisputeSubmissionApprovalResponse,
   FailDisputeCase: failDisputeCase,
   CreateProduct: createProduct,
+  UpdateProduct: updateProduct,
+  DeleteProduct: deleteProduct,
 } satisfies CommandRegistry
 
 export const EVENT_HANDLERS = {

@@ -5,6 +5,7 @@ import type {
   DomainEvent,
   DuplicateMessageError,
   DuplicateProductUrlError,
+  EntityNotFoundError,
   JoinWaitlist,
   ListDisputeCases,
   ListDisputeCasesResult,
@@ -53,6 +54,7 @@ export interface IProductRepository {
   findById: (id: UUIDv4) => Promise<Result<Product | null, DatabaseError>>
   findByUserId: (userId: string) => Promise<Result<Product[], DatabaseError>>
   save: (product: Product) => Promise<Result<Product, DatabaseError | DuplicateProductUrlError>>
+  delete: (product: Product) => Promise<Result<void, DatabaseError>>
 }
 
 /* -------------------------------------------------------------------------------------------------

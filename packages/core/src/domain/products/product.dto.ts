@@ -35,18 +35,19 @@ export const createProductInputSchema = z.object({
 
 export type CreateProductInput = z.infer<typeof createProductInputSchema>
 
-export const updateProductInputSchema = z
-  .object({
-    productName: productNameSchema.optional(),
-    url: productUrlSchema.optional(),
-    productType: productTypeSchema.optional(),
-    productDescription: stripeTextSchema.nullable().optional(),
-    serviceStartRule: z.enum(SERVICE_START_RULES).nullable().optional(),
-    refundPolicyDisclosure: stripeTextSchema.nullable().optional(),
-    cancellationPolicyDisclosure: stripeTextSchema.nullable().optional(),
-  })
-  .refine((value) => Object.keys(value).length > 0, {
-    error: 'update requires at least one field',
-  })
+export const updateProductFieldsSchema = z.object({
+  productName: productNameSchema.optional(),
+  url: productUrlSchema.optional(),
+  productType: productTypeSchema.optional(),
+  productDescription: stripeTextSchema.nullable().optional(),
+  serviceStartRule: z.enum(SERVICE_START_RULES).nullable().optional(),
+  refundPolicyDisclosure: stripeTextSchema.nullable().optional(),
+  cancellationPolicyDisclosure: stripeTextSchema.nullable().optional(),
+})
+
+export const updateProductInputSchema = updateProductFieldsSchema.refine(
+  (value) => Object.keys(value).length > 0,
+  { error: 'update requires at least one field' },
+)
 
 export type UpdateProductInput = z.infer<typeof updateProductInputSchema>

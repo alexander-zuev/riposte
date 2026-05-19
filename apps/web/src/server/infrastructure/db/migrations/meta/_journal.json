@@ -218,6 +218,13 @@
       "when": 1779115666844,
       "tag": "0030_striped_jackpot",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1779204999665,
+      "tag": "0031_even_xorn",
+      "breakpoints": true
     }
   ]
 }

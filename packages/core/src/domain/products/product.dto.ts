@@ -18,23 +18,7 @@ export const productNameSchema = z
 
 const stripeTextSchema = z.string().trim().min(1).max(STRIPE_EVIDENCE_TEXT_MAX_LENGTH)
 
-/** Accepts bare host or absolute URL and stores a canonical https URL. */
-export const productUrlSchema = z
-  .string()
-  .trim()
-  .min(1, { error: 'Add a website URL' })
-  .transform((value) => {
-    if (/^https?:\/\//i.test(value)) return value
-    return `https://${value.replace(/^\/\//, '')}`
-  })
-  .pipe(z.httpUrl({ error: 'Enter a valid website URL' }))
-  .transform((value) => {
-    const url = new URL(value)
-    const canonical = url.toString()
-    return url.pathname === '/' && !url.search && !url.hash
-      ? canonical.replace(/\/$/, '')
-      : canonical
-  })
+export const productUrlSchema = z.httpUrl({ error: 'Enter a valid website URL' })
 
 export const productTypeSchema = z
   .enum(PRODUCT_TYPES)

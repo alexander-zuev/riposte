@@ -82,6 +82,12 @@
       }
     },
     {
+      "files": ["src/routes/**"],
+      "rules": {
+        "unicorn/filename-case": "off"
+      }
+    },
+    {
       "files": ["src/features/**/*", "src/pages/**/*", "src/lib/**/*", "src/ui/**/*"],
       "rules": {
         "no-restricted-imports": [

@@ -5,7 +5,7 @@ import { Result } from 'better-result'
 import { posthog } from 'posthog-js'
 
 const logger = createLogger('auth-service')
-const DEFAULT_AUTH_REDIRECT = '/dashboard'
+const DEFAULT_AUTH_REDIRECT = '/products'
 
 export type AuthServiceValue = { message?: string }
 export type AuthServiceError = {

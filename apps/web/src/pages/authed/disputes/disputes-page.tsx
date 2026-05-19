@@ -84,7 +84,7 @@ const syncTimestampFormatter = new Intl.DateTimeFormat('en-US', {
 
 const statusFilterTrigger = <Button type="button" variant="secondary" size="sm" />
 
-export function DisputesPage() {
+export function DisputesPage({ productId }: { productId: string }) {
   const filters = useDisputeListFilters()
   const { disputes, isError, isLoading, lastSyncedAt, retry } = useDisputeListData(
     filters.listInput,
@@ -161,7 +161,9 @@ export function DisputesPage() {
               ) : disputes.length === 0 ? (
                 <DisputesEmptyRow hasFilters={filters.hasSelectedStatuses} />
               ) : (
-                disputes.map((dispute) => <DisputeRow key={dispute.disputeId} dispute={dispute} />)
+                disputes.map((dispute) => (
+                  <DisputeRow key={dispute.disputeId} dispute={dispute} productId={productId} />
+                ))
               )}
             </TableBody>
           </Table>
@@ -320,12 +322,12 @@ function SortableTableHead({
   )
 }
 
-function DisputeRow({ dispute }: { dispute: DisputeCaseListItem }) {
+function DisputeRow({ dispute, productId }: { dispute: DisputeCaseListItem; productId: string }) {
   return (
     <TableRow>
       <TableCell className="w-[24%] min-w-44">
         <div className="grid min-w-0 gap-1">
-          <DisputeDetailLink disputeId={dispute.disputeId} />
+          <DisputeDetailLink productId={productId} disputeId={dispute.disputeId} />
           <span className="truncate text-muted-foreground">
             {formatStatusLabel(dispute.reason)}
           </span>
@@ -368,12 +370,12 @@ function DisputeRow({ dispute }: { dispute: DisputeCaseListItem }) {
   )
 }
 
-function DisputeDetailLink({ disputeId }: { disputeId: string }) {
-  const params = useMemo(() => ({ disputeId }), [disputeId])
+function DisputeDetailLink({ productId, disputeId }: { productId: string; disputeId: string }) {
+  const params = useMemo(() => ({ productId, disputeId }), [productId, disputeId])
 
   return (
     <Link
-      to="/disputes/$disputeId"
+      to="/products/$productId/disputes/$disputeId"
       params={params}
       className="block truncate text-system font-medium underline-offset-4 hover:underline"
     >

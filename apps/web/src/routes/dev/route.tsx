@@ -49,7 +49,7 @@ function DevLayout() {
             </p>
             <h1 className="m-0">Riposte development</h1>
           </div>
-          <Button render={<Link to="/dashboard" />} variant="secondary">
+          <Button render={<Link to="/products" />} variant="secondary">
             Back to app
           </Button>
         </div>

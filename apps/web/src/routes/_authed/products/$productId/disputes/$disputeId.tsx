@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { DisputeDetailPage } from '@web/pages/authed/disputes/dispute-detail-page'
 
-export const Route = createFileRoute('/_authed/disputes/$disputeId')({
+export const Route = createFileRoute('/_authed/products/$productId/disputes/$disputeId')({
   component: RouteComponent,
 })
 

@@ -51,6 +51,10 @@ import { StripeDisputeContextRepository } from '@server/infrastructure/repositor
 import { StripeDisputeSyncStateRepository } from '@server/infrastructure/repositories/stripe-dispute-sync-state.repository'
 import { WaitlistRepository } from '@server/infrastructure/repositories/waitlist.repository'
 import {
+  type ISlackOAuthService,
+  SlackOAuthService,
+} from '@server/infrastructure/slack/slack-oauth-client'
+import {
   SlackWebhookNotifier,
   type ISlackWebhookNotifier,
 } from '@server/infrastructure/slack/slack-webhook-notifier'
@@ -102,6 +106,7 @@ export type AppDeps = {
     disputeAgentClient: () => IDisputeAgentClient
     email: () => IEmailService
     notifications: (tx: DrizzleDb) => INotificationService
+    slackOAuth: () => ISlackOAuthService
     slackWebhook: () => ISlackWebhookNotifier
     stripeClientProvider: () => IStripeClientProvider
     outboxRelay: () => IOutboxRelay
@@ -164,6 +169,7 @@ export function createAppDeps(env: Env, ctx: WaitUntilContext): AppDeps {
       disputeAgentClient: once<IDisputeAgentClient>(() => new DisputeAgentClient(env)),
       email: once<IEmailService>(() => new ResendEmailService(env.RESEND_API_KEY)),
       notifications: (tx) => new NotificationService(deps, tx),
+      slackOAuth: once<ISlackOAuthService>(() => new SlackOAuthService()),
       slackWebhook: once<ISlackWebhookNotifier>(() => new SlackWebhookNotifier()),
       stripeClientProvider: once<IStripeClientProvider>(
         () => new StripeClientProvider(deps.repos.stripeConnections(deps.db())),

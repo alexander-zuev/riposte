@@ -12,7 +12,6 @@ import {
 } from '@riposte/core'
 import type { HandlerContext } from '@server/application/registry/types'
 import { getServerConfig } from '@server/infrastructure/config'
-import { exchangeSlackOAuthCode } from '@server/infrastructure/slack/slack-oauth-client'
 import { consumeSlackOAuthState } from '@server/infrastructure/slack/slack-oauth-state'
 import { Result } from 'better-result'
 
@@ -45,7 +44,7 @@ export async function handleSlackOAuthCallback(
       ? `${config.appUrl}/api/slack/oauth/callback`
       : SLACK_DEV_REDIRECT_URI
 
-  const token = await exchangeSlackOAuthCode({
+  const token = await deps.services.slackOAuth().exchangeCode({
     clientId: config.slack.clientId,
     clientSecret: config.slack.clientSecret,
     redirectUri,

@@ -17,6 +17,20 @@ export type SlackOAuthClientConfig = {
   redirectUri: string
 }
 
+export interface ISlackOAuthService {
+  exchangeCode: (
+    input: SlackOAuthClientConfig & { code: string },
+  ) => Promise<Result<SlackOAuthToken, SlackOAuthCallbackError>>
+}
+
+export class SlackOAuthService implements ISlackOAuthService {
+  async exchangeCode(
+    input: SlackOAuthClientConfig & { code: string },
+  ): Promise<Result<SlackOAuthToken, SlackOAuthCallbackError>> {
+    return await exchangeSlackOAuthCode(input)
+  }
+}
+
 export async function exchangeSlackOAuthCode(
   input: SlackOAuthClientConfig & { code: string },
 ): Promise<Result<SlackOAuthToken, SlackOAuthCallbackError>> {

@@ -80,7 +80,7 @@ export class DuplicateProductUrlError extends TaggedError('DuplicateProductUrlEr
   constructor(args: { url: string }) {
     super({
       url: args.url,
-      message: 'You already have a product with this URL',
+      message: 'You already have a product with this URL. Use another URL',
       retryable: false,
     })
   }

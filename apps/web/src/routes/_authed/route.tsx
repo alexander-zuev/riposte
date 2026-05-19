@@ -1,24 +1,15 @@
 import { fromRpc } from '@riposte/core/client'
 import { createFileRoute, redirect } from '@tanstack/react-router'
+import { isTaggedErrorWithTag } from '@web/lib/errors'
 import { AuthedLayout } from '@web/pages/authed/layouts/authed-layout'
 import { ensureSession } from '@web/server/entrypoints/functions/auth.fn'
 
-function isAuthenticationError(error: unknown) {
-  return (
-    typeof error === 'object' &&
-    error !== null &&
-    '_tag' in error &&
-    error._tag === 'AuthenticationError'
-  )
-}
-
 export const Route = createFileRoute('/_authed')({
   beforeLoad: async ({ location }) => {
-    const wire = await ensureSession()
-    const result = fromRpc(wire)
+    const result = fromRpc(await ensureSession())
 
     if (result.isErr()) {
-      if (isAuthenticationError(result.error)) {
+      if (isTaggedErrorWithTag(result.error, 'AuthenticationError')) {
         throw redirect({
           to: '/sign-in',
           search: { redirectTo: location.href },

@@ -168,21 +168,33 @@ function HeroSection() {
 
 const PAIN_POINTS = [
   {
-    image: '/images/landing/problem-cards/manual-evidence-collection.png',
+    image: {
+      fallback: '/images/landing/problem-cards/manual-evidence-collection.png',
+      webp480: '/images/landing/problem-cards/manual-evidence-collection-480.webp',
+      webp768: '/images/landing/problem-cards/manual-evidence-collection-768.webp',
+    },
     stat: '30-60 min',
     label: 'per dispute',
     detail:
       'Pulling data from Stripe, digging through your app for usage proof, formatting it, writing the argument — for every single dispute',
   },
   {
-    image: '/images/landing/problem-cards/weak-evidence-submission.png',
+    image: {
+      fallback: '/images/landing/problem-cards/weak-evidence-submission.png',
+      webp480: '/images/landing/problem-cards/weak-evidence-submission-480.webp',
+      webp768: '/images/landing/problem-cards/weak-evidence-submission-768.webp',
+    },
     stat: '~12%',
     label: 'win rate',
     detail:
       'Industry average. Most merchants submit a Stripe receipt and a paragraph of text. The bank reviewer scans it in 30 seconds',
   },
   {
-    image: '/images/landing/problem-cards/deadline-pressure.png',
+    image: {
+      fallback: '/images/landing/problem-cards/deadline-pressure.png',
+      webp480: '/images/landing/problem-cards/deadline-pressure-480.webp',
+      webp768: '/images/landing/problem-cards/deadline-pressure-768.webp',
+    },
     stat: '7-21 days',
     label: 'to respond',
     detail:
@@ -213,13 +225,23 @@ function ProblemSection() {
               key={point.stat}
               className="overflow-hidden rounded-lg border border-border bg-background"
             >
-              <img
-                src={point.image}
-                alt=""
-                aria-hidden="true"
-                className="aspect-video w-full border-b border-border object-cover"
-                loading="lazy"
-              />
+              <picture>
+                <source
+                  srcSet={`${point.image.webp480} 480w, ${point.image.webp768} 768w`}
+                  sizes="(min-width: 1152px) 352px, (min-width: 768px) 33vw, calc(100vw - 48px)"
+                  type="image/webp"
+                />
+                <img
+                  src={point.image.fallback}
+                  alt=""
+                  aria-hidden="true"
+                  className="aspect-video w-full border-b border-border object-cover"
+                  width={1672}
+                  height={941}
+                  loading="lazy"
+                  decoding="async"
+                />
+              </picture>
 
               <div className="p-6">
                 <span className="text-2xl font-bold text-destructive-muted-foreground">

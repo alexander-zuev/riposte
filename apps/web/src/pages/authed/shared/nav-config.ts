@@ -9,47 +9,39 @@ import {
   ScrollIcon,
   UserCircleIcon,
 } from '@phosphor-icons/react'
-import type { routeTree } from '@web/lib/router/routeTree.gen'
+import type { FileRoutesByTo } from '@web/lib/router/routeTree.gen'
 
-type AppRoutePath = (typeof routeTree)['types']['to']
-type ProductScopedRoutePath = Extract<AppRoutePath, `/products/$productId${string}`>
-type WorkspaceRoutePath = Extract<AppRoutePath, '/account' | '/billing' | '/notifications'>
-
-interface BaseNavItem<TTo extends AppRoutePath> {
+export interface NavItem {
   label: string
-  to: TTo
+  to: keyof FileRoutesByTo
   icon: Icon
   exact?: boolean
   badge?: string
 }
 
-export type ProductNavItem = BaseNavItem<ProductScopedRoutePath>
-export type WorkspaceNavItem = BaseNavItem<WorkspaceRoutePath>
-export type NavItem = ProductNavItem | WorkspaceNavItem
-
-export const productOperationsNavItems: readonly ProductNavItem[] = [
-  { label: 'Dashboard', to: '/products/$productI', icon: GaugeIcon, exact: true },
+export const productOperationsNavItems: readonly NavItem[] = [
+  { label: 'Dashboard', to: '/products/$productId', icon: GaugeIcon, exact: true },
   { label: 'Disputes', to: '/products/$productId/disputes', icon: ListChecksIcon, badge: '3' },
 ] as const
 
-export const productSetupNavItems: readonly ProductNavItem[] = [
+export const productSetupNavItems: readonly NavItem[] = [
   { label: 'General', to: '/products/$productId/general', icon: IdentificationCardIcon },
   { label: 'Connections', to: '/products/$productId/connections', icon: PlugIcon },
   { label: 'Playbook', to: '/products/$productId/playbook', icon: ScrollIcon },
 ] as const
 
-export const workspaceNavItems: readonly WorkspaceNavItem[] = [
+export const workspaceNavItems: readonly NavItem[] = [
   { label: 'Account', to: '/account', icon: UserCircleIcon },
   { label: 'Billing', to: '/billing', icon: CreditCardIcon },
   { label: 'Notifications', to: '/notifications', icon: BellIcon },
 ] as const
 
-export const productScopedNavItems: readonly ProductNavItem[] = [
+export const productScopedNavItems: readonly NavItem[] = [
   ...productOperationsNavItems,
   ...productSetupNavItems,
 ] as const
 
-export function interpolateProductHref(template: ProductScopedRoutePath, productId: string) {
+export function interpolateProductHref(template: NavItem['to'], productId: string) {
   return template.replace('$productId', productId)
 }
 

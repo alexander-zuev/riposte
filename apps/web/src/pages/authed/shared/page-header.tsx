@@ -7,19 +7,28 @@ type PageHeaderProps = {
   description?: string
   eyebrow?: string
   icon?: Icon
+  meta?: ReactNode
   action?: ReactNode
 }
 
-export function PageHeader({ title, description, eyebrow, icon: Icon, action }: PageHeaderProps) {
-  const hasMeta = eyebrow || Icon
+export function PageHeader({
+  title,
+  description,
+  eyebrow,
+  icon: Icon,
+  meta,
+  action,
+}: PageHeaderProps) {
+  const hasMeta = eyebrow || Icon || meta
 
   return (
     <header className="flex items-end justify-between gap-4">
       <div className="max-w-3xl">
         {hasMeta ? (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 text-sm">
             {Icon ? <Icon className="size-4 text-muted-foreground" /> : null}
             {eyebrow ? <Badge variant="secondary">{eyebrow}</Badge> : null}
+            {meta ? <span className="text-muted-foreground">{meta}</span> : null}
           </div>
         ) : null}
         <h1 className={hasMeta ? 'mt-3' : undefined}>{title}</h1>

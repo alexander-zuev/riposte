@@ -1,12 +1,14 @@
-import { CaretRightIcon } from '@phosphor-icons/react'
-import { useRouter, useRouterState } from '@tanstack/react-router'
+import { CaretRightIcon, PackageIcon } from '@phosphor-icons/react'
+import { useQuery } from '@tanstack/react-query'
+import { Link, useRouterState } from '@tanstack/react-router'
 import type { AuthUser } from '@web/entities/auth/auth-user'
-import { authService } from '@web/lib/auth'
-import type { NavItem } from '@web/pages/authed/shared/nav-config'
-import { primaryNavItems } from '@web/pages/authed/shared/nav-config'
+import { useSignOutMutation } from '@web/entities/auth/use-sign-out-mutation'
+import { productQueries } from '@web/entities/products/product-queries'
+import { useSelectedProductId } from '@web/entities/products/use-selected-product-id'
+import type { FileRoutesByTo } from '@web/lib/router/routeTree.gen'
+import { productScopedNavItems } from '@web/pages/authed/shared/nav-config'
 import { UserDropdown } from '@web/pages/authed/shared/user-dropdown'
 import { Logo } from '@web/ui/components/ui/logo'
-import { toast } from 'sonner'
 
 const SIDEBAR_HEADER_WIDTH = '16rem'
 
@@ -15,19 +17,7 @@ interface AppHeaderProps {
 }
 
 export function AppHeader({ user }: AppHeaderProps) {
-  const router = useRouter()
-  const pathname = useRouterState().location.pathname
-  const breadcrumb = getBreadcrumb(pathname)
-
-  const handleSignOut = async () => {
-    const result = await authService().signOut()
-    if (result.isErr()) {
-      toast.error(result.error.message ?? 'Failed to log out. Please try again')
-      return
-    }
-
-    await router.invalidate()
-  }
+  const signOutMutation = useSignOutMutation()
 
   return (
     <header className="hidden h-14 shrink-0 items-center border-b border-border bg-background md:flex">
@@ -35,46 +25,127 @@ export function AppHeader({ user }: AppHeaderProps) {
         style={{ width: SIDEBAR_HEADER_WIDTH }}
         className="flex h-full shrink-0 items-center border-r border-sidebar-border px-4"
       >
-        <Logo variant="full" size="sm" href="/dashboard" />
+        <Logo variant="full" size="sm" href="/" />
       </div>
-      <div className="flex flex-1 items-center justify-between gap-4 px-4">
-        <div>{breadcrumb ? <Breadcrumb {...breadcrumb} /> : null}</div>
-        <UserDropdown user={user} onLogOut={handleSignOut} />
+      <div className="flex flex-1 items-center gap-4 px-4">
+        <Breadcrumb />
+        <div className="ml-auto">
+          <UserDropdown user={user} onLogOut={() => signOutMutation.mutate()} />
+        </div>
       </div>
     </header>
   )
 }
 
-function Breadcrumb({ parent, current }: { parent: NavItem; current: string }) {
-  const ParentIcon = parent.icon
+function Breadcrumb() {
+  const pathname = useRouterState().location.pathname
+  const productId = useSelectedProductId()
+  const { data } = useQuery(productQueries.list())
+  const product = productId ? data?.items.find((item) => item.id === productId) : undefined
+
+  const crumbs = buildCrumbs({ pathname, productId, productName: product?.productName })
+  if (crumbs.length === 0) return null
 
   return (
     <nav className="flex min-w-0 items-center gap-2 text-xs">
-      <a
-        href={parent.href}
-        className="flex min-w-0 items-center gap-1.5 text-muted-foreground no-underline hover:text-foreground"
-      >
-        <ParentIcon className="size-4 shrink-0" weight="duotone" />
-        <span className="truncate">{parent.label}</span>
-      </a>
-      <CaretRightIcon className="size-3 shrink-0 text-muted-foreground" />
-      <span className="truncate font-medium text-foreground">{current}</span>
+      {crumbs.map((crumb, index) => {
+        const isLast = index === crumbs.length - 1
+        const Icon = crumb.icon
+
+        const content = (
+          <span className="flex min-w-0 items-center gap-1.5">
+            {Icon ? <Icon className="size-4 shrink-0" weight="duotone" /> : null}
+            <span className="truncate">{crumb.label}</span>
+          </span>
+        )
+
+        return (
+          <span key={crumb.key} className="flex min-w-0 items-center gap-2">
+            {crumb.to && !isLast ? (
+              <Link
+                to={crumb.to}
+                params={crumb.params}
+                className="flex min-w-0 items-center gap-1.5 text-muted-foreground no-underline hover:text-foreground"
+              >
+                {content}
+              </Link>
+            ) : (
+              <span
+                className={
+                  isLast
+                    ? 'flex min-w-0 items-center gap-1.5 font-medium text-foreground'
+                    : 'flex min-w-0 items-center gap-1.5 text-muted-foreground'
+                }
+              >
+                {content}
+              </span>
+            )}
+            {!isLast ? <CaretRightIcon className="size-3 shrink-0 text-muted-foreground" /> : null}
+          </span>
+        )
+      })}
     </nav>
   )
 }
 
-function getBreadcrumb(pathname: string) {
-  const pathParts = pathname.split('/').filter(Boolean)
-  if (pathParts.length < 2) return null
+type AppRoutePath = keyof FileRoutesByTo
 
-  const parentPath = `/${pathParts[0]}`
-  const parent = primaryNavItems.find((item) => item.href === parentPath)
-  if (!parent) return null
+interface Crumb {
+  key: string
+  label: string
+  icon?: typeof PackageIcon
+  to?: AppRoutePath
+  params?: { productId: string }
+}
 
-  return {
-    parent,
-    current: formatSegment(pathParts[pathParts.length - 1] ?? ''),
+function buildCrumbs({
+  pathname,
+  productId,
+  productName,
+}: {
+  pathname: string
+  productId: string | null
+  productName: string | undefined
+}): Crumb[] {
+  const segments = pathname.split('/').filter(Boolean)
+
+  if (segments[0] !== 'products') return []
+
+  const crumbs: Crumb[] = [
+    { key: 'products', label: 'All products', icon: PackageIcon, to: '/products' },
+  ]
+
+  if (segments.length === 1) return crumbs
+
+  if (segments[1] === 'new') {
+    crumbs.push({ key: 'new', label: 'New product' })
+    return crumbs
   }
+
+  if (!productId) return crumbs
+
+  crumbs.push({
+    key: 'product',
+    label: productName ?? 'Product',
+    to: '/products/$productId',
+    params: { productId },
+  })
+
+  const section = segments[2]
+  if (!section) return crumbs
+
+  const sectionTarget = `/products/$productId/${section}`
+  const sectionItem = productScopedNavItems.find((item) => item.to === sectionTarget)
+  const sectionLabel = sectionItem?.label ?? formatSegment(section)
+
+  crumbs.push({
+    key: `section-${section}`,
+    label: sectionLabel,
+    to: sectionItem?.to,
+    params: { productId },
+  })
+
+  return crumbs
 }
 
 function formatSegment(segment: string) {

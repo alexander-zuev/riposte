@@ -10,6 +10,8 @@ import {
   TrendUpIcon,
   WarningIcon,
 } from '@phosphor-icons/react'
+import type { ProductListItem } from '@riposte/core/client'
+import { PageHeader } from '@web/pages/authed/shared/page-header'
 import { Badge } from '@web/ui/components/ui/badge'
 import { Button } from '@web/ui/components/ui/button'
 import {
@@ -145,9 +147,16 @@ const metrics = [
   },
 ] as const
 
-export function DashboardPage() {
+export function DashboardPage({ product }: { product: ProductListItem }) {
   return (
-    <div className="text-foreground">
+    <div className="grid gap-6 text-foreground">
+      <PageHeader
+        eyebrow={product.productName}
+        icon={GaugeIcon}
+        title="Dashboard"
+        description="Overview of urgent disputes, setup health, and agent activity"
+        meta={product.url}
+      />
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
         <section className="space-y-6">
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">

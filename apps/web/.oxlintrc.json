@@ -70,7 +70,8 @@
         "react-perf/jsx-no-new-function-as-prop": "off",
         "no-unsafe-type-assertion": "off",
         "no-underscore-dangle": "off",
-        "no-restricted-imports": "off"
+        "no-restricted-imports": "off",
+        "jsx-a11y/no-noninteractive-element-interactions": "off"
       }
     },
     {

@@ -226,7 +226,7 @@ export function SignInPage() {
                         name={field.name}
                         type="email"
                         autoComplete="email"
-                        placeholder="Email"
+                        placeholder="email@example.com"
                         className="rounded-md"
                         value={field.state.value}
                         onBlur={field.handleBlur}
@@ -246,6 +246,7 @@ export function SignInPage() {
 
               <Button
                 type="submit"
+                variant={'accent'}
                 size="lg"
                 className="w-full rounded-md"
                 disabled={!canSubmitEmail}

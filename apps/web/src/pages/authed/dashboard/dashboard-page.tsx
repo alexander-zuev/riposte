@@ -151,11 +151,10 @@ export function DashboardPage({ product }: { product: ProductListItem }) {
   return (
     <div className="grid gap-6 text-foreground">
       <PageHeader
-        eyebrow={product.productName}
+        eyebrow="Dashboard"
         icon={GaugeIcon}
-        title="Dashboard"
+        title={product.productName}
         description="Overview of urgent disputes, setup health, and agent activity"
-        meta={product.url}
       />
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
         <section className="space-y-6">

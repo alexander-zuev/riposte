@@ -10,7 +10,7 @@ function PlaybookPage() {
   return (
     <SurfaceStubPage
       title="Playbook"
-      description="Versioned markdown that tells the runtime agent how to extract evidence for this product"
+      description="Everything the runtime agent submits to Stripe — rules, text fields, and policy disclosures"
       icon={ScrollIcon}
       sections={[
         {
@@ -22,6 +22,16 @@ function PlaybookPage() {
           title: 'Build via chat',
           description: 'Onboarding agent generates and iterates the playbook in chat',
           items: ['Chat surface', 'Dry-run dispute', 'Commit v(N+1)'],
+        },
+        {
+          title: 'Stripe text fields',
+          description: 'Verbatim copy used in dispute submissions',
+          items: ['Product description', 'Service-start rule', 'Service date source'],
+        },
+        {
+          title: 'Policy disclosures',
+          description: 'How / when the customer was shown each policy',
+          items: ['Refund policy disclosure', 'Cancellation policy disclosure'],
         },
         {
           title: 'Upload',

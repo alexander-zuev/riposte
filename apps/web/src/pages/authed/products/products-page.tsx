@@ -1,4 +1,4 @@
-import { PlusIcon, ShieldCheckIcon } from '@phosphor-icons/react'
+import { DotsThreeIcon, PencilSimpleIcon, PlusIcon, ShieldCheckIcon } from '@phosphor-icons/react'
 import type { ProductListItem } from '@riposte/core/client'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
@@ -6,7 +6,13 @@ import { ProductIcon } from '@web/entities/products/product-icon'
 import { productQueries } from '@web/entities/products/product-queries'
 import { PageHeader } from '@web/pages/authed/shared/page-header'
 import { Badge } from '@web/ui/components/ui/badge'
-import { buttonVariants } from '@web/ui/components/ui/button'
+import { Button, buttonVariants } from '@web/ui/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@web/ui/components/ui/dropdown-menu'
 import type { ComponentProps } from 'react'
 
 type BadgeVariant = ComponentProps<typeof Badge>['variant']
@@ -100,9 +106,45 @@ function ProductCard({ product }: { product: ProductListItem }) {
       >
         {product.url}
       </a>
-      <p className="mt-3 text-xs text-muted-foreground">
-        Added {dateAddedFormatter.format(new Date(product.createdAt))}
-      </p>
+      <div className="mt-3 flex items-center justify-between">
+        <p className="text-xs text-muted-foreground">
+          Added {dateAddedFormatter.format(new Date(product.createdAt))}
+        </p>
+        <ProductCardMenu productId={product.id} />
+      </div>
     </div>
+  )
+}
+
+function ProductCardMenu({ productId }: { productId: string }) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        render={
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            className="relative z-10"
+            aria-label="Product actions"
+          />
+        }
+      >
+        <DotsThreeIcon />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem
+          render={
+            <Link
+              to="/products/$productId/general"
+              params={{ productId }}
+              className="no-underline hover:no-underline"
+            />
+          }
+        >
+          <PencilSimpleIcon weight="duotone" />
+          Edit
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }

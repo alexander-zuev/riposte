@@ -31,27 +31,48 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@web/ui/components/ui/sidebar'
+import { useEffect, useState } from 'react'
 
 export function AppSidebar() {
   const pathname = useRouterState().location.pathname
   const selectedProductId = useSelectedProductId()
+  const hasProduct = selectedProductId !== null
+
+  // Retain the last non-null productId so the product pane stays populated during slide-out.
+  const [displayProductId, setDisplayProductId] = useState<string | null>(selectedProductId)
+  useEffect(() => {
+    if (selectedProductId !== null) setDisplayProductId(selectedProductId)
+  }, [selectedProductId])
 
   return (
     <Sidebar collapsible="none" className="border-r border-sidebar-border">
-      <SidebarContent>
+      <SidebarContent className="flex flex-col overflow-hidden p-0">
         <ProductSwitcher selectedProductId={selectedProductId} />
-        <NavGroup
-          label="Operations"
-          items={productOperationsNavItems}
-          productId={selectedProductId}
-          pathname={pathname}
-        />
-        <NavGroup
-          label="Setup"
-          items={productSetupNavItems}
-          productId={selectedProductId}
-          pathname={pathname}
-        />
+        <div className="flex-1 overflow-hidden">
+          <div
+            className="flex h-full transition-transform duration-200 ease-in-out"
+            style={{
+              width: '200%',
+              transform: hasProduct ? 'translateX(-50%)' : 'translateX(0%)',
+            }}
+          >
+            <div className="w-1/2 flex-shrink-0" aria-hidden={hasProduct} />
+            <div className="flex w-1/2 flex-shrink-0 flex-col" aria-hidden={!hasProduct}>
+              <NavGroup
+                label="Operations"
+                items={productOperationsNavItems}
+                productId={displayProductId}
+                pathname={pathname}
+              />
+              <NavGroup
+                label="Setup"
+                items={productSetupNavItems}
+                productId={displayProductId}
+                pathname={pathname}
+              />
+            </div>
+          </div>
+        </div>
       </SidebarContent>
       <SidebarFooter className="border-t border-sidebar-border p-0">
         <NavGroup label="Workspace" items={workspaceNavItems} pathname={pathname} />
@@ -78,7 +99,7 @@ function ProductSwitcher({ selectedProductId }: { selectedProductId: string | nu
                 {current ? (
                   <ProductIcon url={current.url} className="size-4 rounded-xs" />
                 ) : (
-                  <PackageIcon weight="duotone" />
+                  <PackageIcon weight="duotone" className="text-foreground!" />
                 )}
                 <span className="flex-1 truncate text-left">{triggerLabel}</span>
                 <CaretUpDownIcon className="size-4 text-muted-foreground" />
@@ -89,6 +110,7 @@ function ProductSwitcher({ selectedProductId }: { selectedProductId: string | nu
             {products.map((product) => (
               <DropdownMenuItem
                 key={product.id}
+                className="focus:bg-background-hover focus:text-foreground"
                 render={
                   <Link
                     to="/products/$productId"
@@ -103,6 +125,7 @@ function ProductSwitcher({ selectedProductId }: { selectedProductId: string | nu
             ))}
             {products.length > 0 ? <DropdownMenuSeparator /> : null}
             <DropdownMenuItem
+              className="focus:bg-background-hover focus:text-foreground"
               render={<Link to="/products" className="no-underline hover:no-underline" />}
             >
               <PackageIcon weight="duotone" className="size-4" />

@@ -1,11 +1,12 @@
 import { fromRpc } from '@riposte/core/client'
 import { createFileRoute, redirect } from '@tanstack/react-router'
+import { selectedProductQueries } from '@web/entities/products/selected-product-queries'
 import { isTaggedErrorWithTag } from '@web/lib/errors'
 import { AuthedLayout } from '@web/pages/authed/layouts/authed-layout'
 import { ensureSession } from '@web/server/entrypoints/functions/auth.fn'
 
 export const Route = createFileRoute('/_authed')({
-  beforeLoad: async ({ location }) => {
+  beforeLoad: async ({ context, location }) => {
     const result = fromRpc(await ensureSession())
 
     if (result.isErr()) {
@@ -18,6 +19,8 @@ export const Route = createFileRoute('/_authed')({
 
       throw result.error
     }
+
+    void context.queryClient.prefetchQuery(selectedProductQueries.current())
 
     return { session: result.value }
   },

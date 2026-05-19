@@ -165,22 +165,23 @@ const supportsAnsiColor = (): boolean => {
 
 const ansi = {
   gray: (value: string) => `\x1b[90m${value}\x1b[0m`,
+  dimCyan: (value: string) => `\x1b[2m\x1b[36m${value}\x1b[0m`,
   blue: (value: string) => `\x1b[34m${value}\x1b[0m`,
-  green: (value: string) => `\x1b[32m${value}\x1b[0m`,
   yellow: (value: string) => `\x1b[33m${value}\x1b[0m`,
   red: (value: string) => `\x1b[31m${value}\x1b[0m`,
+  boldRed: (value: string) => `\x1b[1m\x1b[31m${value}\x1b[0m`,
 }
 
 const colorizeLevelAnsi = (level: LogLevel): string => {
   switch (level) {
     case LogLevel.DEBUG:
-      return ansi.blue(level)
+      return ansi.dimCyan(level)
     case LogLevel.INFO:
-      return ansi.green(level)
+      return ansi.blue(level)
     case LogLevel.WARN:
       return ansi.yellow(level)
     case LogLevel.ERROR:
-      return ansi.red(level)
+      return ansi.boldRed(level)
   }
 }
 
@@ -243,10 +244,10 @@ export class Logger {
     if (this.config.colorize && isBrowserRuntime()) {
       const formattedArgs = this.formatArgs(args)
       const levelColors: Record<LogLevel, string> = {
-        [LogLevel.DEBUG]: 'color: #5b9bd5',
-        [LogLevel.INFO]: 'color: #6dbf6d',
+        [LogLevel.DEBUG]: 'color: #5f9ea0',
+        [LogLevel.INFO]: 'color: #61afef',
         [LogLevel.WARN]: 'color: #d4a843',
-        [LogLevel.ERROR]: 'color: #e06c75',
+        [LogLevel.ERROR]: 'color: #e06c75; font-weight: 700',
       }
       const levelStyle = levelColors[level] || 'color: inherit'
 

@@ -1,6 +1,7 @@
 import type { Icon } from '@phosphor-icons/react'
 import {
   BellIcon,
+  BrainIcon,
   CreditCardIcon,
   GaugeIcon,
   IdentificationCardIcon,
@@ -22,6 +23,7 @@ export interface NavItem {
 export const productOperationsNavItems: readonly NavItem[] = [
   { label: 'Dashboard', to: '/products/$productId', icon: GaugeIcon, exact: true },
   { label: 'Disputes', to: '/products/$productId/disputes', icon: ListChecksIcon, badge: '3' },
+  { label: 'Agent', to: '/products/$productId/agent', icon: BrainIcon },
 ] as const
 
 export const productSetupNavItems: readonly NavItem[] = [

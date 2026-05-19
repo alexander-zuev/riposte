@@ -39,6 +39,7 @@ import {
 } from '../notifications'
 import {
   createProductSchema,
+  getProductSetupStateSchema,
   listProductsSchema,
   productCreatedSchema,
   productSetupCompletedSchema,
@@ -121,6 +122,7 @@ export const domainQuerySchema = z.discriminatedUnion('name', [
   getStripeAppSettingsSchema,
   listDisputeCasesSchema,
   listProductsSchema,
+  getProductSetupStateSchema,
 ])
 
 export type DomainQuery = z.infer<typeof domainQuerySchema>

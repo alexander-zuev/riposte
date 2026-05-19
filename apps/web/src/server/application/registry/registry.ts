@@ -25,7 +25,11 @@ import {
   notifyOnDisputeCaseReceived,
   setNotificationChannelPreference,
 } from '@server/application/handlers/notification-handler'
-import { createProduct, listProducts } from '@server/application/handlers/product-handler'
+import {
+  createProduct,
+  getProductSetupState,
+  listProducts,
+} from '@server/application/handlers/product-handler'
 import {
   fanOutScheduledDisputeSync,
   getStripeAppSettings,
@@ -95,6 +99,7 @@ export const QUERY_HANDLERS = {
   GetStripeAppSettings: getStripeAppSettings,
   ListDisputeCases: listDisputeCases,
   ListProducts: listProducts,
+  GetProductSetupState: getProductSetupState,
 } satisfies QueryRegistry
 
 export const defaultRegistry = {

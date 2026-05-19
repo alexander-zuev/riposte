@@ -1,8 +1,12 @@
 import type {
   CreateProduct,
   CreateProductResult,
+  DOUnreachableError,
   DatabaseError,
   DuplicateProductUrlError,
+  EntityNotFoundError,
+  GetProductSetupState,
+  GetProductSetupStateResult,
   ListProducts,
   ListProductsResult,
   ValidationError,
@@ -31,6 +35,16 @@ export const listProducts: QueryHandler<ListProducts, ListProductsResult, Databa
       }
     }),
   })
+}
+
+export const getProductSetupState: QueryHandler<
+  GetProductSetupState,
+  GetProductSetupStateResult,
+  DatabaseError | EntityNotFoundError | DOUnreachableError
+> = async (query, ctx) => {
+  return await ctx.deps.services
+    .productSetup()
+    .getState({ userId: query.userId, productId: query.productId })
 }
 
 export const createProduct: CommandHandler<

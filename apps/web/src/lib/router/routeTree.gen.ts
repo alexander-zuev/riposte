@@ -43,6 +43,7 @@ import { Route as ApiDevEmailsPreviewRouteImport } from './../../routes/api/dev/
 import { Route as AuthedProductsProductIdPlaybookRouteImport } from './../../routes/_authed/products/$productId/playbook'
 import { Route as AuthedProductsProductIdGeneralRouteImport } from './../../routes/_authed/products/$productId/general'
 import { Route as AuthedProductsProductIdConnectionsRouteImport } from './../../routes/_authed/products/$productId/connections'
+import { Route as AuthedProductsProductIdAgentRouteImport } from './../../routes/_authed/products/$productId/agent'
 import { Route as AuthedProductsProductIdDisputesIndexRouteImport } from './../../routes/_authed/products/$productId/disputes/index'
 import { Route as AuthedProductsProductIdDisputesDisputeIdRouteImport } from './../../routes/_authed/products/$productId/disputes/$disputeId'
 
@@ -219,6 +220,12 @@ const AuthedProductsProductIdConnectionsRoute =
     path: '/connections',
     getParentRoute: () => AuthedProductsProductIdRouteRoute,
   } as any)
+const AuthedProductsProductIdAgentRoute =
+  AuthedProductsProductIdAgentRouteImport.update({
+    id: '/agent',
+    path: '/agent',
+    getParentRoute: () => AuthedProductsProductIdRouteRoute,
+  } as any)
 const AuthedProductsProductIdDisputesIndexRoute =
   AuthedProductsProductIdDisputesIndexRouteImport.update({
     id: '/disputes/',
@@ -256,6 +263,7 @@ export interface FileRoutesByFullPath {
   '/dev/evidence-packets/pdf': typeof DevEvidencePacketsPdfRoute
   '/products/': typeof AuthedProductsIndexRoute
   '/dev/emails/': typeof DevEmailsIndexRoute
+  '/products/$productId/agent': typeof AuthedProductsProductIdAgentRoute
   '/products/$productId/connections': typeof AuthedProductsProductIdConnectionsRoute
   '/products/$productId/general': typeof AuthedProductsProductIdGeneralRoute
   '/products/$productId/playbook': typeof AuthedProductsProductIdPlaybookRoute
@@ -289,6 +297,7 @@ export interface FileRoutesByTo {
   '/dev/evidence-packets/pdf': typeof DevEvidencePacketsPdfRoute
   '/products': typeof AuthedProductsIndexRoute
   '/dev/emails': typeof DevEmailsIndexRoute
+  '/products/$productId/agent': typeof AuthedProductsProductIdAgentRoute
   '/products/$productId/connections': typeof AuthedProductsProductIdConnectionsRoute
   '/products/$productId/general': typeof AuthedProductsProductIdGeneralRoute
   '/products/$productId/playbook': typeof AuthedProductsProductIdPlaybookRoute
@@ -328,6 +337,7 @@ export interface FileRoutesById {
   '/dev/evidence-packets/pdf': typeof DevEvidencePacketsPdfRoute
   '/_authed/products/': typeof AuthedProductsIndexRoute
   '/dev/emails/': typeof DevEmailsIndexRoute
+  '/_authed/products/$productId/agent': typeof AuthedProductsProductIdAgentRoute
   '/_authed/products/$productId/connections': typeof AuthedProductsProductIdConnectionsRoute
   '/_authed/products/$productId/general': typeof AuthedProductsProductIdGeneralRoute
   '/_authed/products/$productId/playbook': typeof AuthedProductsProductIdPlaybookRoute
@@ -366,6 +376,7 @@ export interface FileRouteTypes {
     | '/dev/evidence-packets/pdf'
     | '/products/'
     | '/dev/emails/'
+    | '/products/$productId/agent'
     | '/products/$productId/connections'
     | '/products/$productId/general'
     | '/products/$productId/playbook'
@@ -399,6 +410,7 @@ export interface FileRouteTypes {
     | '/dev/evidence-packets/pdf'
     | '/products'
     | '/dev/emails'
+    | '/products/$productId/agent'
     | '/products/$productId/connections'
     | '/products/$productId/general'
     | '/products/$productId/playbook'
@@ -437,6 +449,7 @@ export interface FileRouteTypes {
     | '/dev/evidence-packets/pdf'
     | '/_authed/products/'
     | '/dev/emails/'
+    | '/_authed/products/$productId/agent'
     | '/_authed/products/$productId/connections'
     | '/_authed/products/$productId/general'
     | '/_authed/products/$productId/playbook'
@@ -705,6 +718,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedProductsProductIdConnectionsRouteImport
       parentRoute: typeof AuthedProductsProductIdRouteRoute
     }
+    '/_authed/products/$productId/agent': {
+      id: '/_authed/products/$productId/agent'
+      path: '/agent'
+      fullPath: '/products/$productId/agent'
+      preLoaderRoute: typeof AuthedProductsProductIdAgentRouteImport
+      parentRoute: typeof AuthedProductsProductIdRouteRoute
+    }
     '/_authed/products/$productId/disputes/': {
       id: '/_authed/products/$productId/disputes/'
       path: '/disputes'
@@ -723,6 +743,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthedProductsProductIdRouteRouteChildren {
+  AuthedProductsProductIdAgentRoute: typeof AuthedProductsProductIdAgentRoute
   AuthedProductsProductIdConnectionsRoute: typeof AuthedProductsProductIdConnectionsRoute
   AuthedProductsProductIdGeneralRoute: typeof AuthedProductsProductIdGeneralRoute
   AuthedProductsProductIdPlaybookRoute: typeof AuthedProductsProductIdPlaybookRoute
@@ -733,6 +754,7 @@ interface AuthedProductsProductIdRouteRouteChildren {
 
 const AuthedProductsProductIdRouteRouteChildren: AuthedProductsProductIdRouteRouteChildren =
   {
+    AuthedProductsProductIdAgentRoute: AuthedProductsProductIdAgentRoute,
     AuthedProductsProductIdConnectionsRoute:
       AuthedProductsProductIdConnectionsRoute,
     AuthedProductsProductIdGeneralRoute: AuthedProductsProductIdGeneralRoute,

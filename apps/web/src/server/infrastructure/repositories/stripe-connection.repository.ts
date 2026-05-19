@@ -1,4 +1,4 @@
-import type { CredentialEncryptionError } from '@riposte/core'
+import type { CredentialEncryptionError, UUIDv4 } from '@riposte/core'
 import { DatabaseError } from '@riposte/core'
 import type { IStripeConnectionRepository } from '@server/domain/repository/interfaces'
 import type {
@@ -132,6 +132,27 @@ export class StripeConnectionRepository implements IStripeConnectionRepository {
       },
       catch: (cause) =>
         new DatabaseError({ message: 'Failed to find Stripe connection by user', cause }),
+    })
+
+    if (found.isErr()) return Result.err(found.error)
+    return Result.ok(found.value ? this.toDomain(found.value) : null)
+  }
+
+  async findByProductId(
+    productId: UUIDv4,
+  ): Promise<Result<StripeConnection | null, DatabaseError>> {
+    const found = await Result.tryPromise({
+      try: async () => {
+        const [connection] = await this.db
+          .select()
+          .from(stripeConnections)
+          .where(eq(stripeConnections.productId, productId))
+          .limit(1)
+
+        return connection ?? null
+      },
+      catch: (cause) =>
+        new DatabaseError({ message: 'Failed to find Stripe connection by product', cause }),
     })
 
     if (found.isErr()) return Result.err(found.error)

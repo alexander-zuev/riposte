@@ -1,4 +1,4 @@
-import { createLogger, WorkflowError } from '@riposte/core'
+import { createLogger, DOUnreachableError, WorkflowError, type UUIDv4 } from '@riposte/core'
 import type { DisputeAgent } from '@server/infrastructure/agents/dispute-agent'
 import { isTransientError, RETRY } from '@server/infrastructure/resilience/retry'
 import { getAgentByName } from 'agents'
@@ -27,11 +27,30 @@ export type DisputeAgentWorkflowInput = {
   disputeCaseId: string
 }
 
+export type GetProductMcpStatusInput = {
+  userId: UUIDv4
+  productId: UUIDv4
+}
+
+export type ProductMcpStatus = {
+  firstConnectedAt: Date | null
+}
+
 export interface IDisputeAgentClient {
   startWorkflow: (input: DisputeAgentWorkflowInput) => Promise<Result<void, WorkflowError>>
   pauseWorkflow: (input: DisputeAgentWorkflowInput) => Promise<Result<void, WorkflowError>>
   resumeWorkflow: (input: DisputeAgentWorkflowInput) => Promise<Result<void, WorkflowError>>
   terminateWorkflow: (input: DisputeAgentWorkflowInput) => Promise<Result<void, WorkflowError>>
+  /**
+   * Reads MCP server registrations from the per-product DisputeAgent DO storage and
+   * returns the earliest save-timestamp. Source of truth per dispute-agent-spec.md
+   * (MCP state lives in DO storage, not a PG table).
+   *
+   * Stubbed for MVP: returns `{ firstConnectedAt: null }` until DO MCP wiring lands.
+   */
+  getProductMcpStatus: (
+    input: GetProductMcpStatusInput,
+  ) => Promise<Result<ProductMcpStatus, DOUnreachableError>>
 }
 
 export class DisputeAgentClient implements IDisputeAgentClient {
@@ -152,6 +171,14 @@ export class DisputeAgentClient implements IDisputeAgentClient {
       },
       RETRY.transient,
     )
+  }
+
+  // TODO(agent): replace stub with real DO storage read once DisputeAgent exposes MCP
+  // server registrations. Spec: `cf_agents_mcp_servers` entries + save-timestamps.
+  async getProductMcpStatus(
+    _input: GetProductMcpStatusInput,
+  ): Promise<Result<ProductMcpStatus, DOUnreachableError>> {
+    return Result.ok({ firstConnectedAt: null })
   }
 }
 

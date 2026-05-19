@@ -3,10 +3,15 @@ import type { IMessageBus } from '@server/application/message-bus/message-bus'
 import { MessageBus } from '@server/application/message-bus/message-bus'
 import { executeUoW } from '@server/application/message-bus/unit-of-work'
 import { ConnectionManager, type IConnectionManager } from '@server/domain/connections'
+import {
+  ProductSetupService,
+  type IProductSetupService,
+} from '@server/domain/products/product-setup.service'
 import type {
   IDisputeCaseRepository,
   IDisputeEvidenceArtifactBlobRepository,
   IDisputeEvidencePacketRepository,
+  IDisputePlaybookRepository,
   INotificationPreferenceRepository,
   IOutboxRepository,
   IProductRepository,
@@ -42,6 +47,7 @@ import { QueueClient } from '@server/infrastructure/queues/queue-client'
 import { DisputeCaseRepository } from '@server/infrastructure/repositories/dispute-case.repository'
 import { DisputeEvidenceArtifactBlobRepository } from '@server/infrastructure/repositories/dispute-evidence-artifact-blob.repository'
 import { DisputeEvidencePacketRepository } from '@server/infrastructure/repositories/dispute-evidence-packet.repository'
+import { DisputePlaybookRepository } from '@server/infrastructure/repositories/dispute-playbook.repository'
 import { NotificationPreferenceRepository } from '@server/infrastructure/repositories/notification-preference.repository'
 import { OutboxRepository } from '@server/infrastructure/repositories/outbox.repository'
 import { ProductRepository } from '@server/infrastructure/repositories/product.repository'
@@ -81,6 +87,7 @@ export type AppDeps = {
     disputeCases: (tx: DrizzleDb) => IDisputeCaseRepository
     disputeEvidenceArtifactBlobs: () => IDisputeEvidenceArtifactBlobRepository
     disputeEvidencePackets: (tx: DrizzleDb) => IDisputeEvidencePacketRepository
+    disputePlaybooks: (tx: DrizzleDb) => IDisputePlaybookRepository
     notificationPreferences: (tx: DrizzleDb) => INotificationPreferenceRepository
     outbox: (tx: DrizzleDb) => IOutboxRepository
     products: (tx: DrizzleDb) => IProductRepository
@@ -101,6 +108,7 @@ export type AppDeps = {
   services: {
     messageBus: () => IMessageBus
     connectionManager: () => IConnectionManager
+    productSetup: () => IProductSetupService
     queueClient: () => IQueueClient
     credentialEncryption: () => ICredentialEncryptionService
     disputeAgentClient: () => IDisputeAgentClient
@@ -132,6 +140,7 @@ export function createAppDeps(env: Env, ctx: WaitUntilContext): AppDeps {
       disputeEvidenceArtifactBlobs: () =>
         new DisputeEvidenceArtifactBlobRepository(env.RIPOSTE_BUCKET),
       disputeEvidencePackets: (tx) => new DisputeEvidencePacketRepository(tx),
+      disputePlaybooks: (tx) => new DisputePlaybookRepository(tx),
       notificationPreferences: (tx) => new NotificationPreferenceRepository(tx),
       outbox: (tx) => new OutboxRepository(tx),
       products: (tx) => new ProductRepository(tx),
@@ -154,6 +163,15 @@ export function createAppDeps(env: Env, ctx: WaitUntilContext): AppDeps {
             deps.repos.stripeConnections(deps.db()),
             deps.repos.slackConnections(deps.db()),
             deps.repos.notificationPreferences(deps.db()),
+          ),
+      ),
+      productSetup: once<IProductSetupService>(
+        () =>
+          new ProductSetupService(
+            deps.repos.products(deps.db()),
+            deps.repos.stripeConnections(deps.db()),
+            deps.repos.disputePlaybooks(deps.db()),
+            deps.services.disputeAgentClient(),
           ),
       ),
       queueClient: once<IQueueClient>(() => new QueueClient(env)),

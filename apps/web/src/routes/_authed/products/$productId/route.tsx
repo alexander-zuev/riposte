@@ -9,6 +9,11 @@ export const Route = createFileRoute('/_authed/products/$productId')({
     const product = items.find((item) => item.id === params.productId)
     if (!product) throw notFound()
 
+    // Setup state is not critical path for the dashboard — prefetch warms the cache
+    // for SetupBanner / sidebar without blocking page render. The `/agent` route
+    // uses `ensureQueryData` instead since setup state IS critical there.
+    void context.queryClient.prefetchQuery(productQueries.setup(params.productId))
+
     if (cause === 'enter') {
       await setSelectedProductIdServerFn({ data: { productId: params.productId } })
       context.queryClient.setQueryData(selectedProductQueries.current().queryKey, params.productId)

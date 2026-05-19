@@ -11,6 +11,7 @@ import {
   WarningIcon,
 } from '@phosphor-icons/react'
 import type { ProductListItem } from '@riposte/core/client'
+import { SetupBanner } from '@web/features/agent/setup-banner'
 import { PageHeader } from '@web/pages/authed/shared/page-header'
 import { Badge } from '@web/ui/components/ui/badge'
 import { Button } from '@web/ui/components/ui/button'
@@ -156,6 +157,7 @@ export function DashboardPage({ product }: { product: ProductListItem }) {
         title={product.productName}
         description="Overview of urgent disputes, setup health, and agent activity"
       />
+      <SetupBanner productId={product.id} />
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
         <section className="space-y-6">
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">

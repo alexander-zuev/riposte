@@ -2,6 +2,7 @@ import { z } from 'zod'
 
 import { baseQuerySchema } from '../base/base.messages'
 import { TimestamptzSchema, UserIdSchema } from '../primitives'
+import { productSetupStateSchema } from './product-setup.dto'
 import { PRODUCT_STATUSES, PRODUCT_TYPES } from './product.types'
 
 export const productListItemSchema = z.object({
@@ -25,3 +26,14 @@ export const listProductsResultSchema = z.object({
 export type ProductListItem = z.infer<typeof productListItemSchema>
 export type ListProducts = z.infer<typeof listProductsSchema>
 export type ListProductsResult = z.infer<typeof listProductsResultSchema>
+
+export const getProductSetupStateSchema = baseQuerySchema.extend({
+  name: z.literal('GetProductSetupState'),
+  userId: UserIdSchema,
+  productId: z.uuidv4(),
+})
+
+export const getProductSetupStateResultSchema = productSetupStateSchema
+
+export type GetProductSetupState = z.infer<typeof getProductSetupStateSchema>
+export type GetProductSetupStateResult = z.infer<typeof getProductSetupStateResultSchema>

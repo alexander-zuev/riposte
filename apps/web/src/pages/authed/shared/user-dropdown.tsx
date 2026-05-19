@@ -61,13 +61,13 @@ export function UserDropdown({ user, links = defaultLinks, onLogOut }: UserDropd
           <Button
             type="button"
             variant="ghost"
-            className="group h-auto w-56 min-w-0 justify-start gap-3 px-2 py-1 text-left"
+            className="group h-auto max-w-56 min-w-0 justify-start gap-3 px-2 py-1 text-left"
             aria-label="Open user menu"
           />
         }
       >
         <UserAvatar user={user} />
-        <div className="min-w-0 text-right">
+        <div className="min-w-0">
           <p className="truncate text-xs font-medium text-foreground">{displayName}</p>
           <p className="truncate text-xs text-muted-foreground">{user.email}</p>
         </div>

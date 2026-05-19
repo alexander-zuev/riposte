@@ -10,32 +10,27 @@ const logger = createLogger('outbox-relay-do')
 
 const BATCH_SIZE = 50
 
-/**
- * Coalesced outbox processing via Durable Object.
- * UoW calls trigger() → coalesces into one alarm → self-schedules.
- */
-class OutboxRelayDOBase extends DurableObject<Env> {
-  private readonly deps: AppDeps
+type OutboxRelayAlarmStorage = Pick<DurableObjectStorage, 'getAlarm' | 'setAlarm'>
 
-  constructor(ctx: DurableObjectState, env: Env) {
-    super(ctx, env)
-    this.deps = createAppDeps(env, ctx)
-  }
+export class OutboxRelayAlarmController {
+  constructor(
+    private readonly storage: OutboxRelayAlarmStorage,
+    private readonly deps: { services: Pick<AppDeps['services'], 'outboxRelay'> },
+    private readonly now: () => number = Date.now,
+  ) {}
 
-  /** Signal work exists. Multiple calls coalesce into one alarm. */
   async trigger(): Promise<void> {
-    const currentAlarm = await this.ctx.storage.getAlarm()
+    const currentAlarm = await this.storage.getAlarm()
 
     // Alarm in future = already scheduled, skip
-    if (currentAlarm && currentAlarm > Date.now()) {
+    if (currentAlarm && currentAlarm > this.now()) {
       return
     }
 
     // No alarm or stale (in past) = schedule now
-    await this.ctx.storage.setAlarm(Date.now())
+    await this.storage.setAlarm(this.now())
   }
 
-  /** Flush outbox, self-schedule next run. CF retries on throw. */
   async alarm(): Promise<void> {
     const outboxRelay = this.deps.services.outboxRelay()
     const result = await outboxRelay.flush(BATCH_SIZE)
@@ -52,9 +47,34 @@ class OutboxRelayDOBase extends DurableObject<Env> {
     })
 
     if (published >= BATCH_SIZE) {
-      await this.ctx.storage.setAlarm(Date.now())
+      await this.storage.setAlarm(this.now())
       logger.debug('More messages pending, scheduling next batch')
     }
+  }
+}
+
+/**
+ * Coalesced outbox processing via Durable Object.
+ * UoW calls trigger() → coalesces into one alarm → self-schedules.
+ */
+class OutboxRelayDOBase extends DurableObject<Env> {
+  private readonly deps: AppDeps
+  private readonly alarmController: OutboxRelayAlarmController
+
+  constructor(ctx: DurableObjectState, env: Env) {
+    super(ctx, env)
+    this.deps = createAppDeps(env, ctx)
+    this.alarmController = new OutboxRelayAlarmController(ctx.storage, this.deps)
+  }
+
+  /** Signal work exists. Multiple calls coalesce into one alarm. */
+  async trigger(): Promise<void> {
+    await this.alarmController.trigger()
+  }
+
+  /** Flush outbox, self-schedule next run. CF retries on throw. */
+  async alarm(): Promise<void> {
+    await this.alarmController.alarm()
   }
 }
 

@@ -1,7 +1,12 @@
-import { BrainIcon } from '@phosphor-icons/react'
-import type { ProductListItem, ProductSetupState } from '@riposte/core/client'
+import { BrainIcon, ChatCircleIcon, PulseIcon } from '@phosphor-icons/react'
+import type { ProductListItem } from '@riposte/core/client'
+import { ActivityTab } from '@web/features/agent/activity-tab'
+import { defaultTabFor, deriveAgentMode, subtitleFor } from '@web/features/agent/agent-mode'
+import { AgentSidebar } from '@web/features/agent/agent-sidebar'
+import { ChatTab } from '@web/features/agent/chat-tab'
 import { useProductSetup } from '@web/features/agent/hooks/use-product-setup'
 import { PageHeader } from '@web/pages/authed/shared/page-header'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@web/ui/components/ui/tabs'
 
 type AgentPageProps = {
   product: ProductListItem
@@ -10,63 +15,50 @@ type AgentPageProps = {
 /**
  * /agent — orchestration surface for the per-product agent.
  *
- * Modes (storybook reference, mvp-sketches/ia-recalibration.stories.tsx):
- *  - setup    → scripted onboarding (terminal chat + script actions)
- *  - idle     → activity feed (post-setup, no active dispute)
- *  - handling → workflow timeline + activity feed for an active dispute case
+ * Permanent IA: two-tab shell (Chat | Activity) with a mode-contextual right
+ * sidebar. Default tab depends on mode (setup → Chat, post-setup → Activity);
+ * both tabs are always enabled. Activity during setup is the audit trail;
+ * Chat post-setup carries the archived onboarding transcript.
  *
- * Routing source of truth = `productSetupState.currentStep` for setup/idle split.
- * Handling mode arrives when a dispute case is in-flight (later slice).
+ * See dispute-agent-spec.md.
  */
 export function AgentPage({ product }: AgentPageProps) {
   const setup = useProductSetup(product.id)
+  const mode = deriveAgentMode(setup)
 
   return (
-    <div className="grid gap-6 text-foreground">
+    <div className="flex flex-col gap-6">
       <PageHeader
         eyebrow="Agent"
         icon={BrainIcon}
         title={product.productName}
-        description="Onboard, configure, and operate the dispute agent"
+        description={subtitleFor(mode, setup)}
       />
-      <AgentBody setup={setup} />
+      <Tabs defaultValue={defaultTabFor(mode)} className="gap-6">
+        <TabsList className="self-start">
+          <TabsTrigger value="chat">
+            <ChatCircleIcon data-icon="inline-start" weight="duotone" />
+            Chat
+          </TabsTrigger>
+          <TabsTrigger value="activity">
+            <PulseIcon data-icon="inline-start" weight="duotone" />
+            Activity
+          </TabsTrigger>
+        </TabsList>
+        <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
+          <div>
+            <TabsContent value="chat">
+              <ChatTab mode={mode} setup={setup} productName={product.productName} />
+            </TabsContent>
+            <TabsContent value="activity">
+              <ActivityTab mode={mode} />
+            </TabsContent>
+          </div>
+          <aside className="flex flex-col gap-4">
+            <AgentSidebar mode={mode} setup={setup} productId={product.id} />
+          </aside>
+        </div>
+      </Tabs>
     </div>
-  )
-}
-
-function AgentBody({ setup }: { setup: ReturnType<typeof useProductSetup> }) {
-  if (setup.status === 'loading') return <AgentLoadingView />
-  if (setup.status === 'incomplete') return <AgentSetupView setup={setup.state} />
-  return <AgentIdleView />
-}
-
-function AgentLoadingView() {
-  return (
-    <section className="border bg-surface p-6">
-      <small className="text-muted-foreground">Loading agent state</small>
-    </section>
-  )
-}
-
-// TODO(agent): replace with onboarding script (terminal chat + step actions). See
-// storybook AgentOnboarding for layout: completed transcript + active step block.
-function AgentSetupView({ setup }: { setup: ProductSetupState }) {
-  return (
-    <section className="border bg-surface p-6">
-      <strong>Setup in progress</strong>
-      <small className="mt-2 block text-muted-foreground">Current step: {setup.currentStep}</small>
-    </section>
-  )
-}
-
-// TODO(agent): replace with shared ActivityFeed. See storybook ActivityFeed.
-function AgentIdleView() {
-  return (
-    <section className="border bg-surface p-6">
-      <strong>Setup complete</strong>
-      <small className="mt-2 block text-muted-foreground">
-        No active dispute. Activity feed coming soon
-      </small>
-    </section>
   )
 }

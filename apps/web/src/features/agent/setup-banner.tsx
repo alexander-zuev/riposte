@@ -1,21 +1,10 @@
-import { ArrowRightIcon, CheckCircleIcon, CircleIcon, WarningIcon } from '@phosphor-icons/react'
-import {
-  PRODUCT_SETUP_STEPS,
-  type ProductSetupState,
-  type ProductSetupStep,
-} from '@riposte/core/client'
+import { ArrowRightIcon, WarningIcon } from '@phosphor-icons/react'
+import { PRODUCT_SETUP_STEPS, type ProductSetupState } from '@riposte/core/client'
 import { Link } from '@tanstack/react-router'
 import { useProductSetup } from '@web/features/agent/hooks/use-product-setup'
+import { deriveStepStatus } from '@web/features/agent/setup-steps'
+import { StepChip } from '@web/features/agent/step-chip'
 import { buttonVariants } from '@web/ui/components/ui/button'
-
-const STEP_LABELS: Record<ProductSetupStep, string> = {
-  add_product: 'Get started',
-  connect_stripe: 'Connect Stripe',
-  connect_app_data: 'Connect app data',
-  playbook: 'Define playbook',
-  dry_run: 'Dry run',
-  review: 'Review & approve',
-}
 
 type SetupBannerProps = {
   productId: string
@@ -81,7 +70,7 @@ function StepStrip({ state }: { state: ProductSetupState }) {
     <ol className="flex flex-wrap items-center gap-x-3 gap-y-2">
       {PRODUCT_SETUP_STEPS.map((step, index) => (
         <li key={step} className="flex items-center gap-3">
-          <StepChip step={step} state={state} />
+          <StepChip step={step} status={deriveStepStatus(state, step)} />
           {index < PRODUCT_SETUP_STEPS.length - 1 ? (
             <span aria-hidden className="text-muted-foreground">
               ›
@@ -90,35 +79,5 @@ function StepStrip({ state }: { state: ProductSetupState }) {
         </li>
       ))}
     </ol>
-  )
-}
-
-function StepChip({ step, state }: { step: ProductSetupStep; state: ProductSetupState }) {
-  const done = state.completedAt[step] !== null
-  const active = state.currentStep === step
-
-  if (done) {
-    return (
-      <span className="flex items-center gap-1.5 text-muted-foreground">
-        <CheckCircleIcon weight="fill" className="size-4 text-success-muted-foreground" />
-        <small>{STEP_LABELS[step]}</small>
-      </span>
-    )
-  }
-
-  if (active) {
-    return (
-      <span className="flex items-center gap-1.5 text-foreground">
-        <CircleIcon className="size-4" />
-        <small className="font-semibold">{STEP_LABELS[step]}</small>
-      </span>
-    )
-  }
-
-  return (
-    <span className="flex items-center gap-1.5 text-muted-foreground">
-      <CircleIcon className="size-4" />
-      <small>{STEP_LABELS[step]}</small>
-    </span>
   )
 }

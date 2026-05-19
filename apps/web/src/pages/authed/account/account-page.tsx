@@ -20,8 +20,8 @@ export function AccountPage({ user }: AccountPageProps) {
 
       <Card>
         <CardContent>
-          <div className="flex items-start gap-4">
-            <UserAvatar user={user} className="size-16" />
+          <div className="flex items-center gap-4">
+            <UserAvatar user={user} className="size-12" />
             <dl className="grid min-w-0 flex-1 gap-4 sm:grid-cols-3">
               <AccountField label="Name" value={user.displayName ?? 'Not set'} />
               <AccountField label="Email" value={user.email} />

@@ -16,6 +16,8 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@web/ui/components/ui/dropdown-menu'
@@ -107,22 +109,25 @@ function ProductSwitcher({ selectedProductId }: { selectedProductId: string | nu
             }
           />
           <DropdownMenuContent align="start" sideOffset={4}>
-            {products.map((product) => (
-              <DropdownMenuItem
-                key={product.id}
-                className="focus:bg-background-hover focus:text-foreground"
-                render={
-                  <Link
-                    to="/products/$productId"
-                    params={{ productId: product.id }}
-                    className="no-underline hover:no-underline"
-                  />
-                }
-              >
-                <ProductIcon url={product.url} className="size-4 rounded-xs" />
-                <span className="flex-1 truncate">{product.productName}</span>
-              </DropdownMenuItem>
-            ))}
+            <DropdownMenuRadioGroup value={selectedProductId ?? ''}>
+              {products.map((product) => (
+                <DropdownMenuRadioItem
+                  key={product.id}
+                  value={product.id}
+                  className="focus:bg-background-hover focus:text-foreground"
+                  render={
+                    <Link
+                      to="/products/$productId"
+                      params={{ productId: product.id }}
+                      className="no-underline hover:no-underline"
+                    />
+                  }
+                >
+                  <ProductIcon url={product.url} className="size-4 rounded-xs" />
+                  <span className="flex-1 truncate">{product.productName}</span>
+                </DropdownMenuRadioItem>
+              ))}
+            </DropdownMenuRadioGroup>
             {products.length > 0 ? <DropdownMenuSeparator /> : null}
             <DropdownMenuItem
               className="focus:bg-background-hover focus:text-foreground"

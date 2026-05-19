@@ -2,15 +2,15 @@ import { IdentificationCardIcon } from '@phosphor-icons/react'
 import { createFileRoute } from '@tanstack/react-router'
 import { SurfaceStubPage } from '@web/pages/authed/surface-stub-page'
 
-export const Route = createFileRoute('/_authed/products/$productId/product-info')({
-  component: ProductInfoPage,
+export const Route = createFileRoute('/_authed/products/$productId/general')({
+  component: GeneralPage,
 })
 
-function ProductInfoPage() {
+function GeneralPage() {
   return (
     <SurfaceStubPage
-      title="Product info"
-      description="Stripe-submittable structured fields for this product"
+      title="General"
+      description="Identity, Stripe-submittable fields, and danger zone for this product"
       icon={IdentificationCardIcon}
       sections={[
         {

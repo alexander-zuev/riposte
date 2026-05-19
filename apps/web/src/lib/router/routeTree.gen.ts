@@ -40,9 +40,9 @@ import { Route as ApiStripeAppSyncRouteImport } from './../../routes/api/stripe/
 import { Route as ApiStripeAppSettingsRouteImport } from './../../routes/api/stripe/app/settings'
 import { Route as ApiSlackOauthCallbackRouteImport } from './../../routes/api/slack/oauth/callback'
 import { Route as ApiDevEmailsPreviewRouteImport } from './../../routes/api/dev/emails/preview'
-import { Route as AuthedProductsProductIdSettingsRouteImport } from './../../routes/_authed/products/$productId/settings'
-import { Route as AuthedProductsProductIdProductInfoRouteImport } from './../../routes/_authed/products/$productId/product-info'
 import { Route as AuthedProductsProductIdPlaybookRouteImport } from './../../routes/_authed/products/$productId/playbook'
+import { Route as AuthedProductsProductIdGeneralRouteImport } from './../../routes/_authed/products/$productId/general'
+import { Route as AuthedProductsProductIdConnectionsRouteImport } from './../../routes/_authed/products/$productId/connections'
 import { Route as AuthedProductsProductIdDisputesIndexRouteImport } from './../../routes/_authed/products/$productId/disputes/index'
 import { Route as AuthedProductsProductIdDisputesDisputeIdRouteImport } from './../../routes/_authed/products/$productId/disputes/$disputeId'
 
@@ -201,22 +201,22 @@ const ApiDevEmailsPreviewRoute = ApiDevEmailsPreviewRouteImport.update({
   path: '/api/dev/emails/preview',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthedProductsProductIdSettingsRoute =
-  AuthedProductsProductIdSettingsRouteImport.update({
-    id: '/settings',
-    path: '/settings',
-    getParentRoute: () => AuthedProductsProductIdRouteRoute,
-  } as any)
-const AuthedProductsProductIdProductInfoRoute =
-  AuthedProductsProductIdProductInfoRouteImport.update({
-    id: '/product-info',
-    path: '/product-info',
-    getParentRoute: () => AuthedProductsProductIdRouteRoute,
-  } as any)
 const AuthedProductsProductIdPlaybookRoute =
   AuthedProductsProductIdPlaybookRouteImport.update({
     id: '/playbook',
     path: '/playbook',
+    getParentRoute: () => AuthedProductsProductIdRouteRoute,
+  } as any)
+const AuthedProductsProductIdGeneralRoute =
+  AuthedProductsProductIdGeneralRouteImport.update({
+    id: '/general',
+    path: '/general',
+    getParentRoute: () => AuthedProductsProductIdRouteRoute,
+  } as any)
+const AuthedProductsProductIdConnectionsRoute =
+  AuthedProductsProductIdConnectionsRouteImport.update({
+    id: '/connections',
+    path: '/connections',
     getParentRoute: () => AuthedProductsProductIdRouteRoute,
   } as any)
 const AuthedProductsProductIdDisputesIndexRoute =
@@ -256,9 +256,9 @@ export interface FileRoutesByFullPath {
   '/dev/evidence-packets/pdf': typeof DevEvidencePacketsPdfRoute
   '/products/': typeof AuthedProductsIndexRoute
   '/dev/emails/': typeof DevEmailsIndexRoute
+  '/products/$productId/connections': typeof AuthedProductsProductIdConnectionsRoute
+  '/products/$productId/general': typeof AuthedProductsProductIdGeneralRoute
   '/products/$productId/playbook': typeof AuthedProductsProductIdPlaybookRoute
-  '/products/$productId/product-info': typeof AuthedProductsProductIdProductInfoRoute
-  '/products/$productId/settings': typeof AuthedProductsProductIdSettingsRoute
   '/api/dev/emails/preview': typeof ApiDevEmailsPreviewRoute
   '/api/slack/oauth/callback': typeof ApiSlackOauthCallbackRoute
   '/api/stripe/app/settings': typeof ApiStripeAppSettingsRoute
@@ -289,9 +289,9 @@ export interface FileRoutesByTo {
   '/dev/evidence-packets/pdf': typeof DevEvidencePacketsPdfRoute
   '/products': typeof AuthedProductsIndexRoute
   '/dev/emails': typeof DevEmailsIndexRoute
+  '/products/$productId/connections': typeof AuthedProductsProductIdConnectionsRoute
+  '/products/$productId/general': typeof AuthedProductsProductIdGeneralRoute
   '/products/$productId/playbook': typeof AuthedProductsProductIdPlaybookRoute
-  '/products/$productId/product-info': typeof AuthedProductsProductIdProductInfoRoute
-  '/products/$productId/settings': typeof AuthedProductsProductIdSettingsRoute
   '/api/dev/emails/preview': typeof ApiDevEmailsPreviewRoute
   '/api/slack/oauth/callback': typeof ApiSlackOauthCallbackRoute
   '/api/stripe/app/settings': typeof ApiStripeAppSettingsRoute
@@ -328,9 +328,9 @@ export interface FileRoutesById {
   '/dev/evidence-packets/pdf': typeof DevEvidencePacketsPdfRoute
   '/_authed/products/': typeof AuthedProductsIndexRoute
   '/dev/emails/': typeof DevEmailsIndexRoute
+  '/_authed/products/$productId/connections': typeof AuthedProductsProductIdConnectionsRoute
+  '/_authed/products/$productId/general': typeof AuthedProductsProductIdGeneralRoute
   '/_authed/products/$productId/playbook': typeof AuthedProductsProductIdPlaybookRoute
-  '/_authed/products/$productId/product-info': typeof AuthedProductsProductIdProductInfoRoute
-  '/_authed/products/$productId/settings': typeof AuthedProductsProductIdSettingsRoute
   '/api/dev/emails/preview': typeof ApiDevEmailsPreviewRoute
   '/api/slack/oauth/callback': typeof ApiSlackOauthCallbackRoute
   '/api/stripe/app/settings': typeof ApiStripeAppSettingsRoute
@@ -366,9 +366,9 @@ export interface FileRouteTypes {
     | '/dev/evidence-packets/pdf'
     | '/products/'
     | '/dev/emails/'
+    | '/products/$productId/connections'
+    | '/products/$productId/general'
     | '/products/$productId/playbook'
-    | '/products/$productId/product-info'
-    | '/products/$productId/settings'
     | '/api/dev/emails/preview'
     | '/api/slack/oauth/callback'
     | '/api/stripe/app/settings'
@@ -399,9 +399,9 @@ export interface FileRouteTypes {
     | '/dev/evidence-packets/pdf'
     | '/products'
     | '/dev/emails'
+    | '/products/$productId/connections'
+    | '/products/$productId/general'
     | '/products/$productId/playbook'
-    | '/products/$productId/product-info'
-    | '/products/$productId/settings'
     | '/api/dev/emails/preview'
     | '/api/slack/oauth/callback'
     | '/api/stripe/app/settings'
@@ -437,9 +437,9 @@ export interface FileRouteTypes {
     | '/dev/evidence-packets/pdf'
     | '/_authed/products/'
     | '/dev/emails/'
+    | '/_authed/products/$productId/connections'
+    | '/_authed/products/$productId/general'
     | '/_authed/products/$productId/playbook'
-    | '/_authed/products/$productId/product-info'
-    | '/_authed/products/$productId/settings'
     | '/api/dev/emails/preview'
     | '/api/slack/oauth/callback'
     | '/api/stripe/app/settings'
@@ -684,25 +684,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiDevEmailsPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authed/products/$productId/settings': {
-      id: '/_authed/products/$productId/settings'
-      path: '/settings'
-      fullPath: '/products/$productId/settings'
-      preLoaderRoute: typeof AuthedProductsProductIdSettingsRouteImport
-      parentRoute: typeof AuthedProductsProductIdRouteRoute
-    }
-    '/_authed/products/$productId/product-info': {
-      id: '/_authed/products/$productId/product-info'
-      path: '/product-info'
-      fullPath: '/products/$productId/product-info'
-      preLoaderRoute: typeof AuthedProductsProductIdProductInfoRouteImport
-      parentRoute: typeof AuthedProductsProductIdRouteRoute
-    }
     '/_authed/products/$productId/playbook': {
       id: '/_authed/products/$productId/playbook'
       path: '/playbook'
       fullPath: '/products/$productId/playbook'
       preLoaderRoute: typeof AuthedProductsProductIdPlaybookRouteImport
+      parentRoute: typeof AuthedProductsProductIdRouteRoute
+    }
+    '/_authed/products/$productId/general': {
+      id: '/_authed/products/$productId/general'
+      path: '/general'
+      fullPath: '/products/$productId/general'
+      preLoaderRoute: typeof AuthedProductsProductIdGeneralRouteImport
+      parentRoute: typeof AuthedProductsProductIdRouteRoute
+    }
+    '/_authed/products/$productId/connections': {
+      id: '/_authed/products/$productId/connections'
+      path: '/connections'
+      fullPath: '/products/$productId/connections'
+      preLoaderRoute: typeof AuthedProductsProductIdConnectionsRouteImport
       parentRoute: typeof AuthedProductsProductIdRouteRoute
     }
     '/_authed/products/$productId/disputes/': {
@@ -723,9 +723,9 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthedProductsProductIdRouteRouteChildren {
+  AuthedProductsProductIdConnectionsRoute: typeof AuthedProductsProductIdConnectionsRoute
+  AuthedProductsProductIdGeneralRoute: typeof AuthedProductsProductIdGeneralRoute
   AuthedProductsProductIdPlaybookRoute: typeof AuthedProductsProductIdPlaybookRoute
-  AuthedProductsProductIdProductInfoRoute: typeof AuthedProductsProductIdProductInfoRoute
-  AuthedProductsProductIdSettingsRoute: typeof AuthedProductsProductIdSettingsRoute
   AuthedProductsProductIdIndexRoute: typeof AuthedProductsProductIdIndexRoute
   AuthedProductsProductIdDisputesDisputeIdRoute: typeof AuthedProductsProductIdDisputesDisputeIdRoute
   AuthedProductsProductIdDisputesIndexRoute: typeof AuthedProductsProductIdDisputesIndexRoute
@@ -733,10 +733,10 @@ interface AuthedProductsProductIdRouteRouteChildren {
 
 const AuthedProductsProductIdRouteRouteChildren: AuthedProductsProductIdRouteRouteChildren =
   {
+    AuthedProductsProductIdConnectionsRoute:
+      AuthedProductsProductIdConnectionsRoute,
+    AuthedProductsProductIdGeneralRoute: AuthedProductsProductIdGeneralRoute,
     AuthedProductsProductIdPlaybookRoute: AuthedProductsProductIdPlaybookRoute,
-    AuthedProductsProductIdProductInfoRoute:
-      AuthedProductsProductIdProductInfoRoute,
-    AuthedProductsProductIdSettingsRoute: AuthedProductsProductIdSettingsRoute,
     AuthedProductsProductIdIndexRoute: AuthedProductsProductIdIndexRoute,
     AuthedProductsProductIdDisputesDisputeIdRoute:
       AuthedProductsProductIdDisputesDisputeIdRoute,

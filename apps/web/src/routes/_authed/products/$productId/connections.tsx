@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { connectionsQueries } from '@web/entities/connections'
 import { SettingsPage } from '@web/pages/authed/settings/settings-page'
 
-export const Route = createFileRoute('/_authed/products/$productId/settings')({
+export const Route = createFileRoute('/_authed/products/$productId/connections')({
   loader: ({ context }) => {
     void context.queryClient.prefetchQuery(connectionsQueries.status())
   },

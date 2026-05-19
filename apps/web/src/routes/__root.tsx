@@ -26,12 +26,12 @@ import { Toaster } from '@web/ui/components/ui/sonner'
 import { TooltipProvider } from '@web/ui/components/ui/tooltip'
 import { useEffect } from 'react'
 
-import globalStyles from '@web/ui/stylesheets/globals.css?url'
+import '@web/ui/stylesheets/globals.css'
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient
 }>()({
-  head: () => defaultHead(globalStyles),
+  head: defaultHead,
   loader: async () => getThemeServerFn(),
   staleTime: Infinity, // Cache theme forever - only refetch when explicitly invalidated
   errorComponent: ({ error, reset }) => {

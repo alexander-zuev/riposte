@@ -21,6 +21,11 @@ export default defineConfig(() => {
           generatedRouteTree: './lib/router/routeTree.gen.ts',
         },
         importProtection: { enabled: true },
+        server: {
+          build: {
+            inlineCss: true,
+          },
+        },
       }),
       react(),
       babel({ presets: [reactCompilerPreset({ target: '19' })] }),

@@ -77,7 +77,7 @@ const PRECONNECT_LINKS = [
   { rel: 'dns-prefetch', href: 'https://calendly.com' },
 ]
 
-export function defaultHead(globalStylesHref: string) {
+export function defaultHead() {
   const seo = createSeoHead({
     title: DEFAULT_TITLE,
     description: DEFAULT_DESCRIPTION,
@@ -90,11 +90,6 @@ export function defaultHead(globalStylesHref: string) {
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
       ...seo.meta,
     ],
-    links: [
-      ...PRECONNECT_LINKS,
-      ...FAVICON_LINKS,
-      { rel: 'stylesheet', href: globalStylesHref },
-      ...seo.links,
-    ],
+    links: [...PRECONNECT_LINKS, ...FAVICON_LINKS, ...seo.links],
   }
 }

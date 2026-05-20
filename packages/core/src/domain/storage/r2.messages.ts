@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 import { baseEventSchema } from '../base/base.messages'
+import { uuidv7 } from '../primitives'
 
 export const r2EventSchema = baseEventSchema.extend({
   name: z.literal('R2Event'),
@@ -28,7 +29,7 @@ const r2NotificationSchema = z.object({
 })
 
 export const r2EventTransform = r2NotificationSchema.transform((raw) => ({
-  id: crypto.randomUUID(),
+  id: uuidv7(),
   type: 'event' as const,
   name: 'R2Event' as const,
   timestamp: raw.eventTime ?? new Date().toISOString(),

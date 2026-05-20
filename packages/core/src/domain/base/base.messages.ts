@@ -21,7 +21,7 @@ export const externalMessageIdSchema = z
   .min(1)
   .regex(/^[a-z0-9]+:[A-Za-z0-9_.:-]+$/)
 
-export const MessageIdSchema = z.union([z.uuidv4(), externalMessageIdSchema])
+export const MessageIdSchema = z.union([z.uuidv7(), externalMessageIdSchema])
 
 // Shared base - identity + routing
 // userId is optional here — messages with user context override with required.
@@ -43,7 +43,7 @@ export const baseCommandSchema = baseInternalSchema.extend({
 // - Zero to N handlers
 // - Failure in one handler doesn't stop others
 export const baseEventSchema = baseInternalSchema.extend({
-  id: z.uuidv4(),
+  id: z.uuidv7(),
   type: z.literal('event'),
   timestamp: TimestamptzSchema,
 })

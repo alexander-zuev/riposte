@@ -1,5 +1,5 @@
 import type { MessageId } from '../base/base.messages'
-import type { UUIDv4 } from '../primitives'
+import { uuidv7 } from '../primitives'
 import type {
   CommandMap,
   CommandName,
@@ -29,7 +29,7 @@ type QueryData<T extends QueryName> = Omit<QueryMap[T], QueryFactoryFields>
 export function createCommand<T extends CommandName>(
   name: T,
   data: CommandData<T>,
-  id: MessageId = crypto.randomUUID(),
+  id: MessageId = uuidv7(),
 ): CommandMap[T] {
   return {
     id,
@@ -42,7 +42,7 @@ export function createCommand<T extends CommandName>(
 export function createEvent<T extends EventName>(
   name: T,
   data: EventData<T>,
-  id: UUIDv4 = crypto.randomUUID(),
+  id: string = uuidv7(),
   timestamp: Date = new Date(),
 ): EventMap[T] {
   return {

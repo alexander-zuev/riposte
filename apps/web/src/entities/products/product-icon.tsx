@@ -3,7 +3,9 @@ import { useState } from 'react'
 
 function getFaviconUrl(url: string): string | null {
   try {
-    return `https://www.google.com/s2/favicons?domain=${new URL(url).hostname}&sz=64`
+    const hostname = new URL(url).hostname
+    const upstream = `https://www.google.com/s2/favicons?domain=${hostname}&sz=64`
+    return `/api/cache/images?url=${encodeURIComponent(upstream)}`
   } catch {
     return null
   }
@@ -17,5 +19,13 @@ export function ProductIcon({ url, className }: { url: string; className?: strin
     return <PackageIcon weight="duotone" className={className} />
   }
 
-  return <img src={src} alt="" className={className} onError={() => setErrored(true)} />
+  return (
+    <img
+      src={src}
+      alt=""
+      className={className}
+      referrerPolicy="no-referrer"
+      onError={() => setErrored(true)}
+    />
+  )
 }

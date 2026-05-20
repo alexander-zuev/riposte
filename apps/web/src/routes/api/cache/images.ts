@@ -14,7 +14,7 @@ const MAX_IMAGE_SIZE = 2 * 1024 * 1024
 const CACHE_TTL = 7 * 24 * 60 * 60
 
 const ALLOWED_DOMAIN_PATTERN =
-  /\.(googleusercontent|ggpht|apple|facebook|fbsbx|microsoft|live|githubusercontent|gravatar)\.com$/i
+  /\.(googleusercontent|ggpht|google|apple|facebook|fbsbx|microsoft|live|githubusercontent|gravatar)\.com$/i
 
 const imageProxyUrlSchema = z.url({
   hostname: ALLOWED_DOMAIN_PATTERN,

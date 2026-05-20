@@ -20,7 +20,7 @@ export interface RequiredAuthContext {
   session: Session
 }
 
-export const extractAuth = createMiddleware().server(async ({ next }) => {
+async function resolveAuth(): Promise<{ user: User; session: Session } | null> {
   const headers = getRequestHeaders()
   const auth = getAuthInstance()
 
@@ -38,10 +38,24 @@ export const extractAuth = createMiddleware().server(async ({ next }) => {
   const resolved = session.isOk() ? session.value : null
   if (resolved) Sentry.setUser({ id: resolved.user.id })
 
+  return resolved
+}
+
+export const extractAuth = createMiddleware().server(async ({ next }) => {
+  const resolved = await resolveAuth()
   return next({
     context: { user: resolved?.user, session: resolved?.session },
   })
 })
+
+export const extractAuthFunction = createMiddleware({ type: 'function' }).server(
+  async ({ next }) => {
+    const resolved = await resolveAuth()
+    return next({
+      context: { user: resolved?.user, session: resolved?.session },
+    })
+  },
+)
 
 export const requireAuth = createMiddleware()
   .middleware([extractAuth])

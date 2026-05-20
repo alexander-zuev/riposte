@@ -25,6 +25,10 @@ import {
   DisputeAgentClient,
   type IDisputeAgentClient,
 } from '@server/infrastructure/agents/dispute-agent-client'
+import {
+  AnalyticsService,
+  type IAnalyticsService,
+} from '@server/infrastructure/analytics/analytics-service'
 import type { ICredentialEncryptionService } from '@server/infrastructure/credentials/credential-encryption'
 import { CredentialEncryptionService } from '@server/infrastructure/credentials/credential-encryption'
 import type { DrizzleDb } from '@server/infrastructure/db'
@@ -118,6 +122,7 @@ export type AppDeps = {
     slackWebhook: () => ISlackWebhookNotifier
     stripeClientProvider: () => IStripeClientProvider
     outboxRelay: () => IOutboxRelay
+    analytics: () => IAnalyticsService
   }
 
   hooks: {
@@ -195,6 +200,7 @@ export function createAppDeps(env: Env, ctx: WaitUntilContext): AppDeps {
       outboxRelay: once<IOutboxRelay>(
         () => new OutboxRelay(deps.db(), deps.services.queueClient(), deps.repos.outbox),
       ),
+      analytics: once<IAnalyticsService>(() => new AnalyticsService(env)),
     },
     hooks: {
       onEventsCommitted: () => {

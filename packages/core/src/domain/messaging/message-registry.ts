@@ -6,6 +6,7 @@ import {
   sendWelcomeEmailSchema,
   userSignedUpSchema,
 } from '../auth/auth.messages'
+import { getChatMessagesSchema } from '../chat'
 import { getConnectionsStatusSchema } from '../connections'
 import { disputePlaybookCreatedSchema } from '../dispute-playbooks'
 import {
@@ -135,6 +136,7 @@ export const domainQuerySchema = z.discriminatedUnion('name', [
   listDisputeCasesSchema,
   listProductsSchema,
   getProductSetupStateSchema,
+  getChatMessagesSchema,
 ])
 
 export type DomainQuery = z.infer<typeof domainQuerySchema>

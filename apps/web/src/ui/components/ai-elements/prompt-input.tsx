@@ -547,7 +547,7 @@ export const PromptInput = ({
       if (incoming.length && accepted.length === 0) {
         onError?.({
           code: 'accept',
-          message: 'No files match the accepted types.',
+          message: 'No files match the accepted types',
         })
         return
       }
@@ -556,7 +556,7 @@ export const PromptInput = ({
       if (accepted.length > 0 && sized.length === 0) {
         onError?.({
           code: 'max_file_size',
-          message: 'All files exceed the maximum size.',
+          message: 'All files exceed the maximum size',
         })
         return
       }
@@ -568,7 +568,7 @@ export const PromptInput = ({
         if (typeof capacity === 'number' && sized.length > capacity) {
           onError?.({
             code: 'max_files',
-            message: 'Too many files. Some were not added.',
+            message: 'Too many files, some were not added',
           })
         }
         const next: (FileUIPart & { id: string })[] = []
@@ -607,7 +607,7 @@ export const PromptInput = ({
       if (incoming.length && accepted.length === 0) {
         onError?.({
           code: 'accept',
-          message: 'No files match the accepted types.',
+          message: 'No files match the accepted types',
         })
         return
       }
@@ -616,7 +616,7 @@ export const PromptInput = ({
       if (accepted.length > 0 && sized.length === 0) {
         onError?.({
           code: 'max_file_size',
-          message: 'All files exceed the maximum size.',
+          message: 'All files exceed the maximum size',
         })
         return
       }
@@ -628,7 +628,7 @@ export const PromptInput = ({
       if (typeof capacity === 'number' && sized.length > capacity) {
         onError?.({
           code: 'max_files',
-          message: 'Too many files. Some were not added.',
+          message: 'Too many files, some were not added',
         })
       }
 

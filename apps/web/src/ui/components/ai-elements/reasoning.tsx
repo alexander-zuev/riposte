@@ -1,5 +1,3 @@
-'use client'
-
 import { BrainIcon, CaretDownIcon } from '@phosphor-icons/react'
 import { useControllableState } from '@radix-ui/react-use-controllable-state'
 import { cjk } from '@streamdown/cjk'

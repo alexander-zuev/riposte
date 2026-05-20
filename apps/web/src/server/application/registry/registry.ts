@@ -4,6 +4,7 @@ import {
   sendMagicLink,
   sendWelcomeEmail,
 } from '@server/application/handlers/auth-handler'
+import { getChatMessages } from '@server/application/handlers/chat-handler'
 import { getConnectionsStatus } from '@server/application/handlers/connection-handler'
 import { listDisputeCases } from '@server/application/handlers/dispute-case-handler'
 import {
@@ -104,6 +105,7 @@ export const QUERY_HANDLERS = {
   ListDisputeCases: listDisputeCases,
   ListProducts: listProducts,
   GetProductSetupState: getProductSetupState,
+  GetChatMessages: getChatMessages,
 } satisfies QueryRegistry
 
 export const defaultRegistry = {

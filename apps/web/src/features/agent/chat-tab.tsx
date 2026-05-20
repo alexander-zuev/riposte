@@ -1,27 +1,29 @@
+import { useQuery } from '@tanstack/react-query'
+import { chatQueries } from '@web/entities/chat/chat-queries'
 import { Chat } from '@web/features/agent/chat'
+import { Alert, AlertAction, AlertDescription, AlertTitle } from '@web/ui/components/ui/alert'
+import { Button } from '@web/ui/components/ui/button'
 import { Card, CardContent } from '@web/ui/components/ui/card'
 import { Spinner } from '@web/ui/components/ui/spinner'
-import { Suspense } from 'react'
 
 type ChatTabProps = {
   productId: string
 }
 
 /**
- * Chat tab content. Always-on agent chat — the agent's system prompt is
- * mode-aware (setup vs operate), so the UI never gates the chat surface.
- *
- * Wraps Chat in Suspense because `useAgent`/`useAgentChat` throw a promise on
- * first mount while the agent client warms up. Without a local boundary, that
- * promise bubbles to the router's pending UI and reloads the whole page.
- * Session-switching UI is post-MVP.
+ * Chat tab orchestrator. Reads the per-product chat history via the messages
+ * Query, then mounts `<Chat>` once the seed is available. WS-driven updates
+ * happen inside `<Chat>`; this layer only owns the initial-load loading and
+ * error states (replaces the previous Suspense boundary).
  */
 export function ChatTab({ productId }: ChatTabProps) {
-  return (
-    <Suspense fallback={<ChatLoading />}>
-      <Chat productId={productId} />
-    </Suspense>
+  const { data, isPending, isError, error, refetch } = useQuery(
+    chatQueries.messages(productId),
   )
+
+  if (isPending) return <ChatLoading />
+  if (isError) return <ChatError error={error} onRetry={() => refetch()} />
+  return <Chat productId={productId} initialMessages={data} />
 }
 
 function ChatLoading() {
@@ -29,6 +31,29 @@ function ChatLoading() {
     <Card className="h-[calc(100vh-22rem)] gap-0 py-0">
       <CardContent className="flex flex-1 items-center justify-center p-0 text-muted-foreground">
         <Spinner />
+      </CardContent>
+    </Card>
+  )
+}
+
+type ChatErrorProps = {
+  error: Error
+  onRetry: () => void
+}
+
+function ChatError({ error, onRetry }: ChatErrorProps) {
+  return (
+    <Card className="h-[calc(100vh-22rem)] gap-0 py-0">
+      <CardContent className="flex flex-1 items-center justify-center p-4">
+        <Alert variant="destructive" className="max-w-md">
+          <AlertTitle>Could not load chat history</AlertTitle>
+          <AlertDescription>{error.message}</AlertDescription>
+          <AlertAction>
+            <Button size="sm" variant="secondary" onClick={onRetry}>
+              Retry
+            </Button>
+          </AlertAction>
+        </Alert>
       </CardContent>
     </Card>
   )

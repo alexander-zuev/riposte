@@ -15,10 +15,12 @@ import {
 } from '@web/ui/components/ai-elements/prompt-input'
 import { Card, CardContent, CardFooter } from '@web/ui/components/ui/card'
 import { Spinner } from '@web/ui/components/ui/spinner'
+import type { UIMessage } from 'ai'
 import { useCallback } from 'react'
 
 type ChatProps = {
   productId: string
+  initialMessages: UIMessage<never>[]
 }
 
 /**
@@ -27,8 +29,8 @@ type ChatProps = {
  * markdown links, free-form responses) is emitted by the agent — no UI-side
  * script copy.
  */
-export function Chat({ productId }: ChatProps) {
-  const chat = useDisputeAgentChat(productId)
+export function Chat({ productId, initialMessages }: ChatProps) {
+  const chat = useDisputeAgentChat(productId, initialMessages)
   const handleSubmit = useCallback(
     (message: { text?: string }) => {
       const text = message.text?.trim()

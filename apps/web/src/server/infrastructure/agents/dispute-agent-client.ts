@@ -2,6 +2,7 @@ import { createLogger, DOUnreachableError, WorkflowError, type UUIDv4 } from '@r
 import type { DisputeAgent, DisputeAgentProps } from '@server/infrastructure/agents/dispute-agent'
 import { isTransientError, RETRY } from '@server/infrastructure/resilience/retry'
 import { getAgentByName } from 'agents'
+import type { UIMessage } from 'ai'
 import { Result } from 'better-result'
 
 type EnvBindingName<TBinding> = {
@@ -52,6 +53,11 @@ export type PrimeOnboardingInput = {
   productName: string
 }
 
+export type GetMessagesInput = {
+  userId: UUIDv4
+  productId: UUIDv4
+}
+
 export interface IDisputeAgentClient {
   startWorkflow: (input: DisputeAgentWorkflowInput) => Promise<Result<void, WorkflowError>>
   pauseWorkflow: (input: DisputeAgentWorkflowInput) => Promise<Result<void, WorkflowError>>
@@ -74,6 +80,16 @@ export interface IDisputeAgentClient {
    * if the DO RPC fails — caller decides whether to log-and-swallow or surface.
    */
   primeOnboarding: (input: PrimeOnboardingInput) => Promise<Result<void, DOUnreachableError>>
+  /**
+   * Reads persisted chat history from the per-product DisputeAgent DO. The
+   * `UIMessage<never>` specialization is our application-layer claim that no
+   * one writes `metadata` — keeps the wire payload statically serializable
+   * (the SDK's default `UIMessage<unknown>` would fail TanStack Start's
+   * validator). Widen the generic when we start attaching metadata.
+   */
+  getMessages: (
+    input: GetMessagesInput,
+  ) => Promise<Result<UIMessage<never>[], DOUnreachableError>>
 }
 
 export class DisputeAgentClient implements IDisputeAgentClient {
@@ -236,6 +252,25 @@ export class DisputeAgentClient implements IDisputeAgentClient {
           disputeAgentOptions(userId),
         )
         await agent.primeOnboarding({ productId, productName })
+      },
+      catch: (cause) => new DOUnreachableError({ cause, retryable: isTransientError(cause) }),
+    })
+  }
+
+  async getMessages({
+    userId,
+    productId,
+  }: GetMessagesInput): Promise<Result<UIMessage<never>[], DOUnreachableError>> {
+    return Result.tryPromise({
+      try: async () => {
+        const agent = await getAgentByName<Env, DisputeAgent, DisputeAgentProps>(
+          this.env.DisputeAgent,
+          productId,
+          disputeAgentOptions(userId),
+        )
+        // Cast: the DO returns the SDK's `UIMessage<unknown>` but nothing in
+        // this codebase writes `metadata`. See the interface docstring above.
+        return (await agent.getMessages()) as UIMessage<never>[]
       },
       catch: (cause) => new DOUnreachableError({ cause, retryable: isTransientError(cause) }),
     })

@@ -1,5 +1,3 @@
-'use client'
-
 import { BookOpenIcon, CaretDownIcon } from '@phosphor-icons/react'
 import { cn } from '@web/lib/utils'
 import {

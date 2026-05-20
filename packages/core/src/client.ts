@@ -13,6 +13,7 @@
 export * from './domain/messaging'
 export * from './domain/primitives'
 export * from './domain/auth'
+export * from './domain/chat'
 export * from './domain/disputes/dispute-workflow-policy'
 export * from './domain/disputes/dispute.queries'
 export * from './domain/disputes/stripe-dispute-taxonomy'

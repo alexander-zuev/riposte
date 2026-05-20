@@ -9,6 +9,7 @@ import {
   type StreamTextOnFinishCallback,
   ToolLoopAgent,
   type ToolSet,
+  type UIMessage,
 } from 'ai'
 
 const logger = createLogger('dispute-agent')
@@ -63,6 +64,8 @@ class DisputeAgentBase extends AIChatAgent<Env, DisputeAgentState, DisputeAgentP
     this.userId = await this.ctx.storage.get<UserId>(USER_ID_STORAGE_KEY)
   }
 
+  // TODO:
+  // When / how do we thread in the Setup State updates -> on chat message or between message parts / inside the turn?
   async onChatMessage(
     _onFinish: StreamTextOnFinishCallback<ToolSet>,
     opts?: OnChatMessageOptions,
@@ -104,6 +107,11 @@ class DisputeAgentBase extends AIChatAgent<Env, DisputeAgentState, DisputeAgentP
     return result.toUIMessageStreamResponse()
   }
 
+  /** RPC seed for the agent page — WS doesn't replay history on connect. */
+  async getMessages(): Promise<UIMessage[]> {
+    return this.messages
+  }
+
   /**
    * Idempotent welcome-message prime. Called from the CreateProduct command
    * handler after the product is persisted, so the chat is populated before
@@ -133,13 +141,17 @@ class DisputeAgentBase extends AIChatAgent<Env, DisputeAgentState, DisputeAgentP
     ])
   }
   /**
-   * AIChatAgent overloads this as `onError(connection, error)` (WS path) and
-   * `onError(error)` (HTTP path). The single implementation signature must
-   * satisfy both — the actual error is always the last argument.
+   * Base class overloads this as `(connection, error)` (WS) and `(error)`
+   * (HTTP). Single impl satisfies both. Logged at `warn` so the breadcrumb
+   * carries `productId` context without double-firing to Sentry — the DO
+   * instrumentation captures the rethrow as the canonical error event.
    */
-  async onError(connectionOrError: unknown, error?: unknown): Promise<void> {
-    const actualError = error ?? connectionOrError
-    logger.error('dispute_agent_error', { error: actualError, productId: this.name })
+  onError(connection: unknown, error: unknown): void
+  onError(error: unknown): void
+  onError(connectionOrError: unknown, error?: unknown): void {
+    const actualError = error !== undefined ? error : connectionOrError
+    logger.warn('dispute_agent_error', { error: actualError, productId: this.name })
+    throw actualError
   }
 
   async onWorkflowError(workflowName: string, workflowId: string, error: string): Promise<void> {

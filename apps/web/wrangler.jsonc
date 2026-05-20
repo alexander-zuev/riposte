@@ -2,10 +2,9 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "riposte",
   "compatibility_date": "2026-04-21",
-  "compatibility_flags": ["nodejs_compat"],
-  "browser": {
-    "binding": "BROWSER",
-  },
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
   "main": "./src/server.ts",
   "upload_source_maps": true,
   "observability": {
@@ -22,7 +21,9 @@
   "rules": [
     {
       "type": "Text",
-      "globs": ["**/*.sql"],
+      "globs": [
+        "**/*.sql"
+      ],
       "fallthrough": true,
     },
   ],
@@ -35,19 +36,28 @@
   "migrations": [
     {
       "tag": "v1",
-      "new_sqlite_classes": ["RateLimiterDO"],
+      "new_sqlite_classes": [
+        "RateLimiterDO"
+      ],
     },
     {
       "tag": "v2",
-      "new_classes": ["OutboxRelayDO"],
+      "new_classes": [
+        "OutboxRelayDO"
+      ],
     },
     {
       "tag": "v3",
-      "new_sqlite_classes": ["DisputeAgent"],
+      "new_sqlite_classes": [
+        "DisputeAgent"
+      ],
     },
   ],
   "triggers": {
-    "crons": ["*/1 * * * *", "0 3 * * *"],
+    "crons": [
+      "*/1 * * * *",
+      "0 3 * * *"
+    ],
   },
   "env": {
     "dev": {
@@ -286,7 +296,10 @@
     },
     "test": {
       "name": "riposte-test",
-      "compatibility_flags": ["nodejs_compat", "service_binding_extra_handlers"],
+      "compatibility_flags": [
+        "nodejs_compat",
+        "service_binding_extra_handlers"
+      ],
       "hyperdrive": [
         {
           "binding": "HYPERDRIVE",

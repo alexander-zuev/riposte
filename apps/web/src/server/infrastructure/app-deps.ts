@@ -72,6 +72,7 @@ import {
   StripeClientProvider,
   type IStripeClientProvider,
 } from '@server/infrastructure/stripe/stripe-client-provider'
+import { JinaClient, type IJinaClient } from '@server/infrastructure/web/jina-client'
 import type { Result } from 'better-result'
 
 type WaitUntilContext = Pick<ExecutionContext, 'waitUntil'>
@@ -123,6 +124,7 @@ export type AppDeps = {
     stripeClientProvider: () => IStripeClientProvider
     outboxRelay: () => IOutboxRelay
     analytics: () => IAnalyticsService
+    jinaClient: () => IJinaClient
   }
 
   hooks: {
@@ -201,6 +203,7 @@ export function createAppDeps(env: Env, ctx: WaitUntilContext): AppDeps {
         () => new OutboxRelay(deps.db(), deps.services.queueClient(), deps.repos.outbox),
       ),
       analytics: once<IAnalyticsService>(() => new AnalyticsService(env)),
+      jinaClient: once<IJinaClient>(() => new JinaClient({ apiKey: env.JINA_API_KEY })),
     },
     hooks: {
       onEventsCommitted: () => {

@@ -172,6 +172,7 @@
           "SLACK_SIGNING_SECRET",
           "CREDENTIAL_ENCRYPTION_KEY_V1",
           "RESEND_API_KEY",
+          "JINA_API_KEY",
         ],
       },
     },
@@ -285,6 +286,7 @@
           "SLACK_SIGNING_SECRET",
           "CREDENTIAL_ENCRYPTION_KEY_V1",
           "RESEND_API_KEY",
+          "JINA_API_KEY",
         ],
       },
       "routes": [
@@ -329,6 +331,7 @@
         "CURRENT_CREDENTIAL_ENCRYPTION_KEY_VERSION": "v1",
         "CREDENTIAL_ENCRYPTION_KEY_V1": "MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=",
         "RESEND_API_KEY": "test",
+        "JINA_API_KEY": "test",
       },
       "kv_namespaces": [
         {
@@ -510,6 +513,7 @@
           "SLACK_SIGNING_SECRET",
           "CREDENTIAL_ENCRYPTION_KEY_V1",
           "RESEND_API_KEY",
+          "JINA_API_KEY",
         ],
       },
       "routes": [

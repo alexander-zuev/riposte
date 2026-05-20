@@ -46,7 +46,10 @@ export const settings = {
     apiKey: env.VITE_PUBLIC_POSTHOG_KEY,
     apiHost: 'https://relay.riposte.sh',
     uiHost: 'https://us.posthog.com',
-    enabled: env.MODE !== 'development',
+    // TEMP: enabled in dev to verify LLM Analytics dashboard end-to-end
+    // (incl. $session_id propagation to backend $ai_generation events).
+    // Revert to `env.MODE !== 'development'` before merging.
+    enabled: true,
   },
 
   turnstile: {

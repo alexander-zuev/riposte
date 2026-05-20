@@ -1,0 +1,10 @@
+@layer base {
+  [data-streamdown='link'] {
+    cursor: pointer;
+    text-underline-offset: 4px;
+  }
+
+  [data-streamdown='link']:hover {
+    text-decoration: underline;
+  }
+}

@@ -283,6 +283,14 @@ function ExternalLinkSafetyModal({
   onConfirm: () => void
   url: string
 }) {
+  const domain = (() => {
+    try {
+      return new URL(url).host
+    } catch {
+      return null
+    }
+  })()
+
   return (
     <Dialog
       onOpenChange={(next) => {
@@ -294,7 +302,10 @@ function ExternalLinkSafetyModal({
         <DialogHeader>
           <DialogTitle>Open external link?</DialogTitle>
           <DialogDescription>
-            You&apos;re about to visit an external website
+            You&apos;re about to visit{' '}
+            <span className="font-medium text-foreground">
+              {domain ?? 'an external website'}
+            </span>
           </DialogDescription>
         </DialogHeader>
         <div className="break-all border border-border bg-muted p-3 font-mono text-sm">{url}</div>

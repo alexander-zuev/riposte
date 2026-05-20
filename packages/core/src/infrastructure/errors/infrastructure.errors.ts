@@ -226,6 +226,51 @@ export class SlackApiError extends TaggedError('SlackApiError')<{
   }
 }
 
+export class SearchError extends TaggedError('SearchError')<{
+  message: string
+  cause: unknown
+  retryable: boolean
+  status?: number
+}>() {
+  constructor(args: {
+    cause: unknown
+    retryable: boolean
+    message?: string
+    status?: number
+  }) {
+    super({
+      message: args.message ?? 'Search failed',
+      cause: args.cause,
+      retryable: args.retryable,
+      status: args.status,
+    })
+  }
+}
+
+export class FetchError extends TaggedError('FetchError')<{
+  message: string
+  cause: unknown
+  retryable: boolean
+  status?: number
+  url?: string
+}>() {
+  constructor(args: {
+    cause: unknown
+    retryable: boolean
+    message?: string
+    status?: number
+    url?: string
+  }) {
+    super({
+      message: args.message ?? 'Fetch failed',
+      cause: args.cause,
+      retryable: args.retryable,
+      status: args.status,
+      url: args.url,
+    })
+  }
+}
+
 function getErrorMessage(cause: unknown): string | undefined {
   if (cause instanceof Error) return cause.message
   if (

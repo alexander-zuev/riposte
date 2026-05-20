@@ -6,6 +6,7 @@
 @import './typography.css';
 @import './radius.css';
 @import './shadows.css';
+@import './streamdown.css';
 @import './utilities.css';
 
 @tailwind utilities;

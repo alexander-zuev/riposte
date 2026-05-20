@@ -1,5 +1,6 @@
-import { createLogger, EntityNotFoundError } from '@riposte/core'
+import { createCommand, createLogger, EntityNotFoundError } from '@riposte/core'
 import type {
+  BuildStripeOAuthInstallUrl,
   CreateProduct,
   CreateProductResult,
   DOUnreachableError,
@@ -15,6 +16,7 @@ import type {
   UpdateProductResult,
   ValidationError,
 } from '@riposte/core'
+import { buildStripeOAuthInstallUrl } from '@server/application/handlers/stripe-oauth-handler'
 import type { CommandHandler, QueryHandler } from '@server/application/registry/types'
 import { Product } from '@server/domain/products'
 import { Result } from 'better-result'
@@ -71,17 +73,29 @@ export const createProduct: CommandHandler<
 
   // Prime the agent's onboarding chat. Non-fatal: orphan primes are harmless,
   // a missing prime can be re-primed later.
-  // TODO(stripe-link): build a real Stripe install URL here via a shared
-  // `buildStripeOAuthInstallUrl({ userId, productId, kv: ctx.deps.kv.auth,
-  // redirectAfter: '/products/${id}/agent' })` helper, then pass it into
-  // primeOnboarding so the welcome bubble links straight to Stripe instead of
-  // /products/${id}/connections. Requires extracting the URL builder from
-  // stripe.fn.ts and threading `redirectAfter` through stripe-oauth-state +
-  // HandleStripeOAuthCallback result + /api/stripe/oauth/callback redirect.
+  const buildStripeOAuthCommand: BuildStripeOAuthInstallUrl = createCommand(
+    'BuildStripeOAuthInstallUrl',
+    {
+      userId: command.userId,
+      productId: saved.value.id,
+      redirectAfter: `/products/${saved.value.id}/agent`,
+    },
+  )
+  const stripeInstallUrl = await buildStripeOAuthInstallUrl(buildStripeOAuthCommand, ctx)
+  if (stripeInstallUrl.isErr()) {
+    logger.error('build_stripe_oauth_install_url_failed', {
+      productId: saved.value.id,
+      error: stripeInstallUrl.error,
+    })
+  }
+
   const primed = await ctx.deps.services.disputeAgentClient().primeOnboarding({
     userId: command.userId,
     productId: saved.value.id,
     productName: command.productName,
+    connectStripeUrl: stripeInstallUrl.isOk()
+      ? stripeInstallUrl.value.url
+      : `/products/${saved.value.id}/connections`,
   })
   if (primed.isErr()) {
     logger.error('prime_onboarding_failed', { productId: saved.value.id, error: primed.error })

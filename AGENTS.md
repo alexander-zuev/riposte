@@ -36,6 +36,11 @@ Do not manually edit generated files. In particular, never hand-edit
 source config and running the appropriate generation command, such as
 `pnpm --filter @riposte/web run cf-typegen`.
 
+When adding or changing a Cloudflare Worker env var or binding in `wrangler.jsonc`, update the
+source config first and then regenerate Worker types with `pnpm --filter @riposte/web run
+cf-typegen` before touching application code. Do not paper over missing `Env` properties with type
+assertions, local widened env types, or `as string` casts.
+
 Do not manually create or edit Drizzle migration files or migration journal/snapshot metadata under
 `apps/web/src/server/infrastructure/db/migrations/`. Change the Drizzle schema first, then generate
 migrations with `pnpm --filter @riposte/web run db:generate`. If Drizzle prompts for an interactive

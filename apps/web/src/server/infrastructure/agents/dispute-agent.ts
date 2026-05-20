@@ -117,12 +117,11 @@ class DisputeAgentBase extends AIChatAgent<Env, DisputeAgentState, DisputeAgentP
    * handler after the product is persisted, so the chat is populated before
    * the merchant ever navigates to the agent page.
    */
-  // TODO(stripe-link): accept `connectStripeUrl` from the caller and use it as
-  // the markdown link target. Caller builds it via a shared
-  // `buildStripeOAuthInstallUrl({ userId, productId, kv, redirectAfter })`
-  // helper extracted from stripe.fn.ts, with `redirectAfter` set to the agent
-  // page so OAuth returns the merchant straight back to the chat.
-  async primeOnboarding(args: { productId: string; productName: string }) {
+  async primeOnboarding(args: {
+    productId: string
+    productName: string
+    connectStripeUrl: string
+  }) {
     if (this.messages.length > 0) return
     await this.persistMessages([
       {
@@ -134,7 +133,7 @@ class DisputeAgentBase extends AIChatAgent<Env, DisputeAgentState, DisputeAgentP
             text:
               `Hi, I'm **Riposte**. I'll defend **${args.productName}** against Stripe disputes. ` +
               `To start, I need access to your Stripe account so I can read disputes and submit evidence on your behalf. ` +
-              `[Connect Stripe →](/products/${args.productId}/connections)`,
+              `[Connect Stripe →](${args.connectStripeUrl})`,
           },
         ],
       },

@@ -38,7 +38,10 @@ import {
   getStripeAppSettings,
   syncDisputes,
 } from '@server/application/handlers/stripe-app-handler'
-import { handleStripeOAuthCallback } from '@server/application/handlers/stripe-oauth-handler'
+import {
+  buildStripeOAuthInstallUrl,
+  handleStripeOAuthCallback,
+} from '@server/application/handlers/stripe-oauth-handler'
 import {
   handleDisputeClosed,
   handleDisputeCreated,
@@ -64,6 +67,7 @@ export const COMMAND_HANDLERS = {
   SyncDisputes: syncDisputes,
   HandleStripeAppAuthorized: handleStripeAppAuthorized,
   HandleStripeAppDeauthorized: handleStripeAppDeauthorized,
+  BuildStripeOAuthInstallUrl: buildStripeOAuthInstallUrl,
   HandleStripeOAuthCallback: handleStripeOAuthCallback,
   HandleSlackOAuthCallback: handleSlackOAuthCallback,
   HandleSlackAppUninstalled: handleSlackAppUninstalled,

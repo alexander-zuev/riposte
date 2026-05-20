@@ -1,13 +1,20 @@
 import {
+  type BuildStripeOAuthInstallUrl,
+  type BuildStripeOAuthInstallUrlResult,
   createLogger,
+  type KVError,
   StripeOAuthCallbackError,
+  type HandleStripeOAuthCallbackResult,
   type DatabaseError,
   type HandleStripeOAuthCallback,
   type UUIDv4,
 } from '@riposte/core'
 import type { HandlerContext } from '@server/application/registry/types'
 import { getServerConfig } from '@server/infrastructure/config'
-import { consumeOAuthState } from '@server/infrastructure/stripe/stripe-oauth-state'
+import {
+  consumeOAuthState,
+  createOAuthState,
+} from '@server/infrastructure/stripe/stripe-oauth-state'
 import {
   getRequiredOAuthTokenFields,
   STRIPE_APPS_ACCESS_TOKEN_TTL_MS,
@@ -17,15 +24,51 @@ import { Result } from 'better-result'
 import StripeClient from 'stripe'
 
 const logger = createLogger('stripe-oauth-handler')
+const STRIPE_APP_CLIENT_ID = 'ca_UTQuSndRIZIb31NTd1oAtPSOYTMl1MFw'
+const STRIPE_APP_INSTALL_LINK_ID = 'chnlink_61UdsCZhNvQAInh1H41RbvfiqIYDIJHE'
 
 type StripeOAuthHandlerError = DatabaseError | StripeOAuthCallbackError
+
+export async function buildStripeOAuthInstallUrl(
+  command: BuildStripeOAuthInstallUrl,
+  { deps }: HandlerContext,
+): Promise<Result<BuildStripeOAuthInstallUrlResult, KVError>> {
+  const config = getServerConfig()
+  const state = await consumeOrCreateState(command, deps.kv.auth)
+  if (state.isErr()) return Result.err(state.error)
+
+  // Stripe Apps only accepts pre-registered absolute callback URLs.
+  const redirectUri = config.stripeOAuthCallbackUrl
+
+  const params = new URLSearchParams({
+    client_id: STRIPE_APP_CLIENT_ID,
+    response_type: 'code',
+    scope: 'stripe_apps',
+    redirect_uri: redirectUri,
+    state: state.value,
+  })
+
+  const url =
+    `https://marketplace.stripe.com/oauth/v2/${STRIPE_APP_INSTALL_LINK_ID}/authorize` +
+    `?${params.toString()}`
+
+  logger.info('stripe_oauth_initiated', {
+    userId: command.userId,
+    productId: command.productId,
+    redirectAfter: command.redirectAfter,
+    redirectUri,
+  })
+
+  return Result.ok({ url })
+}
 
 export async function handleStripeOAuthCallback(
   command: HandleStripeOAuthCallback,
   { deps, tx }: HandlerContext,
-): Promise<Result<void, StripeOAuthHandlerError>> {
+): Promise<Result<HandleStripeOAuthCallbackResult, StripeOAuthHandlerError>> {
   let userId: string | undefined
   let productId: UUIDv4 | undefined
+  let redirectAfter: string | undefined
 
   if (command.state) {
     const stored = await consumeOAuthState(command.state, deps.kv.auth)
@@ -38,6 +81,7 @@ export async function handleStripeOAuthCallback(
     }
     userId = stored.value.userId
     productId = stored.value.productId
+    redirectAfter = stored.value.redirectAfter
   }
 
   const config = getServerConfig()
@@ -156,5 +200,19 @@ export async function handleStripeOAuthCallback(
     userId: saved.value.userId,
   })
 
-  return Result.ok(undefined)
+  return Result.ok({ redirectAfter })
+}
+
+async function consumeOrCreateState(
+  command: BuildStripeOAuthInstallUrl,
+  kv: HandlerContext['deps']['kv']['auth'],
+): Promise<Result<string, KVError>> {
+  return await createOAuthState(
+    {
+      userId: command.userId,
+      productId: command.productId,
+      redirectAfter: command.redirectAfter,
+    },
+    kv,
+  )
 }

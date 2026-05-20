@@ -51,6 +51,7 @@ export type PrimeOnboardingInput = {
   userId: UUIDv4
   productId: UUIDv4
   productName: string
+  connectStripeUrl: string
 }
 
 export type GetMessagesInput = {
@@ -238,6 +239,7 @@ export class DisputeAgentClient implements IDisputeAgentClient {
     userId,
     productId,
     productName,
+    connectStripeUrl,
   }: PrimeOnboardingInput): Promise<Result<void, DOUnreachableError>> {
     return Result.tryPromise({
       try: async () => {
@@ -249,7 +251,7 @@ export class DisputeAgentClient implements IDisputeAgentClient {
           productId,
           disputeAgentOptions(userId),
         )
-        await agent.primeOnboarding({ productId, productName })
+        await agent.primeOnboarding({ productId, productName, connectStripeUrl })
       },
       catch: (cause) => new DOUnreachableError({ cause, retryable: isTransientError(cause) }),
     })

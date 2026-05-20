@@ -1,4 +1,4 @@
-import type { UUIDv4 } from '@riposte/core'
+import type { KVError, UUIDv4 } from '@riposte/core'
 import type { KVClient } from '@server/infrastructure/kv/kv-client'
 import { Result } from 'better-result'
 
@@ -8,15 +8,13 @@ const STATE_TTL_SECONDS = 600
 export type StripeOAuthState = {
   userId: string
   productId: UUIDv4
-  // TODO(stripe-link): add optional `redirectAfter?: string` so callers can
-  // route the post-callback redirect (e.g. agent welcome link → back to /agent
-  // instead of /notifications). Plumb into HandleStripeOAuthCallback result.
+  redirectAfter?: string
 }
 
 export async function createOAuthState(
   input: StripeOAuthState,
   kv: KVClient,
-): Promise<Result<string, Error>> {
+): Promise<Result<string, KVError>> {
   const state = crypto.randomUUID()
   const result = await kv.put(`${KV_PREFIX}${state}`, JSON.stringify(input), {
     ttl: STATE_TTL_SECONDS,
@@ -29,7 +27,7 @@ export async function createOAuthState(
 export async function consumeOAuthState(
   state: string,
   kv: KVClient,
-): Promise<Result<StripeOAuthState | null, Error>> {
+): Promise<Result<StripeOAuthState | null, KVError>> {
   const stored = await kv.get(`${KV_PREFIX}${state}`)
   if (stored.isErr()) return Result.err(stored.error)
   if (!stored.value) return Result.ok(null)

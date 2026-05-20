@@ -7,6 +7,15 @@ import { cn } from '@web/lib/utils'
 import { Button } from '@web/ui/components/ui/button'
 import { ButtonGroup, ButtonGroupText } from '@web/ui/components/ui/button-group'
 import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@web/ui/components/ui/dialog'
+import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
@@ -263,10 +272,50 @@ export type MessageResponseProps = ComponentProps<typeof Streamdown>
 
 const streamdownPlugins = { cjk, code, math, mermaid }
 
+function ExternalLinkSafetyModal({
+  isOpen,
+  onClose,
+  onConfirm,
+  url,
+}: {
+  isOpen: boolean
+  onClose: () => void
+  onConfirm: () => void
+  url: string
+}) {
+  return (
+    <Dialog
+      onOpenChange={(next) => {
+        if (!next) onClose()
+      }}
+      open={isOpen}
+    >
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Open external link?</DialogTitle>
+          <DialogDescription>
+            You&apos;re about to visit an external website
+          </DialogDescription>
+        </DialogHeader>
+        <div className="break-all border border-border bg-muted p-3 font-mono text-sm">{url}</div>
+        <DialogFooter>
+          <DialogClose render={<Button variant="secondary" />}>Cancel</DialogClose>
+          <Button onClick={onConfirm}>Open link</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 export const MessageResponse = memo(
   ({ className, ...props }: MessageResponseProps) => (
     <Streamdown
       className={cn('size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0', className)}
+      linkSafety={{
+        enabled: true,
+        onLinkCheck: (url) => url.startsWith('/'),
+        renderModal: (modalProps) => <ExternalLinkSafetyModal {...modalProps} />,
+      }}
       plugins={streamdownPlugins}
       {...props}
     />

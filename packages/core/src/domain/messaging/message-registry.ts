@@ -53,6 +53,7 @@ import {
 } from '../products'
 import { r2EventSchema, r2EventTransform } from '../storage/r2.messages'
 import {
+  buildStripeOAuthInstallUrlSchema,
   handleStripeAppAuthorizedSchema,
   handleStripeAppDeauthorizedSchema,
   handleStripeOAuthCallbackSchema,
@@ -83,6 +84,7 @@ export const domainCommandSchema = z.discriminatedUnion('name', [
   failDisputeCaseSchema,
   handleStripeAppAuthorizedSchema,
   handleStripeAppDeauthorizedSchema,
+  buildStripeOAuthInstallUrlSchema,
   handleStripeOAuthCallbackSchema,
   handleSlackOAuthCallbackSchema,
   handleSlackAppUninstalledSchema,

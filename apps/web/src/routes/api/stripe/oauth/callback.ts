@@ -1,7 +1,7 @@
 import { createCommand, createLogger, StripeOAuthCallbackError } from '@riposte/core'
 import { resultToApiResponse } from '@server/infrastructure/http/api-result'
 import { apiRouteWithDepsMiddleware } from '@server/infrastructure/middleware'
-import { createFileRoute, redirect } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 
 const logger = createLogger('stripe-oauth')
 
@@ -21,12 +21,12 @@ export const Route = createFileRoute('/api/stripe/oauth/callback')({
             error: stripeError,
             description: url.searchParams.get('error_description'),
           })
-          return redirectToNotifications({ stripeError })
+          return redirectToPath(url, '/notifications', { stripeError })
         }
 
         if (!code) {
           logger.warn('stripe_oauth_missing_params', { hasCode: !!code, hasState: !!state })
-          return redirectToNotifications({ stripeError: 'missing_params' })
+          return redirectToPath(url, '/notifications', { stripeError: 'missing_params' })
         }
 
         const command = createCommand('HandleStripeOAuthCallback', {
@@ -35,20 +35,18 @@ export const Route = createFileRoute('/api/stripe/oauth/callback')({
         })
         const result = await deps.services.messageBus().handle(command)
 
-        // TODO(stripe-link): honor a `redirectAfter` carried through the
-        // OAuth state. Plumb the field from `StripeOAuthState` into the
-        // `HandleStripeOAuthCallback` ok result so this branch can redirect to
-        // the agent page (or wherever the caller queued) instead of always
-        // /notifications. Today every connection lands on /notifications.
         return resultToApiResponse(result, {
-          ok: () => redirectToNotifications({ stripeConnected: 'true' }),
+          ok: (value) =>
+            redirectToPath(url, value.redirectAfter ?? '/notifications', {
+              stripeConnected: 'true',
+            }),
           err: (failure) => {
             if (StripeOAuthCallbackError.is(failure)) {
-              return redirectToNotifications({ stripeError: failure.reason })
+              return redirectToPath(url, '/notifications', { stripeError: failure.reason })
             }
 
             logger.error('stripe_oauth_callback_command_failed', { error: failure })
-            return redirectToNotifications({ stripeError: 'persistence_failed' })
+            return redirectToPath(url, '/notifications', { stripeError: 'persistence_failed' })
           },
         })
       },
@@ -56,10 +54,11 @@ export const Route = createFileRoute('/api/stripe/oauth/callback')({
   },
 })
 
-function redirectToNotifications(search: Record<string, string>) {
-  return redirect({
-    to: '/notifications',
-    search,
-    statusCode: 302,
-  })
+function redirectToPath(url: URL, pathname: string, search: Record<string, string>) {
+  const location = new URL(pathname, url)
+  for (const [key, value] of Object.entries(search)) {
+    location.searchParams.set(key, value)
+  }
+
+  return Response.redirect(location.toString(), 302)
 }

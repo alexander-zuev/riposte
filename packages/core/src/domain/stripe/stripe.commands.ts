@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 import { baseCommandSchema } from '../base/base.messages'
+import { UserIdSchema } from '../primitives'
 
 export const stripeWebhookEventSchema = z
   .object({
@@ -34,7 +35,15 @@ export const handleStripeOAuthCallbackSchema = baseCommandSchema.extend({
   state: z.string().min(1).optional(),
 })
 
+export const buildStripeOAuthInstallUrlSchema = baseCommandSchema.extend({
+  name: z.literal('BuildStripeOAuthInstallUrl'),
+  userId: UserIdSchema,
+  productId: z.uuidv4(),
+  redirectAfter: z.string().startsWith('/').optional(),
+})
+
 export type StripeWebhookEvent = z.infer<typeof stripeWebhookEventSchema>
 export type HandleStripeAppAuthorized = z.infer<typeof handleStripeAppAuthorizedSchema>
 export type HandleStripeAppDeauthorized = z.infer<typeof handleStripeAppDeauthorizedSchema>
 export type HandleStripeOAuthCallback = z.infer<typeof handleStripeOAuthCallbackSchema>
+export type BuildStripeOAuthInstallUrl = z.infer<typeof buildStripeOAuthInstallUrlSchema>

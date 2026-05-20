@@ -3,6 +3,9 @@
   "name": "riposte",
   "compatibility_date": "2026-04-21",
   "compatibility_flags": ["nodejs_compat"],
+  "browser": {
+    "binding": "BROWSER",
+  },
   "main": "./src/server.ts",
   "upload_source_maps": true,
   "observability": {
@@ -136,6 +139,7 @@
       "vars": {
         "ENV": "development",
         "APP_URL": "http://localhost:3000",
+        "STRIPE_OAUTH_CALLBACK_URL": "https://tunnel.riposte.sh/api/stripe/oauth/callback",
         "SENTRY_DSN": "https://be15dbb0ce04a60ac3d39dc7ddb9fec2@o4508393623257088.ingest.us.sentry.io/4511314272583680",
         "POSTHOG_API_KEY": "phc_tvCSeYXcuPPE6KzfhHjroFvPGFvaga3aocEmz95FdVd3",
         "GOOGLE_CLIENT_ID": "189119872614-1ef29kgrij3mmc38sbbmh7tl358835bg.apps.googleusercontent.com",
@@ -249,6 +253,7 @@
       "vars": {
         "ENV": "staging",
         "APP_URL": "https://staging.riposte.sh",
+        "STRIPE_OAUTH_CALLBACK_URL": "https://staging.riposte.sh/api/stripe/oauth/callback",
         "SENTRY_DSN": "https://be15dbb0ce04a60ac3d39dc7ddb9fec2@o4508393623257088.ingest.us.sentry.io/4511314272583680",
         "POSTHOG_API_KEY": "phc_tvCSeYXcuPPE6KzfhHjroFvPGFvaga3aocEmz95FdVd3",
         "GOOGLE_CLIENT_ID": "",
@@ -292,6 +297,7 @@
       "vars": {
         "ENV": "test",
         "APP_URL": "http://localhost:3000",
+        "STRIPE_OAUTH_CALLBACK_URL": "https://tunnel.riposte.sh/api/stripe/oauth/callback",
         "SENTRY_DSN": "",
         "POSTHOG_API_KEY": "",
         "GOOGLE_CLIENT_ID": "",
@@ -469,6 +475,7 @@
       "vars": {
         "ENV": "production",
         "APP_URL": "https://riposte.sh",
+        "STRIPE_OAUTH_CALLBACK_URL": "https://riposte.sh/api/stripe/oauth/callback",
         "SENTRY_DSN": "https://be15dbb0ce04a60ac3d39dc7ddb9fec2@o4508393623257088.ingest.us.sentry.io/4511314272583680",
         "POSTHOG_API_KEY": "phc_tvCSeYXcuPPE6KzfhHjroFvPGFvaga3aocEmz95FdVd3",
         "GOOGLE_CLIENT_ID": "189119872614-dmtnkqeoibjubc0frpkms8sptbn9j2h0.apps.googleusercontent.com",

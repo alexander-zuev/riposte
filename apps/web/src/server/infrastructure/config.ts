@@ -44,6 +44,7 @@ export function getServerConfig() {
       clientSecret: env.SLACK_CLIENT_SECRET,
       signingSecret: env.SLACK_SIGNING_SECRET,
     },
+    stripeOAuthCallbackUrl: env.STRIPE_OAUTH_CALLBACK_URL,
 
     kvStorage: env.AUTH_KV,
     rateLimiter: env.AUTH_RATE_LIMITER as DurableObjectNamespace,

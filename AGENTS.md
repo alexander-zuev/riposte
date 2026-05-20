@@ -370,6 +370,7 @@ Service bindings/assets/browser/vectorize/images:
 - UI primitives: default to components in `apps/web/src/ui/components` instead of raw HTML controls. Use raw elements only when there is a clear exception.
 - Styling: for colors, design tokens, typography, and reusable visual rules, reach for `apps/web/src/ui/stylesheets` first. If a needed token or utility is missing, ask why before adding one-off classes.
 - UI copy: do not end short interface labels, helper text, validation messages, button text, badges, or table cells with periods. Full prose paragraphs can use normal punctuation.
+- UI copy: do not use em dashes. Use commas, colons, or plain hyphens instead.
 - Layout spacing: prefer flex/grid `gap-*` utilities. Do not add new Tailwind `space-x-*` or `space-y-*` layout utilities.
 - Layout sizing: do not use arbitrary pixel Tailwind values like `min-h-[89px]` for normal layout. Use design tokens, semantic sizing, responsive constraints, or component variants. Arbitrary values are only acceptable for real external constraints such as a fixed third-party widget or asset, and the reason should be obvious from context.
 - Forms: use TanStack Form for all forms, including small forms. Prefer `apps/web/src/ui/components/ui/field.tsx` primitives (`Field`, `FieldLabel`, `FieldError`, etc.) or build reusable wrappers around them.

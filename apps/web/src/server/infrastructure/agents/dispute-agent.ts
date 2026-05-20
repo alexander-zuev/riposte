@@ -124,7 +124,7 @@ class DisputeAgentBase extends AIChatAgent<Env, DisputeAgentState, DisputeAgentP
   // page so OAuth returns the merchant straight back to the chat.
   async primeOnboarding(args: { productId: string; productName: string }) {
     if (this.messages.length > 0) return
-    await this.saveMessages([
+    await this.persistMessages([
       {
         id: 'welcome',
         role: 'assistant',
@@ -132,7 +132,7 @@ class DisputeAgentBase extends AIChatAgent<Env, DisputeAgentState, DisputeAgentP
           {
             type: 'text',
             text:
-              `Hi — I'm **Riposte**. I'll defend **${args.productName}** against Stripe disputes. ` +
+              `Hi, I'm **Riposte**. I'll defend **${args.productName}** against Stripe disputes. ` +
               `To start, I need access to your Stripe account so I can read disputes and submit evidence on your behalf. ` +
               `[Connect Stripe →](/products/${args.productId}/connections)`,
           },

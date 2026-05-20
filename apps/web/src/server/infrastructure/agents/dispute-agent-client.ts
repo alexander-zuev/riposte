@@ -87,9 +87,7 @@ export interface IDisputeAgentClient {
    * (the SDK's default `UIMessage<unknown>` would fail TanStack Start's
    * validator). Widen the generic when we start attaching metadata.
    */
-  getMessages: (
-    input: GetMessagesInput,
-  ) => Promise<Result<UIMessage<never>[], DOUnreachableError>>
+  getMessages: (input: GetMessagesInput) => Promise<Result<UIMessage<never>[], DOUnreachableError>>
 }
 
 export class DisputeAgentClient implements IDisputeAgentClient {
@@ -270,7 +268,7 @@ export class DisputeAgentClient implements IDisputeAgentClient {
         )
         // Cast: the DO returns the SDK's `UIMessage<unknown>` but nothing in
         // this codebase writes `metadata`. See the interface docstring above.
-        return (await agent.getMessages()) as UIMessage<never>[]
+        return agent.getMessages()
       },
       catch: (cause) => new DOUnreachableError({ cause, retryable: isTransientError(cause) }),
     })

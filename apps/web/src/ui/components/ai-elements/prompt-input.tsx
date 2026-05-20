@@ -36,7 +36,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@web/ui/components/ui/select'
-import { Spinner } from '@web/ui/components/ui/spinner'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@web/ui/components/ui/tooltip'
 import type { ChatStatus, FileUIPart, SourceDocumentUIPart } from 'ai'
 import { nanoid } from 'nanoid'
@@ -1132,13 +1131,12 @@ export const PromptInputSubmit = ({
   children,
   ...props
 }: PromptInputSubmitProps) => {
-  const isGenerating = status === 'submitted' || status === 'streaming'
+  const isSubmitted = status === 'submitted'
+  const isStreaming = status === 'streaming'
 
   let Icon = <ArrowElbowDownLeftIcon className="size-4" />
 
-  if (status === 'submitted') {
-    Icon = <Spinner />
-  } else if (status === 'streaming') {
+  if (isStreaming) {
     Icon = <SquareIcon className="size-4" />
   } else if (status === 'error') {
     Icon = <XIcon className="size-4" />
@@ -1146,25 +1144,26 @@ export const PromptInputSubmit = ({
 
   const handleClick = useCallback(
     (e: Parameters<NonNullable<ComponentProps<typeof InputGroupButton>['onClick']>>[0]) => {
-      if (isGenerating && onStop) {
+      if (isStreaming && onStop) {
         e.preventDefault()
         onStop()
         return
       }
       onClick?.(e)
     },
-    [isGenerating, onStop, onClick],
+    [isStreaming, onStop, onClick],
   )
 
   return (
     <InputGroupButton
-      aria-label={isGenerating ? 'Stop' : 'Submit'}
+      aria-label={isStreaming ? 'Stop' : 'Submit'}
       className={cn(className)}
       onClick={handleClick}
       size={size}
-      type={isGenerating && onStop ? 'button' : 'submit'}
+      type={isStreaming && onStop ? 'button' : 'submit'}
       variant={variant}
       {...props}
+      disabled={isSubmitted || props.disabled}
     >
       {children ?? Icon}
     </InputGroupButton>

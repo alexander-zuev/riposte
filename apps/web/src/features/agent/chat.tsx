@@ -15,6 +15,7 @@ import {
 } from '@web/ui/components/ai-elements/prompt-input'
 import { Card, CardContent, CardFooter } from '@web/ui/components/ui/card'
 import { Spinner } from '@web/ui/components/ui/spinner'
+import { useCallback } from 'react'
 
 type ChatProps = {
   productId: string
@@ -28,9 +29,17 @@ type ChatProps = {
  */
 export function Chat({ productId }: ChatProps) {
   const chat = useDisputeAgentChat(productId)
+  const handleSubmit = useCallback(
+    (message: { text?: string }) => {
+      const text = message.text?.trim()
+      if (!text) return
+      void chat.sendMessage({ text })
+    },
+    [chat],
+  )
 
   return (
-    <Card className="h-[calc(100vh-22rem)] gap-0 py-0">
+    <Card className="h-[calc(100vh-22rem)] gap-0 py-0 text-sm">
       <CardContent className="flex flex-1 overflow-hidden p-0">
         <Conversation className="flex-1">
           <ConversationContent>
@@ -53,18 +62,14 @@ export function Chat({ productId }: ChatProps) {
         </div>
       )}
       <CardFooter className="p-0">
-        <PromptInput
-          className="w-full border-0"
-          onSubmit={(message) => {
-            const text = message.text?.trim()
-            if (!text) return
-            chat.sendMessage({ text })
-          }}
-        >
-          <PromptInputTextarea placeholder="Ask the agent — or click the action above to continue" />
-          <PromptInputFooter>
+        <PromptInput className="w-full border-0" onSubmit={handleSubmit}>
+          <PromptInputTextarea
+            className="text-sm md:text-sm"
+            placeholder="Ask the agent — or click the action above to continue"
+          />
+          <PromptInputFooter className="text-sm">
             <PromptInputTools />
-            <PromptInputSubmit status={chat.status} onStop={chat.stop} />
+            <PromptInputSubmit className="text-sm" status={chat.status} onStop={chat.stop} />
           </PromptInputFooter>
         </PromptInput>
       </CardFooter>

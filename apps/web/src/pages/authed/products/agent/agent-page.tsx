@@ -45,8 +45,8 @@ export function AgentPage({ product }: AgentPageProps) {
             Activity
           </TabsTrigger>
         </TabsList>
-        <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
-          <div>
+        <div className="flex min-w-0 flex-col gap-6 lg:flex-row">
+          <div className="min-w-0 flex-1">
             <TabsContent value="chat">
               <ChatTab productId={product.id} />
             </TabsContent>
@@ -54,7 +54,7 @@ export function AgentPage({ product }: AgentPageProps) {
               <ActivityTab mode={mode} />
             </TabsContent>
           </div>
-          <aside className="flex flex-col gap-4">
+          <aside className="flex w-70 shrink-0 flex-col gap-4">
             <AgentSidebar mode={mode} setup={setup} productId={product.id} />
           </aside>
         </div>

@@ -1,34 +1,35 @@
-import type { AgentMode } from '@web/features/agent/agent-mode'
-import type { UseProductSetupResult } from '@web/features/agent/hooks/use-product-setup'
-import { OnboardingChatSurface } from '@web/features/agent/onboarding-chat-surface'
+import { Chat } from '@web/features/agent/chat'
+import { Card, CardContent } from '@web/ui/components/ui/card'
+import { Spinner } from '@web/ui/components/ui/spinner'
+import { Suspense } from 'react'
 
 type ChatTabProps = {
-  mode: AgentMode
-  setup: UseProductSetupResult
-  productName: string
+  productId: string
 }
 
 /**
- * Chat tab content. Setup mode → onboarding chat surface (scripted, with
- * inline step actions). Post-setup → empty state pointing at the archived
- * onboarding transcript. Free chat with the agent ships after MVP.
+ * Chat tab content. Always-on agent chat — the agent's system prompt is
+ * mode-aware (setup vs operate), so the UI never gates the chat surface.
+ *
+ * Wraps Chat in Suspense because `useAgent`/`useAgentChat` throw a promise on
+ * first mount while the agent client warms up. Without a local boundary, that
+ * promise bubbles to the router's pending UI and reloads the whole page.
+ * Session-switching UI is post-MVP.
  */
-export function ChatTab({ mode, setup, productName }: ChatTabProps) {
-  if (mode === 'setup' && setup.status === 'incomplete') {
-    return <OnboardingChatSurface productName={productName} state={setup.state} />
-  }
-  if (mode === 'loading') return null
-  return <PostSetupEmpty />
+export function ChatTab({ productId }: ChatTabProps) {
+  return (
+    <Suspense fallback={<ChatLoading />}>
+      <Chat productId={productId} />
+    </Suspense>
+  )
 }
 
-function PostSetupEmpty() {
+function ChatLoading() {
   return (
-    <section className="flex flex-col items-center gap-2 border border-dashed bg-surface px-6 py-12 text-center">
-      <strong>Setup transcript archived</strong>
-      <small className="max-w-md text-muted-foreground">
-        Free chat with the agent ships after MVP. The agent runs autonomously per dispute and
-        records every step in the activity feed
-      </small>
-    </section>
+    <Card className="h-[calc(100vh-22rem)] gap-0 py-0">
+      <CardContent className="flex flex-1 items-center justify-center p-0 text-muted-foreground">
+        <Spinner />
+      </CardContent>
+    </Card>
   )
 }

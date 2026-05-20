@@ -46,6 +46,7 @@
     "@libpdf/core": "catalog:",
     "@marsidev/react-turnstile": "catalog:",
     "@phosphor-icons/react": "catalog:",
+    "@posthog/ai": "catalog:",
     "@radix-ui/colors": "catalog:",
     "@riposte/core": "workspace:*",
     "@sentry/cloudflare": "catalog:",
@@ -93,6 +94,7 @@
     "tailwindcss": "catalog:",
     "tw-animate-css": "catalog:",
     "use-stick-to-bottom": "^1.1.4",
+    "workers-ai-provider": "^3.1.14",
     "zod": "catalog:",
     "zustand": "catalog:"
   },

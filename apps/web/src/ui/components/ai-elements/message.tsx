@@ -38,7 +38,7 @@ export const MessageContent = ({ children, className, ...props }: MessageContent
   <div
     className={cn(
       'is-user:dark flex w-fit min-w-0 max-w-full flex-col gap-2 overflow-hidden text-sm',
-      'group-[.is-user]:ml-auto group-[.is-user]:rounded-lg group-[.is-user]:bg-secondary group-[.is-user]:px-4 group-[.is-user]:py-3 group-[.is-user]:text-foreground',
+      'group-[.is-user]:ml-auto group-[.is-user]:bg-muted group-[.is-user]:px-4 group-[.is-user]:py-3 group-[.is-user]:text-foreground',
       'group-[.is-assistant]:text-foreground',
       className,
     )}
@@ -201,16 +201,7 @@ export const MessageBranchSelector = ({ className, ...props }: MessageBranchSele
     return null
   }
 
-  return (
-    <ButtonGroup
-      className={cn(
-        '[&>*:not(:first-child)]:rounded-l-md [&>*:not(:last-child)]:rounded-r-md',
-        className,
-      )}
-      orientation="horizontal"
-      {...props}
-    />
-  )
+  return <ButtonGroup className={cn(className)} orientation="horizontal" {...props} />
 }
 
 export type MessageBranchPreviousProps = ComponentProps<typeof Button>
@@ -289,7 +280,7 @@ MessageResponse.displayName = 'MessageResponse'
 export type MessageToolbarProps = ComponentProps<'div'>
 
 export const MessageToolbar = ({ className, children, ...props }: MessageToolbarProps) => (
-  <div className={cn('mt-4 flex w-full items-center justify-between gap-4', className)} {...props}>
+  <div className={cn('flex w-full items-center justify-between gap-4', className)} {...props}>
     {children}
   </div>
 )

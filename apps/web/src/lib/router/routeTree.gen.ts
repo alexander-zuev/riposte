@@ -32,6 +32,7 @@ import { Route as ApiStripeWebhookRouteImport } from './../../routes/api/stripe/
 import { Route as ApiSlackEventsRouteImport } from './../../routes/api/slack/events'
 import { Route as ApiCacheImagesRouteImport } from './../../routes/api/cache/images'
 import { Route as ApiAuthSplatRouteImport } from './../../routes/api/auth/$'
+import { Route as ApiAgentsSplatRouteImport } from './../../routes/api/agents/$'
 import { Route as AuthedProductsNewRouteImport } from './../../routes/_authed/products/new'
 import { Route as AuthedProductsProductIdRouteRouteImport } from './../../routes/_authed/products/$productId/route'
 import { Route as AuthedProductsProductIdIndexRouteImport } from './../../routes/_authed/products/$productId/index'
@@ -160,6 +161,11 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAgentsSplatRoute = ApiAgentsSplatRouteImport.update({
+  id: '/api/agents/$',
+  path: '/api/agents/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthedProductsNewRoute = AuthedProductsNewRouteImport.update({
   id: '/products/new',
   path: '/products/new',
@@ -255,6 +261,7 @@ export interface FileRoutesByFullPath {
   '/dev/': typeof DevIndexRoute
   '/products/$productId': typeof AuthedProductsProductIdRouteRouteWithChildren
   '/products/new': typeof AuthedProductsNewRoute
+  '/api/agents/$': typeof ApiAgentsSplatRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/cache/images': typeof ApiCacheImagesRoute
   '/api/slack/events': typeof ApiSlackEventsRoute
@@ -289,6 +296,7 @@ export interface FileRoutesByTo {
   '/dev/evidence-packets': typeof DevEvidencePacketsRouteWithChildren
   '/dev': typeof DevIndexRoute
   '/products/new': typeof AuthedProductsNewRoute
+  '/api/agents/$': typeof ApiAgentsSplatRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/cache/images': typeof ApiCacheImagesRoute
   '/api/slack/events': typeof ApiSlackEventsRoute
@@ -329,6 +337,7 @@ export interface FileRoutesById {
   '/dev/': typeof DevIndexRoute
   '/_authed/products/$productId': typeof AuthedProductsProductIdRouteRouteWithChildren
   '/_authed/products/new': typeof AuthedProductsNewRoute
+  '/api/agents/$': typeof ApiAgentsSplatRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/cache/images': typeof ApiCacheImagesRoute
   '/api/slack/events': typeof ApiSlackEventsRoute
@@ -368,6 +377,7 @@ export interface FileRouteTypes {
     | '/dev/'
     | '/products/$productId'
     | '/products/new'
+    | '/api/agents/$'
     | '/api/auth/$'
     | '/api/cache/images'
     | '/api/slack/events'
@@ -402,6 +412,7 @@ export interface FileRouteTypes {
     | '/dev/evidence-packets'
     | '/dev'
     | '/products/new'
+    | '/api/agents/$'
     | '/api/auth/$'
     | '/api/cache/images'
     | '/api/slack/events'
@@ -441,6 +452,7 @@ export interface FileRouteTypes {
     | '/dev/'
     | '/_authed/products/$productId'
     | '/_authed/products/new'
+    | '/api/agents/$'
     | '/api/auth/$'
     | '/api/cache/images'
     | '/api/slack/events'
@@ -467,6 +479,7 @@ export interface RootRouteChildren {
   AuthedRouteRoute: typeof AuthedRouteRouteWithChildren
   PublicRouteRoute: typeof PublicRouteRouteWithChildren
   DevRouteRoute: typeof DevRouteRouteWithChildren
+  ApiAgentsSplatRoute: typeof ApiAgentsSplatRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiCacheImagesRoute: typeof ApiCacheImagesRoute
   ApiSlackEventsRoute: typeof ApiSlackEventsRoute
@@ -639,6 +652,13 @@ declare module '@tanstack/react-router' {
       path: '/api/auth/$'
       fullPath: '/api/auth/$'
       preLoaderRoute: typeof ApiAuthSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/agents/$': {
+      id: '/api/agents/$'
+      path: '/api/agents/$'
+      fullPath: '/api/agents/$'
+      preLoaderRoute: typeof ApiAgentsSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authed/products/new': {
@@ -861,6 +881,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthedRouteRoute: AuthedRouteRouteWithChildren,
   PublicRouteRoute: PublicRouteRouteWithChildren,
   DevRouteRoute: DevRouteRouteWithChildren,
+  ApiAgentsSplatRoute: ApiAgentsSplatRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiCacheImagesRoute: ApiCacheImagesRoute,
   ApiSlackEventsRoute: ApiSlackEventsRoute,

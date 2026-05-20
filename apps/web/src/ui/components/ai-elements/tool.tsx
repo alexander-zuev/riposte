@@ -22,10 +22,7 @@ import { CodeBlock } from './code-block'
 export type ToolProps = ComponentProps<typeof Collapsible>
 
 export const Tool = ({ className, ...props }: ToolProps) => (
-  <Collapsible
-    className={cn('group not-prose mb-4 w-full rounded-md border', className)}
-    {...props}
-  />
+  <Collapsible className={cn('group not-prose w-full border', className)} {...props} />
 )
 
 export type ToolPart = ToolUIPart | DynamicToolUIPart
@@ -53,17 +50,29 @@ const statusLabels: Record<ToolPart['state'], string> = {
 }
 
 const statusIcons: Record<ToolPart['state'], ReactNode> = {
-  'approval-requested': <ClockIcon className="size-4 text-yellow-600" />,
-  'approval-responded': <CheckCircleIcon className="size-4 text-blue-600" />,
+  'approval-requested': <ClockIcon className="size-4" />,
+  'approval-responded': <CheckCircleIcon className="size-4" />,
   'input-available': <ClockIcon className="size-4 animate-pulse" />,
-  'input-streaming': <CircleIcon className="size-4" />,
-  'output-available': <CheckCircleIcon className="size-4 text-green-600" />,
-  'output-denied': <XCircleIcon className="size-4 text-orange-600" />,
-  'output-error': <XCircleIcon className="size-4 text-red-600" />,
+  'input-streaming': <CircleIcon className="size-4" weight="regular" />,
+  'output-available': <CheckCircleIcon className="size-4" />,
+  'output-denied': <XCircleIcon className="size-4" />,
+  'output-error': <XCircleIcon className="size-4" />,
+}
+
+type BadgeVariant = ComponentProps<typeof Badge>['variant']
+
+const statusVariants: Record<ToolPart['state'], BadgeVariant> = {
+  'approval-requested': 'warning',
+  'approval-responded': 'info',
+  'input-available': 'secondary',
+  'input-streaming': 'secondary',
+  'output-available': 'success',
+  'output-denied': 'secondary',
+  'output-error': 'destructive',
 }
 
 export const getStatusBadge = (status: ToolPart['state']) => (
-  <Badge className="gap-1.5 rounded-full text-xs" variant="secondary">
+  <Badge variant={statusVariants[status]}>
     {statusIcons[status]}
     {statusLabels[status]}
   </Badge>
@@ -99,7 +108,7 @@ export type ToolContentProps = ComponentProps<typeof CollapsibleContent>
 export const ToolContent = ({ className, ...props }: ToolContentProps) => (
   <CollapsibleContent
     className={cn(
-      'data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-top-2 data-[state=open]:slide-in-from-top-2 space-y-4 p-4 text-popover-foreground outline-none data-[state=closed]:animate-out data-[state=open]:animate-in',
+      'flex flex-col gap-4 p-4 text-popover-foreground outline-none data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-top-2 data-[state=closed]:animate-out data-[state=open]:slide-in-from-top-2 data-[state=open]:animate-in',
       className,
     )}
     {...props}
@@ -111,11 +120,9 @@ export type ToolInputProps = ComponentProps<'div'> & {
 }
 
 export const ToolInput = ({ className, input, ...props }: ToolInputProps) => (
-  <div className={cn('space-y-2 overflow-hidden', className)} {...props}>
-    <h4 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-      Parameters
-    </h4>
-    <div className="rounded-md bg-muted/50">
+  <div className={cn('flex flex-col gap-2 overflow-hidden', className)} {...props}>
+    <small className="font-medium tracking-wide text-muted-foreground uppercase">Parameters</small>
+    <div className="bg-muted/50">
       <CodeBlock code={JSON.stringify(input, null, 2)} language="json" />
     </div>
   </div>
@@ -140,14 +147,14 @@ export const ToolOutput = ({ className, output, errorText, ...props }: ToolOutpu
   }
 
   return (
-    <div className={cn('space-y-2', className)} {...props}>
-      <h4 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+    <div className={cn('flex flex-col gap-2', className)} {...props}>
+      <small className="font-medium tracking-wide text-muted-foreground uppercase">
         {errorText ? 'Error' : 'Result'}
-      </h4>
+      </small>
       <div
         className={cn(
-          'overflow-x-auto rounded-md text-xs [&_table]:w-full',
-          errorText ? 'bg-destructive/10 text-destructive' : 'bg-muted/50 text-foreground',
+          'overflow-x-auto text-xs [&_table]:w-full',
+          errorText ? 'bg-destructive-muted text-destructive' : 'bg-muted/50 text-foreground',
         )}
       >
         {errorText && <div>{errorText}</div>}

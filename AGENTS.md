@@ -366,6 +366,7 @@ Service bindings/assets/browser/vectorize/images:
 - Commit messages must use Conventional Commits, such as `feat: add dispute sync`,
   `fix: deduplicate Stripe webhooks`, or `docs: update agent guidance`.
 - Formatting: oxfmt. Linting: oxlint. No ESLint/Prettier.
+- No leading underscores on identifiers (`no-underscore-dangle`). Use `private`/`readonly` modifiers for class fields instead of `_field` naming; rename `_var` locals to a meaningful name.
 - UI primitives: default to components in `apps/web/src/ui/components` instead of raw HTML controls. Use raw elements only when there is a clear exception.
 - Styling: for colors, design tokens, typography, and reusable visual rules, reach for `apps/web/src/ui/stylesheets` first. If a needed token or utility is missing, ask why before adding one-off classes.
 - UI copy: do not end short interface labels, helper text, validation messages, button text, badges, or table cells with periods. Full prose paragraphs can use normal punctuation.

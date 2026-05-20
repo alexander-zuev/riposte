@@ -35,6 +35,11 @@ export const Route = createFileRoute('/api/stripe/oauth/callback')({
         })
         const result = await deps.services.messageBus().handle(command)
 
+        // TODO(stripe-link): honor a `redirectAfter` carried through the
+        // OAuth state. Plumb the field from `StripeOAuthState` into the
+        // `HandleStripeOAuthCallback` ok result so this branch can redirect to
+        // the agent page (or wherever the caller queued) instead of always
+        // /notifications. Today every connection lands on /notifications.
         return resultToApiResponse(result, {
           ok: () => redirectToNotifications({ stripeConnected: 'true' }),
           err: (failure) => {

@@ -1,4 +1,4 @@
-import { EntityNotFoundError } from '@riposte/core'
+import { createLogger, EntityNotFoundError } from '@riposte/core'
 import type {
   CreateProduct,
   CreateProductResult,
@@ -18,6 +18,8 @@ import type {
 import type { CommandHandler, QueryHandler } from '@server/application/registry/types'
 import { Product } from '@server/domain/products'
 import { Result } from 'better-result'
+
+const logger = createLogger('product-handler')
 
 export const listProducts: QueryHandler<ListProducts, ListProductsResult, DatabaseError> = async (
   query,
@@ -66,6 +68,24 @@ export const createProduct: CommandHandler<
 
   const saved = await ctx.deps.repos.products(ctx.tx).save(product.value)
   if (saved.isErr()) return Result.err(saved.error)
+
+  // Prime the agent's onboarding chat. Non-fatal: orphan primes are harmless,
+  // a missing prime can be re-primed later.
+  // TODO(stripe-link): build a real Stripe install URL here via a shared
+  // `buildStripeOAuthInstallUrl({ userId, productId, kv: ctx.deps.kv.auth,
+  // redirectAfter: '/products/${id}/agent' })` helper, then pass it into
+  // primeOnboarding so the welcome bubble links straight to Stripe instead of
+  // /products/${id}/connections. Requires extracting the URL builder from
+  // stripe.fn.ts and threading `redirectAfter` through stripe-oauth-state +
+  // HandleStripeOAuthCallback result + /api/stripe/oauth/callback redirect.
+  const primed = await ctx.deps.services.disputeAgentClient().primeOnboarding({
+    userId: command.userId,
+    productId: saved.value.id,
+    productName: command.productName,
+  })
+  if (primed.isErr()) {
+    logger.error('prime_onboarding_failed', { productId: saved.value.id, error: primed.error })
+  }
 
   return Result.ok({ productId: saved.value.id })
 }

@@ -1184,7 +1184,7 @@ export const PromptInputSelectTrigger = ({
   <SelectTrigger
     className={cn(
       'border-none bg-transparent font-medium text-muted-foreground shadow-none transition-colors',
-      'hover:bg-accent hover:text-foreground aria-expanded:bg-accent aria-expanded:text-foreground',
+      'hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground',
       className,
     )}
     {...props}
@@ -1246,22 +1246,22 @@ export const PromptInputTabLabel = ({
   children,
   ...props
 }: PromptInputTabLabelProps) => (
-  <h3 className={cn('mb-2 px-3 font-medium text-muted-foreground text-xs', className)} {...props}>
+  <small className={cn('mb-2 block px-3 font-medium text-muted-foreground', className)} {...props}>
     {children}
-  </h3>
+  </small>
 )
 
 export type PromptInputTabBodyProps = HTMLAttributes<HTMLDivElement>
 
 export const PromptInputTabBody = ({ className, ...props }: PromptInputTabBodyProps) => (
-  <div className={cn('space-y-1', className)} {...props} />
+  <div className={cn('flex flex-col gap-1', className)} {...props} />
 )
 
 export type PromptInputTabItemProps = HTMLAttributes<HTMLDivElement>
 
 export const PromptInputTabItem = ({ className, ...props }: PromptInputTabItemProps) => (
   <div
-    className={cn('flex items-center gap-2 px-3 py-2 text-xs hover:bg-accent', className)}
+    className={cn('flex items-center gap-2 px-3 py-2 text-xs hover:bg-muted', className)}
     {...props}
   />
 )

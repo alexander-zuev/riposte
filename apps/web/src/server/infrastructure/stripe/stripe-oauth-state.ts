@@ -8,6 +8,9 @@ const STATE_TTL_SECONDS = 600
 export type StripeOAuthState = {
   userId: string
   productId: UUIDv4
+  // TODO(stripe-link): add optional `redirectAfter?: string` so callers can
+  // route the post-callback redirect (e.g. agent welcome link → back to /agent
+  // instead of /notifications). Plumb into HandleStripeOAuthCallback result.
 }
 
 export async function createOAuthState(

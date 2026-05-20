@@ -4,6 +4,7 @@ packages:
   - scripts
 
 allowBuilds:
+  '@google/genai': false
   '@sentry/cli': true
   '@tailwindcss/oxide': true
   better-sqlite3: true
@@ -96,6 +97,7 @@ catalog:
   oxfmt: ^0.50.0
   oxlint: ^1.65.0
   postgres: ^3.4.9
+  '@posthog/ai': ^7.18.8
   posthog-js: ^1.373.5
   posthog-node: ^5.34.2
   react: ^19.2.6

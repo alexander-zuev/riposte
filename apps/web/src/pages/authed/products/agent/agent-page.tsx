@@ -48,7 +48,7 @@ export function AgentPage({ product }: AgentPageProps) {
         <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
           <div>
             <TabsContent value="chat">
-              <ChatTab mode={mode} setup={setup} productName={product.productName} />
+              <ChatTab productId={product.id} />
             </TabsContent>
             <TabsContent value="activity">
               <ActivityTab mode={mode} />

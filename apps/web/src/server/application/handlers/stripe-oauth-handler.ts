@@ -1,16 +1,20 @@
 import {
   type BuildStripeOAuthInstallUrl,
   type BuildStripeOAuthInstallUrlResult,
+  createEvent,
   createLogger,
+  type DOUnreachableError,
   type KVError,
   StripeOAuthCallbackError,
   type HandleStripeOAuthCallbackResult,
   type DatabaseError,
   type HandleStripeOAuthCallback,
+  type StripeConnectionCreated,
   type UUIDv4,
 } from '@riposte/core'
-import type { HandlerContext } from '@server/application/registry/types'
+import type { EventHandler, HandlerContext } from '@server/application/registry/types'
 import { getServerConfig } from '@server/infrastructure/config'
+import { registerEvents } from '@server/infrastructure/context/event-context'
 import {
   consumeOAuthState,
   createOAuthState,
@@ -200,7 +204,28 @@ export async function handleStripeOAuthCallback(
     userId: saved.value.userId,
   })
 
+  // TODO(stripe-connection-entity): move this emission onto a StripeConnection
+  // entity once one exists; dispatch via BaseRepository like other aggregates.
+  registerEvents([
+    createEvent('StripeConnectionCreated', {
+      userId: saved.value.userId,
+      productId: saved.value.productId,
+      stripeAccountId: saved.value.stripeAccountId,
+      livemode: saved.value.livemode,
+    }),
+  ])
+
   return Result.ok({ redirectAfter })
+}
+
+export const handleStripeConnectionCreated: EventHandler<
+  StripeConnectionCreated,
+  DOUnreachableError
+> = async (event, ctx) => {
+  return ctx.deps.services.disputeAgentClient().signalStripeConnected({
+    userId: event.userId,
+    productId: event.productId,
+  })
 }
 
 async function consumeOrCreateState(

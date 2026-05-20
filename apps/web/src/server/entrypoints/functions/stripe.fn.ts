@@ -8,6 +8,7 @@ const logger = createLogger('stripe.fn')
 
 const getStripeOAuthUrlInput = z.object({
   productId: z.uuidv4(),
+  redirectAfter: z.string().startsWith('/').optional(),
 })
 
 export const getStripeOAuthUrl = createServerFn({ method: 'GET' })
@@ -17,6 +18,7 @@ export const getStripeOAuthUrl = createServerFn({ method: 'GET' })
     const command = createCommand('BuildStripeOAuthInstallUrl', {
       userId: context.user.id,
       productId: data.productId,
+      redirectAfter: data.redirectAfter,
     })
     const result = await context.deps.services.messageBus().handle(command)
     if (result.isErr()) return toServerFnRpc(Result.err(result.error))

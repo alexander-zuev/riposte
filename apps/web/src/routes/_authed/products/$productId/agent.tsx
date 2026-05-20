@@ -1,7 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { chatQueries } from '@web/entities/chat/chat-queries'
 import { productQueries } from '@web/entities/products/product-queries'
-import { useStripeConnectedToast } from '@web/features/agent/hooks/use-stripe-connected-toast'
 import { AgentPage } from '@web/pages/authed/products/agent/agent-page'
 import { z } from 'zod'
 
@@ -19,12 +18,5 @@ export const Route = createFileRoute('/_authed/products/$productId/agent')({
       context.queryClient.ensureQueryData(productQueries.setup(params.productId)),
       context.queryClient.prefetchQuery(chatQueries.messages(params.productId)),
     ]),
-  component: RouteComponent,
+  component: AgentPage,
 })
-
-function RouteComponent() {
-  const { product } = Route.useRouteContext()
-  const { productId } = Route.useParams()
-  useStripeConnectedToast(productId)
-  return <AgentPage product={product} />
-}

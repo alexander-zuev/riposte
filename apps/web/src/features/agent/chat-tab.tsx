@@ -1,38 +1,39 @@
 import { useQuery } from '@tanstack/react-query'
 import { chatQueries } from '@web/entities/chat/chat-queries'
 import { Chat } from '@web/features/agent/chat'
+import type {
+  AgentTransportState,
+  useDisputeAgent,
+} from '@web/features/agent/hooks/use-dispute-agent-chat'
 import { Alert, AlertAction, AlertDescription, AlertTitle } from '@web/ui/components/ui/alert'
 import { Button } from '@web/ui/components/ui/button'
-import { Card, CardContent } from '@web/ui/components/ui/card'
 import { Spinner } from '@web/ui/components/ui/spinner'
 
 type ChatTabProps = {
   productId: string
+  agent: ReturnType<typeof useDisputeAgent>
+  transportState: AgentTransportState
 }
 
 /**
  * Chat tab orchestrator. Reads the per-product chat history via the messages
  * Query, then mounts `<Chat>` once the seed is available. WS-driven updates
- * happen inside `<Chat>`; this layer only owns the initial-load loading and
- * error states (replaces the previous Suspense boundary).
+ * happen inside `<Chat>`; this layer owns initial-load loading and error
+ * states. Renders inside the parent card — no card wrapper here.
  */
-export function ChatTab({ productId }: ChatTabProps) {
-  const { data, isPending, isError, error, refetch } = useQuery(
-    chatQueries.messages(productId),
-  )
+export function ChatTab({ productId, agent, transportState }: ChatTabProps) {
+  const { data, isPending, isError, error, refetch } = useQuery(chatQueries.messages(productId))
 
   if (isPending) return <ChatLoading />
   if (isError) return <ChatError error={error} onRetry={() => refetch()} />
-  return <Chat productId={productId} initialMessages={data} />
+  return <Chat agent={agent} transportState={transportState} initialMessages={data} />
 }
 
 function ChatLoading() {
   return (
-    <Card className="h-[calc(100vh-22rem)] gap-0 py-0">
-      <CardContent className="flex flex-1 items-center justify-center p-0 text-muted-foreground">
-        <Spinner />
-      </CardContent>
-    </Card>
+    <div className="flex flex-1 items-center justify-center text-muted-foreground">
+      <Spinner />
+    </div>
   )
 }
 
@@ -43,18 +44,16 @@ type ChatErrorProps = {
 
 function ChatError({ error, onRetry }: ChatErrorProps) {
   return (
-    <Card className="h-[calc(100vh-22rem)] gap-0 py-0">
-      <CardContent className="flex flex-1 items-center justify-center p-4">
-        <Alert variant="destructive" className="max-w-md">
-          <AlertTitle>Could not load chat history</AlertTitle>
-          <AlertDescription>{error.message}</AlertDescription>
-          <AlertAction>
-            <Button size="sm" variant="secondary" onClick={onRetry}>
-              Retry
-            </Button>
-          </AlertAction>
-        </Alert>
-      </CardContent>
-    </Card>
+    <div className="flex flex-1 items-center justify-center p-4">
+      <Alert variant="destructive" className="max-w-md">
+        <AlertTitle>Could not load chat history</AlertTitle>
+        <AlertDescription>{error.message}</AlertDescription>
+        <AlertAction>
+          <Button size="sm" variant="secondary" onClick={onRetry}>
+            Retry
+          </Button>
+        </AlertAction>
+      </Alert>
+    </div>
   )
 }

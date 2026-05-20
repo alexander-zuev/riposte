@@ -59,6 +59,11 @@ export type GetMessagesInput = {
   productId: UUIDv4
 }
 
+export type SignalStripeConnectedInput = {
+  userId: UUIDv4
+  productId: UUIDv4
+}
+
 export interface IDisputeAgentClient {
   startWorkflow: (input: DisputeAgentWorkflowInput) => Promise<Result<void, WorkflowError>>
   pauseWorkflow: (input: DisputeAgentWorkflowInput) => Promise<Result<void, WorkflowError>>
@@ -89,6 +94,10 @@ export interface IDisputeAgentClient {
    * validator). Widen the generic when we start attaching metadata.
    */
   getMessages: (input: GetMessagesInput) => Promise<Result<UIMessage<never>[], DOUnreachableError>>
+  /** Drops a synthetic "Stripe connected" user message and triggers the next agent turn. */
+  signalStripeConnected: (
+    input: SignalStripeConnectedInput,
+  ) => Promise<Result<void, DOUnreachableError>>
 }
 
 export class DisputeAgentClient implements IDisputeAgentClient {
@@ -271,6 +280,23 @@ export class DisputeAgentClient implements IDisputeAgentClient {
         // Cast: the DO returns the SDK's `UIMessage<unknown>` but nothing in
         // this codebase writes `metadata`. See the interface docstring above.
         return agent.getMessages()
+      },
+      catch: (cause) => new DOUnreachableError({ cause, retryable: isTransientError(cause) }),
+    })
+  }
+
+  async signalStripeConnected({
+    userId,
+    productId,
+  }: SignalStripeConnectedInput): Promise<Result<void, DOUnreachableError>> {
+    return Result.tryPromise({
+      try: async () => {
+        const agent = await getAgentByName<Env, DisputeAgent, DisputeAgentProps>(
+          this.env.DisputeAgent,
+          productId,
+          disputeAgentOptions(userId),
+        )
+        await agent.signalStripeConnected()
       },
       catch: (cause) => new DOUnreachableError({ cause, retryable: isTransientError(cause) }),
     })

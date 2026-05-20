@@ -3,9 +3,14 @@ import { useMutation } from '@tanstack/react-query'
 import { getStripeOAuthUrl } from '@web/server/entrypoints/functions/stripe.fn'
 import { toast } from 'sonner'
 
+type Input = {
+  productId: string
+  redirectAfter?: string
+}
+
 export function useStripeOAuthMutation() {
-  return useMutation({
-    mutationFn: async () => unwrapRpc(await getStripeOAuthUrl()),
+  return useMutation<{ url: string }, Error, Input>({
+    mutationFn: async (input) => unwrapRpc(await getStripeOAuthUrl({ data: input })),
     onMutate: () => {
       toast.loading('Redirecting to Stripe', { duration: Infinity, id: 'stripe-oauth' })
     },

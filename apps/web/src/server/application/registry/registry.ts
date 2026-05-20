@@ -40,6 +40,7 @@ import {
 } from '@server/application/handlers/stripe-app-handler'
 import {
   buildStripeOAuthInstallUrl,
+  handleStripeConnectionCreated,
   handleStripeOAuthCallback,
 } from '@server/application/handlers/stripe-oauth-handler'
 import {
@@ -100,6 +101,9 @@ export const EVENT_HANDLERS = {
     { id: 'stripeApp.fanOutScheduledDisputeSync', handle: fanOutScheduledDisputeSync },
   ],
   UserSignedUp: [{ id: 'auth.handleUserSignedUp', handle: handleUserSignedUp }],
+  StripeConnectionCreated: [
+    { id: 'agent.signalStripeConnected', handle: handleStripeConnectionCreated },
+  ],
 } satisfies EventRegistry
 
 export const QUERY_HANDLERS = {

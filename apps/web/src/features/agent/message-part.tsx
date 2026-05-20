@@ -71,7 +71,7 @@ export function AgentMessagePart({ part }: AgentMessagePartProps) {
 
   if (isReasoningUIPart(part)) {
     return (
-      <Reasoning isStreaming={part.state === 'streaming'}>
+      <Reasoning isStreaming={part.state === 'streaming'} defaultOpen={false}>
         <ReasoningTrigger />
         <ReasoningContent>{part.text}</ReasoningContent>
       </Reasoning>

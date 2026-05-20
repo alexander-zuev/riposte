@@ -82,17 +82,26 @@ export const Reasoning = memo(
     const [hasAutoClosed, setHasAutoClosed] = useState(false)
     const startTimeRef = useRef<number | null>(null)
 
-    // Track when streaming starts and compute duration
+    // Track when streaming starts, tick a live elapsed counter while streaming,
+    // and commit the final duration when streaming ends.
     useEffect(() => {
       if (isStreaming) {
         hasEverStreamedRef.current = true
         if (startTimeRef.current === null) {
           startTimeRef.current = Date.now()
         }
-      } else if (startTimeRef.current !== null) {
+        const interval = setInterval(() => {
+          if (startTimeRef.current !== null) {
+            setDuration(Math.floor((Date.now() - startTimeRef.current) / MS_IN_S))
+          }
+        }, MS_IN_S)
+        return () => clearInterval(interval)
+      }
+      if (startTimeRef.current !== null) {
         setDuration(Math.ceil((Date.now() - startTimeRef.current) / MS_IN_S))
         startTimeRef.current = null
       }
+      return undefined
     }, [isStreaming, setDuration])
 
     // Auto-open when streaming starts (unless explicitly closed)
@@ -148,8 +157,9 @@ export type ReasoningTriggerProps = ComponentProps<typeof CollapsibleTrigger> & 
 }
 
 const defaultGetThinkingMessage = (isStreaming: boolean, duration?: number) => {
-  if (isStreaming || duration === 0) {
-    return <Shimmer duration={1}>Thinking...</Shimmer>
+  if (isStreaming) {
+    const label = duration && duration > 0 ? `Thinking for ${duration}s...` : 'Thinking...'
+    return <Shimmer duration={1}>{label}</Shimmer>
   }
   if (duration === undefined) {
     return <p>Thought for a few seconds</p>

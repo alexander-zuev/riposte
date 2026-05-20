@@ -303,12 +303,12 @@ function ExternalLinkSafetyModal({
           <DialogTitle>Open external link?</DialogTitle>
           <DialogDescription>
             You&apos;re about to visit{' '}
-            <span className="font-medium text-foreground">
-              {domain ?? 'an external website'}
-            </span>
+            <span className="font-medium text-foreground">{domain ?? 'an external website'}</span>
           </DialogDescription>
         </DialogHeader>
-        <div className="break-all border border-border bg-muted p-3 font-mono text-sm">{url}</div>
+        <div className="max-h-40 overflow-y-auto border border-border bg-muted p-3 font-mono text-sm break-all">
+          {url}
+        </div>
         <DialogFooter>
           <DialogClose render={<Button variant="secondary" />}>Cancel</DialogClose>
           <Button onClick={onConfirm}>Open link</Button>

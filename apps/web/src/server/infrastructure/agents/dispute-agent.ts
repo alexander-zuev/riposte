@@ -5,6 +5,8 @@ import { BASE_PROMPT, buildSystemPrompt } from '@server/infrastructure/agents/bu
 import {
   createDisputeAgentContextState,
   type DisputeAgentContextState,
+  INITIAL_USAGE,
+  type DisputeAgentUsage,
 } from '@server/infrastructure/agents/dispute-agent.context'
 import {
   createMcpOAuthCallbackHandler,
@@ -168,7 +170,7 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
 
     return result.toUIMessageStreamResponse({
       onError: (error) => {
-        logger.warn('dispute_agent_stream_error', {
+        logger.error('dispute_agent_stream_error', {
           error,
           mode: this.state.mode,
           productId: this.name,

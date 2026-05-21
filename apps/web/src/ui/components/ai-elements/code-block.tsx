@@ -18,6 +18,7 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
 } from 'react'
 import type { BundledLanguage, BundledTheme, HighlighterGeneric, ThemedToken } from 'shiki'
 import { createHighlighter } from 'shiki'
@@ -192,7 +193,6 @@ export const highlightCode = (
 
   // Start highlighting in background - fire-and-forget async pattern
   getHighlighter(language)
-    // oxlint-disable-next-line eslint-plugin-promise(prefer-await-to-then), eslint-plugin-promise(always-return)
     .then((highlighter) => {
       const availableLangs = highlighter.getLoadedLanguages()
       const langToUse = availableLangs.includes(language) ? language : 'text'
@@ -223,7 +223,6 @@ export const highlightCode = (
         subscribers.delete(tokensCacheKey)
       }
     })
-    // oxlint-disable-next-line eslint-plugin-promise(prefer-await-to-then), eslint-plugin-promise(prefer-await-to-callbacks)
     .catch((error) => {
       console.error('Failed to highlight code:', error)
       subscribers.delete(tokensCacheKey)
@@ -348,6 +347,34 @@ export const CodeBlockActions = ({
   </div>
 )
 
+/**
+ * Builds a useSyncExternalStore-shaped wrapper around the module-level
+ * `tokensCache` + `subscribers` maps. `getServerSnapshot` always returns
+ * `rawTokens` so SSR and the initial hydration render are symmetric even when
+ * the cache has been populated client-side by an earlier code block.
+ */
+function createTokenStore(code: string, language: BundledLanguage, rawTokens: TokenizedCode) {
+  const cacheKey = getTokensCacheKey(code, language)
+  const subscribe = (onChange: () => void) => {
+    let set = subscribers.get(cacheKey)
+    if (!set) {
+      set = new Set()
+      subscribers.set(cacheKey, set)
+    }
+    const wrapped = () => onChange()
+    set.add(wrapped)
+    // Kick off the background highlight if not already cached. Notify path
+    // calls every subscriber when shiki resolves; React re-reads getSnapshot.
+    highlightCode(code, language)
+    return () => {
+      subscribers.get(cacheKey)?.delete(wrapped)
+    }
+  }
+  const getSnapshot = (): TokenizedCode => tokensCache.get(cacheKey) ?? rawTokens
+  const getServerSnapshot = (): TokenizedCode => rawTokens
+  return { subscribe, getSnapshot, getServerSnapshot }
+}
+
 export const CodeBlockContent = ({
   code,
   language,
@@ -357,40 +384,16 @@ export const CodeBlockContent = ({
   language: BundledLanguage
   showLineNumbers?: boolean
 }) => {
-  // Memoized raw tokens for immediate display
   const rawTokens = useMemo(() => createRawTokens(code), [code])
-
-  // Synchronous cache lookup — avoids setState in effect for cached results
-  const syncTokens = useMemo(
-    () => highlightCode(code, language) ?? rawTokens,
+  const store = useMemo(
+    () => createTokenStore(code, language, rawTokens),
     [code, language, rawTokens],
   )
-
-  // Async highlighting result (populated after shiki loads)
-  const [asyncTokens, setAsyncTokens] = useState<TokenizedCode | null>(null)
-  const asyncKeyRef = useRef({ code, language })
-
-  // Invalidate stale async tokens synchronously during render
-  if (asyncKeyRef.current.code !== code || asyncKeyRef.current.language !== language) {
-    asyncKeyRef.current = { code, language }
-    setAsyncTokens(null)
-  }
-
-  useEffect(() => {
-    let cancelled = false
-
-    highlightCode(code, language, (result) => {
-      if (!cancelled) {
-        setAsyncTokens(result)
-      }
-    })
-
-    return () => {
-      cancelled = true
-    }
-  }, [code, language])
-
-  const tokenized = asyncTokens ?? syncTokens
+  const tokenized = useSyncExternalStore(
+    store.subscribe,
+    store.getSnapshot,
+    store.getServerSnapshot,
+  )
 
   return (
     <div className="relative overflow-auto">

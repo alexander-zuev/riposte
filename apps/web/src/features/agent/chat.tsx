@@ -1,3 +1,4 @@
+import { ArrowsClockwiseIcon } from '@phosphor-icons/react'
 import {
   type AgentTransportState,
   type DisputeAgentConnection,
@@ -12,7 +13,12 @@ import {
   ConversationContent,
   ConversationScrollButton,
 } from '@web/ui/components/ai-elements/conversation'
-import { Message, MessageContent } from '@web/ui/components/ai-elements/message'
+import {
+  Message,
+  MessageAction,
+  MessageActions,
+  MessageContent,
+} from '@web/ui/components/ai-elements/message'
 import {
   PromptInput,
   PromptInputFooter,
@@ -24,7 +30,7 @@ import { Spinner } from '@web/ui/components/ui/spinner'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@web/ui/components/ui/tooltip'
 import type { MCPServersState } from 'agents'
 import type { UIMessage } from 'ai'
-import { useCallback } from 'react'
+import { memo, useCallback } from 'react'
 
 type ChatProps = {
   agent: DisputeAgentConnection
@@ -49,10 +55,17 @@ export function Chat({ agent, transportState, initialMessages, productId, mcp }:
       if (isInputDisabled) return
       const text = message.text?.trim()
       if (!text) return
-      void chat.sendMessage({ text })
+      chat.sendMessage({ text })
     },
     [chat, isInputDisabled],
   )
+  const handleRegenerate = useCallback(
+    (messageId: string) => {
+      void chat.regenerate({ messageId })
+    },
+    [chat],
+  )
+  const showActions = !chat.isStreaming
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -62,9 +75,12 @@ export function Chat({ agent, transportState, initialMessages, productId, mcp }:
             <Message key={message.id} from={message.role}>
               <MessageContent>
                 {keyedAgentMessageParts(message.parts).map(({ key, part }) => (
-                  <AgentMessagePart key={key} part={part} />
+                  <AgentMessagePart key={key} isStreaming={chat.isStreaming} part={part} />
                 ))}
               </MessageContent>
+              {showActions && message.role === 'assistant' && (
+                <RegenerateMessageAction messageId={message.id} onRegenerate={handleRegenerate} />
+              )}
             </Message>
           ))}
         </ConversationContent>
@@ -121,11 +137,28 @@ function ContextUsageMeter({
         {formatTokenCount(context.windowTokens)}
       </TooltipTrigger>
       <TooltipContent>
-        Compaction threshold: {formatTokenCount(context.compactAtTokens)}
+        Older messages are summarized automatically at {formatTokenCount(context.compactAtTokens)}
       </TooltipContent>
     </Tooltip>
   )
 }
+
+const RegenerateMessageAction = memo(function RegenerateMessageAction({
+  messageId,
+  onRegenerate,
+}: {
+  messageId: string
+  onRegenerate: (id: string) => void
+}) {
+  const handleClick = useCallback(() => onRegenerate(messageId), [messageId, onRegenerate])
+  return (
+    <MessageActions className="-ms-1.5">
+      <MessageAction tooltip="Regenerate" onClick={handleClick}>
+        <ArrowsClockwiseIcon size={16} />
+      </MessageAction>
+    </MessageActions>
+  )
+})
 
 function getContextUsageClassName(context: DisputeAgentContextState): string {
   if (context.status === 'compact_required') return 'text-destructive-muted-foreground'

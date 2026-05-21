@@ -29,6 +29,7 @@ import { useMemo } from 'react'
 
 type AgentMessagePartProps = {
   part: UIMessage['parts'][number]
+  isStreaming: boolean
 }
 
 type KeyedAgentMessagePart = {
@@ -65,7 +66,7 @@ function FilePartView({ part }: { part: FilePart }) {
   )
 }
 
-export function AgentMessagePart({ part }: AgentMessagePartProps) {
+export function AgentMessagePart({ part, isStreaming }: AgentMessagePartProps) {
   if (part.type === 'step-start') {
     return null
   }
@@ -76,7 +77,7 @@ export function AgentMessagePart({ part }: AgentMessagePartProps) {
 
   if (isReasoningUIPart(part)) {
     return (
-      <Reasoning isStreaming={part.state === 'streaming'} defaultOpen={false}>
+      <Reasoning isStreaming={isStreaming && part.state === 'streaming'} defaultOpen={false}>
         <ReasoningTrigger />
         <ReasoningContent>{part.text}</ReasoningContent>
       </Reasoning>

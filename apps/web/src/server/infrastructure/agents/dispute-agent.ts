@@ -95,6 +95,7 @@ export type DisputeAgentMode = 'setup' | 'operate'
 
 export type DisputeAgentState = {
   mode: DisputeAgentMode
+  setupChangeId: string | null
 }
 
 /** Upgrade-time props forwarded from the auth-verified route — see `routes/api/agents/$.ts`. */
@@ -124,7 +125,7 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
   private readonly deps: AppDeps
   private readonly analytics: IAnalyticsService
 
-  initialState: DisputeAgentState = { mode: 'setup' }
+  initialState: DisputeAgentState = { mode: 'setup', setupChangeId: null }
 
   private userId?: UserId
 
@@ -210,11 +211,26 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
     // TODO(agent): add a wall-clock-based `stopWhen` (not step count) — see spec bounds.
     // Tools are passed on every turn regardless of `state.mode` for now; mode-gating
     // can be added later if the runtime extraction loop should not see web tools.
+    const tools: ToolSet = {}
+    let activeToolNames: string[] = []
+    const refreshMcpTools = async () => {
+      await this.mcp.waitForConnections({ timeout: 1000 })
+      const mcpTools = this.mcp.getAITools()
+      Object.assign(tools, mcpTools)
+      activeToolNames = Object.keys(tools)
+    }
+    Object.assign(tools, this.buildTools(refreshMcpTools))
+    await refreshMcpTools()
+
     const agent = new ToolLoopAgent({
       id: 'dispute-agent',
       model,
       instructions,
-      tools: this.buildTools(),
+      tools,
+      prepareStep: async () => {
+        await refreshMcpTools()
+        return { activeTools: activeToolNames }
+      },
     })
 
     const result = await agent.stream({
@@ -235,15 +251,11 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
    *   `X-Respond-With: no-content`). Agent follows up with `fetchUrl` to read a
    *   promising result.
    */
-  private buildTools(): ToolSet {
+  private buildTools(refreshMcpTools: () => Promise<void>): ToolSet {
     const jina = this.deps.services.jinaClient()
     const storage = this.ctx.storage
 
     return {
-      // Tools exposed by any connected MCP server (merchant DB, etc.). Empty until
-      // `connectMcpServer` runs successfully.
-      ...this.mcp.getAITools(),
-
       // TODO(agent): extract to a ConnectMcpServer command + handler.
       connectMcpServer: tool({
         description:
@@ -260,6 +272,7 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
           for (const [id, server] of Object.entries(servers)) {
             if (server.server_url !== url) continue
             if (server.state === 'ready') {
+              await refreshMcpTools()
               return { ok: true as const, state: 'ready', id }
             }
             staleIds.push(id)
@@ -273,6 +286,7 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
           if (result.state === 'authenticating') {
             return { ok: true as const, state: 'authenticating', authUrl: result.authUrl }
           }
+          await refreshMcpTools()
           return { ok: true as const, state: 'ready', id: result.id }
         },
       }),
@@ -413,10 +427,14 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
   async restartSetup(): Promise<{ ok: true } | { ok: false; error: string }> {
     const { servers } = this.getMcpServers()
     await Promise.all(Object.keys(servers).map((serverId) => this.removeMcpServer(serverId)))
-    this.setState({ mode: 'setup' })
+    this.setState({ ...this.state, mode: 'setup' })
     await this.clearConversation()
 
     return { ok: true }
+  }
+
+  async signalProductSetupChanged(setupChangeId: string): Promise<void> {
+    this.setState({ ...this.state, setupChangeId })
   }
 
   async getReadyMcpServer(serverId: string): Promise<ReadyMcpServerResult> {
@@ -512,7 +530,7 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
         parts: [
           {
             type: 'text',
-            text: `Connection event: MCP "${serverName}" was disconnected. Continue without those tools.`,
+            text: `Connection event: MCP server "${serverName}" was disconnected by the user.`,
           },
         ],
       },

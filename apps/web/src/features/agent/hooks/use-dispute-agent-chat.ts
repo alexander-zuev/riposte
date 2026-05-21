@@ -1,5 +1,6 @@
 import { useAgentChat } from '@cloudflare/ai-chat/react'
 import { createLogger } from '@riposte/core/client'
+import { useProductSetupInvalidation } from '@web/features/agent/hooks/use-product-setup-invalidation'
 import type { MCPServersState } from 'agents'
 import { useAgent } from 'agents/react'
 import type { UIMessage } from 'ai'
@@ -9,6 +10,11 @@ const logger = createLogger('dispute-agent-chat')
 
 export type AgentTransportState = 'connecting' | 'connected' | 'closing' | 'disconnected'
 
+type DisputeAgentState = {
+  mode: 'setup' | 'operate'
+  setupChangeId: string | null
+}
+
 /**
  * Live MCP servers state pushed from the DO over the WebSocket. `null` until
  * the first `CF_AGENT_MCP_SERVERS` broadcast arrives (the SDK replays current
@@ -16,12 +22,14 @@ export type AgentTransportState = 'connecting' | 'connected' | 'closing' | 'disc
  */
 export function useDisputeAgent(productId: string) {
   const [mcp, setMcp] = useState<MCPServersState | null>(null)
-  const agent = useAgent({
+  const invalidateProductSetup = useProductSetupInvalidation(productId)
+  const agent = useAgent<DisputeAgentState>({
     agent: 'dispute-agent',
     name: productId,
     prefix: 'api/agents',
     onStateUpdate: (state, source) => {
       logger.debug('state_update', { state, source })
+      invalidateProductSetup(state, source)
     },
     onMcpUpdate: (next) => {
       logger.debug('mcp_update', {

@@ -4,7 +4,7 @@ import {
   useDisputeAgentChat,
 } from '@web/features/agent/hooks/use-dispute-agent-chat'
 import { McpSourcesPopover } from '@web/features/agent/mcp-sources-popover'
-import { AgentMessagePart, agentMessagePartKey } from '@web/features/agent/message-part'
+import { AgentMessagePart, keyedAgentMessageParts } from '@web/features/agent/message-part'
 import {
   Conversation,
   ConversationContent,
@@ -57,8 +57,8 @@ export function Chat({ agent, transportState, initialMessages, productId, mcp }:
           {chat.messages.map((message) => (
             <Message key={message.id} from={message.role}>
               <MessageContent>
-                {message.parts.map((part) => (
-                  <AgentMessagePart key={agentMessagePartKey(part)} part={part} />
+                {keyedAgentMessageParts(message.parts).map(({ key, part }) => (
+                  <AgentMessagePart key={key} part={part} />
                 ))}
               </MessageContent>
             </Message>

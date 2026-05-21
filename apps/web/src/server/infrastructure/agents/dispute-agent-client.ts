@@ -32,15 +32,6 @@ export type DisputeAgentWorkflowInput = {
   disputeCaseId: string
 }
 
-export type GetProductMcpStatusInput = {
-  userId: UUIDv4
-  productId: UUIDv4
-}
-
-export type ProductMcpStatus = {
-  firstConnectedAt: Date | null
-}
-
 export type PrimeOnboardingInput = {
   userId: UUIDv4
   productId: UUIDv4
@@ -69,21 +60,17 @@ export type RestartSetupInput = {
   productId: UUIDv4
 }
 
+export type SignalProductSetupChangedInput = {
+  userId: UUIDv4
+  productId: UUIDv4
+  setupChangeId: string
+}
+
 export interface IDisputeAgentClient {
   startWorkflow: (input: DisputeAgentWorkflowInput) => Promise<Result<void, WorkflowError>>
   pauseWorkflow: (input: DisputeAgentWorkflowInput) => Promise<Result<void, WorkflowError>>
   resumeWorkflow: (input: DisputeAgentWorkflowInput) => Promise<Result<void, WorkflowError>>
   terminateWorkflow: (input: DisputeAgentWorkflowInput) => Promise<Result<void, WorkflowError>>
-  /**
-   * Reads MCP server registrations from the per-product DisputeAgent DO storage and
-   * returns the earliest save-timestamp. Source of truth per dispute-agent-spec.md
-   * (MCP state lives in DO storage, not a PG table).
-   *
-   * Stubbed for MVP: returns `{ firstConnectedAt: null }` until DO MCP wiring lands.
-   */
-  getProductMcpStatus: (
-    input: GetProductMcpStatusInput,
-  ) => Promise<Result<ProductMcpStatus, DOUnreachableError>>
   /**
    * Saves the onboarding welcome message into the per-product DisputeAgent DO so
    * the chat is populated before the merchant opens /agent. Idempotent on the DO
@@ -112,6 +99,9 @@ export interface IDisputeAgentClient {
    */
   disconnectMcp: (input: DisconnectMcpInput) => Promise<Result<void, DOUnreachableError>>
   restartSetup: (input: RestartSetupInput) => Promise<Result<void, DOUnreachableError>>
+  signalProductSetupChanged: (
+    input: SignalProductSetupChangedInput,
+  ) => Promise<Result<void, DOUnreachableError>>
 }
 
 export class DisputeAgentClient implements IDisputeAgentClient {
@@ -250,14 +240,6 @@ export class DisputeAgentClient implements IDisputeAgentClient {
     )
   }
 
-  // TODO(agent): replace stub with real DO storage read once DisputeAgent exposes MCP
-  // server registrations. Spec: `cf_agents_mcp_servers` entries + save-timestamps.
-  async getProductMcpStatus(
-    _input: GetProductMcpStatusInput,
-  ): Promise<Result<ProductMcpStatus, DOUnreachableError>> {
-    return Result.ok({ firstConnectedAt: null })
-  }
-
   async primeOnboarding({
     userId,
     productId,
@@ -349,6 +331,24 @@ export class DisputeAgentClient implements IDisputeAgentClient {
         if (!result.ok) {
           throw new Error(result.error)
         }
+      },
+      catch: (cause) => new DOUnreachableError({ cause, retryable: isTransientError(cause) }),
+    })
+  }
+
+  async signalProductSetupChanged({
+    userId,
+    productId,
+    setupChangeId,
+  }: SignalProductSetupChangedInput): Promise<Result<void, DOUnreachableError>> {
+    return Result.tryPromise({
+      try: async () => {
+        const agent = await getAgentByName(
+          this.env.DisputeAgent,
+          productId,
+          disputeAgentOptions(userId),
+        )
+        await agent.signalProductSetupChanged(setupChangeId)
       },
       catch: (cause) => new DOUnreachableError({ cause, retryable: isTransientError(cause) }),
     })

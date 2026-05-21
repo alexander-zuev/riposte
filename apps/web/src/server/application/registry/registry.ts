@@ -32,6 +32,7 @@ import {
   disconnectProductAppDataSource,
   getProductSetupState,
   listProducts,
+  notifyProductSetupChanged,
   registerProductAppDataSource,
   restartProductSetup,
   updateProduct,
@@ -109,7 +110,15 @@ export const EVENT_HANDLERS = {
   UserSignedUp: [{ id: 'auth.handleUserSignedUp', handle: handleUserSignedUp }],
   StripeConnectionCreated: [
     { id: 'agent.signalStripeConnected', handle: handleStripeConnectionCreated },
+    { id: 'productSetup.notifyChanged', handle: notifyProductSetupChanged },
   ],
+  ProductAppDataSourceRegistered: [
+    { id: 'productSetup.notifyChanged', handle: notifyProductSetupChanged },
+  ],
+  ProductAppDataSourceDisconnected: [
+    { id: 'productSetup.notifyChanged', handle: notifyProductSetupChanged },
+  ],
+  ProductSetupCompleted: [{ id: 'productSetup.notifyChanged', handle: notifyProductSetupChanged }],
 } satisfies EventRegistry
 
 export const QUERY_HANDLERS = {

@@ -12,11 +12,11 @@ import type { DisputePlaybook } from '@server/domain/dispute-playbooks'
 import type { ProductSnapshot } from '@server/domain/products/product.entity'
 import type {
   IDisputePlaybookRepository,
+  IProductAppDataSourceRepository,
   IProductRepository,
   IStripeConnectionRepository,
 } from '@server/domain/repository/interfaces'
 import type { StripeConnection } from '@server/domain/stripe'
-import type { IDisputeAgentClient } from '@server/infrastructure/agents/dispute-agent-client'
 import { Result } from 'better-result'
 
 export interface IProductSetupService {
@@ -32,15 +32,15 @@ export type GetProductSetupStateInput = {
 
 /**
  * Owns onboarding step satisfaction rules. Reads the artifacts that back each step
- * (product columns, stripe connection, dispute playbook, MCP DO storage) and
+ * (product columns, stripe connection, verified app data sources, dispute playbook) and
  * projects them into a `ProductSetupState`. Caller (query handler) is a one-liner.
  */
 export class ProductSetupService implements IProductSetupService {
   constructor(
     private readonly products: IProductRepository,
     private readonly stripeConnections: IStripeConnectionRepository,
+    private readonly productAppDataSources: IProductAppDataSourceRepository,
     private readonly disputePlaybooks: IDisputePlaybookRepository,
-    private readonly disputeAgentClient: IDisputeAgentClient,
   ) {}
 
   async getState({
@@ -65,14 +65,14 @@ export class ProductSetupService implements IProductSetupService {
     const playbookResult = await this.disputePlaybooks.findLatestForProduct(productId)
     if (playbookResult.isErr()) return Result.err(playbookResult.error)
 
-    const mcpResult = await this.disputeAgentClient.getProductMcpStatus({ userId, productId })
-    if (mcpResult.isErr()) return Result.err(mcpResult.error)
+    const appDataSourcesResult = await this.productAppDataSources.findByProductId(productId)
+    if (appDataSourcesResult.isErr()) return Result.err(appDataSourcesResult.error)
 
     const completedAt = ProductSetupService.computeCompletedAt({
       product,
       stripeConnection: stripeResult.value,
       playbook: playbookResult.value,
-      mcpFirstConnectedAt: mcpResult.value.firstConnectedAt,
+      appDataSourceConnectedAt: appDataSourcesResult.value[0]?.createdAt ?? null,
     })
     const currentStep =
       PRODUCT_SETUP_STEPS.find((step: ProductSetupStep) => completedAt[step] === null) ?? null
@@ -89,7 +89,7 @@ export class ProductSetupService implements IProductSetupService {
    * Exposed (via class) for direct unit tests with mocked artifacts.
    */
   static computeCompletedAt(input: ComputeCompletedAtInput): ProductSetupCompletedAt {
-    const { product, stripeConnection, playbook, mcpFirstConnectedAt } = input
+    const { product, stripeConnection, playbook, appDataSourceConnectedAt } = input
 
     const stripeCompletedAt =
       stripeConnection && stripeConnection.status === 'active'
@@ -105,7 +105,7 @@ export class ProductSetupService implements IProductSetupService {
     return {
       add_product: product.createdAt.toISOString(),
       connect_stripe: stripeCompletedAt,
-      connect_app_data: mcpFirstConnectedAt?.toISOString() ?? null,
+      connect_app_data: appDataSourceConnectedAt?.toISOString() ?? null,
       playbook: playbookCompletedAt,
       dry_run: null,
       review: reviewCompletedAt,
@@ -117,5 +117,5 @@ export type ComputeCompletedAtInput = {
   product: ProductSnapshot
   stripeConnection: StripeConnection | null
   playbook: DisputePlaybook | null
-  mcpFirstConnectedAt: Date | null
+  appDataSourceConnectedAt: Date | null
 }

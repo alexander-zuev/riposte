@@ -31,6 +31,11 @@ type AgentMessagePartProps = {
   part: UIMessage['parts'][number]
 }
 
+type KeyedAgentMessagePart = {
+  key: string
+  part: UIMessage['parts'][number]
+}
+
 type SourceDocumentPart = Extract<UIMessage['parts'][number], { type: 'source-document' }>
 type FilePart = Extract<UIMessage['parts'][number], { type: 'file' }>
 
@@ -121,15 +126,25 @@ export function AgentMessagePart({ part }: AgentMessagePartProps) {
   return <CodeBlock code={JSON.stringify(part, null, 2)} language="json" />
 }
 
-export function agentMessagePartKey(part: UIMessage['parts'][number]): string {
-  if (part.type === 'text') return `text:${part.text}`
-  if (part.type === 'reasoning') return `reasoning:${part.text}`
+/**
+ * Stable identity if the part has one (tool call id, source id, file url, data id),
+ * otherwise position. Position is safe because UIMessage parts are append-only in
+ * the AI SDK — keying by content would remount text/reasoning on every chunk and
+ * collide on every step-start.
+ */
+export function agentMessagePartKey(part: UIMessage['parts'][number], index: number): string {
   if (isToolUIPart(part)) return `tool:${part.toolCallId}`
   if (part.type === 'source-url' || part.type === 'source-document') {
     return `source:${part.sourceId}`
   }
   if (part.type === 'file') return `file:${part.url}`
-  if (part.type === 'step-start') return 'step-start'
-  if (isDataUIPart(part)) return `data:${part.type}:${part.id ?? JSON.stringify(part.data)}`
-  return `unknown:${JSON.stringify(part)}`
+  if (isDataUIPart(part) && part.id !== undefined) return `data:${part.type}:${part.id}`
+  return `${part.type}:${index}`
+}
+
+export function keyedAgentMessageParts(parts: UIMessage['parts']): KeyedAgentMessagePart[] {
+  return parts.map((part, index) => ({
+    key: agentMessagePartKey(part, index),
+    part,
+  }))
 }

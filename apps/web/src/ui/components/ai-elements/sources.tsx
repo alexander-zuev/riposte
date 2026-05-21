@@ -10,7 +10,10 @@ import type { ComponentProps } from 'react'
 export type SourcesProps = ComponentProps<'div'>
 
 export const Sources = ({ className, ...props }: SourcesProps) => (
-  <Collapsible className={cn('not-prose w-full text-foreground text-sm', className)} {...props} />
+  <Collapsible
+    className={cn('group not-prose w-full text-foreground text-sm', className)}
+    {...props}
+  />
 )
 
 export type SourcesTriggerProps = ComponentProps<typeof CollapsibleTrigger> & {
@@ -28,8 +31,8 @@ export const SourcesTrigger = ({ className, count, children, ...props }: Sources
     {children ?? (
       <>
         <BookOpenIcon className="size-4" />
-        <p className="font-medium">Used {count} sources</p>
-        <CaretDownIcon className="size-4" />
+        <span className="font-medium">Used {count} sources</span>
+        <CaretDownIcon className="size-4 -rotate-90 transition-transform group-data-[state=open]:rotate-0" />
       </>
     )}
   </CollapsibleTrigger>

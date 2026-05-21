@@ -22,7 +22,7 @@ import { CodeBlock } from './code-block'
 export type ToolProps = ComponentProps<typeof Collapsible>
 
 export const Tool = ({ className, ...props }: ToolProps) => (
-  <Collapsible className={cn('group not-prose w-full border', className)} {...props} />
+  <Collapsible className={cn('group not-prose w-full', className)} {...props} />
 )
 
 export type ToolPart = ToolUIPart | DynamicToolUIPart
@@ -90,15 +90,18 @@ export const ToolHeader = ({
 
   return (
     <CollapsibleTrigger
-      className={cn('flex w-full items-center justify-between gap-4 p-3', className)}
+      className={cn(
+        'flex w-full cursor-pointer items-center justify-between gap-4 text-muted-foreground text-sm transition-colors hover:text-foreground',
+        className,
+      )}
       {...props}
     >
       <div className="flex items-center gap-2">
-        <WrenchIcon className="size-4 text-muted-foreground" />
-        <span className="text-sm font-medium">{title ?? derivedName}</span>
+        <WrenchIcon className="size-4" />
+        <span className="font-medium">{title ?? derivedName}</span>
         {getStatusBadge(state)}
       </div>
-      <CaretDownIcon className="size-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
+      <CaretDownIcon className="size-4 transition-transform group-data-[state=open]:rotate-180" />
     </CollapsibleTrigger>
   )
 }
@@ -108,7 +111,7 @@ export type ToolContentProps = ComponentProps<typeof CollapsibleContent>
 export const ToolContent = ({ className, ...props }: ToolContentProps) => (
   <CollapsibleContent
     className={cn(
-      'flex flex-col gap-4 p-4 text-popover-foreground outline-none data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-top-2 data-[state=closed]:animate-out data-[state=open]:slide-in-from-top-2 data-[state=open]:animate-in',
+      'mt-2 flex flex-col gap-4 text-foreground outline-none data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-top-2 data-[state=closed]:animate-out data-[state=open]:slide-in-from-top-2 data-[state=open]:animate-in',
       className,
     )}
     {...props}

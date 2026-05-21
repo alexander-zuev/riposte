@@ -23,13 +23,9 @@ import type { BundledLanguage, BundledTheme, HighlighterGeneric, ThemedToken } f
 import { createHighlighter } from 'shiki'
 
 // Shiki uses bitflags for font styles: 1=italic, 2=bold, 4=underline
-// oxlint-disable-next-line eslint(no-bitwise)
 const isItalic = (fontStyle: number | undefined) => fontStyle && fontStyle & 1
-// oxlint-disable-next-line eslint(no-bitwise)
 const isBold = (fontStyle: number | undefined) => fontStyle && fontStyle & 2
-const isUnderline = (fontStyle: number | undefined) =>
-  // oxlint-disable-next-line eslint(no-bitwise)
-  fontStyle && fontStyle & 4
+const isUnderline = (fontStyle: number | undefined) => fontStyle && fontStyle & 4
 
 // Transform tokens to include pre-computed keys to avoid noArrayIndexKey lint
 interface KeyedToken {
@@ -148,7 +144,7 @@ const getHighlighter = (
 
   const highlighterPromise = createHighlighter({
     langs: [language],
-    themes: ['github-light', 'github-dark'],
+    themes: ['one-light', 'one-dark-pro'],
   })
 
   highlighterCache.set(language, highlighterPromise)
@@ -204,8 +200,8 @@ export const highlightCode = (
       const result = highlighter.codeToTokens(code, {
         lang: langToUse,
         themes: {
-          dark: 'github-dark',
-          light: 'github-light',
+          dark: 'one-dark-pro',
+          light: 'one-light',
         },
       })
 

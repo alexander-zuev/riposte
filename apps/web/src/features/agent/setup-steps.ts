@@ -5,7 +5,7 @@ export const STEP_LABELS: Record<ProductSetupStep, string> = {
   add_product: 'Get started',
   connect_stripe: 'Connect Stripe',
   connect_app_data: 'Connect app data',
-  playbook: 'Define playbook',
+  playbook: 'Define dispute playbook',
   dry_run: 'Dry run',
   review: 'Review & approve',
 }

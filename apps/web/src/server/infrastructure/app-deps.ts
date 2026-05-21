@@ -181,8 +181,8 @@ export function createAppDeps(env: Env, ctx: WaitUntilContext): AppDeps {
           new ProductSetupService(
             deps.repos.products(deps.db()),
             deps.repos.stripeConnections(deps.db()),
+            deps.repos.productAppDataSources(deps.db()),
             deps.repos.disputePlaybooks(deps.db()),
-            deps.services.disputeAgentClient(),
           ),
       ),
       queueClient: once<IQueueClient>(() => new QueueClient(env)),

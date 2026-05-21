@@ -14,21 +14,31 @@ import type {
   GetProductSetupStateResult,
   ListProducts,
   ListProductsResult,
+  ProductAppDataSourceDisconnected,
+  ProductAppDataSourceRegistered,
+  ProductSetupCompleted,
   RegisterProductAppDataSource,
   RegisterProductAppDataSourceResult,
   RestartProductSetup,
   RestartProductSetupResult,
+  StripeConnectionCreated,
   UpdateProduct,
   UpdateProductResult,
   ValidationError,
 } from '@riposte/core'
 import { buildStripeOAuthInstallUrl } from '@server/application/handlers/stripe-oauth-handler'
-import type { CommandHandler, QueryHandler } from '@server/application/registry/types'
+import type { CommandHandler, EventHandler, QueryHandler } from '@server/application/registry/types'
 import { ProductAppDataSource } from '@server/domain/app-data-sources'
 import { Product } from '@server/domain/products'
 import { Result } from 'better-result'
 
 const logger = createLogger('product-handler')
+
+type ProductSetupChangedEvent =
+  | StripeConnectionCreated
+  | ProductAppDataSourceRegistered
+  | ProductAppDataSourceDisconnected
+  | ProductSetupCompleted
 
 export const listProducts: QueryHandler<ListProducts, ListProductsResult, DatabaseError> = async (
   query,
@@ -60,6 +70,27 @@ export const getProductSetupState: QueryHandler<
   return await ctx.deps.services
     .productSetup()
     .getState({ userId: query.userId, productId: query.productId })
+}
+
+export const notifyProductSetupChanged: EventHandler<
+  ProductSetupChangedEvent,
+  DatabaseError | EntityNotFoundError | DOUnreachableError
+> = async (event, ctx) => {
+  const productId = event.productId
+  const product = await ctx.deps.repos.products(ctx.tx).findById(productId)
+  if (product.isErr()) return Result.err(product.error)
+  if (!product.value) {
+    return Result.err(new EntityNotFoundError({ entity: 'Product', id: productId }))
+  }
+
+  const notified = await ctx.deps.services.disputeAgentClient().signalProductSetupChanged({
+    userId: product.value.userId,
+    productId,
+    setupChangeId: event.id,
+  })
+  if (notified.isErr()) return Result.err(notified.error)
+
+  return Result.ok(undefined)
 }
 
 export const createProduct: CommandHandler<

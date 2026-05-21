@@ -8,3 +8,34 @@
     text-decoration: underline;
   }
 }
+
+/**
+ * Markdown block rhythm for chat surfaces.
+ *
+ * Streamdown bakes `space-y-4` (16px) between blocks on its wrapper. That
+ * gap reads larger than the gap between message-part types, which inverts
+ * the visual hierarchy in chat. Surfaces that render Streamdown inside a
+ * chat bubble opt into `.markdown-body` to tighten that rhythm to match
+ * `MessageContent`'s gap.
+ *
+ * Unlayered on purpose: needs to beat Tailwind's `space-y-4` utility, which
+ * lives in `@layer utilities`. Equal specificity, unlayered wins.
+ */
+.markdown-body > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 0.5rem;
+}
+
+.markdown-body [data-streamdown='heading-1'],
+.markdown-body [data-streamdown='heading-2'],
+.markdown-body [data-streamdown='heading-3'] {
+  margin-top: 0.75rem;
+}
+
+.markdown-body [data-streamdown='list-item'] {
+  margin-block: 0.125rem;
+}
+
+.markdown-body [data-streamdown='code-block'],
+.markdown-body [data-streamdown='blockquote'] {
+  margin-block: 0.5rem;
+}

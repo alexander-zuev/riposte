@@ -44,11 +44,13 @@ import {
   getProductSetupStateSchema,
   listProductsSchema,
   productCreatedSchema,
+  productAppDataSourceRegisteredSchema,
   productDeletedSchema,
   productDisabledSchema,
   productEnabledSchema,
   productSetupCompletedSchema,
   productUpdatedSchema,
+  registerProductAppDataSourceSchema,
   updateProductSchema,
 } from '../products'
 import { r2EventSchema, r2EventTransform } from '../storage/r2.messages'
@@ -93,6 +95,7 @@ export const domainCommandSchema = z.discriminatedUnion('name', [
   handleSlackAppUninstalledSchema,
   setNotificationChannelPreferenceSchema,
   createProductSchema,
+  registerProductAppDataSourceSchema,
   updateProductSchema,
   deleteProductSchema,
 ])
@@ -115,6 +118,7 @@ export const domainEventSchema = z.discriminatedUnion('name', [
   disputeEvidencePacketCreatedSchema,
   scheduledDisputeSyncDueSchema,
   productCreatedSchema,
+  productAppDataSourceRegisteredSchema,
   productUpdatedSchema,
   productDeletedSchema,
   productDisabledSchema,

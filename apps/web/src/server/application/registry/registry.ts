@@ -31,6 +31,7 @@ import {
   deleteProduct,
   getProductSetupState,
   listProducts,
+  registerProductAppDataSource,
   updateProduct,
 } from '@server/application/handlers/product-handler'
 import {
@@ -82,6 +83,7 @@ export const COMMAND_HANDLERS = {
   HandleDisputeSubmissionApprovalResponse: handleDisputeSubmissionApprovalResponse,
   FailDisputeCase: failDisputeCase,
   CreateProduct: createProduct,
+  RegisterProductAppDataSource: registerProductAppDataSource,
   UpdateProduct: updateProduct,
   DeleteProduct: deleteProduct,
 } satisfies CommandRegistry

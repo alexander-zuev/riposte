@@ -26,7 +26,9 @@ const SETUP_GUIDANCE: Record<ProductSetupStep, string> = {
 
 Ask the merchant openly: "Where do you track what your customers do after they sign up?" Let them name the system. Do not suggest specific vendors, products, or system types — let the answer come from them.
 
-Once they name it, use the \`webSearch\` tool to find that system's MCP server and its connection docs. Use \`fetchUrl\` to read the docs if needed. The merchant should never have to type or look up an MCP URL — that is your job. Guide them through authorizing the connection (OAuth flow or generating a personal access token, whichever the docs require).
+Once they name it, use the \`webSearch\` tool to find that system's MCP server and its connection docs. Use \`fetchUrl\` to read the docs if needed. The merchant should never have to type or look up an MCP URL — that is your job. When you find the right server, briefly explain what it will let Riposte read and ask whether they want you to connect it. If they agree, connect it and guide them through authorization (OAuth flow or generating a personal access token, whichever the docs require).
+
+After authorization completes, check the MCP server status and available tools. If the server is ready and exposes usable read tools, tell the merchant app data is connected and move to the next setup step. If it is not ready, surface the issue and offer a retry.
 
 If no MCP server exists for the system the merchant named, mark it as a setup blocker — direct connections without MCP are post-MVP.
 

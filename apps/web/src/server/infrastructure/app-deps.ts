@@ -14,6 +14,7 @@ import type {
   IDisputePlaybookRepository,
   INotificationPreferenceRepository,
   IOutboxRepository,
+  IProductAppDataSourceRepository,
   IProductRepository,
   ISlackConnectionRepository,
   IStripeConnectionRepository,
@@ -54,6 +55,7 @@ import { DisputeEvidencePacketRepository } from '@server/infrastructure/reposito
 import { DisputePlaybookRepository } from '@server/infrastructure/repositories/dispute-playbook.repository'
 import { NotificationPreferenceRepository } from '@server/infrastructure/repositories/notification-preference.repository'
 import { OutboxRepository } from '@server/infrastructure/repositories/outbox.repository'
+import { ProductAppDataSourceRepository } from '@server/infrastructure/repositories/product-app-data-source.repository'
 import { ProductRepository } from '@server/infrastructure/repositories/product.repository'
 import { SlackConnectionRepository } from '@server/infrastructure/repositories/slack-connection.repository'
 import { StripeConnectionRepository } from '@server/infrastructure/repositories/stripe-connection.repository'
@@ -95,6 +97,7 @@ export type AppDeps = {
     disputePlaybooks: (tx: DrizzleDb) => IDisputePlaybookRepository
     notificationPreferences: (tx: DrizzleDb) => INotificationPreferenceRepository
     outbox: (tx: DrizzleDb) => IOutboxRepository
+    productAppDataSources: (tx: DrizzleDb) => IProductAppDataSourceRepository
     products: (tx: DrizzleDb) => IProductRepository
     slackConnections: (tx: DrizzleDb) => ISlackConnectionRepository
     stripeConnections: (tx: DrizzleDb) => IStripeConnectionRepository
@@ -150,6 +153,7 @@ export function createAppDeps(env: Env, ctx: WaitUntilContext): AppDeps {
       disputePlaybooks: (tx) => new DisputePlaybookRepository(tx),
       notificationPreferences: (tx) => new NotificationPreferenceRepository(tx),
       outbox: (tx) => new OutboxRepository(tx),
+      productAppDataSources: (tx) => new ProductAppDataSourceRepository(tx),
       products: (tx) => new ProductRepository(tx),
       slackConnections: (tx) =>
         new SlackConnectionRepository(tx, deps.services.credentialEncryption()),

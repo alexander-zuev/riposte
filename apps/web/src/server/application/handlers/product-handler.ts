@@ -12,12 +12,15 @@ import type {
   GetProductSetupStateResult,
   ListProducts,
   ListProductsResult,
+  RegisterProductAppDataSource,
+  RegisterProductAppDataSourceResult,
   UpdateProduct,
   UpdateProductResult,
   ValidationError,
 } from '@riposte/core'
 import { buildStripeOAuthInstallUrl } from '@server/application/handlers/stripe-oauth-handler'
 import type { CommandHandler, QueryHandler } from '@server/application/registry/types'
+import { ProductAppDataSource } from '@server/domain/app-data-sources'
 import { Product } from '@server/domain/products'
 import { Result } from 'better-result'
 
@@ -102,6 +105,40 @@ export const createProduct: CommandHandler<
   }
 
   return Result.ok({ productId: saved.value.id })
+}
+
+export const registerProductAppDataSource: CommandHandler<
+  RegisterProductAppDataSource,
+  RegisterProductAppDataSourceResult,
+  DatabaseError | EntityNotFoundError
+> = async (command, ctx) => {
+  const product = await ctx.deps.repos.products(ctx.tx).findById(command.productId)
+  if (product.isErr()) return Result.err(product.error)
+  if (!product.value) {
+    return Result.err(new EntityNotFoundError({ entity: 'Product', id: command.productId }))
+  }
+
+  const repo = ctx.deps.repos.productAppDataSources(ctx.tx)
+
+  const existing = await repo.findByProductIdAndMcpServerId({
+    productId: command.productId,
+    mcpServerId: command.mcpServerId,
+  })
+  if (existing.isErr()) return Result.err(existing.error)
+  if (existing.value) {
+    return Result.ok({ productAppDataSourceId: existing.value.id })
+  }
+
+  const source = ProductAppDataSource.create({
+    productId: command.productId,
+    mcpServerId: command.mcpServerId,
+    alias: command.alias,
+  })
+
+  const saved = await repo.save(source)
+  if (saved.isErr()) return Result.err(saved.error)
+
+  return Result.ok({ productAppDataSourceId: saved.value.id })
 }
 
 export const updateProduct: CommandHandler<

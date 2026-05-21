@@ -12,6 +12,7 @@ import type {
   DisputeSyncState,
   UUIDv4,
 } from '@riposte/core'
+import type { ProductAppDataSource } from '@server/domain/app-data-sources'
 import type { DisputePlaybook } from '@server/domain/dispute-playbooks'
 import type {
   DisputeCase,
@@ -54,6 +55,15 @@ export interface IProductRepository {
   findByUserId: (userId: string) => Promise<Result<Product[], DatabaseError>>
   save: (product: Product) => Promise<Result<Product, DatabaseError | DuplicateProductUrlError>>
   delete: (product: Product) => Promise<Result<void, DatabaseError>>
+}
+
+export interface IProductAppDataSourceRepository {
+  save: (source: ProductAppDataSource) => Promise<Result<ProductAppDataSource, DatabaseError>>
+  findByProductId: (productId: UUIDv4) => Promise<Result<ProductAppDataSource[], DatabaseError>>
+  findByProductIdAndMcpServerId: (input: {
+    productId: UUIDv4
+    mcpServerId: string
+  }) => Promise<Result<ProductAppDataSource | null, DatabaseError>>
 }
 
 /* -------------------------------------------------------------------------------------------------

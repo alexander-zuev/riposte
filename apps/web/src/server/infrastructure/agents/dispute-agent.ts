@@ -64,13 +64,15 @@ export type DisputeAgentProps = {
 const USER_ID_STORAGE_KEY = 'userId'
 const MCP_OAUTH_CLIENT_NAME = 'Riposte'
 
-// Named class expression: the inline name `DisputeAgent` becomes `.name` on the
-// class at runtime, which the Agents SDK reads as `_ParentClass.name` to build
-// the OAuth callback URL and to look up the env binding. The variable name
-// (`DisputeAgentImpl`) is only used inside this module — the exported `const
-// DisputeAgent` below shadows it for consumers, while the binding key in
-// wrangler.jsonc (`DisputeAgent` → kebab `dispute-agent`) matches the runtime
-// class name (`DisputeAgent` → kebab `dispute-agent`).
+class RiposteMcpOAuthProvider extends DurableObjectOAuthClientProvider {
+  get clientMetadata() {
+    return {
+      ...super.clientMetadata,
+      client_name: MCP_OAUTH_CLIENT_NAME,
+    }
+  }
+}
+
 class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps> {
   private readonly deps: AppDeps
   private readonly analytics: IAnalyticsService
@@ -86,11 +88,7 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
   }
 
   createMcpOAuthProvider(callbackUrl: string): AgentMcpOAuthProvider {
-    return new DurableObjectOAuthClientProvider(
-      this.ctx.storage,
-      MCP_OAUTH_CLIENT_NAME,
-      callbackUrl,
-    )
+    return new RiposteMcpOAuthProvider(this.ctx.storage, this.name, callbackUrl)
   }
 
   async onStart(props?: DisputeAgentProps): Promise<void> {
@@ -202,7 +200,7 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
       // TODO(agent): extract to a ConnectMcpServer command + handler.
       connectMcpServer: tool({
         description:
-          'Connect a Model Context Protocol (MCP) server so we can use its tools to find evidence proofs (e.g., the merchant\'s database for user activity). Provide a memorable `name` and the MCP server `url` you discovered via webSearch/fetchUrl. If the server needs OAuth, returns `state: "authenticating"` with an `authUrl` — surface that to the merchant as a clickable markdown link so they can authorize. After authorization, you will be notified automatically and can continue without waiting for the merchant to type anything.',
+          'Connect a Model Context Protocol (MCP) server so we can use its tools to find evidence proofs (e.g., the merchant\'s database for user activity). Provide a memorable `name` and the MCP server `url` you discovered via webSearch/fetchUrl. Prefer explaining the server you found and asking the merchant before connecting. If the server needs OAuth, returns `state: "authenticating"` with an `authUrl` — surface that to the merchant as a clickable markdown link so they can authorize. After authorization, you will be notified automatically and can continue without waiting for the merchant to type anything.',
         inputSchema: z.object({
           name: z.string().min(1).max(50),
           url: z.url(),

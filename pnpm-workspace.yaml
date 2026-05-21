@@ -94,8 +94,9 @@ catalog:
   lucide-react: ^1.16.0
   motion: ^12.39.0
   nanoid: ^5.1.11
-  oxfmt: ^0.50.0
-  oxlint: ^1.65.0
+  oxfmt: ^0.51.0
+  oxlint: ^1.66.0
+  oxlint-tsgolint: ^0.23.0
   postgres: ^3.4.9
   '@posthog/ai': ^7.18.10
   posthog-js: ^1.374.2

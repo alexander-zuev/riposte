@@ -20,6 +20,16 @@ export const productSetupCompletedSchema = baseEventSchema.extend({
 
 export type ProductSetupCompleted = z.infer<typeof productSetupCompletedSchema>
 
+export const productAppDataSourceRegisteredSchema = baseEventSchema.extend({
+  name: z.literal('ProductAppDataSourceRegistered'),
+  productAppDataSourceId: z.uuidv4(),
+  productId: z.uuidv4(),
+  mcpServerId: z.string().min(1),
+  alias: z.string().min(1),
+})
+
+export type ProductAppDataSourceRegistered = z.infer<typeof productAppDataSourceRegisteredSchema>
+
 export const productUpdatedSchema = baseEventSchema.extend({
   name: z.literal('ProductUpdated'),
   productId: z.uuidv4(),

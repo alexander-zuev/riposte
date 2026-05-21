@@ -15,6 +15,22 @@ export const createProductResultSchema = z.object({
 export type CreateProduct = z.infer<typeof createProductSchema>
 export type CreateProductResult = z.infer<typeof createProductResultSchema>
 
+export const registerProductAppDataSourceSchema = baseCommandSchema.extend({
+  name: z.literal('RegisterProductAppDataSource'),
+  productId: z.uuidv4(),
+  mcpServerId: z.string().min(1),
+  alias: z.string().min(1),
+})
+
+export const registerProductAppDataSourceResultSchema = z.object({
+  productAppDataSourceId: z.uuidv4(),
+})
+
+export type RegisterProductAppDataSource = z.infer<typeof registerProductAppDataSourceSchema>
+export type RegisterProductAppDataSourceResult = z.infer<
+  typeof registerProductAppDataSourceResultSchema
+>
+
 // TODO(review): revisit UpdateProduct shape. Currently accepts every updatable
 // field as optional via updateProductFieldsSchema.shape; once onboarding stops
 // writing through update we may want narrower, intent-specific commands.

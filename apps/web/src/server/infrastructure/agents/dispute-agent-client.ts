@@ -7,6 +7,10 @@ import { Result } from 'better-result'
 const DISPUTE_AGENT_BINDING = 'DisputeAgent'
 const DISPUTE_AGENT_WORKFLOW_BINDING = 'DISPUTE_AGENT_WORKFLOW'
 
+// TODO(agent-scope): decide whether DisputeAgent DO names and workflow instances
+// should be user-scoped or product-scoped before app-data MCP setup becomes
+// durable product behavior.
+
 /** Build `getAgentByName` options. `props` is required so the DO's `onStart`
  * captures `userId` on first init — see `dispute-agent.ts`. `routingRetry`
  * handles transient DO routing blips; overloaded errors are skipped by the SDK. */

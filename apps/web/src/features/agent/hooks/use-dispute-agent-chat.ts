@@ -1,22 +1,40 @@
 import { useAgentChat } from '@cloudflare/ai-chat/react'
 import { createLogger } from '@riposte/core/client'
-import type { UIMessage } from 'ai'
+import type { MCPServersState } from 'agents'
 import { useAgent } from 'agents/react'
+import type { UIMessage } from 'ai'
+import { useState } from 'react'
 
 const logger = createLogger('dispute-agent-chat')
 
 export type AgentTransportState = 'connecting' | 'connected' | 'closing' | 'disconnected'
 
+/**
+ * Live MCP servers state pushed from the DO over the WebSocket. `null` until
+ * the first `CF_AGENT_MCP_SERVERS` broadcast arrives (the SDK replays current
+ * state on connect, so this resolves once the WS is identified).
+ */
 export function useDisputeAgent(productId: string) {
-  return useAgent({
+  const [mcp, setMcp] = useState<MCPServersState | null>(null)
+  const agent = useAgent({
     agent: 'dispute-agent',
     name: productId,
     prefix: 'api/agents',
     onStateUpdate: (state, source) => {
       logger.debug('state_update', { state, source })
     },
+    onMcpUpdate: (next) => {
+      logger.debug('mcp_update', {
+        servers: Object.keys(next.servers).length,
+        tools: next.tools.length,
+      })
+      setMcp(next)
+    },
   })
+  return { agent, mcp }
 }
+
+export type DisputeAgentConnection = ReturnType<typeof useDisputeAgent>['agent']
 
 export function getAgentTransportState(
   readyState: number,
@@ -48,7 +66,7 @@ export function getAgentTransportState(
  * `onError` surfaces runtime chat stream failures to the browser console.
  */
 export function useDisputeAgentChat(
-  agent: ReturnType<typeof useDisputeAgent>,
+  agent: DisputeAgentConnection,
   initialMessages: UIMessage<never>[],
 ) {
   return useAgentChat({

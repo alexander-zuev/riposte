@@ -1,8 +1,9 @@
 import {
   type AgentTransportState,
-  useDisputeAgent,
+  type DisputeAgentConnection,
   useDisputeAgentChat,
 } from '@web/features/agent/hooks/use-dispute-agent-chat'
+import { McpSourcesPopover } from '@web/features/agent/mcp-sources-popover'
 import { AgentMessagePart, agentMessagePartKey } from '@web/features/agent/message-part'
 import {
   Conversation,
@@ -18,13 +19,16 @@ import {
   PromptInputTools,
 } from '@web/ui/components/ai-elements/prompt-input'
 import { Spinner } from '@web/ui/components/ui/spinner'
+import type { MCPServersState } from 'agents'
 import type { UIMessage } from 'ai'
 import { useCallback } from 'react'
 
 type ChatProps = {
-  agent: ReturnType<typeof useDisputeAgent>
+  agent: DisputeAgentConnection
   transportState: AgentTransportState
   initialMessages: UIMessage<never>[]
+  productId: string
+  mcp: MCPServersState | null
 }
 
 /**
@@ -33,7 +37,7 @@ type ChatProps = {
  * owned by the parent page so the connection indicator in the card header
  * tracks the same instance.
  */
-export function Chat({ agent, transportState, initialMessages }: ChatProps) {
+export function Chat({ agent, transportState, initialMessages, productId, mcp }: ChatProps) {
   const chat = useDisputeAgentChat(agent, initialMessages)
   const isInputDisabled = transportState !== 'connected'
   const handleSubmit = useCallback(
@@ -71,18 +75,12 @@ export function Chat({ agent, transportState, initialMessages }: ChatProps) {
         <PromptInputTextarea
           className="text-sm md:text-sm"
           disabled={isInputDisabled}
-          placeholder={
-            transportState === 'connecting'
-              ? 'Connecting…'
-              : transportState === 'closing'
-                ? 'Closing…'
-                : transportState === 'disconnected'
-                  ? 'Disconnected'
-                  : 'Message'
-          }
+          placeholder="Type your message here..."
         />
         <PromptInputFooter className="text-sm">
-          <PromptInputTools />
+          <PromptInputTools>
+            <McpSourcesPopover mcp={mcp} productId={productId} />
+          </PromptInputTools>
           <PromptInputSubmit
             className="text-sm"
             disabled={isInputDisabled}

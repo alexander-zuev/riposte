@@ -41,9 +41,11 @@ import {
 import {
   createProductSchema,
   deleteProductSchema,
+  disconnectProductAppDataSourceSchema,
   getProductSetupStateSchema,
   listProductsSchema,
   productCreatedSchema,
+  productAppDataSourceDisconnectedSchema,
   productAppDataSourceRegisteredSchema,
   productDeletedSchema,
   productDisabledSchema,
@@ -51,6 +53,7 @@ import {
   productSetupCompletedSchema,
   productUpdatedSchema,
   registerProductAppDataSourceSchema,
+  restartProductSetupSchema,
   updateProductSchema,
 } from '../products'
 import { r2EventSchema, r2EventTransform } from '../storage/r2.messages'
@@ -96,6 +99,8 @@ export const domainCommandSchema = z.discriminatedUnion('name', [
   setNotificationChannelPreferenceSchema,
   createProductSchema,
   registerProductAppDataSourceSchema,
+  disconnectProductAppDataSourceSchema,
+  restartProductSetupSchema,
   updateProductSchema,
   deleteProductSchema,
 ])
@@ -119,6 +124,7 @@ export const domainEventSchema = z.discriminatedUnion('name', [
   scheduledDisputeSyncDueSchema,
   productCreatedSchema,
   productAppDataSourceRegisteredSchema,
+  productAppDataSourceDisconnectedSchema,
   productUpdatedSchema,
   productDeletedSchema,
   productDisabledSchema,

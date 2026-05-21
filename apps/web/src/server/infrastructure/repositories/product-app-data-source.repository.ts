@@ -78,4 +78,15 @@ export class ProductAppDataSourceRepository
 
     return found.map((row) => (row ? ProductAppDataSource.deserialize(row) : null))
   }
+
+  async delete(source: ProductAppDataSource): Promise<Result<void, DatabaseError>> {
+    return await Result.tryPromise({
+      try: async () => {
+        await this.db.delete(productAppDataSources).where(eq(productAppDataSources.id, source.id))
+        this.dispatchEvents(source)
+      },
+      catch: (cause) =>
+        new DatabaseError({ message: 'Failed to delete product app data source', cause }),
+    })
+  }
 }

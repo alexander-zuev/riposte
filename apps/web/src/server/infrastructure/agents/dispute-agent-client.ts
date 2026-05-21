@@ -58,6 +58,17 @@ export type SignalStripeConnectedInput = {
   productId: UUIDv4
 }
 
+export type DisconnectMcpInput = {
+  userId: UUIDv4
+  productId: UUIDv4
+  mcpServerId: string
+}
+
+export type RestartSetupInput = {
+  userId: UUIDv4
+  productId: UUIDv4
+}
+
 export interface IDisputeAgentClient {
   startWorkflow: (input: DisputeAgentWorkflowInput) => Promise<Result<void, WorkflowError>>
   pauseWorkflow: (input: DisputeAgentWorkflowInput) => Promise<Result<void, WorkflowError>>
@@ -92,6 +103,15 @@ export interface IDisputeAgentClient {
   signalStripeConnected: (
     input: SignalStripeConnectedInput,
   ) => Promise<Result<void, DOUnreachableError>>
+  /**
+   * Composite disconnect entry point used by the server function backing the
+   * Sources popover. The DO clears its MCP state, synthesizes a "disconnected"
+   * user turn, and dispatches `DisconnectProductAppDataSource` for PG cleanup.
+   * Symmetric with the register flow where the agent's tool dispatches
+   * `RegisterProductAppDataSource` after `addMcpServer`.
+   */
+  disconnectMcp: (input: DisconnectMcpInput) => Promise<Result<void, DOUnreachableError>>
+  restartSetup: (input: RestartSetupInput) => Promise<Result<void, DOUnreachableError>>
 }
 
 export class DisputeAgentClient implements IDisputeAgentClient {
@@ -254,7 +274,7 @@ export class DisputeAgentClient implements IDisputeAgentClient {
           productId,
           disputeAgentOptions(userId),
         )
-        await agent.primeOnboarding({ productId, productName, connectStripeUrl })
+        await agent.primeOnboarding({ productName, connectStripeUrl })
       },
       catch: (cause) => new DOUnreachableError({ cause, retryable: isTransientError(cause) }),
     })
@@ -291,6 +311,44 @@ export class DisputeAgentClient implements IDisputeAgentClient {
           disputeAgentOptions(userId),
         )
         await agent.signalStripeConnected()
+      },
+      catch: (cause) => new DOUnreachableError({ cause, retryable: isTransientError(cause) }),
+    })
+  }
+
+  async disconnectMcp({
+    userId,
+    productId,
+    mcpServerId,
+  }: DisconnectMcpInput): Promise<Result<void, DOUnreachableError>> {
+    return Result.tryPromise({
+      try: async () => {
+        const agent = await getAgentByName(
+          this.env.DisputeAgent,
+          productId,
+          disputeAgentOptions(userId),
+        )
+        await agent.disconnectMcp(mcpServerId)
+      },
+      catch: (cause) => new DOUnreachableError({ cause, retryable: isTransientError(cause) }),
+    })
+  }
+
+  async restartSetup({
+    userId,
+    productId,
+  }: RestartSetupInput): Promise<Result<void, DOUnreachableError>> {
+    return Result.tryPromise({
+      try: async () => {
+        const agent = await getAgentByName(
+          this.env.DisputeAgent,
+          productId,
+          disputeAgentOptions(userId),
+        )
+        const result = await agent.restartSetup()
+        if (!result.ok) {
+          throw new Error(result.error)
+        }
       },
       catch: (cause) => new DOUnreachableError({ cause, retryable: isTransientError(cause) }),
     })

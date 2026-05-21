@@ -7,6 +7,8 @@ import type {
   DatabaseError,
   DeleteProduct,
   DeleteProductResult,
+  DisconnectProductAppDataSource,
+  DisconnectProductAppDataSourceResult,
   DuplicateProductUrlError,
   GetProductSetupState,
   GetProductSetupStateResult,
@@ -14,6 +16,8 @@ import type {
   ListProductsResult,
   RegisterProductAppDataSource,
   RegisterProductAppDataSourceResult,
+  RestartProductSetup,
+  RestartProductSetupResult,
   UpdateProduct,
   UpdateProductResult,
   ValidationError,
@@ -107,6 +111,38 @@ export const createProduct: CommandHandler<
   return Result.ok({ productId: saved.value.id })
 }
 
+/**
+ * PG cleanup half of MCP disconnect. The DO's `disconnectMcp` clears live
+ * state, broadcasts to the FE over WS, and dispatches this command to wipe
+ * the persisted `product_app_data_sources` row. Idempotent: missing rows
+ * (DO-only connections, or a retry after a prior success) succeed with the
+ * same shape. See `dispute-agent.ts > disconnectMcp` and the register flow
+ * for symmetry.
+ */
+export const disconnectProductAppDataSource: CommandHandler<
+  DisconnectProductAppDataSource,
+  DisconnectProductAppDataSourceResult,
+  DatabaseError
+> = async (command, ctx) => {
+  const repo = ctx.deps.repos.productAppDataSources(ctx.tx)
+
+  const found = await repo.findByProductIdAndMcpServerId({
+    productId: command.productId,
+    mcpServerId: command.mcpServerId,
+  })
+  if (found.isErr()) return Result.err(found.error)
+  if (!found.value) {
+    return Result.ok({ mcpServerId: command.mcpServerId })
+  }
+
+  found.value.markDisconnected({ userId: command.userId })
+
+  const deleted = await repo.delete(found.value)
+  if (deleted.isErr()) return Result.err(deleted.error)
+
+  return Result.ok({ mcpServerId: command.mcpServerId })
+}
+
 export const registerProductAppDataSource: CommandHandler<
   RegisterProductAppDataSource,
   RegisterProductAppDataSourceResult,
@@ -139,6 +175,67 @@ export const registerProductAppDataSource: CommandHandler<
   if (saved.isErr()) return Result.err(saved.error)
 
   return Result.ok({ productAppDataSourceId: saved.value.id })
+}
+
+export const restartProductSetup: CommandHandler<
+  RestartProductSetup,
+  RestartProductSetupResult,
+  DatabaseError | EntityNotFoundError | DOUnreachableError
+> = async (command, ctx) => {
+  const product = await ctx.deps.repos.products(ctx.tx).findById(command.productId)
+  if (product.isErr()) return Result.err(product.error)
+  if (!product.value || product.value.userId !== command.userId) {
+    return Result.err(new EntityNotFoundError({ entity: 'Product', id: command.productId }))
+  }
+
+  const appDataSourceRepo = ctx.deps.repos.productAppDataSources(ctx.tx)
+  const appDataSources = await appDataSourceRepo.findByProductId(command.productId)
+  if (appDataSources.isErr()) return Result.err(appDataSources.error)
+
+  const deletedAppDataSources = await Promise.all(
+    appDataSources.value.map((source) => {
+      source.markDisconnected({ userId: command.userId })
+      return appDataSourceRepo.delete(source)
+    }),
+  )
+  const failedDelete = deletedAppDataSources.find((deleted) => deleted.isErr())
+  if (failedDelete?.isErr()) {
+    return Result.err(failedDelete.error)
+  }
+
+  const restarted = await ctx.deps.services.disputeAgentClient().restartSetup({
+    userId: command.userId,
+    productId: command.productId,
+  })
+  if (restarted.isErr()) return Result.err(restarted.error)
+
+  const stripeInstallUrl = await buildStripeOAuthInstallUrl(
+    createCommand('BuildStripeOAuthInstallUrl', {
+      userId: command.userId,
+      productId: command.productId,
+      redirectAfter: `/products/${command.productId}/agent`,
+    }),
+    ctx,
+  )
+  if (stripeInstallUrl.isErr()) {
+    logger.error('build_stripe_oauth_install_url_failed', {
+      productId: command.productId,
+      error: stripeInstallUrl.error,
+    })
+  }
+
+  const snapshot = product.value.serialize()
+  const primed = await ctx.deps.services.disputeAgentClient().primeOnboarding({
+    userId: command.userId,
+    productId: command.productId,
+    productName: snapshot.productName,
+    connectStripeUrl: stripeInstallUrl.isOk()
+      ? stripeInstallUrl.value.url
+      : `/products/${command.productId}/connections`,
+  })
+  if (primed.isErr()) return Result.err(primed.error)
+
+  return Result.ok({ productId: command.productId })
 }
 
 export const updateProduct: CommandHandler<

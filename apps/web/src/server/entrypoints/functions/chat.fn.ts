@@ -1,4 +1,4 @@
-import { createQuery, toServerFnRpc } from '@riposte/core'
+import { createCommand, createQuery, toServerFnRpc } from '@riposte/core'
 import { requireAuth } from '@server/infrastructure/middleware/auth.middleware'
 import { createServerFn } from '@tanstack/react-start'
 import type { UIMessage } from 'ai'
@@ -19,6 +19,10 @@ const getChatMessagesInputSchema = z.object({
   productId: z.uuidv4(),
 })
 
+const restartAgentSetupInputSchema = z.object({
+  productId: z.uuidv4(),
+})
+
 export const getChatMessages = createServerFn({ method: 'GET' })
   .middleware([requireAuth])
   .inputValidator(getChatMessagesInputSchema)
@@ -28,6 +32,19 @@ export const getChatMessages = createServerFn({ method: 'GET' })
       productId: data.productId,
     })
     const result = await context.deps.services.messageBus().handle(query)
+
+    return toServerFnRpc(result)
+  })
+
+export const restartAgentSetup = createServerFn({ method: 'POST' })
+  .middleware([requireAuth])
+  .inputValidator(restartAgentSetupInputSchema)
+  .handler(async ({ data, context }) => {
+    const command = createCommand('RestartProductSetup', {
+      userId: context.user.id,
+      productId: data.productId,
+    })
+    const result = await context.deps.services.messageBus().handle(command)
 
     return toServerFnRpc(result)
   })

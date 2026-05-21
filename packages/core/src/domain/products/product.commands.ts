@@ -31,6 +31,35 @@ export type RegisterProductAppDataSourceResult = z.infer<
   typeof registerProductAppDataSourceResultSchema
 >
 
+export const disconnectProductAppDataSourceSchema = baseCommandSchema.extend({
+  name: z.literal('DisconnectProductAppDataSource'),
+  userId: UserIdSchema,
+  productId: z.uuidv4(),
+  mcpServerId: z.string().min(1),
+})
+
+export const disconnectProductAppDataSourceResultSchema = z.object({
+  mcpServerId: z.string(),
+})
+
+export type DisconnectProductAppDataSource = z.infer<typeof disconnectProductAppDataSourceSchema>
+export type DisconnectProductAppDataSourceResult = z.infer<
+  typeof disconnectProductAppDataSourceResultSchema
+>
+
+export const restartProductSetupSchema = baseCommandSchema.extend({
+  name: z.literal('RestartProductSetup'),
+  userId: UserIdSchema,
+  productId: z.uuidv4(),
+})
+
+export const restartProductSetupResultSchema = z.object({
+  productId: z.uuidv4(),
+})
+
+export type RestartProductSetup = z.infer<typeof restartProductSetupSchema>
+export type RestartProductSetupResult = z.infer<typeof restartProductSetupResultSchema>
+
 // TODO(review): revisit UpdateProduct shape. Currently accepts every updatable
 // field as optional via updateProductFieldsSchema.shape; once onboarding stops
 // writing through update we may want narrower, intent-specific commands.

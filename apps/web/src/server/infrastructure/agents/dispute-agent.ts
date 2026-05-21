@@ -1,5 +1,5 @@
 import { AIChatAgent, type OnChatMessageOptions } from '@cloudflare/ai-chat'
-import { createLogger, createSentryOptions, type UserId } from '@riposte/core'
+import { createCommand, createLogger, createSentryOptions, type UserId } from '@riposte/core'
 import * as Sentry from '@sentry/cloudflare'
 import { BASE_PROMPT, buildSystemPrompt } from '@server/infrastructure/agents/build-system-prompt'
 import { createDisputeAgentModel } from '@server/infrastructure/ai/model-factory'
@@ -32,6 +32,31 @@ type CachedFetchDoc = {
   expiresAt: number
 }
 
+type ReadyMcpServerResult =
+  | {
+      ok: true
+      serverId: string
+      serverName: string
+    }
+  | {
+      ok: false
+      reason: 'not_found'
+      retryable: false
+      message: string
+    }
+  | {
+      ok: false
+      reason: 'not_ready'
+      state: string
+      retryable: boolean
+      message: string
+    }
+
+type PrimeOnboardingArgs = {
+  productName: string
+  connectStripeUrl: string
+}
+
 /** Minimal escape for surfacing untrusted error text in the OAuth callback HTML response. */
 function escapeHtml(input: string): string {
   return input
@@ -40,6 +65,22 @@ function escapeHtml(input: string): string {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;')
+}
+
+function buildOnboardingWelcomeMessage(args: PrimeOnboardingArgs): UIMessage<never> {
+  return {
+    id: 'welcome',
+    role: 'assistant',
+    parts: [
+      {
+        type: 'text',
+        text:
+          `Hi, I'm **Riposte**. I'll defend **${args.productName}** against Stripe disputes. ` +
+          `To start, I need access to your Stripe account so I can read disputes and submit evidence on your behalf. ` +
+          `[Connect Stripe →](${args.connectStripeUrl})`,
+      },
+    ],
+  }
 }
 
 const logger = createLogger('dispute-agent')
@@ -62,7 +103,13 @@ export type DisputeAgentProps = {
 }
 
 const USER_ID_STORAGE_KEY = 'userId'
+const PRIME_ONBOARDING_STORAGE_KEY = 'primeOnboarding'
 const MCP_OAUTH_CLIENT_NAME = 'Riposte'
+const appDataSourceAliasSchema = z
+  .string()
+  .min(1)
+  .max(50)
+  .regex(/^[a-z][a-z0-9_]*$/)
 
 class RiposteMcpOAuthProvider extends DurableObjectOAuthClientProvider {
   get clientMetadata() {
@@ -120,7 +167,7 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
           // Fire-and-forget: the popup must close fast, but the synthetic user
           // message + agent turn run in the background. The open chat WebSocket
           // keeps the DO alive long enough for the agent's response to stream.
-          this.signalMcpConnected(serverName)
+          this.signalMcpConnected({ serverId: result.serverId, serverName })
           return new Response('<script>window.close();</script>', {
             headers: { 'content-type': 'text/html' },
           })
@@ -230,6 +277,57 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
         },
       }),
 
+      listMcpServers: tool({
+        description:
+          'List connected MCP servers with their internal server ids, display names, URLs, and connection states. Use this after an OAuth connection event when you need the server id for readiness checks or app data registration.',
+        inputSchema: z.object({}),
+        execute: async () => {
+          const { servers } = this.getMcpServers()
+          return {
+            ok: true as const,
+            servers: Object.entries(servers).map(([id, server]) => ({
+              id,
+              name: server.name,
+              url: server.server_url,
+              state: server.state,
+            })),
+          }
+        },
+      }),
+
+      // TODO(agent): extract to a RegisterAppDataSource command/tool adapter.
+      registerAppDataSource: tool({
+        description:
+          'Register a ready MCP server as a merchant app data source for this product. Use only after the MCP server is authorized, ready, represents merchant-owned app/customer/usage data, and you have successfully made one harmless read-only call with its MCP tools. Do not use for Stripe. `serverId` must be the internal MCP server id from listMcpServers or connectMcpServer, not the display name. Choose a stable snake_case alias such as `primary_db`, `usage_db`, or `support_tool`; the alias may be referenced by future playbooks.',
+        inputSchema: z.object({
+          serverId: z.string().min(1),
+          alias: appDataSourceAliasSchema,
+        }),
+        execute: async ({ serverId, alias }) => {
+          const readyServer = await this.getReadyMcpServer(serverId)
+          if (!readyServer.ok) {
+            return readyServer
+          }
+
+          const command = createCommand('RegisterProductAppDataSource', {
+            productId: this.name,
+            mcpServerId: serverId,
+            alias,
+          })
+          const registered = await this.deps.services.messageBus().handle(command)
+          if (registered.isErr()) {
+            return { ok: false as const, error: registered.error.message }
+          }
+
+          return {
+            ok: true as const,
+            productAppDataSourceId: registered.value.productAppDataSourceId,
+            serverName: readyServer.serverName,
+            alias,
+          }
+        },
+      }),
+
       // TODO(agent): extract to a FetchUrl command + handler.
       fetchUrl: tool({
         description:
@@ -312,21 +410,157 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
     return this.messages
   }
 
+  async restartSetup(): Promise<{ ok: true } | { ok: false; error: string }> {
+    const { servers } = this.getMcpServers()
+    await Promise.all(Object.keys(servers).map((serverId) => this.removeMcpServer(serverId)))
+    this.setState({ mode: 'setup' })
+    await this.clearConversation()
+
+    return { ok: true }
+  }
+
+  async getReadyMcpServer(serverId: string): Promise<ReadyMcpServerResult> {
+    const server = this.getMcpServers().servers[serverId]
+    if (!server) {
+      return {
+        ok: false,
+        reason: 'not_found',
+        retryable: false,
+        message: 'MCP server was not found.',
+      }
+    }
+
+    switch (server.state) {
+      case 'ready':
+        return {
+          ok: true,
+          serverId,
+          serverName: server.name,
+        }
+      case 'connecting':
+      case 'connected':
+      case 'discovering':
+        return {
+          ok: false,
+          reason: 'not_ready',
+          state: server.state,
+          retryable: true,
+          message: `MCP server is still ${server.state}. Check again shortly.`,
+        }
+      case 'authenticating':
+        return {
+          ok: false,
+          reason: 'not_ready',
+          state: server.state,
+          retryable: false,
+          message:
+            'MCP server is waiting for OAuth authorization. Ask the merchant to authorize using the link from the connect step, or reconnect if that link is stale.',
+        }
+      case 'failed':
+        return {
+          ok: false,
+          reason: 'not_ready',
+          state: server.state,
+          retryable: false,
+          message: 'MCP server connection failed. Reconnect the server before using it.',
+        }
+      default:
+        return {
+          ok: false,
+          reason: 'not_ready',
+          state: String(server.state),
+          retryable: false,
+          message: `MCP server is not ready. Current state: ${String(server.state)}.`,
+        }
+    }
+  }
+
   /** Synthesizes an "MCP connected" user turn so the agent picks up the new MCP tools without merchant input. Called from the OAuth callback's `customHandler` after a successful authorization. */
-  async signalMcpConnected(serverName: string): Promise<void> {
+  async signalMcpConnected({
+    serverId,
+    serverName,
+  }: {
+    serverId: string
+    serverName: string
+  }): Promise<void> {
     await this.saveMessages((messages) => [
       ...messages,
       {
-        id: `mcp-connected-${serverName}-${Date.now()}`,
+        id: `mcp-connected-${serverId}-${Date.now()}`,
         role: 'user',
         parts: [
           {
             type: 'text',
-            text: `Connection event: OAuth authorization succeeded for the MCP: "${serverName}".`,
+            text: `Connection event: OAuth authorization succeeded for MCP server "${serverName}". Continue setup.`,
           },
         ],
       },
     ])
+  }
+
+  /**
+   * Mirror of {@link signalMcpConnected}. Synthesizes a "disconnected" user
+   * turn after a merchant-initiated MCP disconnect so the agent stops trying
+   * tools from the now-removed server on its next stream.
+   */
+  async signalMcpDisconnected(serverName: string): Promise<void> {
+    await this.saveMessages((messages) => [
+      ...messages,
+      {
+        id: `mcp-disconnected-${serverName}-${Date.now()}`,
+        role: 'user',
+        parts: [
+          {
+            type: 'text',
+            text: `Connection event: MCP "${serverName}" was disconnected. Continue without those tools.`,
+          },
+        ],
+      },
+    ])
+  }
+
+  /**
+   * Composite disconnect entry point called by the application layer (the
+   * `disconnectProductAppDataSource` server fn) and by {@link clearMcpServers}
+   * during restart. Symmetric with the register flow:
+   *
+   * 1. clear DO MCP state (SDK broadcasts `CF_AGENT_MCP_SERVERS` to the FE)
+   * 2. synthesize a "disconnected" user turn so the agent stops trying tools
+   *    from the now-removed server on its next stream
+   * 3. dispatch `DisconnectProductAppDataSource` to wipe the persisted
+   *    `product_app_data_sources` row
+   *
+   * No-op (`false`) if the server is already gone. Missing `userId` logs and
+   * still completes DO cleanup — same fail-soft pattern as `onChatMessage`,
+   * and the PG handler is idempotent on missing rows for a future retry.
+   */
+  async disconnectMcp(mcpServerId: string): Promise<boolean> {
+    const server = this.getMcpServers().servers[mcpServerId]
+    if (!server) return false
+
+    await this.removeMcpServer(mcpServerId)
+    await this.signalMcpDisconnected(server.name)
+
+    if (!this.userId) {
+      logger.error('disconnect_mcp_missing_userid', { productId: this.name, mcpServerId })
+      return true
+    }
+
+    const command = createCommand('DisconnectProductAppDataSource', {
+      userId: this.userId,
+      productId: this.name,
+      mcpServerId,
+    })
+    const result = await this.deps.services.messageBus().handle(command)
+    if (result.isErr()) {
+      logger.error('disconnect_mcp_pg_cleanup_failed', {
+        productId: this.name,
+        mcpServerId,
+        error: result.error,
+      })
+    }
+
+    return true
   }
 
   /** Synthesizes a "Stripe connected" user turn so the agent advances onboarding. `saveMessages` (not `persistMessages`) triggers the next model turn and serializes behind any in-flight stream. */
@@ -346,32 +580,16 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
     ])
   }
 
-  /**
-   * Idempotent welcome-message prime. Called from the CreateProduct command
-   * handler after the product is persisted, so the chat is populated before
-   * the merchant ever navigates to the agent page.
-   */
-  async primeOnboarding(args: {
-    productId: string
-    productName: string
-    connectStripeUrl: string
-  }) {
-    if (this.messages.length > 0) return
-    await this.persistMessages([
-      {
-        id: 'welcome',
-        role: 'assistant',
-        parts: [
-          {
-            type: 'text',
-            text:
-              `Hi, I'm **Riposte**. I'll defend **${args.productName}** against Stripe disputes. ` +
-              `To start, I need access to your Stripe account so I can read disputes and submit evidence on your behalf. ` +
-              `[Connect Stripe →](${args.connectStripeUrl})`,
-          },
-        ],
-      },
-    ])
+  /** Clears the current conversation and writes the onboarding welcome message. */
+  async primeOnboarding(args: PrimeOnboardingArgs) {
+    await this.ctx.storage.put(PRIME_ONBOARDING_STORAGE_KEY, args)
+    await this.clearConversation()
+    await this.persistMessages([buildOnboardingWelcomeMessage(args)])
+  }
+
+  private async clearConversation(): Promise<void> {
+    this.resetTurnState()
+    await this.persistMessages([], [], { _deleteStaleRows: true })
   }
   /**
    * Base class overloads this as `(connection, error)` (WS) and `(error)`

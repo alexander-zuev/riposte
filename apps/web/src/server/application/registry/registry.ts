@@ -29,9 +29,11 @@ import {
 import {
   createProduct,
   deleteProduct,
+  disconnectProductAppDataSource,
   getProductSetupState,
   listProducts,
   registerProductAppDataSource,
+  restartProductSetup,
   updateProduct,
 } from '@server/application/handlers/product-handler'
 import {
@@ -84,6 +86,8 @@ export const COMMAND_HANDLERS = {
   FailDisputeCase: failDisputeCase,
   CreateProduct: createProduct,
   RegisterProductAppDataSource: registerProductAppDataSource,
+  DisconnectProductAppDataSource: disconnectProductAppDataSource,
+  RestartProductSetup: restartProductSetup,
   UpdateProduct: updateProduct,
   DeleteProduct: deleteProduct,
 } satisfies CommandRegistry

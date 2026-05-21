@@ -10,6 +10,7 @@ import { isTaggedErrorWithTag } from '@web/lib/errors'
 import {
   createProduct,
   deleteProduct,
+  disconnectProductAppDataSource,
   updateProduct,
 } from '@web/server/entrypoints/functions/product.fn'
 import { setSelectedProductIdServerFn } from '@web/server/entrypoints/functions/selected-product.fn'
@@ -63,6 +64,29 @@ export function useUpdateProductMutation(productId: string) {
       }
 
       toast.error('Failed to update product')
+    },
+  })
+}
+
+/**
+ * Disconnects a merchant MCP source for a product. The DO clears its MCP state
+ * and broadcasts the new `MCPServersState` over the WS — so we deliberately
+ * do not invalidate any query here. The popover updates via `onMcpUpdate` push
+ * (see `useDisputeAgent`).
+ */
+export function useDisconnectMcpMutation(productId: string) {
+  return useMutation({
+    mutationFn: async (input: { mcpServerId: string; serverName: string }) =>
+      unwrapRpc(
+        await disconnectProductAppDataSource({
+          data: { productId, mcpServerId: input.mcpServerId },
+        }),
+      ),
+    onSuccess: (_data, variables) => {
+      toast.success(`Disconnected ${variables.serverName} MCP server`)
+    },
+    onError: (_error, variables) => {
+      toast.error(`Failed to disconnect ${variables.serverName} MCP server`)
     },
   })
 }

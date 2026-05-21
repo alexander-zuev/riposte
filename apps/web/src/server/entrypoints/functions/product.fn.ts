@@ -23,6 +23,11 @@ const deleteProductFnInputSchema = z.object({
   productId: z.uuidv4(),
 })
 
+const disconnectProductAppDataSourceFnInputSchema = z.object({
+  productId: z.uuidv4(),
+  mcpServerId: z.string().min(1),
+})
+
 export const listProducts = createServerFn({ method: 'GET' })
   .middleware([requireAuth])
   .handler(async ({ context }) => {
@@ -84,6 +89,26 @@ export const deleteProduct = createServerFn({ method: 'POST' })
       productId: data.productId,
     })
     const result = await context.deps.services.messageBus().handle(command)
+
+    return toServerFnRpc(result)
+  })
+
+/**
+ * Disconnect a merchant MCP source. Calls into the DisputeAgent DO, which
+ * clears its MCP state, signals the agent, and dispatches
+ * `DisconnectProductAppDataSource` for PG cleanup. The DO is the orchestrator
+ * here — see `dispute-agent.ts > disconnectMcp` for the symmetric register
+ * pattern.
+ */
+export const disconnectProductAppDataSource = createServerFn({ method: 'POST' })
+  .middleware([requireAuth])
+  .inputValidator(disconnectProductAppDataSourceFnInputSchema)
+  .handler(async ({ data, context }) => {
+    const result = await context.deps.services.disputeAgentClient().disconnectMcp({
+      userId: context.user.id,
+      productId: data.productId,
+      mcpServerId: data.mcpServerId,
+    })
 
     return toServerFnRpc(result)
   })

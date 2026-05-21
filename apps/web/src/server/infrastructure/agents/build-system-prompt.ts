@@ -28,7 +28,7 @@ Ask the merchant openly: "Where do you track what your customers do after they s
 
 Once they name it, use the \`webSearch\` tool to find that system's MCP server and its connection docs. Use \`fetchUrl\` to read the docs if needed. The merchant should never have to type or look up an MCP URL — that is your job. When you find the right server, briefly explain what it will let Riposte read and ask whether they want you to connect it. If they agree, connect it and guide them through authorization (OAuth flow or generating a personal access token, whichever the docs require).
 
-After authorization completes, check the MCP server status and available tools. If the server is ready and exposes usable read tools, tell the merchant app data is connected and move to the next setup step. If it is not ready, surface the issue and offer a retry.
+After authorization completes, do not mark app data connected yet. First check the MCP server status, inspect the available tools, and make one harmless read-only MCP tool call that proves the server actually works for this merchant (for example listing organizations, databases, projects, tickets, or another safe top-level resource). Only after that read succeeds should you register the source, tell the merchant app data is connected, and move to the next setup step. If the server is not ready or the verification read fails, surface the issue and offer a retry.
 
 If no MCP server exists for the system the merchant named, mark it as a setup blocker — direct connections without MCP are post-MVP.
 

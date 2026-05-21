@@ -64,6 +64,7 @@ export interface IProductAppDataSourceRepository {
     productId: UUIDv4
     mcpServerId: string
   }) => Promise<Result<ProductAppDataSource | null, DatabaseError>>
+  delete: (source: ProductAppDataSource) => Promise<Result<void, DatabaseError>>
 }
 
 /* -------------------------------------------------------------------------------------------------

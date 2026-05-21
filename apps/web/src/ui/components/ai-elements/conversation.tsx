@@ -21,7 +21,9 @@ export const Conversation = ({ className, ...props }: ConversationProps) => (
 export type ConversationContentProps = ComponentProps<typeof StickToBottom.Content>
 
 export const ConversationContent = ({ className, ...props }: ConversationContentProps) => (
-  <StickToBottom.Content className={cn('flex flex-col gap-8 p-4', className)} {...props} />
+  // px-1.5 (6px) + StickToBottom's 10px scrollbar-gutter on each side = 16px,
+  // matching CardHeader/PromptInput horizontal padding in the chat card.
+  <StickToBottom.Content className={cn('flex flex-col gap-8 py-4 px-1.5', className)} {...props} />
 )
 
 export type ConversationEmptyStateProps = ComponentProps<'div'> & {

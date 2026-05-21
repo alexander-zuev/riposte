@@ -70,4 +70,15 @@ export class ProductAppDataSource extends Entity<ProductAppDataSourceSnapshot> {
       createdAt: this.createdAt,
     }
   }
+
+  markDisconnected(input: { userId: UUIDv4 }): void {
+    this.addEvent(
+      createEvent('ProductAppDataSourceDisconnected', {
+        productAppDataSourceId: this.id,
+        productId: this.productId,
+        userId: input.userId,
+        mcpServerId: this.mcpServerId,
+      }),
+    )
+  }
 }

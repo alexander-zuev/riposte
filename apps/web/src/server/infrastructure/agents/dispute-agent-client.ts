@@ -1,21 +1,11 @@
 import { createLogger, DOUnreachableError, WorkflowError, type UUIDv4 } from '@riposte/core'
-import type { DisputeAgent, DisputeAgentProps } from '@server/infrastructure/agents/dispute-agent'
 import { isTransientError, RETRY } from '@server/infrastructure/resilience/retry'
 import { getAgentByName } from 'agents'
 import type { UIMessage } from 'ai'
 import { Result } from 'better-result'
 
-type EnvBindingName<TBinding> = {
-  [TKey in keyof Env]: Env[TKey] extends TBinding ? TKey : never
-}[keyof Env] &
-  string
-
-type DisputeAgentWorkflowBindingName = EnvBindingName<Workflow<DisputeAgentWorkflowParams>>
-type DisputeAgentBindingName = EnvBindingName<DurableObjectNamespace<DisputeAgent>>
-
-const DISPUTE_AGENT_BINDING = 'DisputeAgent' satisfies DisputeAgentBindingName
-const DISPUTE_AGENT_WORKFLOW_BINDING =
-  'DISPUTE_AGENT_WORKFLOW' satisfies DisputeAgentWorkflowBindingName
+const DISPUTE_AGENT_BINDING = 'DisputeAgent'
+const DISPUTE_AGENT_WORKFLOW_BINDING = 'DISPUTE_AGENT_WORKFLOW'
 
 /** Build `getAgentByName` options. `props` is required so the DO's `onStart`
  * captures `userId` on first init — see `dispute-agent.ts`. `routingRetry`
@@ -112,7 +102,7 @@ export class DisputeAgentClient implements IDisputeAgentClient {
     return Result.tryPromise(
       {
         try: async () => {
-          const agent = await getAgentByName<Env, DisputeAgent, DisputeAgentProps>(
+          const agent = await getAgentByName(
             this.env.DisputeAgent,
             userId,
             disputeAgentOptions(userId),
@@ -155,7 +145,7 @@ export class DisputeAgentClient implements IDisputeAgentClient {
     return Result.tryPromise(
       {
         try: async () => {
-          const agent = await getAgentByName<Env, DisputeAgent, DisputeAgentProps>(
+          const agent = await getAgentByName(
             this.env.DisputeAgent,
             userId,
             disputeAgentOptions(userId),
@@ -185,7 +175,7 @@ export class DisputeAgentClient implements IDisputeAgentClient {
     return Result.tryPromise(
       {
         try: async () => {
-          const agent = await getAgentByName<Env, DisputeAgent, DisputeAgentProps>(
+          const agent = await getAgentByName(
             this.env.DisputeAgent,
             userId,
             disputeAgentOptions(userId),
@@ -215,7 +205,7 @@ export class DisputeAgentClient implements IDisputeAgentClient {
     return Result.tryPromise(
       {
         try: async () => {
-          const agent = await getAgentByName<Env, DisputeAgent, DisputeAgentProps>(
+          const agent = await getAgentByName(
             this.env.DisputeAgent,
             userId,
             disputeAgentOptions(userId),
@@ -255,7 +245,7 @@ export class DisputeAgentClient implements IDisputeAgentClient {
         // Pass `props` so the DO's `onStart` captures `userId` on first init.
         // Without this the DO inits without userId and PostHog events ship
         // unattributed for its lifetime (see dispute-agent.ts onStart).
-        const agent = await getAgentByName<Env, DisputeAgent, DisputeAgentProps>(
+        const agent = await getAgentByName(
           this.env.DisputeAgent,
           productId,
           disputeAgentOptions(userId),
@@ -272,7 +262,7 @@ export class DisputeAgentClient implements IDisputeAgentClient {
   }: GetMessagesInput): Promise<Result<UIMessage<never>[], DOUnreachableError>> {
     return Result.tryPromise({
       try: async () => {
-        const agent = await getAgentByName<Env, DisputeAgent, DisputeAgentProps>(
+        const agent = await getAgentByName(
           this.env.DisputeAgent,
           productId,
           disputeAgentOptions(userId),
@@ -291,7 +281,7 @@ export class DisputeAgentClient implements IDisputeAgentClient {
   }: SignalStripeConnectedInput): Promise<Result<void, DOUnreachableError>> {
     return Result.tryPromise({
       try: async () => {
-        const agent = await getAgentByName<Env, DisputeAgent, DisputeAgentProps>(
+        const agent = await getAgentByName(
           this.env.DisputeAgent,
           productId,
           disputeAgentOptions(userId),

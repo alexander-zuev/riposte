@@ -1,4 +1,4 @@
-import type { StripeConnection } from '@server/domain/stripe'
+import type { StripeConnection, StripeConnectionSnapshot } from '@server/domain/stripe'
 
 export type ConnectionHealth = 'connected' | 'not_connected' | 'failed'
 export type NotificationChannel = 'email' | 'slack'
@@ -36,11 +36,11 @@ export type StripeConnectionState =
     }
   | {
       status: 'revoked'
-      connection: StripeConnection
+      connection: StripeConnectionSnapshot
     }
   | {
       status: 'connected'
-      connection: StripeConnection
+      connection: StripeConnectionSnapshot
     }
 
 export type AppDatabaseConnectionState = {
@@ -86,7 +86,7 @@ export function createConnectionsStatus(input: {
   return {
     stripe: {
       status: input.stripeConnection.status === 'revoked' ? 'revoked' : 'connected',
-      connection: input.stripeConnection,
+      connection: input.stripeConnection.serialize(),
     },
     appDatabase: { status: 'not_connected' },
     notifications,

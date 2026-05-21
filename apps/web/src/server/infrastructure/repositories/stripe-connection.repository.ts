@@ -1,111 +1,132 @@
 import type { CredentialEncryptionError, UUIDv4 } from '@riposte/core'
 import { DatabaseError } from '@riposte/core'
 import type { IStripeConnectionRepository } from '@server/domain/repository/interfaces'
-import type {
-  RefreshStripeCredentialsInput,
+import {
   StripeConnection,
-  StripeConnectionCredentials,
-  StripeConnectionWithCredentials,
-  UpsertStripeConnectionInput,
+  type StripeConnectionCredentials,
+  type StripeConnectionWithCredentials,
 } from '@server/domain/stripe'
 import type { ICredentialEncryptionService } from '@server/infrastructure/credentials/credential-encryption'
 import type { DbStripeConnection, DrizzleDb } from '@server/infrastructure/db'
 import { stripeConnections } from '@server/infrastructure/db'
-import { STRIPE_APPS_ACCESS_TOKEN_TTL_MS } from '@server/infrastructure/stripe/stripe-oauth-token'
 import { Result } from 'better-result'
 import { desc, eq } from 'drizzle-orm'
 
-export class StripeConnectionRepository implements IStripeConnectionRepository {
+import { BaseRepository } from './base.repository'
+
+export class StripeConnectionRepository
+  extends BaseRepository
+  implements IStripeConnectionRepository
+{
   constructor(
     private readonly db: DrizzleDb,
     private readonly credentialEncryption: ICredentialEncryptionService,
-  ) {}
+  ) {
+    super()
+  }
 
-  async upsertConnectedAccount(
-    input: UpsertStripeConnectionInput,
-  ): Promise<Result<StripeConnection, DatabaseError | CredentialEncryptionError>> {
-    const encryptedCredential = await this.credentialEncryption.encrypt({
-      accessToken: input.accessToken,
-      refreshToken: input.refreshToken,
-    })
-    if (encryptedCredential.isErr()) return Result.err(encryptedCredential.error)
+  async save(connection: StripeConnection): Promise<Result<StripeConnection, DatabaseError>> {
+    const row = connection.serialize()
 
     const saved = await Result.tryPromise({
       try: async () => {
-        const [connection] = await this.db
+        const [savedConnection] = await this.db
+          .update(stripeConnections)
+          .set({
+            userId: row.userId,
+            productId: row.productId,
+            stripeBusinessName: row.stripeBusinessName,
+            livemode: row.livemode,
+            status: row.status,
+            scope: row.scope,
+            tokenType: row.tokenType,
+            accessTokenExpiresAt: row.accessTokenExpiresAt,
+            connectedAt: row.connectedAt,
+            revokedAt: row.revokedAt,
+            revokedStripeEventId: row.revokedStripeEventId,
+            updatedAt: row.updatedAt,
+          })
+          .where(eq(stripeConnections.id, row.id))
+          .returning()
+
+        if (!savedConnection) throw new Error('Stripe connection save returned no row')
+        this.dispatchEvents(connection)
+        return savedConnection
+      },
+      catch: (cause) => new DatabaseError({ message: 'Failed to save Stripe connection', cause }),
+    })
+
+    if (saved.isErr()) return Result.err(saved.error)
+    return Result.ok(StripeConnection.deserialize(saved.value))
+  }
+
+  async saveWithCredentials(
+    connection: StripeConnection,
+    credentials: StripeConnectionCredentials,
+  ): Promise<Result<StripeConnection, DatabaseError | CredentialEncryptionError>> {
+    const encryptedCredential = await this.credentialEncryption.encrypt({
+      accessToken: credentials.accessToken,
+      refreshToken: credentials.refreshToken,
+    })
+    if (encryptedCredential.isErr()) return Result.err(encryptedCredential.error)
+
+    const row = connection.serialize()
+
+    const saved = await Result.tryPromise({
+      try: async () => {
+        const [savedConnection] = await this.db
           .insert(stripeConnections)
           .values({
-            userId: input.userId,
-            productId: input.productId,
-            stripeAccountId: input.stripeAccountId,
-            stripeBusinessName: input.stripeBusinessName,
-            livemode: input.livemode,
-            status: 'active',
-            scope: input.scope,
-            tokenType: input.tokenType,
+            id: row.id,
+            userId: row.userId,
+            productId: row.productId,
+            stripeAccountId: row.stripeAccountId,
+            stripeBusinessName: row.stripeBusinessName,
+            livemode: row.livemode,
+            status: row.status,
+            scope: row.scope,
+            tokenType: row.tokenType,
             credentialCiphertext: encryptedCredential.value.ciphertext,
             credentialIv: encryptedCredential.value.iv,
             credentialKeyVersion: encryptedCredential.value.keyVersion,
-            accessTokenExpiresAt: input.accessTokenExpiresAt,
-            connectedAt: input.connectedAt,
+            accessTokenExpiresAt: row.accessTokenExpiresAt,
+            connectedAt: row.connectedAt,
+            revokedAt: row.revokedAt,
+            revokedStripeEventId: row.revokedStripeEventId,
+            createdAt: row.createdAt,
+            updatedAt: row.updatedAt,
           })
           .onConflictDoUpdate({
             target: [stripeConnections.stripeAccountId, stripeConnections.livemode],
             set: {
-              userId: input.userId,
-              productId: input.productId,
-              stripeBusinessName: input.stripeBusinessName,
-              status: 'active',
-              scope: input.scope,
-              tokenType: input.tokenType,
+              userId: row.userId,
+              productId: row.productId,
+              stripeBusinessName: row.stripeBusinessName,
+              status: row.status,
+              scope: row.scope,
+              tokenType: row.tokenType,
               credentialCiphertext: encryptedCredential.value.ciphertext,
               credentialIv: encryptedCredential.value.iv,
               credentialKeyVersion: encryptedCredential.value.keyVersion,
-              accessTokenExpiresAt: input.accessTokenExpiresAt,
-              connectedAt: input.connectedAt,
-              revokedAt: null,
-              revokedStripeEventId: null,
-              updatedAt: new Date(),
+              accessTokenExpiresAt: row.accessTokenExpiresAt,
+              connectedAt: row.connectedAt,
+              revokedAt: row.revokedAt,
+              revokedStripeEventId: row.revokedStripeEventId,
+              updatedAt: row.updatedAt,
             },
           })
           .returning()
 
-        if (!connection) throw new Error('Stripe connection upsert returned no rows')
-
-        return connection
+        if (!savedConnection) throw new Error('Stripe connection save returned no row')
+        this.dispatchEvents(connection)
+        return savedConnection
       },
-      catch: (cause) => new DatabaseError({ message: 'Failed to upsert Stripe connection', cause }),
+      catch: (cause) =>
+        new DatabaseError({ message: 'Failed to save Stripe connection credentials', cause }),
     })
 
     if (saved.isErr()) return Result.err(saved.error)
-    return Result.ok(this.toDomain(saved.value))
-  }
-
-  async markRevokedByStripeAccountId(input: {
-    stripeAccountId: string
-    stripeEventId: string
-    revokedAt: Date
-  }): Promise<Result<StripeConnection | null, DatabaseError>> {
-    const saved = await Result.tryPromise({
-      try: async () => {
-        const [connection] = await this.db
-          .update(stripeConnections)
-          .set({
-            status: 'revoked',
-            revokedAt: input.revokedAt,
-            revokedStripeEventId: input.stripeEventId,
-            updatedAt: new Date(),
-          })
-          .where(eq(stripeConnections.stripeAccountId, input.stripeAccountId))
-          .returning()
-
-        return connection ?? null
-      },
-      catch: (cause) => new DatabaseError({ message: 'Failed to revoke Stripe connection', cause }),
-    })
-
-    if (saved.isErr()) return Result.err(saved.error)
-    return Result.ok(saved.value ? this.toDomain(saved.value) : null)
+    return Result.ok(StripeConnection.deserialize(saved.value))
   }
 
   async findByStripeAccountId(
@@ -113,7 +134,7 @@ export class StripeConnectionRepository implements IStripeConnectionRepository {
   ): Promise<Result<StripeConnection | null, DatabaseError>> {
     const found = await this.findDbByStripeAccountId(stripeAccountId)
     if (found.isErr()) return Result.err(found.error)
-    return Result.ok(found.value ? this.toDomain(found.value) : null)
+    return Result.ok(found.value ? StripeConnection.deserialize(found.value) : null)
   }
 
   async findLatestByUserId(
@@ -135,7 +156,7 @@ export class StripeConnectionRepository implements IStripeConnectionRepository {
     })
 
     if (found.isErr()) return Result.err(found.error)
-    return Result.ok(found.value ? this.toDomain(found.value) : null)
+    return Result.ok(found.value ? StripeConnection.deserialize(found.value) : null)
   }
 
   async findByProductId(
@@ -156,7 +177,7 @@ export class StripeConnectionRepository implements IStripeConnectionRepository {
     })
 
     if (found.isErr()) return Result.err(found.error)
-    return Result.ok(found.value ? this.toDomain(found.value) : null)
+    return Result.ok(found.value ? StripeConnection.deserialize(found.value) : null)
   }
 
   async findWithCredentialsByStripeAccountId(
@@ -175,51 +196,12 @@ export class StripeConnectionRepository implements IStripeConnectionRepository {
     })
     if (credentials.isErr()) return Result.err(credentials.error)
 
-    return Result.ok({
-      ...this.toDomain(found.value),
-      ...credentials.value,
-    })
-  }
-
-  async refreshCredentials(
-    input: RefreshStripeCredentialsInput,
-  ): Promise<Result<StripeConnectionWithCredentials, DatabaseError | CredentialEncryptionError>> {
-    const encrypted = await this.credentialEncryption.encrypt({
-      accessToken: input.accessToken,
-      refreshToken: input.refreshToken,
-    })
-    if (encrypted.isErr()) return Result.err(encrypted.error)
-
-    const accessTokenExpiresAt = new Date(Date.now() + STRIPE_APPS_ACCESS_TOKEN_TTL_MS)
-
-    const saved = await Result.tryPromise({
-      try: async () => {
-        const [connection] = await this.db
-          .update(stripeConnections)
-          .set({
-            credentialCiphertext: encrypted.value.ciphertext,
-            credentialIv: encrypted.value.iv,
-            credentialKeyVersion: encrypted.value.keyVersion,
-            accessTokenExpiresAt,
-            updatedAt: new Date(),
-          })
-          .where(eq(stripeConnections.stripeAccountId, input.stripeAccountId))
-          .returning()
-
-        if (!connection) throw new Error('Stripe connection not found for credential refresh')
-
-        return connection
-      },
-      catch: (cause) =>
-        new DatabaseError({ message: 'Failed to refresh Stripe credentials', cause }),
-    })
-    if (saved.isErr()) return Result.err(saved.error)
-
-    return Result.ok({
-      ...this.toDomain(saved.value),
-      accessToken: input.accessToken,
-      refreshToken: input.refreshToken,
-    })
+    return Result.ok(
+      StripeConnection.withCredentials(
+        StripeConnection.deserialize(found.value),
+        credentials.value,
+      ),
+    )
   }
 
   private async findDbByStripeAccountId(
@@ -237,25 +219,5 @@ export class StripeConnectionRepository implements IStripeConnectionRepository {
       },
       catch: (cause) => new DatabaseError({ message: 'Failed to find Stripe connection', cause }),
     })
-  }
-
-  private toDomain(connection: DbStripeConnection): StripeConnection {
-    return {
-      id: connection.id,
-      userId: connection.userId,
-      productId: connection.productId,
-      stripeAccountId: connection.stripeAccountId,
-      stripeBusinessName: connection.stripeBusinessName,
-      livemode: connection.livemode,
-      status: connection.status,
-      scope: connection.scope,
-      tokenType: connection.tokenType,
-      accessTokenExpiresAt: connection.accessTokenExpiresAt,
-      connectedAt: connection.connectedAt,
-      revokedAt: connection.revokedAt,
-      revokedStripeEventId: connection.revokedStripeEventId,
-      createdAt: connection.createdAt,
-      updatedAt: connection.updatedAt,
-    }
   }
 }

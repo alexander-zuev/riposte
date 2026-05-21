@@ -1,2 +1,2 @@
-export * from './stripe-connection.types'
+export * from './stripe-connection.entity'
 export * from './stripe-webhook-command'

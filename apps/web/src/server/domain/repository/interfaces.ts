@@ -30,10 +30,9 @@ import type {
   UpsertSlackConnectionInput,
 } from '@server/domain/slack'
 import type {
-  RefreshStripeCredentialsInput,
   StripeConnection,
+  StripeConnectionCredentials,
   StripeConnectionWithCredentials,
-  UpsertStripeConnectionInput,
 } from '@server/domain/stripe'
 import type { DbOutbox } from '@server/infrastructure/db'
 import type { Result } from 'better-result'
@@ -159,15 +158,12 @@ export interface IDisputeEvidenceArtifactBlobRepository {
  * ------------------------------------------------------------------------------------------------- */
 
 export interface IStripeConnectionRepository {
-  upsertConnectedAccount: (
-    input: UpsertStripeConnectionInput,
-  ) => Promise<Result<StripeConnection, DatabaseError | CredentialEncryptionError>>
+  save: (connection: StripeConnection) => Promise<Result<StripeConnection, DatabaseError>>
 
-  markRevokedByStripeAccountId: (input: {
-    stripeAccountId: string
-    stripeEventId: string
-    revokedAt: Date
-  }) => Promise<Result<StripeConnection | null, DatabaseError>>
+  saveWithCredentials: (
+    connection: StripeConnection,
+    credentials: StripeConnectionCredentials,
+  ) => Promise<Result<StripeConnection, DatabaseError | CredentialEncryptionError>>
 
   findByStripeAccountId: (
     stripeAccountId: string,
@@ -182,10 +178,6 @@ export interface IStripeConnectionRepository {
   ) => Promise<
     Result<StripeConnectionWithCredentials | null, DatabaseError | CredentialEncryptionError>
   >
-
-  refreshCredentials: (
-    input: RefreshStripeCredentialsInput,
-  ) => Promise<Result<StripeConnectionWithCredentials, DatabaseError | CredentialEncryptionError>>
 }
 
 /* -------------------------------------------------------------------------------------------------

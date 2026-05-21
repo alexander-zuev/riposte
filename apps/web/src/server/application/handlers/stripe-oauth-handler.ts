@@ -1,7 +1,6 @@
 import {
   type BuildStripeOAuthInstallUrl,
   type BuildStripeOAuthInstallUrlResult,
-  createEvent,
   createLogger,
   type DOUnreachableError,
   type KVError,
@@ -13,8 +12,8 @@ import {
   type UUIDv4,
 } from '@riposte/core'
 import type { EventHandler, HandlerContext } from '@server/application/registry/types'
+import { StripeConnection } from '@server/domain/stripe'
 import { getServerConfig } from '@server/infrastructure/config'
-import { registerEvents } from '@server/infrastructure/context/event-context'
 import {
   consumeOAuthState,
   createOAuthState,
@@ -173,18 +172,24 @@ export async function handleStripeOAuthCallback(
   const stripeBusinessName = account.business_profile?.name ?? null
 
   const now = new Date()
-  const saved = await deps.repos.stripeConnections(tx).upsertConnectedAccount({
-    userId,
-    productId,
-    stripeAccountId: tokenFields.stripeAccountId,
-    stripeBusinessName,
-    livemode: tokenFields.livemode,
-    scope: token.scope,
-    tokenType: token.token_type,
+  const connection = StripeConnection.connect(
+    {
+      userId,
+      productId,
+      stripeAccountId: tokenFields.stripeAccountId,
+      stripeBusinessName,
+      livemode: tokenFields.livemode,
+      scope: token.scope,
+      tokenType: token.token_type,
+      accessTokenExpiresAt: new Date(now.getTime() + STRIPE_APPS_ACCESS_TOKEN_TTL_MS),
+      connectedAt: now,
+    },
+    now,
+  )
+
+  const saved = await deps.repos.stripeConnections(tx).saveWithCredentials(connection, {
     accessToken: tokenFields.accessToken,
     refreshToken: tokenFields.refreshToken,
-    accessTokenExpiresAt: new Date(now.getTime() + STRIPE_APPS_ACCESS_TOKEN_TTL_MS),
-    connectedAt: now,
   })
 
   if (saved.isErr()) {
@@ -203,17 +208,6 @@ export async function handleStripeOAuthCallback(
     livemode: saved.value.livemode,
     userId: saved.value.userId,
   })
-
-  // TODO(stripe-connection-entity): move this emission onto a StripeConnection
-  // entity once one exists; dispatch via BaseRepository like other aggregates.
-  registerEvents([
-    createEvent('StripeConnectionCreated', {
-      userId: saved.value.userId,
-      productId: saved.value.productId,
-      stripeAccountId: saved.value.stripeAccountId,
-      livemode: saved.value.livemode,
-    }),
-  ])
 
   return Result.ok({ redirectAfter })
 }

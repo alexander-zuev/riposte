@@ -5,6 +5,7 @@ import { BASE_PROMPT, buildSystemPrompt } from '@server/infrastructure/agents/bu
 import { createDisputeAgentModel } from '@server/infrastructure/ai/model-factory'
 import type { IAnalyticsService } from '@server/infrastructure/analytics/analytics-service'
 import { createAppDeps, type AppDeps } from '@server/infrastructure/app-deps'
+import { DurableObjectOAuthClientProvider, type AgentMcpOAuthProvider } from 'agents'
 import {
   convertToModelMessages,
   type StreamTextOnFinishCallback,
@@ -61,6 +62,7 @@ export type DisputeAgentProps = {
 }
 
 const USER_ID_STORAGE_KEY = 'userId'
+const MCP_OAUTH_CLIENT_NAME = 'Riposte'
 
 // Named class expression: the inline name `DisputeAgent` becomes `.name` on the
 // class at runtime, which the Agents SDK reads as `_ParentClass.name` to build
@@ -69,11 +71,7 @@ const USER_ID_STORAGE_KEY = 'userId'
 // DisputeAgent` below shadows it for consumers, while the binding key in
 // wrangler.jsonc (`DisputeAgent` → kebab `dispute-agent`) matches the runtime
 // class name (`DisputeAgent` → kebab `dispute-agent`).
-const DisputeAgentImpl = class DisputeAgent extends AIChatAgent<
-  Env,
-  DisputeAgentState,
-  DisputeAgentProps
-> {
+class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps> {
   private readonly deps: AppDeps
   private readonly analytics: IAnalyticsService
 
@@ -87,6 +85,14 @@ const DisputeAgentImpl = class DisputeAgent extends AIChatAgent<
     this.analytics = this.deps.services.analytics()
   }
 
+  createMcpOAuthProvider(callbackUrl: string): AgentMcpOAuthProvider {
+    return new DurableObjectOAuthClientProvider(
+      this.ctx.storage,
+      MCP_OAUTH_CLIENT_NAME,
+      callbackUrl,
+    )
+  }
+
   async onStart(props?: DisputeAgentProps): Promise<void> {
     if (props?.userId) {
       await this.ctx.storage.put(USER_ID_STORAGE_KEY, props.userId)
@@ -94,6 +100,16 @@ const DisputeAgentImpl = class DisputeAgent extends AIChatAgent<
     } else {
       this.userId = await this.ctx.storage.get<UserId>(USER_ID_STORAGE_KEY)
     }
+
+    // TODO: consider where do we redirect currently?
+    // export class MyAgent extends Agent<Env> {
+    //   onStart() {
+    //     this.mcp.configureOAuthCallback({
+    //       successRedirect: "/dashboard",
+    //       errorRedirect: "/auth-error",
+    //     });
+    //   }
+    // }
 
     // After MCP OAuth completes, close the popup and inject a synthetic "connected"
     // user turn (same shape as `signalStripeConnected`) so the agent picks up the
@@ -106,7 +122,7 @@ const DisputeAgentImpl = class DisputeAgent extends AIChatAgent<
           // Fire-and-forget: the popup must close fast, but the synthetic user
           // message + agent turn run in the background. The open chat WebSocket
           // keeps the DO alive long enough for the agent's response to stream.
-          void this.signalMcpConnected(serverName)
+          this.signalMcpConnected(serverName)
           return new Response('<script>window.close();</script>', {
             headers: { 'content-type': 'text/html' },
           })
@@ -208,9 +224,6 @@ const DisputeAgentImpl = class DisputeAgent extends AIChatAgent<
           // (`prefix: 'api/agents'` in routes/api/agents/$.ts). Without it the
           // SDK generates a `redirect_uri` under `/agents/...` which 404s.
           //
-          // TODO(agent): override `createMcpOAuthProvider` to set DCR
-          // `client_name = "Riposte"` so the OAuth consent screen displays our
-          // product name instead of the productId UUID. Cosmetic; not critical.
           const result = await this.addMcpServer(name, url, { agentsPrefix: 'api/agents' })
           if (result.state === 'authenticating') {
             return { ok: true as const, state: 'authenticating', authUrl: result.authUrl }
@@ -308,7 +321,12 @@ const DisputeAgentImpl = class DisputeAgent extends AIChatAgent<
       {
         id: `mcp-connected-${serverName}-${Date.now()}`,
         role: 'user',
-        parts: [{ type: 'text', text: `I authorized ${serverName}, continue.` }],
+        parts: [
+          {
+            type: 'text',
+            text: `Connection event: OAuth authorization succeeded for the MCP: "${serverName}".`,
+          },
+        ],
       },
     ])
   }
@@ -320,7 +338,12 @@ const DisputeAgentImpl = class DisputeAgent extends AIChatAgent<
       {
         id: 'stripe-connected',
         role: 'user',
-        parts: [{ type: 'text', text: 'I just connected Stripe, continue.' }],
+        parts: [
+          {
+            type: 'text',
+            text: 'Connection event: Stripe authorization succeeded for this product. Continue onboarding from the previous step.',
+          },
+        ],
       },
     ])
   }
@@ -375,9 +398,8 @@ const DisputeAgentImpl = class DisputeAgent extends AIChatAgent<
   }
 }
 
-export type DisputeAgent = InstanceType<typeof DisputeAgentImpl>
-
-export const DisputeAgent = Sentry.instrumentDurableObjectWithSentry(
+export const InstrumentedDisputeAgent = Sentry.instrumentDurableObjectWithSentry(
   (env: Env) => createSentryOptions(env),
-  DisputeAgentImpl,
+  DisputeAgent,
 )
+export type DisputeAgentType = InstanceType<typeof DisputeAgent>

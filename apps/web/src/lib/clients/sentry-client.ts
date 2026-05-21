@@ -1,11 +1,11 @@
-import { setLoggerErrorHook } from '@riposte/core/client'
+import { type ErrorCaptureEntry, setLoggerErrorHook } from '@riposte/core/client'
 import * as Sentry from '@sentry/tanstackstart-react'
 import type { AnyRouter } from '@tanstack/react-router'
 import { settings } from '@web/lib/env/env'
 
 // Register logger.error -> Sentry hook (client-side)
 if (typeof window !== 'undefined') {
-  setLoggerErrorHook((entry) => {
+  setLoggerErrorHook((entry: ErrorCaptureEntry) => {
     const error =
       entry.error instanceof Error
         ? entry.error

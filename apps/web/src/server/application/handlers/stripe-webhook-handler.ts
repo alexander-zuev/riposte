@@ -51,23 +51,28 @@ export async function handleStripeAppDeauthorized(
     return Result.ok(undefined)
   }
 
-  const revoked = await deps.repos.stripeConnections(tx).markRevokedByStripeAccountId({
-    stripeAccountId: account,
-    stripeEventId: eventId,
-    revokedAt: new Date(),
-  })
-  if (revoked.isErr()) return Result.err(revoked.error)
+  const repo = deps.repos.stripeConnections(tx)
+  const found = await repo.findByStripeAccountId(account)
+  if (found.isErr()) return Result.err(found.error)
 
-  if (!revoked.value) {
+  if (!found.value) {
     logger.warn('stripe_app_deauthorized_unknown_account', { account, eventId })
     return Result.ok(undefined)
   }
 
+  found.value.revoke({
+    stripeEventId: eventId,
+    revokedAt: new Date(),
+  })
+
+  const saved = await repo.save(found.value)
+  if (saved.isErr()) return Result.err(saved.error)
+
   logger.info('stripe_connection_revoked', {
     account,
     eventId,
-    stripeConnectionId: revoked.value.id,
-    userId: revoked.value.userId,
+    stripeConnectionId: saved.value.id,
+    userId: saved.value.userId,
   })
 
   return Result.ok(undefined)

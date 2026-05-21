@@ -7,7 +7,7 @@ import {
 import type { DisputeSubmissionApprovalResponse, DomainCommand } from '@riposte/core'
 import * as Sentry from '@sentry/cloudflare'
 import type { MessageBusError } from '@server/application/registry/message-result'
-import type { DisputeAgent } from '@server/infrastructure/agents/dispute-agent'
+import { DisputeAgentType } from '@server/infrastructure/agents/dispute-agent'
 import type { DisputeAgentWorkflowParams } from '@server/infrastructure/agents/dispute-agent-client'
 import { createAppDeps, type AppDeps } from '@server/infrastructure/app-deps'
 import { AgentWorkflow } from 'agents/workflows'
@@ -36,7 +36,7 @@ type DisputeAgentWorkflowOutput = {
   disputeCaseId: string
 }
 
-class DisputeAgentWorkflowBase extends AgentWorkflow<DisputeAgent, DisputeAgentWorkflowParams> {
+class DisputeAgentWorkflow extends AgentWorkflow<DisputeAgentType, DisputeAgentWorkflowParams> {
   private readonly deps: AppDeps
 
   constructor(ctx: ExecutionContext, env: Env) {
@@ -236,7 +236,7 @@ export function unwrapWorkflowStepResult<T>(
   throw new NonRetryableError(error.message)
 }
 
-export const DisputeAgentWorkflow = Sentry.instrumentWorkflowWithSentry(
+export const InstrumentedDisputeAgentWorkflow = Sentry.instrumentWorkflowWithSentry(
   (env: Env) => createSentryOptions(env),
-  DisputeAgentWorkflowBase,
+  DisputeAgentWorkflow,
 )

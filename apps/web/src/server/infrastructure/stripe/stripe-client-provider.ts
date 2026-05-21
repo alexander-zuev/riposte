@@ -6,7 +6,7 @@ import {
   createLogger,
 } from '@riposte/core'
 import type { IStripeConnectionRepository } from '@server/domain/repository/interfaces'
-import type { StripeConnection, StripeConnectionWithCredentials } from '@server/domain/stripe'
+import { StripeConnection, type StripeConnectionWithCredentials } from '@server/domain/stripe'
 import { getServerConfig } from '@server/infrastructure/config'
 import { getRequiredOAuthTokenFields } from '@server/infrastructure/stripe/stripe-oauth-token'
 import { stripeRequest } from '@server/infrastructure/stripe/stripe-request'
@@ -16,6 +16,7 @@ import Stripe from 'stripe'
 const logger = createLogger('stripe-client-provider')
 
 const REFRESH_BUFFER_MS = 5 * 60 * 1000
+const STRIPE_APPS_ACCESS_TOKEN_TTL_MS = 60 * 60 * 1000
 
 export type ResolveConnectionError = DatabaseError | StripeConnectionUnavailableError
 
@@ -146,8 +147,11 @@ export class StripeClientProvider implements IStripeClientProvider {
       )
     }
 
-    const saved = await this.connectionRepo.refreshCredentials({
-      stripeAccountId: connection.stripeAccountId,
+    connection.refreshAccessToken({
+      accessTokenExpiresAt: new Date(Date.now() + STRIPE_APPS_ACCESS_TOKEN_TTL_MS),
+    })
+
+    const saved = await this.connectionRepo.saveWithCredentials(connection, {
       accessToken: tokenFields.accessToken,
       refreshToken: tokenFields.refreshToken,
     })
@@ -158,6 +162,11 @@ export class StripeClientProvider implements IStripeClientProvider {
       newExpiresAt: saved.value.accessTokenExpiresAt.toISOString(),
     })
 
-    return Result.ok(saved.value)
+    return Result.ok(
+      StripeConnection.withCredentials(saved.value, {
+        accessToken: tokenFields.accessToken,
+        refreshToken: tokenFields.refreshToken,
+      }),
+    )
   }
 }

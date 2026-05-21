@@ -5,18 +5,19 @@ import { queue } from '@web/server/entrypoints/queue'
 import { scheduled } from '@web/server/entrypoints/scheduled'
 import { createAppDeps } from '@web/server/infrastructure/app-deps'
 import { waitUntil } from 'cloudflare:workers'
-export { DisputeAgent } from '@web/server/infrastructure/agents/dispute-agent'
-export { DisputeAgentWorkflow } from '@web/server/infrastructure/workflows/dispute-agent-workflow'
+export { InstrumentedDisputeAgent as DisputeAgent } from '@web/server/infrastructure/agents/dispute-agent'
+export { InstrumentedDisputeAgentWorkflow as DisputeAgentWorkflow } from '@web/server/infrastructure/workflows/dispute-agent-workflow'
 export { OutboxRelayDO, RateLimiterDO } from '@web/server/infrastructure/durable-objects'
 
 setLoggerErrorHook((entry: ErrorCaptureEntry) => {
-  const hint: Parameters<typeof Sentry.captureException>[1] = {
-    extra: entry.context,
-  }
-  if (entry.distinctId) {
-    Object.assign(hint, { user: { id: entry.distinctId } })
-  }
-  waitUntil(Promise.resolve(Sentry.captureException(entry.error, hint)))
+  waitUntil(
+    Promise.resolve(
+      Sentry.captureException(entry.error, {
+        extra: entry.context,
+        ...(entry.distinctId ? { user: { id: entry.distinctId } } : {}),
+      }),
+    ),
+  )
 })
 
 const serverEntry = createServerEntry(handler)

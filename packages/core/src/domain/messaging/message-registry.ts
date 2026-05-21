@@ -58,6 +58,8 @@ import {
   handleStripeAppDeauthorizedSchema,
   handleStripeOAuthCallbackSchema,
   stripeConnectionCreatedSchema,
+  stripeConnectionRevokedSchema,
+  stripeConnectionTokenRefreshedSchema,
 } from '../stripe'
 import { joinWaitlistSchema } from '../waitlist/waitlist.messages'
 
@@ -120,6 +122,8 @@ export const domainEventSchema = z.discriminatedUnion('name', [
   productSetupCompletedSchema,
   disputePlaybookCreatedSchema,
   stripeConnectionCreatedSchema,
+  stripeConnectionRevokedSchema,
+  stripeConnectionTokenRefreshedSchema,
   r2EventSchema,
 ])
 

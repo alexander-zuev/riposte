@@ -204,7 +204,7 @@ export function ProductForm({
               ) : (
                 <FieldDescription>
                   {lockType
-                    ? 'Product type cannot be changed yet'
+                    ? 'Product type cannot be changed '
                     : 'Determines which Stripe evidence fields apply during disputes'}
                 </FieldDescription>
               )}

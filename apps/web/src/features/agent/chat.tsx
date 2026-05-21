@@ -73,12 +73,12 @@ export function Chat({ agent, transportState, initialMessages }: ChatProps) {
           disabled={isInputDisabled}
           placeholder={
             transportState === 'connecting'
-              ? 'Connecting to the agent'
+              ? 'Connecting…'
               : transportState === 'closing'
-                ? 'Agent connection is closing'
+                ? 'Closing…'
                 : transportState === 'disconnected'
-                  ? 'Agent is disconnected'
-                  : 'Ask the agent — or click the action above to continue'
+                  ? 'Disconnected'
+                  : 'Message'
           }
         />
         <PromptInputFooter className="text-sm">

@@ -49,9 +49,9 @@ export function AgentPage() {
       <div className="flex min-w-0 flex-col gap-6 lg:flex-row">
         <div className="min-w-0 flex-1">
           <Tabs defaultValue={defaultTabFor(mode)} className="contents">
-            <Card className="flex h-[calc(100vh-16rem)] w-full flex-col gap-0 overflow-hidden py-0 text-sm">
-              <CardHeader className="gap-3 border-b border-border px-3 py-2 sm:grid-cols-[1fr_auto]">
-                <TabsList className="self-start">
+            <Card className="gap-0 p-0">
+              <CardHeader className="items-center py-2">
+                <TabsList>
                   <TabsTrigger value="chat">
                     <ChatCircleIcon data-icon="inline-start" weight="duotone" />
                     Chat
@@ -61,20 +61,21 @@ export function AgentPage() {
                     Activity
                   </TabsTrigger>
                 </TabsList>
-                <CardAction className="static col-auto row-auto justify-self-end">
+                <CardAction className="static col-auto row-auto self-center justify-self-end">
                   <ConnectionIndicator state={transportState} />
                 </CardAction>
               </CardHeader>
-              <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden p-0">
+              <CardContent className="flex flex-col border-t border-border p-0">
+                {/* flex-none neutralizes the base flex-1 in TabsContent so h-[…] applies */}
                 <TabsContent
                   value="chat"
-                  className="flex min-h-0 flex-1 flex-col data-[state=inactive]:hidden"
+                  className="flex h-[calc(100vh-19rem)] flex-none flex-col data-[state=inactive]:hidden"
                 >
                   <ChatTab productId={product.id} agent={agent} transportState={transportState} />
                 </TabsContent>
                 <TabsContent
                   value="activity"
-                  className="flex min-h-0 flex-1 flex-col data-[state=inactive]:hidden"
+                  className="flex max-h-[calc(100vh-19rem)] flex-col data-[state=inactive]:hidden"
                 >
                   <ActivityTab mode={mode} />
                 </TabsContent>

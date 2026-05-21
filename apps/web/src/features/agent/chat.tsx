@@ -1,10 +1,12 @@
 import {
   type AgentTransportState,
   type DisputeAgentConnection,
+  type DisputeAgentContextState,
   useDisputeAgentChat,
 } from '@web/features/agent/hooks/use-dispute-agent-chat'
 import { McpSourcesPopover } from '@web/features/agent/mcp-sources-popover'
 import { AgentMessagePart, keyedAgentMessageParts } from '@web/features/agent/message-part'
+import { cn } from '@web/lib/utils'
 import {
   Conversation,
   ConversationContent,
@@ -19,6 +21,7 @@ import {
   PromptInputTools,
 } from '@web/ui/components/ai-elements/prompt-input'
 import { Spinner } from '@web/ui/components/ui/spinner'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@web/ui/components/ui/tooltip'
 import type { MCPServersState } from 'agents'
 import type { UIMessage } from 'ai'
 import { useCallback } from 'react'
@@ -40,6 +43,7 @@ type ChatProps = {
 export function Chat({ agent, transportState, initialMessages, productId, mcp }: ChatProps) {
   const chat = useDisputeAgentChat(agent, initialMessages)
   const isInputDisabled = transportState !== 'connected'
+  const agentState = agent.state
   const handleSubmit = useCallback(
     (message: { text?: string }) => {
       if (isInputDisabled) return
@@ -66,11 +70,10 @@ export function Chat({ agent, transportState, initialMessages, productId, mcp }:
         </ConversationContent>
         <ConversationScrollButton />
       </Conversation>
-      {chat.isStreaming && (
-        <div className="flex items-center gap-2 px-4 py-2 text-muted-foreground">
-          <Spinner className="size-4" />
-        </div>
-      )}
+      <div className="flex min-h-8 items-center gap-2 px-4 py-2 text-muted-foreground">
+        {chat.isStreaming && <Spinner className="size-4" />}
+        {agentState ? <ContextUsageMeter className="ml-auto" context={agentState.context} /> : null}
+      </div>
       <PromptInput className="w-full rounded-none border-0 border-t" onSubmit={handleSubmit}>
         <PromptInputTextarea
           className="text-sm md:text-sm"
@@ -91,4 +94,47 @@ export function Chat({ agent, transportState, initialMessages, productId, mcp }:
       </PromptInput>
     </div>
   )
+}
+
+function ContextUsageMeter({
+  className,
+  context,
+}: {
+  className?: string
+  context: DisputeAgentContextState
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <span
+            aria-label={`Context: ${formatTokenCount(context.usage.totalTokens)} of ${formatTokenCount(context.windowTokens)} used`}
+            className={cn(
+              'shrink-0 cursor-help text-xs tabular-nums',
+              getContextUsageClassName(context),
+              className,
+            )}
+          />
+        }
+      >
+        Context: {formatTokenCount(context.usage.totalTokens)} /{' '}
+        {formatTokenCount(context.windowTokens)}
+      </TooltipTrigger>
+      <TooltipContent>
+        Compaction threshold: {formatTokenCount(context.compactAtTokens)}
+      </TooltipContent>
+    </Tooltip>
+  )
+}
+
+function getContextUsageClassName(context: DisputeAgentContextState): string {
+  if (context.status === 'compact_required') return 'text-destructive-muted-foreground'
+  const warningAtTokens = context.compactAtTokens - context.windowTokens * 0.2
+  if (context.usage.totalTokens >= warningAtTokens) return 'text-warning-muted-foreground'
+  return 'text-muted-foreground'
+}
+
+function formatTokenCount(value: number): string {
+  if (value < 1000) return value.toLocaleString()
+  return `${Math.round(value / 1000).toLocaleString()}k`
 }

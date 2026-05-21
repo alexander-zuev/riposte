@@ -10,9 +10,26 @@ const logger = createLogger('dispute-agent-chat')
 
 export type AgentTransportState = 'connecting' | 'connected' | 'closing' | 'disconnected'
 
+export type DisputeAgentUsage = {
+  inputTokens: number
+  outputTokens: number
+  totalTokens: number
+  updatedAt: string | null
+}
+
+export type DisputeAgentContextStatus = 'ok' | 'compact_required'
+
+export type DisputeAgentContextState = {
+  windowTokens: number
+  compactAtTokens: number
+  status: DisputeAgentContextStatus
+  usage: DisputeAgentUsage
+}
+
 type DisputeAgentState = {
   mode: 'setup' | 'operate'
   setupChangeId: string | null
+  context: DisputeAgentContextState
 }
 
 /**

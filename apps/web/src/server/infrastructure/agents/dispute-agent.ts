@@ -3,6 +3,10 @@ import { createCommand, createLogger, createSentryOptions, type UserId } from '@
 import * as Sentry from '@sentry/cloudflare'
 import { BASE_PROMPT, buildSystemPrompt } from '@server/infrastructure/agents/build-system-prompt'
 import {
+  createDisputeAgentContextState,
+  type DisputeAgentContextState,
+} from '@server/infrastructure/agents/dispute-agent.context'
+import {
   createMcpOAuthCallbackHandler,
   RiposteMcpOAuthProvider,
 } from '@server/infrastructure/agents/dispute-agent.oauth'
@@ -13,6 +17,7 @@ import { createAppDeps, type AppDeps } from '@server/infrastructure/app-deps'
 import type { AgentMcpOAuthProvider } from 'agents'
 import {
   convertToModelMessages,
+  type LanguageModelUsage,
   type StreamTextOnFinishCallback,
   ToolLoopAgent,
   type ToolSet,
@@ -73,6 +78,7 @@ export type DisputeAgentMode = 'setup' | 'operate'
 export type DisputeAgentState = {
   mode: DisputeAgentMode
   setupChangeId: string | null
+  context: DisputeAgentContextState
 }
 
 /** Upgrade-time props forwarded from the auth-verified route — see `routes/api/agents/$.ts`. */
@@ -87,7 +93,11 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
   readonly deps: AppDeps
   private readonly analytics: IAnalyticsService
 
-  initialState: DisputeAgentState = { mode: 'setup', setupChangeId: null }
+  initialState: DisputeAgentState = {
+    mode: 'setup',
+    setupChangeId: null,
+    context: createDisputeAgentContextState(),
+  }
 
   private userId?: UserId
 
@@ -146,13 +156,40 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
       model,
       instructions,
       tools,
+      onFinish: ({ totalUsage }) => {
+        this.updateUsage(totalUsage)
+      },
     })
 
     const result = await agent.stream({
       messages: await convertToModelMessages(this.messages),
+      abortSignal: opts?.abortSignal,
     })
 
-    return result.toUIMessageStreamResponse()
+    return result.toUIMessageStreamResponse({
+      onError: (error) => {
+        logger.warn('dispute_agent_stream_error', {
+          error,
+          mode: this.state.mode,
+          productId: this.name,
+          requestId: opts?.requestId,
+        })
+        throw error
+      },
+    })
+  }
+
+  private updateUsage(usage: LanguageModelUsage): void {
+    if (usage.totalTokens === undefined) return
+    this.setState({
+      ...this.state,
+      context: createDisputeAgentContextState({
+        inputTokens: usage.inputTokens ?? 0,
+        outputTokens: usage.outputTokens ?? 0,
+        totalTokens: usage.totalTokens,
+        updatedAt: new Date().toISOString(),
+      }),
+    })
   }
 
   /** Builds the dynamic system prompt for this turn. Fail-soft: falls back to {@link BASE_PROMPT} so chat still works if PG is degraded. */
@@ -192,7 +229,11 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
   async restartSetup(): Promise<{ ok: true } | { ok: false; error: string }> {
     const { servers } = this.getMcpServers()
     await Promise.all(Object.keys(servers).map((serverId) => this.removeMcpServer(serverId)))
-    this.setState({ ...this.state, mode: 'setup' })
+    this.setState({
+      ...this.state,
+      mode: 'setup',
+      context: createDisputeAgentContextState(),
+    })
     await this.clearConversation()
 
     return { ok: true }

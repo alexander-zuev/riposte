@@ -1,4 +1,5 @@
 import {
+  type ServiceStartRule,
   ValidationError,
   createEvent,
   createProductInputSchema,
@@ -8,7 +9,6 @@ import type {
   CreateProductInput,
   ProductStatus,
   ProductType,
-  ServiceStartRule,
   UUIDv4,
   UpdateProductInput,
 } from '@riposte/core'
@@ -29,6 +29,14 @@ export type ProductSnapshot = {
   createdAt: Date
   updatedAt: Date
 }
+
+export type ProductEvidenceSetupSnapshot = Pick<
+  ProductSnapshot,
+  | 'productDescription'
+  | 'serviceStartRule'
+  | 'refundPolicyDisclosure'
+  | 'cancellationPolicyDisclosure'
+>
 
 export class Product extends Entity<ProductSnapshot> {
   private constructor(
@@ -133,6 +141,10 @@ export class Product extends Entity<ProductSnapshot> {
     this.addEvent(createEvent('ProductDeleted', { productId: this.id, userId: this.userId }))
   }
 
+  hasApprovedProductEvidenceFields(): boolean {
+    return requiredProductEvidenceFieldIssues(this.serialize()).length === 0
+  }
+
   completeSetup(): Result<void, ValidationError> {
     if (this.status !== 'setup_pending') {
       return Result.err(
@@ -147,16 +159,11 @@ export class Product extends Entity<ProductSnapshot> {
         }),
       )
     }
-    if (!this.productDescription) {
+    const evidenceIssues = requiredProductEvidenceFieldIssues(this.serialize())
+    if (evidenceIssues.length > 0) {
       return Result.err(
         new ValidationError({
-          issues: [
-            {
-              code: 'invalid_product',
-              path: ['productDescription'],
-              message: 'productDescription is required to complete setup',
-            },
-          ],
+          issues: evidenceIssues,
         }),
       )
     }
@@ -232,4 +239,39 @@ export class Product extends Entity<ProductSnapshot> {
       updatedAt: this.updatedAt,
     }
   }
+}
+
+function requiredProductEvidenceFieldIssues(product: ProductEvidenceSetupSnapshot) {
+  const issues: Array<{ code: string; path: string[]; message: string }> = []
+
+  if (product.productDescription === null) {
+    issues.push({
+      code: 'invalid_product',
+      path: ['productDescription'],
+      message: 'productDescription is required to complete setup',
+    })
+  }
+  if (product.serviceStartRule === null) {
+    issues.push({
+      code: 'invalid_product',
+      path: ['serviceStartRule'],
+      message: 'serviceStartRule is required to complete setup',
+    })
+  }
+  if (product.refundPolicyDisclosure === null) {
+    issues.push({
+      code: 'invalid_product',
+      path: ['refundPolicyDisclosure'],
+      message: 'refundPolicyDisclosure is required to complete setup',
+    })
+  }
+  if (product.cancellationPolicyDisclosure === null) {
+    issues.push({
+      code: 'invalid_product',
+      path: ['cancellationPolicyDisclosure'],
+      message: 'cancellationPolicyDisclosure is required to complete setup',
+    })
+  }
+
+  return issues
 }

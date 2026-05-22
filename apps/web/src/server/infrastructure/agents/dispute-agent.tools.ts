@@ -1,6 +1,8 @@
 import {
   InternalServerError,
   PLAYBOOK_MD_MAX_LENGTH,
+  SERVICE_START_RULES,
+  STRIPE_EVIDENCE_TEXT_MAX_LENGTH,
   createCommand,
   createQuery,
   playbookVerificationSchema,
@@ -30,6 +32,13 @@ const appDataSourceAliasSchema = z
   .min(1)
   .max(50)
   .regex(/^[a-z][a-z0-9_]*$/)
+
+const productEvidenceFieldsSchema = z.object({
+  productDescription: z.string().trim().min(1).max(STRIPE_EVIDENCE_TEXT_MAX_LENGTH),
+  serviceStartRule: z.enum(SERVICE_START_RULES),
+  refundPolicyDisclosure: z.string().trim().min(1).max(STRIPE_EVIDENCE_TEXT_MAX_LENGTH),
+  cancellationPolicyDisclosure: z.string().trim().min(1).max(STRIPE_EVIDENCE_TEXT_MAX_LENGTH),
+})
 
 /**
  * Static product setup tools, merged with MCP tools from the connected servers.
@@ -164,6 +173,21 @@ export function buildDisputeAgentTools(
             alias,
           }),
         })
+      },
+    }),
+
+    saveProductEvidenceFields: tool({
+      description:
+        'Save merchant-approved product evidence fields used by deterministic Stripe evidence packet generation: product description, service date derivation rule, refund policy disclosure, and cancellation policy disclosure. Use only after presenting the drafted fields to the merchant and receiving approval.',
+      inputSchema: productEvidenceFieldsSchema,
+      execute: async (fields) => {
+        const command = createCommand('UpdateProduct', {
+          userId: agent.getCurrentUserId(),
+          productId: agent.name,
+          ...fields,
+        })
+        const result = await agent.deps.services.messageBus().handle(command)
+        return resultToAgentToolResponse(result, { ok: () => fields })
       },
     }),
 

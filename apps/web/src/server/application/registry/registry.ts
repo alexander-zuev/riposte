@@ -121,6 +121,7 @@ export const EVENT_HANDLERS = {
   ProductAppDataSourceDisconnected: [
     { id: 'productSetup.notifyChanged', handle: notifyProductSetupChanged },
   ],
+  ProductUpdated: [{ id: 'productSetup.notifyChanged', handle: notifyProductSetupChanged }],
   DisputePlaybookCreated: [{ id: 'productSetup.notifyChanged', handle: notifyProductSetupChanged }],
   ProductSetupCompleted: [{ id: 'productSetup.notifyChanged', handle: notifyProductSetupChanged }],
 } satisfies EventRegistry

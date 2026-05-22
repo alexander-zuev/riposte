@@ -10,7 +10,7 @@ import {
   type UUIDv4,
 } from '@riposte/core'
 import type { DisputePlaybook } from '@server/domain/dispute-playbooks'
-import type { ProductSnapshot } from '@server/domain/products/product.entity'
+import { Product, type ProductSnapshot } from '@server/domain/products/product.entity'
 import type {
   IDisputePlaybookRepository,
   IProductAppDataSourceRepository,
@@ -185,25 +185,45 @@ export class ProductSetupService implements IProductSetupService {
   static computeCompletedAt(input: ComputeCompletedAtInput): ProductSetupCompletedAt {
     const { product, stripeConnection, playbook, appDataSourceConnectedAt } = input
 
-    const stripeCompletedAt =
-      stripeConnection && stripeConnection.status === 'active'
-        ? stripeConnection.connectedAt.toISOString()
-        : null
-
-    const playbookCompletedAt =
-      playbook && product.productDescription !== null ? playbook.createdAt.toISOString() : null
-
-    const reviewCompletedAt =
-      product.status === 'setup_complete' ? product.updatedAt.toISOString() : null
-
     return {
       add_product: product.createdAt.toISOString(),
-      connect_stripe: stripeCompletedAt,
-      connect_app_data: appDataSourceConnectedAt?.toISOString() ?? null,
-      playbook: playbookCompletedAt,
+      connect_stripe: ProductSetupService.isStripeStepComplete(stripeConnection)
+        ? stripeConnection.connectedAt.toISOString()
+        : null,
+      connect_app_data: ProductSetupService.isAppDataStepComplete(appDataSourceConnectedAt)
+        ? appDataSourceConnectedAt.toISOString()
+        : null,
+      playbook: ProductSetupService.isPlaybookStepComplete(product, playbook)
+        ? playbook.createdAt.toISOString()
+        : null,
       dry_run: null,
-      review: reviewCompletedAt,
+      review: ProductSetupService.isReviewStepComplete(product)
+        ? product.updatedAt.toISOString()
+        : null,
     } satisfies Record<ProductSetupStep, string | null>
+  }
+
+  private static isStripeStepComplete(
+    stripeConnection: ComputeCompletedAtInput['stripeConnection'],
+  ): stripeConnection is StripeConnection {
+    return stripeConnection !== null && stripeConnection.status === 'active'
+  }
+
+  private static isAppDataStepComplete(
+    appDataSourceConnectedAt: ComputeCompletedAtInput['appDataSourceConnectedAt'],
+  ): appDataSourceConnectedAt is Date {
+    return appDataSourceConnectedAt !== null
+  }
+
+  private static isPlaybookStepComplete(
+    product: ProductSnapshot,
+    playbook: DisputePlaybook | null,
+  ): playbook is DisputePlaybook {
+    return playbook !== null && Product.deserialize(product).hasApprovedProductEvidenceFields()
+  }
+
+  private static isReviewStepComplete(product: ProductSnapshot): boolean {
+    return product.status === 'setup_complete'
   }
 }
 

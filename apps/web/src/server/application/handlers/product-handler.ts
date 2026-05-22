@@ -18,6 +18,7 @@ import type {
   ProductAppDataSourceDisconnected,
   ProductAppDataSourceRegistered,
   ProductSetupCompleted,
+  ProductUpdated,
   ReadProductSetupSnapshot,
   ReadProductSetupSnapshotResult,
   RegisterProductAppDataSource,
@@ -44,6 +45,7 @@ type ProductSetupChangedEvent =
   | StripeConnectionCreated
   | ProductAppDataSourceRegistered
   | ProductAppDataSourceDisconnected
+  | ProductUpdated
   | DisputePlaybookCreated
   | ProductSetupCompleted
 

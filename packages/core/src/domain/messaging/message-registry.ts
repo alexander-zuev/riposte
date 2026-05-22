@@ -8,7 +8,7 @@ import {
 } from '../auth/auth.messages'
 import { getChatMessagesSchema } from '../chat'
 import { getConnectionsStatusSchema } from '../connections'
-import { disputePlaybookCreatedSchema } from '../dispute-playbooks'
+import { disputePlaybookCreatedSchema, saveDisputePlaybookSchema } from '../dispute-playbooks'
 import {
   ingestDisputeClosedSchema,
   ingestDisputeCreatedSchema,
@@ -102,6 +102,7 @@ export const domainCommandSchema = z.discriminatedUnion('name', [
   registerProductAppDataSourceSchema,
   disconnectProductAppDataSourceSchema,
   restartProductSetupSchema,
+  saveDisputePlaybookSchema,
   updateProductSchema,
   deleteProductSchema,
 ])

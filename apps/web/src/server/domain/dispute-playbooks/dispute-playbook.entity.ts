@@ -3,13 +3,17 @@ import {
   createEvent,
   createPlaybookInputSchema,
   type CreatePlaybookInput,
+  type PlaybookVerification,
   type UUIDv4,
 } from '@riposte/core'
 import { Entity } from '@server/domain/models/base.models'
 import type { DbDisputePlaybook, DbNewDisputePlaybook } from '@server/infrastructure/db'
 import { Result } from 'better-result'
 
+import { validateDisputePlaybookMarkdown } from './dispute-playbook-markdown.validator'
+
 export type CreateDisputePlaybookInput = CreatePlaybookInput & {
+  playbookVerification?: PlaybookVerification
   previousPlaybook?: DisputePlaybook | null
 }
 
@@ -26,7 +30,7 @@ export class DisputePlaybook extends Entity<DbNewDisputePlaybook> {
     super()
   }
 
-  static async create(
+  static async createRevision(
     input: CreateDisputePlaybookInput,
   ): Promise<Result<DisputePlaybook, ValidationError>> {
     const parsed = createPlaybookInputSchema.safeParse(input)
@@ -40,6 +44,14 @@ export class DisputePlaybook extends Entity<DbNewDisputePlaybook> {
           })),
         }),
       )
+    }
+
+    const markdownIssues = validateDisputePlaybookMarkdown(parsed.data.playbookMd, {
+      initialRevision: input.previousPlaybook === null || input.previousPlaybook === undefined,
+      playbookVerification: input.playbookVerification,
+    })
+    if (markdownIssues.length > 0) {
+      return Result.err(new ValidationError({ issues: markdownIssues }))
     }
 
     const version = (input.previousPlaybook?.version ?? 0) + 1

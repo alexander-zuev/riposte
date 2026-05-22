@@ -1,4 +1,10 @@
-import { InternalServerError, createCommand, createQuery } from '@riposte/core'
+import {
+  InternalServerError,
+  PLAYBOOK_MD_MAX_LENGTH,
+  createCommand,
+  createQuery,
+  playbookVerificationSchema,
+} from '@riposte/core'
 import { resultToAgentToolResponse } from '@server/infrastructure/agents/agent-tool-result'
 import type { DisputeAgentType } from '@server/infrastructure/agents/dispute-agent'
 import { tool, type ToolSet } from 'ai'
@@ -158,6 +164,25 @@ export function buildDisputeAgentTools(
             alias,
           }),
         })
+      },
+    }),
+
+    saveDisputePlaybook: tool({
+      description:
+        'Save the product dispute playbook markdown after merchant approval. Provide structured playbookVerification from the onboarding walkthrough: customer/activity must be verified with tool call IDs; cancellation/refund may be verified or explicitly marked not applicable / Stripe-only.',
+      inputSchema: z.object({
+        playbookMd: z.string().trim().min(1).max(PLAYBOOK_MD_MAX_LENGTH),
+        playbookVerification: playbookVerificationSchema,
+      }),
+      execute: async ({ playbookMd, playbookVerification }) => {
+        const command = createCommand('SaveDisputePlaybook', {
+          userId: agent.getCurrentUserId(),
+          productId: agent.name,
+          playbookMd,
+          playbookVerification,
+        })
+        const result = await agent.deps.services.messageBus().handle(command)
+        return resultToAgentToolResponse(result)
       },
     }),
 

@@ -36,6 +36,7 @@ import {
   readProductSetupSnapshot,
   registerProductAppDataSource,
   restartProductSetup,
+  saveDisputePlaybook,
   updateProduct,
 } from '@server/application/handlers/product-handler'
 import {
@@ -90,6 +91,7 @@ export const COMMAND_HANDLERS = {
   RegisterProductAppDataSource: registerProductAppDataSource,
   DisconnectProductAppDataSource: disconnectProductAppDataSource,
   RestartProductSetup: restartProductSetup,
+  SaveDisputePlaybook: saveDisputePlaybook,
   UpdateProduct: updateProduct,
   DeleteProduct: deleteProduct,
 } satisfies CommandRegistry
@@ -119,6 +121,7 @@ export const EVENT_HANDLERS = {
   ProductAppDataSourceDisconnected: [
     { id: 'productSetup.notifyChanged', handle: notifyProductSetupChanged },
   ],
+  DisputePlaybookCreated: [{ id: 'productSetup.notifyChanged', handle: notifyProductSetupChanged }],
   ProductSetupCompleted: [{ id: 'productSetup.notifyChanged', handle: notifyProductSetupChanged }],
 } satisfies EventRegistry
 

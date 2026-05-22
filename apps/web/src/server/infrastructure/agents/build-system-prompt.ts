@@ -16,6 +16,27 @@ Use the <setup> block to know what is done and what is next. Do not ask about st
 
 If the merchant says they completed an external setup step and the <setup> snapshot may be stale, read the authoritative product setup snapshot and follow the newest snapshot_at.`
 
+const STRIPE_DISPUTE_GLOSSARY = `Stripe dispute field context. This is vocabulary and source ownership, not a setup checklist; current-step instructions and tool schemas decide what must be saved.
+- product_description: Stripe text evidence. Source: merchant-approved Product field describing what the customer bought and how the product/service was presented.
+- service_date: Stripe text evidence. Source: derived from serviceStartRule plus Stripe billing data, app entitlement data, app usage data, or merchant-provided proof.
+- serviceStartRule: merchant-approved Product rule for deriving service_date.
+  - charge_succeeded_at: use Stripe charge.created when payment itself starts access.
+  - billing_period_start: use Stripe invoice/subscription period start for paid-period access.
+  - app_entitlement_started_at: use merchant app timestamp when access, credits, seats, workspace, or license was granted.
+  - first_verified_usage_at: use first source-backed customer usage or delivery event.
+  - merchant_provided: require merchant-provided service-start evidence when Stripe/app data cannot derive it reliably.
+- refund_policy_disclosure: Stripe text evidence. Source: merchant-approved Product field describing how/when the refund policy was shown, not the full policy text.
+- cancellation_policy_disclosure: Stripe text evidence. Source: merchant-approved Product field describing how/when cancellation terms were shown.
+- customer_name, customer_email_address, customer_purchase_ip, billing_address: Stripe/DisputeCase-sourced evidence. Do not ask the merchant to invent these.
+- access_activity_log: Stripe text evidence. Source: per-dispute app activity collected from verified merchant data according to the playbook.
+- refund_refusal_explanation: Stripe text evidence. Source: per-dispute refund request/refusal facts from Stripe, support, or merchant data.
+- cancellation_rebuttal: Stripe text evidence. Source: per-dispute cancellation and post-cancellation usage facts.
+- uncategorized_text: Stripe text evidence. Source: concise argument built only from verified facts.
+- receipt: Stripe file evidence. Source: Stripe invoice/receipt uploaded as a dispute evidence file when available.
+- refund_policy: Stripe file evidence. Source: uploaded refund policy document, distinct from refund_policy_disclosure text.
+- cancellation_policy: Stripe file evidence. Source: uploaded cancellation policy document, distinct from cancellation_policy_disclosure text.
+- service_documentation: Stripe file evidence. Source: generated PDF packet with usage, deliverables, and proof.`
+
 /**
  * Per-step guidance appended only when that step is `setup.currentStep`. Each entry
  * is plain English the agent reads — it should never repeat tool names or schema
@@ -50,14 +71,19 @@ We only need read access. Riposte never writes to merchant data.`,
    Explore the merchant's website (homepage, pricing, ToS, refund/cancellation pages) via webSearch and fetchUrl. Draft these fields, present in chat for merchant review and edit, save via the save tool.
 
 2. The dispute-defense playbook (versioned markdown loaded as system prompt for every future dispute against this product). Sections (per spec):
-   - How to match a customer (Stripe customer → merchant's user record)
-   - Service start (typically signup or first verified usage)
-   - How to prove service delivery (sessions, usage events, generated outputs from the connected activity source)
-   - Delivered outputs (URLs / IDs of what the customer made or received)
-   - Refund and cancellation policy
+   - Customer matching
+   - Activity sources
+   - Cancellation detection
+   - Refund request detection
+   - Visual deliverables
+   - Strongest signals
    - Gotchas
 
    Draft the playbook by walking through one real recent dispute end-to-end (synthesize from the latest successful charge if no real dispute qualifies). Use the connected MCP tools to query actual activity during the walkthrough.
+   When saving, provide structured playbookVerification to the saveDisputePlaybook tool:
+   - customerMatching and activitySources must cite what was verified, the MCP tool call id, and the observed result.
+   - cancellationDetection can be verified, not_applicable, or no_subscription_cancellation_flow.
+   - refundRequestDetection can be verified, stripe_refunds_only, or no_external_refund_request_source.
 
 The merchant reviews each artifact in chat. Save both via their save tools when approved.`,
   dry_run: `The bank reviewer answering a dispute asks one question: "did this customer get what they paid for?" The dry-run produces the PDF that answers it for one real recent dispute (or synthesized if none exists).
@@ -71,7 +97,7 @@ Walk the merchant through the resulting PDF. They are validating that the packet
 
 /** Composes the dynamic system prompt: base + product/setup context + step guidance. */
 export function buildSystemPrompt(product: ProductSnapshot, setup: ProductSetupState): string {
-  const sections = [BASE_PROMPT, renderContext(product, setup)]
+  const sections = [BASE_PROMPT, STRIPE_DISPUTE_GLOSSARY, renderContext(product, setup)]
   const guidance = setup.currentStep ? SETUP_GUIDANCE[setup.currentStep] : undefined
   if (guidance) sections.push(guidance)
   return sections.join('\n\n')

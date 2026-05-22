@@ -9,6 +9,7 @@ import type {
   DeleteProductResult,
   DisconnectProductAppDataSource,
   DisconnectProductAppDataSourceResult,
+  DisputePlaybookCreated,
   DuplicateProductUrlError,
   GetProductSetupState,
   GetProductSetupStateResult,
@@ -23,6 +24,8 @@ import type {
   RegisterProductAppDataSourceResult,
   RestartProductSetup,
   RestartProductSetupResult,
+  SaveDisputePlaybook,
+  SaveDisputePlaybookResult,
   StripeConnectionCreated,
   UpdateProduct,
   UpdateProductResult,
@@ -31,6 +34,7 @@ import type {
 import { buildStripeOAuthInstallUrl } from '@server/application/handlers/stripe-oauth-handler'
 import type { CommandHandler, EventHandler, QueryHandler } from '@server/application/registry/types'
 import { ProductAppDataSource } from '@server/domain/app-data-sources'
+import { DisputePlaybook } from '@server/domain/dispute-playbooks'
 import { Product } from '@server/domain/products'
 import { Result } from 'better-result'
 
@@ -40,6 +44,7 @@ type ProductSetupChangedEvent =
   | StripeConnectionCreated
   | ProductAppDataSourceRegistered
   | ProductAppDataSourceDisconnected
+  | DisputePlaybookCreated
   | ProductSetupCompleted
 
 export const listProducts: QueryHandler<ListProducts, ListProductsResult, DatabaseError> = async (
@@ -279,6 +284,40 @@ export const restartProductSetup: CommandHandler<
   if (primed.isErr()) return Result.err(primed.error)
 
   return Result.ok({ productId: command.productId })
+}
+
+export const saveDisputePlaybook: CommandHandler<
+  SaveDisputePlaybook,
+  SaveDisputePlaybookResult,
+  DatabaseError | EntityNotFoundError | ValidationError
+> = async (command, ctx) => {
+  const product = await ctx.deps.repos.products(ctx.tx).findById(command.productId)
+  if (product.isErr()) return Result.err(product.error)
+  if (!product.value || product.value.userId !== command.userId) {
+    return Result.err(new EntityNotFoundError({ entity: 'Product', id: command.productId }))
+  }
+
+  const repo = ctx.deps.repos.disputePlaybooks(ctx.tx)
+  const previousPlaybook = await repo.findLatestForProduct(command.productId)
+  if (previousPlaybook.isErr()) return Result.err(previousPlaybook.error)
+
+  const playbook = await DisputePlaybook.createRevision({
+    productId: command.productId,
+    createdBy: command.userId,
+    playbookMd: command.playbookMd,
+    playbookVerification: command.playbookVerification,
+    previousPlaybook: previousPlaybook.value,
+  })
+  if (playbook.isErr()) return Result.err(playbook.error)
+
+  const saved = await repo.save(playbook.value)
+  if (saved.isErr()) return Result.err(saved.error)
+
+  return Result.ok({
+    disputePlaybookId: saved.value.id,
+    version: saved.value.version,
+    playbookHash: saved.value.playbookHash,
+  })
 }
 
 export const updateProduct: CommandHandler<

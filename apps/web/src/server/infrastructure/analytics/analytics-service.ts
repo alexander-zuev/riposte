@@ -1,4 +1,3 @@
-import { waitUntil } from 'cloudflare:workers'
 import { PostHog } from 'posthog-node'
 
 import type { AnalyticsContext } from './analytics-context'
@@ -30,15 +29,17 @@ export interface IAnalyticsService {
  */
 export class AnalyticsService implements IAnalyticsService {
   private readonly client: PostHog
+  private readonly ctx: Pick<ExecutionContext, 'waitUntil'>
   private readonly env: string
   private context: AnalyticsContext = {}
 
-  constructor(env: Env) {
+  constructor(env: Env, ctx: Pick<ExecutionContext, 'waitUntil'>) {
+    this.ctx = ctx
     this.client = new PostHog(env.POSTHOG_API_KEY, {
       host: POSTHOG_HOST,
       flushAt: 1,
       flushInterval: 0,
-      waitUntil: (promise) => waitUntil(promise),
+      waitUntil: (promise) => ctx.waitUntil(promise),
     })
     this.env = env.ENV
   }
@@ -55,7 +56,7 @@ export class AnalyticsService implements IAnalyticsService {
   track(event: AnalyticsEvent, overrides: AnalyticsContext = {}): void {
     const distinctId = overrides.distinctId ?? this.context.distinctId
     const posthogSessionId = overrides.posthogSessionId ?? this.context.posthogSessionId
-    waitUntil(
+    this.ctx.waitUntil(
       this.client.captureImmediate({
         ...(distinctId ? { distinctId } : {}),
         event: event.name,

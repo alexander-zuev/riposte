@@ -206,7 +206,7 @@ export function createAppDeps(env: Env, ctx: WaitUntilContext): AppDeps {
       outboxRelay: once<IOutboxRelay>(
         () => new OutboxRelay(deps.db(), deps.services.queueClient(), deps.repos.outbox),
       ),
-      analytics: once<IAnalyticsService>(() => new AnalyticsService(env)),
+      analytics: once<IAnalyticsService>(() => new AnalyticsService(env, ctx)),
       jinaClient: once<IJinaClient>(() => new JinaClient({ apiKey: env.JINA_API_KEY })),
     },
     hooks: {

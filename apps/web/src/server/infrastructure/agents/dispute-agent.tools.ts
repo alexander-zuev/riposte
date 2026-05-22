@@ -261,5 +261,17 @@ export function buildDisputeAgentTools(
         return resultToAgentToolResponse(result)
       },
     }),
+
+    reportUnknownTool: tool({
+      description:
+        'INTERNAL fallback. Do not call directly. The agent runtime redirects calls to non-existent tools here so the model can see what went wrong and pick a real tool next step.',
+      inputSchema: z.object({
+        attemptedToolName: z.string(),
+        availableTools: z.array(z.string()),
+      }),
+      execute: async ({ attemptedToolName, availableTools }) => ({
+        error: `Tool "${attemptedToolName}" does not exist. Pick one from: ${availableTools.join(', ')}.`,
+      }),
+    }),
   }
 }

@@ -37,6 +37,7 @@
     "tunnel": "dotenvx run -- ../../scripts/tunnel.sh"
   },
   "dependencies": {
+    "@ai-sdk/provider-utils": "^4.0.27",
     "@base-ui/react": "catalog:",
     "@better-auth/stripe": "catalog:",
     "@cloudflare/ai-chat": "catalog:",
@@ -76,6 +77,7 @@
     "cmdk": "catalog:",
     "drizzle-orm": "catalog:",
     "input-otp": "catalog:",
+    "jsonrepair": "^3.14.0",
     "lucide-react": "catalog:",
     "motion": "catalog:",
     "nanoid": "^5.1.11",

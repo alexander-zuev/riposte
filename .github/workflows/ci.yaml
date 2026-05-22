@@ -19,7 +19,7 @@ concurrency:
 
 jobs:
   actions-security:
-    name: GitHub Actions Security
+    name: Security Checks
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -41,7 +41,7 @@ jobs:
           min-confidence: high
 
   check:
-    name: Check
+    name: CI
     runs-on: ubuntu-latest
     timeout-minutes: 20
 

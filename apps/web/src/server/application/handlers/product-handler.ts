@@ -224,7 +224,7 @@ export const restartProductSetup: CommandHandler<
   if (appDataSources.isErr()) return Result.err(appDataSources.error)
 
   const deletedAppDataSources = await Promise.all(
-    appDataSources.value.map((source) => {
+    appDataSources.value.map(async (source) => {
       source.markDisconnected({ userId: command.userId })
       return appDataSourceRepo.delete(source)
     }),

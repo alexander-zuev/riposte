@@ -41,7 +41,9 @@ function hasErrorName(value: unknown, name: string): boolean {
 export function isTransientError(cause: unknown): boolean {
   if (hasBooleanProp(cause, 'overloaded', true)) return false
   if (hasBooleanProp(cause, 'retryable', true)) return true
-  if (hasErrorName(cause, 'AbortError')) return true
+  // AbortError signals intentional cancellation (user clicked stop, our own
+  // timeout fired, or a circuit breaker decided). Retrying contradicts intent.
+  if (hasErrorName(cause, 'AbortError')) return false
 
   if (cause instanceof Error) {
     const msg = cause.message.toLowerCase()

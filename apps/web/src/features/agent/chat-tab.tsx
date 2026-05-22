@@ -27,7 +27,7 @@ export function ChatTab({ productId, agent, transportState, mcp }: ChatTabProps)
   const { data, isPending, isError, error, refetch } = useQuery(chatQueries.messages(productId))
 
   if (isPending) return <ChatLoading />
-  if (isError) return <ChatError error={error} onRetry={() => refetch()} />
+  if (isError) return <ChatError error={error} onRetry={async () => refetch()} />
   return (
     <Chat
       key={data.map((message) => message.id).join(':')}

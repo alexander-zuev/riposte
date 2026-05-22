@@ -23,6 +23,10 @@ const restartAgentSetupInputSchema = z.object({
   productId: z.uuidv4(),
 })
 
+const cancelAgentCompactionInputSchema = z.object({
+  productId: z.uuidv4(),
+})
+
 export const getChatMessages = createServerFn({ method: 'GET' })
   .middleware([requireAuth])
   .inputValidator(getChatMessagesInputSchema)
@@ -32,6 +36,18 @@ export const getChatMessages = createServerFn({ method: 'GET' })
       productId: data.productId,
     })
     const result = await context.deps.services.messageBus().handle(query)
+
+    return toServerFnRpc(result)
+  })
+
+export const cancelAgentCompaction = createServerFn({ method: 'POST' })
+  .middleware([requireAuth])
+  .inputValidator(cancelAgentCompactionInputSchema)
+  .handler(async ({ data, context }) => {
+    const result = await context.deps.services.disputeAgentClient().cancelCompaction({
+      userId: context.user.id,
+      productId: data.productId,
+    })
 
     return toServerFnRpc(result)
   })

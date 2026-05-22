@@ -1,30 +1,54 @@
 import { AIChatAgent, type OnChatMessageOptions } from '@cloudflare/ai-chat'
-import { createCommand, createLogger, createSentryOptions, type UserId } from '@riposte/core'
+import {
+  createCommand,
+  createLogger,
+  createSentryOptions,
+  InternalServerError,
+  type UserId,
+} from '@riposte/core'
 import * as Sentry from '@sentry/cloudflare'
 import { BASE_PROMPT, buildSystemPrompt } from '@server/infrastructure/agents/build-system-prompt'
 import {
-  createDisputeAgentContextState,
+  applyDisputeAgentCompactions,
+  compactDisputeAgentMessages,
+} from '@server/infrastructure/agents/dispute-agent.compaction'
+import {
+  createDisputeAgentCompactionStore,
+  DISPUTE_AGENT_SESSION_ID,
+  migrateDisputeAgentCompactionStorage,
+} from '@server/infrastructure/agents/dispute-agent.compaction.storage'
+import {
+  buildEstimatedUsage,
+  createInitialDisputeAgentContextState,
+  type DisputeAgentCompactionState,
   type DisputeAgentContextState,
+  INITIAL_ESTIMATED_USAGE,
   INITIAL_USAGE,
-  type DisputeAgentUsage,
+  nextDisputeAgentContextState,
 } from '@server/infrastructure/agents/dispute-agent.context'
 import {
   createMcpOAuthCallbackHandler,
   RiposteMcpOAuthProvider,
 } from '@server/infrastructure/agents/dispute-agent.oauth'
 import { buildDisputeAgentTools } from '@server/infrastructure/agents/dispute-agent.tools'
-import { createDisputeAgentModel } from '@server/infrastructure/ai/model-factory'
+import {
+  createDisputeAgentModel,
+  DISPUTE_AGENT_MODEL,
+} from '@server/infrastructure/ai/model-factory'
 import type { IAnalyticsService } from '@server/infrastructure/analytics/analytics-service'
 import { createAppDeps, type AppDeps } from '@server/infrastructure/app-deps'
 import type { AgentMcpOAuthProvider } from 'agents'
+import { estimateMessageTokens, estimateStringTokens } from 'agents/experimental/memory/utils'
 import {
   convertToModelMessages,
+  type LanguageModel,
   type LanguageModelUsage,
   type StreamTextOnFinishCallback,
   ToolLoopAgent,
   type ToolSet,
   type UIMessage,
 } from 'ai'
+import { Result, type Result as ResultType } from 'better-result'
 
 type ReadyMcpServerResult =
   | {
@@ -91,6 +115,8 @@ export type DisputeAgentProps = {
 const USER_ID_STORAGE_KEY = 'userId'
 const PRIME_ONBOARDING_STORAGE_KEY = 'primeOnboarding'
 
+type PrepareMessagesError = InternalServerError
+
 class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps> {
   readonly deps: AppDeps
   private readonly analytics: IAnalyticsService
@@ -98,15 +124,34 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
   initialState: DisputeAgentState = {
     mode: 'setup',
     setupChangeId: null,
-    context: createDisputeAgentContextState(),
+    context: createInitialDisputeAgentContextState(DISPUTE_AGENT_MODEL.label),
   }
 
   private userId?: UserId
+  /**
+   * Active compaction's abort controller. Set when compaction begins, cleared
+   * when it ends (success or failure). The cancel-compaction server function
+   * fires `abort()` on this, which propagates into `generateText` inside the
+   * summarizer and short-circuits the operation.
+   */
+  private compactionAbortController: AbortController | null = null
 
   constructor(state: DurableObjectState, env: Env) {
     super(state, env)
+    state.blockConcurrencyWhile(async () => {
+      migrateDisputeAgentCompactionStorage(state.storage)
+    })
     this.deps = createAppDeps(env, state)
     this.analytics = this.deps.services.analytics()
+    // Refresh the FE estimate whenever MCP state transitions (server added,
+    // OAuth completed, tools discovered, server removed). Per the SDK docs:
+    // `onServerStateChanged is an Event<void>` returning a disposable.
+    // Subscription is for the lifetime of the DO; we don't dispose explicitly
+    // because the SDK's MCPClientManager owns the emitter and cleans up on
+    // its own dispose().
+    this.mcp.onServerStateChanged(() => {
+      this.ctx.waitUntil(this.refreshContextEstimate())
+    })
   }
 
   createMcpOAuthProvider(callbackUrl: string): AgentMcpOAuthProvider {
@@ -121,7 +166,45 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
       this.userId = await this.ctx.storage.get<UserId>(USER_ID_STORAGE_KEY)
     }
 
+    this.migrateContextStateIfNeeded()
     this.mcp.configureOAuthCallback({ customHandler: createMcpOAuthCallbackHandler(this) })
+  }
+
+  /**
+   * One-shot normalizer for persisted state predating the context refactor:
+   *  - `compaction: null` → `{ status: 'idle' }`
+   *  - missing `estimatedUsage` → `INITIAL_ESTIMATED_USAGE`
+   *
+   * Idempotent — runs on every boot, no-op once state is on the new shape.
+   * Can be removed once we're confident no live DO carries the old shape.
+   */
+  private migrateContextStateIfNeeded(): void {
+    const current = this.state.context as unknown as {
+      modelName?: string
+      usage?: typeof INITIAL_USAGE
+      compaction?: DisputeAgentCompactionState | null
+      estimatedUsage?: typeof INITIAL_ESTIMATED_USAGE
+    } | null
+    if (
+      current &&
+      current.modelName !== undefined &&
+      current.compaction !== null &&
+      current.compaction !== undefined &&
+      current.estimatedUsage !== undefined
+    ) {
+      return
+    }
+    const base = createInitialDisputeAgentContextState(
+      current?.modelName ?? DISPUTE_AGENT_MODEL.label,
+    )
+    this.setState({
+      ...this.state,
+      context: nextDisputeAgentContextState(base, {
+        usage: current?.usage ?? INITIAL_USAGE,
+        compaction: { status: 'idle' },
+        estimatedUsage: current?.estimatedUsage ?? INITIAL_ESTIMATED_USAGE,
+      }),
+    })
   }
 
   async onChatMessage(
@@ -135,6 +218,9 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
       logger.error('dispute_agent_missing_userid', { productId: this.name })
     }
 
+    // TODO(perf): when `opts?.continuation === true` (auto-continue after a
+    // tool result), instructions + tools are guaranteed identical to the prior
+    // step — cache them per-turn to skip 2 Postgres reads on every continuation.
     const instructions = await this.loadInstructions()
 
     const model = createDisputeAgentModel({
@@ -150,27 +236,62 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
       },
     })
 
+    const prepared = await this.prepareMessagesForModel(model)
+    if (prepared.isErr()) {
+      logger.warn('dispute_agent_prepare_messages_failed', {
+        error: prepared.error,
+        mode: this.state.mode,
+        productId: this.name,
+        requestId: opts?.requestId,
+        context: this.state.context,
+      })
+      return Response.json({ error: prepared.error.message }, { status: 503 })
+    }
+
+    await this.mcp.waitForConnections({ timeout: 10_000 })
+
     // TODO(agent): add a wall-clock-based `stopWhen` (not step count) — see spec bounds.
     const tools = buildDisputeAgentTools(this, this.ctx.storage)
+    logger.debug('dispute_agent_tools_ready', {
+      mode: this.state.mode,
+      productId: this.name,
+      requestId: opts?.requestId,
+      toolNames: Object.keys(tools),
+      mcpServers: Object.fromEntries(
+        Object.entries(this.getMcpServers().servers).map(([serverId, server]) => [
+          serverId,
+          {
+            name: server.name,
+            state: server.state,
+          },
+        ]),
+      ),
+    })
 
     const agent = new ToolLoopAgent({
       id: 'dispute-agent',
       model,
       instructions,
       tools,
-      onFinish: ({ totalUsage }) => {
-        this.updateUsage(totalUsage)
+      onFinish: ({ usage }) => {
+        // Use the LAST step's usage, not `totalUsage`. In a multi-step tool
+        // loop, `totalUsage` is the billing aggregate across all steps and can
+        // far exceed the context window; `usage` is what one model call saw,
+        // which is what window-pressure decisions (compaction, popover) care
+        // about.
+        this.updateUsage(usage)
+        this.ctx.waitUntil(this.refreshContextEstimate())
       },
     })
 
     const result = await agent.stream({
-      messages: await convertToModelMessages(this.messages),
+      messages: await convertToModelMessages(prepared.value),
       abortSignal: opts?.abortSignal,
     })
 
     return result.toUIMessageStreamResponse({
       onError: (error) => {
-        logger.error('dispute_agent_stream_error', {
+        logger.warn('dispute_agent_stream_error', {
           error,
           mode: this.state.mode,
           productId: this.name,
@@ -182,16 +303,168 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
   }
 
   private updateUsage(usage: LanguageModelUsage): void {
-    if (usage.totalTokens === undefined) return
-    this.setState({
-      ...this.state,
-      context: createDisputeAgentContextState({
-        inputTokens: usage.inputTokens ?? 0,
+    if (usage.totalTokens === undefined) {
+      logger.warn('dispute_agent_usage_missing_total', { usage, productId: this.name })
+      return
+    }
+    const realInputTokens = usage.inputTokens ?? 0
+    const estimatedTotalTokens = this.state.context.estimatedUsage.total
+    const byCategory = this.state.context.estimatedUsage.byCategory.map((bucket) => ({
+      category: bucket.category,
+      tokens: bucket.tokens,
+    }))
+    const staticTokens = byCategory
+      .filter((b) => b.category !== 'messages')
+      .reduce((sum, b) => sum + b.tokens, 0)
+    const messagesTokens = byCategory.find((b) => b.category === 'messages')?.tokens ?? 0
+    logger.debug('dispute_agent_usage_update', {
+      usage,
+      storedUsage: {
+        inputTokens: realInputTokens,
         outputTokens: usage.outputTokens ?? 0,
         totalTokens: usage.totalTokens,
-        updatedAt: new Date().toISOString(),
+      },
+      compactAtTokens: this.state.context.compactAtTokens,
+      calibration: {
+        estimatedTotalTokens,
+        realInputTokens,
+        ratio: estimatedTotalTokens > 0 ? realInputTokens / estimatedTotalTokens : null,
+        byCategory,
+        staticTokens,
+        messagesTokens,
+      },
+    })
+    this.setState({
+      ...this.state,
+      context: nextDisputeAgentContextState(this.state.context, {
+        usage: {
+          inputTokens: realInputTokens,
+          outputTokens: usage.outputTokens ?? 0,
+          totalTokens: usage.totalTokens,
+          updatedAt: new Date().toISOString(),
+        },
       }),
     })
+  }
+
+  private setCompactionState(compaction: DisputeAgentCompactionState): void {
+    this.setState({
+      ...this.state,
+      context: nextDisputeAgentContextState(this.state.context, { compaction }),
+    })
+  }
+
+  private startCompaction(): void {
+    this.setCompactionState({ status: 'compacting', startedAt: new Date().toISOString() })
+  }
+
+  private failCompaction(error: Error): void {
+    this.setCompactionState({
+      status: 'failed',
+      failedAt: new Date().toISOString(),
+      message: error.message,
+    })
+  }
+
+  private completeCompaction(): void {
+    this.setCompactionState({ status: 'idle' })
+  }
+
+  async cancelCompaction(): Promise<void> {
+    this.compactionAbortController?.abort()
+  }
+
+  /**
+   * Recomputes the per-category estimated usage (system prompt + per-tool +
+   * messages) and persists it onto `state.context.estimatedUsage`. Cheap
+   * heuristic (chars/4 + word fudge) — for FE visibility only; the compaction
+   * trigger never reads this, it reads real `usage.totalTokens`.
+   *
+   * Call sites: after each chat turn, on MCP connect/disconnect, on setup
+   * change.
+   */
+  private async refreshContextEstimate(): Promise<void> {
+    const instructions = await this.loadInstructions()
+    const mcpTools = this.mcp.getAITools() as Record<string, unknown>
+    const allTools = buildDisputeAgentTools(this, this.ctx.storage) as Record<string, unknown>
+    const systemTools = Object.fromEntries(
+      Object.entries(allTools).filter(([key]) => !(key in mcpTools)),
+    )
+    const estimatedUsage = buildEstimatedUsage({
+      instructions,
+      systemTools,
+      mcpTools,
+      messages: this.messages,
+      lastRealTotalTokens: this.state.context.usage.totalTokens,
+      estimateString: estimateStringTokens,
+      estimateMessages: (messages) => estimateMessageTokens(messages as UIMessage[]),
+    })
+    this.setState({
+      ...this.state,
+      context: nextDisputeAgentContextState(this.state.context, { estimatedUsage }),
+    })
+  }
+
+  private async prepareMessagesForModel(
+    model: LanguageModel,
+  ): Promise<ResultType<UIMessage[], PrepareMessagesError>> {
+    const compactionStore = createDisputeAgentCompactionStore(this.ctx.storage)
+    const overlays = compactionStore.list(DISPUTE_AGENT_SESSION_ID)
+    const messagesForModel = applyDisputeAgentCompactions(this.messages, overlays)
+
+    logger.debug('dispute_agent_prepare_messages_decision', {
+      status: this.state.context.status,
+      totalTokens: this.state.context.usage.totalTokens,
+      compactAtTokens: this.state.context.compactAtTokens,
+      overlayCount: overlays.length,
+      rawMessageCount: this.messages.length,
+      modelMessageCount: messagesForModel.length,
+      productId: this.name,
+    })
+
+    if (this.state.context.status !== 'compact_required') {
+      return Result.ok(messagesForModel)
+    }
+
+    this.startCompaction()
+    this.compactionAbortController = new AbortController()
+    const compaction = await compactDisputeAgentMessages({
+      messages: this.messages,
+      overlays,
+      model,
+      saveOverlay: (args) => compactionStore.add(args),
+      abortSignal: this.compactionAbortController.signal,
+    })
+    this.compactionAbortController = null
+
+    if (!compaction.ok) {
+      // Surface the static/messages split so we can tell at a glance whether
+      // the deadlock is "static overhead exceeds threshold" (compaction can't
+      // help) vs "messages legitimately failed to summarize".
+      const byCategory = this.state.context.estimatedUsage.byCategory
+      const staticTokens = byCategory
+        .filter((b) => b.category !== 'messages')
+        .reduce((sum, b) => sum + b.tokens, 0)
+      const messagesTokens = byCategory.find((b) => b.category === 'messages')?.tokens ?? 0
+      logger.warn('dispute_agent_compaction_failed', {
+        error: compaction.error,
+        productId: this.name,
+        compactAtTokens: this.state.context.compactAtTokens,
+        usageTotalTokens: this.state.context.usage.totalTokens,
+        staticTokens,
+        messagesTokens,
+        staticExceedsThreshold: staticTokens >= this.state.context.compactAtTokens,
+      })
+      this.failCompaction(compaction.error)
+      return Result.err(
+        new InternalServerError({
+          message: 'Failed to compact conversation',
+        }),
+      )
+    }
+
+    this.completeCompaction()
+    return Result.ok(compaction.messages)
   }
 
   /** Builds the dynamic system prompt for this turn. Fail-soft: falls back to {@link BASE_PROMPT} so chat still works if PG is degraded. */
@@ -230,19 +503,22 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
 
   async restartSetup(): Promise<{ ok: true } | { ok: false; error: string }> {
     const { servers } = this.getMcpServers()
-    await Promise.all(Object.keys(servers).map((serverId) => this.removeMcpServer(serverId)))
+    await Promise.all(Object.keys(servers).map(async (serverId) => this.removeMcpServer(serverId)))
     this.setState({
       ...this.state,
       mode: 'setup',
-      context: createDisputeAgentContextState(),
+      context: createInitialDisputeAgentContextState(DISPUTE_AGENT_MODEL.label),
     })
     await this.clearConversation()
+    createDisputeAgentCompactionStore(this.ctx.storage).clear(DISPUTE_AGENT_SESSION_ID)
+    await this.refreshContextEstimate()
 
     return { ok: true }
   }
 
   async signalProductSetupChanged(setupChangeId: string): Promise<void> {
     this.setState({ ...this.state, setupChangeId })
+    await this.refreshContextEstimate()
   }
 
   async getReadyMcpServer(serverId: string): Promise<ReadyMcpServerResult> {
@@ -324,6 +600,8 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
       `mcp-connected-${serverId}-${Date.now()}`,
       `Connection event: OAuth authorization succeeded for MCP server "${serverName}". Continue setup.`,
     )
+    // No refresh here: `broadcastMcpServers` already fires `refreshContextEstimate`
+    // whenever MCP state transitions (including tool discovery after OAuth).
   }
 
   async signalMcpDisconnected(serverName: string): Promise<void> {
@@ -331,6 +609,7 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
       `mcp-disconnected-${serverName}-${Date.now()}`,
       `Connection event: MCP server "${serverName}" was disconnected by the user.`,
     )
+    // No refresh here: see signalMcpConnected.
   }
 
   /**
@@ -382,6 +661,7 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
       'stripe-connected',
       'Connection event: Stripe authorization succeeded for this product. Continue onboarding from the previous step.',
     )
+    await this.refreshContextEstimate()
   }
 
   /** Clears the current conversation and writes the onboarding welcome message. */
@@ -389,6 +669,7 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
     await this.ctx.storage.put(PRIME_ONBOARDING_STORAGE_KEY, args)
     await this.clearConversation()
     await this.persistMessages([buildOnboardingWelcomeMessage(args)])
+    await this.refreshContextEstimate()
   }
 
   private async clearConversation(): Promise<void> {

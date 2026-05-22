@@ -4,7 +4,16 @@ import type { PostHog } from 'posthog-node'
 import { createWorkersAI, type WorkersAI } from 'workers-ai-provider'
 
 const DISPUTE_AGENT_GATEWAY_ID = 'riposte-prod'
-const DISPUTE_AGENT_MODEL = '@cf/google/gemma-4-26b-a4b-it'
+
+/**
+ * Active dispute-agent model. `id` is the Workers AI binding identifier sent
+ * to the provider; `label` is the popover-friendly short name surfaced to
+ * users. Kept together so they can never drift.
+ */
+export const DISPUTE_AGENT_MODEL = {
+  id: '@cf/google/gemma-4-26b-a4b-it',
+  label: 'gemma-4-26b',
+} as const
 
 export type TracingContext = {
   phClient: PostHog
@@ -36,7 +45,7 @@ export function createDisputeAgentModel(args: {
     gateway: { id: DISPUTE_AGENT_GATEWAY_ID },
   })
 
-  const model = workersai(DISPUTE_AGENT_MODEL as Parameters<WorkersAI>[0])
+  const model = workersai(DISPUTE_AGENT_MODEL.id as Parameters<WorkersAI>[0])
 
   return withTracing(model, args.tracing.phClient, {
     posthogDistinctId: args.tracing.distinctId,

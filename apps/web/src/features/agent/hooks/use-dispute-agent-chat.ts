@@ -19,11 +19,33 @@ export type DisputeAgentUsage = {
 
 export type DisputeAgentContextStatus = 'ok' | 'compact_required'
 
+export type DisputeAgentCompactionState =
+  | { status: 'idle' }
+  | { status: 'compacting'; startedAt: string }
+  | { status: 'failed'; failedAt: string; message: string }
+
+export type ContextCategory = 'system_prompt' | 'system_tools' | 'mcp_tools' | 'messages'
+
+export type ContextCategoryUsage = {
+  label: string
+  category: ContextCategory
+  tokens: number
+  children?: ContextCategoryUsage[]
+}
+
+export type DisputeAgentEstimatedUsage = {
+  byCategory: ContextCategoryUsage[]
+  total: number
+}
+
 export type DisputeAgentContextState = {
+  modelName: string
   windowTokens: number
   compactAtTokens: number
   status: DisputeAgentContextStatus
+  compaction: DisputeAgentCompactionState
   usage: DisputeAgentUsage
+  estimatedUsage: DisputeAgentEstimatedUsage
 }
 
 type DisputeAgentState = {

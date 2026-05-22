@@ -1,24 +1,19 @@
-import { ArrowsClockwiseIcon } from '@phosphor-icons/react'
+import { ContextUsageMeter } from '@web/features/agent/context-usage-meter'
+import { useCancelAgentCompaction } from '@web/features/agent/hooks/use-cancel-agent-compaction'
 import {
   type AgentTransportState,
   type DisputeAgentConnection,
-  type DisputeAgentContextState,
   useDisputeAgentChat,
 } from '@web/features/agent/hooks/use-dispute-agent-chat'
 import { McpSourcesPopover } from '@web/features/agent/mcp-sources-popover'
 import { AgentMessagePart, keyedAgentMessageParts } from '@web/features/agent/message-part'
-import { cn } from '@web/lib/utils'
+import { RegenerateMessageAction } from '@web/features/agent/regenerate-message-action'
 import {
   Conversation,
   ConversationContent,
   ConversationScrollButton,
 } from '@web/ui/components/ai-elements/conversation'
-import {
-  Message,
-  MessageAction,
-  MessageActions,
-  MessageContent,
-} from '@web/ui/components/ai-elements/message'
+import { Message, MessageContent } from '@web/ui/components/ai-elements/message'
 import {
   PromptInput,
   PromptInputFooter,
@@ -27,10 +22,9 @@ import {
   PromptInputTools,
 } from '@web/ui/components/ai-elements/prompt-input'
 import { Spinner } from '@web/ui/components/ui/spinner'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@web/ui/components/ui/tooltip'
 import type { MCPServersState } from 'agents'
 import type { UIMessage } from 'ai'
-import { memo, useCallback } from 'react'
+import { useCallback } from 'react'
 
 type ChatProps = {
   agent: DisputeAgentConnection
@@ -48,11 +42,17 @@ type ChatProps = {
  */
 export function Chat({ agent, transportState, initialMessages, productId, mcp }: ChatProps) {
   const chat = useDisputeAgentChat(agent, initialMessages)
+  const { cancelCompaction } = useCancelAgentCompaction({ productId })
   const isInputDisabled = transportState !== 'connected'
   const agentState = agent.state
   const handleSubmit = useCallback(
     (message: { text?: string }) => {
       if (isInputDisabled) return
+      // Both Enter and the submit button funnel through here. The button has
+      // its own stop-vs-submit branch on click (handled in PromptInputSubmit),
+      // but Enter would otherwise bypass it. Single gate: never send while the
+      // agent is mid-stream. User must explicitly click stop, then submit.
+      if (chat.isStreaming) return
       const text = message.text?.trim()
       if (!text) return
       chat.sendMessage({ text })
@@ -65,7 +65,11 @@ export function Chat({ agent, transportState, initialMessages, productId, mcp }:
     },
     [chat],
   )
+  const handleCancelCompaction = useCallback(() => {
+    cancelCompaction()
+  }, [cancelCompaction])
   const showActions = !chat.isStreaming
+  const promptStatus = chat.isStreaming ? 'streaming' : chat.status
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -88,12 +92,17 @@ export function Chat({ agent, transportState, initialMessages, productId, mcp }:
       </Conversation>
       <div className="flex min-h-8 items-center gap-2 px-4 py-2 text-muted-foreground">
         {chat.isStreaming && <Spinner className="size-4" />}
-        {agentState ? <ContextUsageMeter className="ml-auto" context={agentState.context} /> : null}
+        {agentState ? (
+          <ContextUsageMeter
+            className="ml-auto"
+            context={agentState.context}
+            onCancelCompaction={handleCancelCompaction}
+          />
+        ) : null}
       </div>
       <PromptInput className="w-full rounded-none border-0 border-t" onSubmit={handleSubmit}>
         <PromptInputTextarea
           className="text-sm md:text-sm"
-          disabled={isInputDisabled}
           placeholder="Type your message here..."
         />
         <PromptInputFooter className="text-sm">
@@ -103,71 +112,11 @@ export function Chat({ agent, transportState, initialMessages, productId, mcp }:
           <PromptInputSubmit
             className="text-sm"
             disabled={isInputDisabled}
-            status={chat.status}
+            status={promptStatus}
             onStop={chat.stop}
           />
         </PromptInputFooter>
       </PromptInput>
     </div>
   )
-}
-
-function ContextUsageMeter({
-  className,
-  context,
-}: {
-  className?: string
-  context: DisputeAgentContextState
-}) {
-  return (
-    <Tooltip>
-      <TooltipTrigger
-        render={
-          <span
-            aria-label={`Context: ${formatTokenCount(context.usage.totalTokens)} of ${formatTokenCount(context.windowTokens)} used`}
-            className={cn(
-              'shrink-0 cursor-help text-xs tabular-nums',
-              getContextUsageClassName(context),
-              className,
-            )}
-          />
-        }
-      >
-        Context: {formatTokenCount(context.usage.totalTokens)} /{' '}
-        {formatTokenCount(context.windowTokens)}
-      </TooltipTrigger>
-      <TooltipContent>
-        Older messages are summarized automatically at {formatTokenCount(context.compactAtTokens)}
-      </TooltipContent>
-    </Tooltip>
-  )
-}
-
-const RegenerateMessageAction = memo(function RegenerateMessageAction({
-  messageId,
-  onRegenerate,
-}: {
-  messageId: string
-  onRegenerate: (id: string) => void
-}) {
-  const handleClick = useCallback(() => onRegenerate(messageId), [messageId, onRegenerate])
-  return (
-    <MessageActions className="-ms-1.5">
-      <MessageAction tooltip="Regenerate" onClick={handleClick}>
-        <ArrowsClockwiseIcon size={16} />
-      </MessageAction>
-    </MessageActions>
-  )
-})
-
-function getContextUsageClassName(context: DisputeAgentContextState): string {
-  if (context.status === 'compact_required') return 'text-destructive-muted-foreground'
-  const warningAtTokens = context.compactAtTokens - context.windowTokens * 0.2
-  if (context.usage.totalTokens >= warningAtTokens) return 'text-warning-muted-foreground'
-  return 'text-muted-foreground'
-}
-
-function formatTokenCount(value: number): string {
-  if (value < 1000) return value.toLocaleString()
-  return `${Math.round(value / 1000).toLocaleString()}k`
 }

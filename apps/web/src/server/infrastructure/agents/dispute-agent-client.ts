@@ -60,6 +60,11 @@ export type RestartSetupInput = {
   productId: UUIDv4
 }
 
+export type CancelCompactionInput = {
+  userId: UUIDv4
+  productId: UUIDv4
+}
+
 export type SignalProductSetupChangedInput = {
   userId: UUIDv4
   productId: UUIDv4
@@ -99,6 +104,7 @@ export interface IDisputeAgentClient {
    */
   disconnectMcp: (input: DisconnectMcpInput) => Promise<Result<void, DOUnreachableError>>
   restartSetup: (input: RestartSetupInput) => Promise<Result<void, DOUnreachableError>>
+  cancelCompaction: (input: CancelCompactionInput) => Promise<Result<void, DOUnreachableError>>
   signalProductSetupChanged: (
     input: SignalProductSetupChangedInput,
   ) => Promise<Result<void, DOUnreachableError>>
@@ -331,6 +337,23 @@ export class DisputeAgentClient implements IDisputeAgentClient {
         if (!result.ok) {
           throw new Error(result.error)
         }
+      },
+      catch: (cause) => new DOUnreachableError({ cause, retryable: isTransientError(cause) }),
+    })
+  }
+
+  async cancelCompaction({
+    userId,
+    productId,
+  }: CancelCompactionInput): Promise<Result<void, DOUnreachableError>> {
+    return Result.tryPromise({
+      try: async () => {
+        const agent = await getAgentByName(
+          this.env.DisputeAgent,
+          productId,
+          disputeAgentOptions(userId),
+        )
+        await agent.cancelCompaction()
       },
       catch: (cause) => new DOUnreachableError({ cause, retryable: isTransientError(cause) }),
     })

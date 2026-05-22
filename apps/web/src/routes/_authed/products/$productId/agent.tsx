@@ -13,7 +13,7 @@ export const Route = createFileRoute('/_authed/products/$productId/agent')({
   // Setup gates render (ensureQueryData rejects → route-level error). Messages
   // are best-effort SSR seed (prefetchQuery swallows errors → in-card retry).
   // Promise.all so SSR latency = max(setup, messages), not sum.
-  loader: ({ context, params }) =>
+  loader: async ({ context, params }) =>
     Promise.all([
       context.queryClient.ensureQueryData(productQueries.setup(params.productId)),
       context.queryClient.prefetchQuery(chatQueries.messages(params.productId)),

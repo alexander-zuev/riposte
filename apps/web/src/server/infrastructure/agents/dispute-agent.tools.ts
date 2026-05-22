@@ -25,9 +25,8 @@ const appDataSourceAliasSchema = z
 
 /**
  * Static onboarding tools, merged with MCP tools from the connected servers.
- * AIChatAgent's `waitForMcpConnections` has already settled pending MCP
- * handshakes before `onChatMessage` runs, so `getAITools()` returns the final
- * set for this turn — no per-step refresh needed.
+ * `onChatMessage` waits for MCP connections before this builder runs so
+ * programmatic `saveMessages()` turns after OAuth see freshly discovered tools.
  */
 export function buildDisputeAgentTools(
   agent: DisputeAgentType,

@@ -69,12 +69,12 @@ export class DisputePlaybook extends Entity<DbNewDisputePlaybook> {
 
   static deserialize(row: DbDisputePlaybook): DisputePlaybook {
     return new DisputePlaybook(
-      row.id as UUIDv4,
-      row.productId as UUIDv4,
+      row.id,
+      row.productId,
       row.version,
       row.playbookMd,
       row.playbookHash,
-      row.createdBy as UUIDv4,
+      row.createdBy,
       row.createdAt,
     )
   }

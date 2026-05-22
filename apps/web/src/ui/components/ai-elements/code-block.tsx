@@ -135,7 +135,7 @@ const getTokensCacheKey = (code: string, language: BundledLanguage) => {
   return `${language}:${code.length}:${start}:${end}`
 }
 
-const getHighlighter = (
+const getHighlighter = async (
   language: BundledLanguage,
 ): Promise<HighlighterGeneric<BundledLanguage, BundledTheme>> => {
   const cached = highlighterCache.get(language)

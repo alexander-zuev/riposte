@@ -1,6 +1,8 @@
-import { createCommand } from '@riposte/core'
+import { InternalServerError, createCommand, createQuery } from '@riposte/core'
+import { resultToAgentToolResponse } from '@server/infrastructure/agents/agent-tool-result'
 import type { DisputeAgentType } from '@server/infrastructure/agents/dispute-agent'
 import { tool, type ToolSet } from 'ai'
+import { Result } from 'better-result'
 import { z } from 'zod'
 
 /** Max chars returned per fetchUrl call. Guards the 256k Gemma context window. */
@@ -24,7 +26,7 @@ const appDataSourceAliasSchema = z
   .regex(/^[a-z][a-z0-9_]*$/)
 
 /**
- * Static onboarding tools, merged with MCP tools from the connected servers.
+ * Static product setup tools, merged with MCP tools from the connected servers.
  * `onChatMessage` waits for MCP connections before this builder runs so
  * programmatic `saveMessages()` turns after OAuth see freshly discovered tools.
  */
@@ -32,97 +34,19 @@ export function buildDisputeAgentTools(
   agent: DisputeAgentType,
   storage: DurableObjectStorage,
 ): ToolSet {
-  const jina = agent.deps.services.jinaClient()
-
   return {
     ...agent.mcp.getAITools(),
-    readOnboardingState: tool({
+    readProductSetupSnapshot: tool({
       description:
-        'Read the authoritative onboarding state for this product. Use when the merchant says they completed an external setup step, after OAuth callbacks, after reconnects, or when the injected setup snapshot might be stale. The result includes `snapshotAt`; if it is newer than the prompt `snapshot_at`, treat it as the current state.',
+        'Read the authoritative setup snapshot for this product. Use when the merchant says they completed an external setup step, after OAuth callbacks, after reconnects, or when the injected setup snapshot might be stale. The result includes `snapshotAt`; if it is newer than the prompt `snapshot_at`, treat it as the current state.',
       inputSchema: z.object({}),
       execute: async () => {
-        const userId = agent.getCurrentUserId()
-
-        const db = agent.deps.db()
-        const product = await agent.deps.repos.products(db).findById(agent.name)
-        if (product.isErr()) {
-          return { ok: false as const, error: product.error.message }
-        }
-        if (!product.value) {
-          return { ok: false as const, error: 'Product was not found.' }
-        }
-
-        const setup = await agent.deps.services.productSetup().getState({
-          userId,
+        const query = createQuery('ReadProductSetupSnapshot', {
+          userId: agent.getCurrentUserId(),
           productId: agent.name,
         })
-        if (setup.isErr()) {
-          return { ok: false as const, error: setup.error.message }
-        }
-
-        const stripeConnection = await agent.deps.repos
-          .stripeConnections(db)
-          .findByProductId(agent.name)
-        if (stripeConnection.isErr()) {
-          return { ok: false as const, error: stripeConnection.error.message }
-        }
-
-        const appDataSources = await agent.deps.repos
-          .productAppDataSources(db)
-          .findByProductId(agent.name)
-        if (appDataSources.isErr()) {
-          return { ok: false as const, error: appDataSources.error.message }
-        }
-
-        const latestPlaybook = await agent.deps.repos
-          .disputePlaybooks(db)
-          .findLatestForProduct(agent.name)
-        if (latestPlaybook.isErr()) {
-          return { ok: false as const, error: latestPlaybook.error.message }
-        }
-
-        const productSnapshot = product.value.serialize()
-        const stripeSnapshot = stripeConnection.value?.serialize() ?? null
-        const playbook = latestPlaybook.value
-
-        return {
-          ok: true as const,
-          snapshotAt: setup.value.snapshotAt,
-          product: {
-            id: productSnapshot.id,
-            productName: productSnapshot.productName,
-            url: productSnapshot.url,
-            productType: productSnapshot.productType,
-            status: productSnapshot.status,
-            productDescription: productSnapshot.productDescription,
-            serviceStartRule: productSnapshot.serviceStartRule,
-            refundPolicyDisclosure: productSnapshot.refundPolicyDisclosure,
-            cancellationPolicyDisclosure: productSnapshot.cancellationPolicyDisclosure,
-            updatedAt: productSnapshot.updatedAt.toISOString(),
-          },
-          setup: setup.value,
-          stripe: {
-            connected: stripeSnapshot?.status === 'active',
-            livemode: stripeSnapshot?.livemode ?? null,
-            stripeAccountId: stripeSnapshot?.stripeAccountId ?? null,
-            status: stripeSnapshot?.status ?? 'missing',
-            updatedAt: stripeSnapshot?.updatedAt.toISOString() ?? null,
-          },
-          appDataSources: appDataSources.value.map((source) => {
-            const snapshot = source.serialize()
-            return {
-              id: snapshot.id,
-              alias: snapshot.alias,
-              mcpServerId: snapshot.mcpServerId,
-              createdAt: snapshot.createdAt.toISOString(),
-            }
-          }),
-          playbook: {
-            exists: playbook !== null,
-            version: playbook?.version ?? null,
-            createdAt: playbook?.createdAt.toISOString() ?? null,
-          },
-        }
+        const result = await agent.deps.services.messageBus().handle(query)
+        return resultToAgentToolResponse(result)
       },
     }),
 
@@ -134,43 +58,50 @@ export function buildDisputeAgentTools(
         url: z.url(),
       }),
       execute: async ({ name, url }) => {
-        const { servers } = agent.getMcpServers()
-        const existing = Object.entries(servers).find(([, s]) => s.server_url === url)
+        const result = await Result.tryPromise({
+          try: async () => {
+            const { servers } = agent.getMcpServers()
+            const existing = Object.entries(servers).find(([, s]) => s.server_url === url)
 
-        if (existing) {
-          const [id, server] = existing
-          switch (server.state) {
-            case 'ready':
-              return { ok: true as const, state: 'ready', id }
-            case 'connecting':
-            case 'connected':
-            case 'discovering': {
-              // In-flight handshake — wait for it instead of kicking.
-              await agent.mcp.waitForConnections({ timeout: 5000 })
-              const after = agent.getMcpServers().servers[id]
-              if (after?.state === 'ready') {
-                return { ok: true as const, state: 'ready', id }
+            if (existing) {
+              const [id, server] = existing
+              switch (server.state) {
+                case 'ready':
+                  return { state: 'ready', id }
+                case 'connecting':
+                case 'connected':
+                case 'discovering': {
+                  // In-flight handshake — wait for it instead of kicking.
+                  await agent.mcp.waitForConnections({ timeout: 5000 })
+                  const after = agent.getMcpServers().servers[id]
+                  if (after?.state === 'ready') {
+                    return { state: 'ready', id }
+                  }
+                  await agent.removeMcpServer(id)
+                  break
+                }
+                case 'authenticating':
+                case 'failed':
+                default:
+                  // Auth flow likely abandoned (stale state, expired link) or broken.
+                  // Fresh reconnect is the right retry semantic.
+                  await agent.removeMcpServer(id)
+                  break
               }
-              await agent.removeMcpServer(id)
-              break
             }
-            case 'authenticating':
-            case 'failed':
-            default:
-              // Auth flow likely abandoned (stale state, expired link) or broken.
-              // Fresh reconnect is the right retry semantic.
-              await agent.removeMcpServer(id)
-              break
-          }
-        }
 
-        // `agentsPrefix` must match the catchall route's `prefix: 'api/agents'`
-        // (routes/api/agents/$.ts); without it the SDK builds a 404'ing redirect_uri.
-        const result = await agent.addMcpServer(name, url, { agentsPrefix: 'api/agents' })
-        if (result.state === 'authenticating') {
-          return { ok: true as const, state: 'authenticating', authUrl: result.authUrl }
-        }
-        return { ok: true as const, state: 'ready', id: result.id }
+            // `agentsPrefix` must match the catchall route's `prefix: 'api/agents'`
+            // (routes/api/agents/$.ts); without it the SDK builds a 404'ing redirect_uri.
+            const added = await agent.addMcpServer(name, url, { agentsPrefix: 'api/agents' })
+            if (added.state === 'authenticating') {
+              return { state: 'authenticating', authUrl: added.authUrl }
+            }
+            return { state: 'ready', id: added.id }
+          },
+          catch: () => new InternalServerError({ message: 'Failed to connect MCP server' }),
+        })
+
+        return resultToAgentToolResponse(result)
       },
     }),
 
@@ -180,15 +111,16 @@ export function buildDisputeAgentTools(
       inputSchema: z.object({}),
       execute: async () => {
         const { servers } = agent.getMcpServers()
-        return {
-          ok: true as const,
+        const result = Result.ok({
           servers: Object.entries(servers).map(([id, server]) => ({
             id,
             name: server.name,
             url: server.server_url,
             state: server.state,
           })),
-        }
+        })
+
+        return resultToAgentToolResponse(result)
       },
     }),
 
@@ -202,7 +134,15 @@ export function buildDisputeAgentTools(
       execute: async ({ serverId, alias }) => {
         const readyServer = await agent.getReadyMcpServer(serverId)
         if (!readyServer.ok) {
-          return readyServer
+          const result = Result.ok({
+            ready: false,
+            reason: readyServer.reason,
+            retryable: readyServer.retryable,
+            message: readyServer.message,
+            ...(readyServer.reason === 'not_ready' ? { state: readyServer.state } : {}),
+          })
+
+          return resultToAgentToolResponse(result)
         }
 
         const command = createCommand('RegisterProductAppDataSource', {
@@ -210,17 +150,14 @@ export function buildDisputeAgentTools(
           mcpServerId: serverId,
           alias,
         })
-        const registered = await agent.deps.services.messageBus().handle(command)
-        if (registered.isErr()) {
-          return { ok: false as const, error: registered.error.message }
-        }
-
-        return {
-          ok: true as const,
-          productAppDataSourceId: registered.value.productAppDataSourceId,
-          serverName: readyServer.serverName,
-          alias,
-        }
+        const result = await agent.deps.services.messageBus().handle(command)
+        return resultToAgentToolResponse(result, {
+          ok: (value) => ({
+            productAppDataSourceId: value.productAppDataSourceId,
+            serverName: readyServer.serverName,
+            alias,
+          }),
+        })
       },
     }),
 
@@ -232,31 +169,33 @@ export function buildDisputeAgentTools(
         offset: z.number().int().min(0).optional(),
       }),
       execute: async ({ url, offset = 0 }) => {
-        const key = `${FETCH_CACHE_PREFIX}${url}`
-        let cached = await storage.get<CachedFetchDoc>(key)
-        if (!cached || cached.expiresAt < Date.now()) {
-          const fetched = await jina.fetchUrl({ url })
-          if (fetched.isErr()) {
-            return { ok: false as const, error: fetched.error.message }
+        const jina = agent.deps.services.jinaClient()
+        const result = await Result.gen(async function* () {
+          const key = `${FETCH_CACHE_PREFIX}${url}`
+          let cached = await storage.get<CachedFetchDoc>(key)
+          if (!cached || cached.expiresAt < Date.now()) {
+            const fetched = yield* Result.await(jina.fetchUrl({ url }))
+            cached = {
+              url: fetched.url,
+              title: fetched.title,
+              content: fetched.content,
+              expiresAt: Date.now() + FETCH_CACHE_TTL_MS,
+            }
+            await storage.put(key, cached)
           }
-          cached = {
-            url: fetched.value.url,
-            title: fetched.value.title,
-            content: fetched.value.content,
-            expiresAt: Date.now() + FETCH_CACHE_TTL_MS,
-          }
-          await storage.put(key, cached)
-        }
-        const chunk = cached.content.slice(offset, offset + FETCH_CHUNK_SIZE)
-        const nextOffset = offset + chunk.length
-        return {
-          ok: true as const,
-          url: cached.url,
-          title: cached.title,
-          content: chunk,
-          totalChars: cached.content.length,
-          nextOffset: nextOffset < cached.content.length ? nextOffset : null,
-        }
+
+          const chunk = cached.content.slice(offset, offset + FETCH_CHUNK_SIZE)
+          const nextOffset = offset + chunk.length
+          return Result.ok({
+            url: cached.url,
+            title: cached.title,
+            content: chunk,
+            totalChars: cached.content.length,
+            nextOffset: nextOffset < cached.content.length ? nextOffset : null,
+          })
+        })
+
+        return resultToAgentToolResponse(result)
       },
     }),
 
@@ -268,11 +207,9 @@ export function buildDisputeAgentTools(
         numResults: z.number().int().min(1).max(10).optional(),
       }),
       execute: async ({ query, numResults }) => {
+        const jina = agent.deps.services.jinaClient()
         const result = await jina.webSearch({ query, numResults })
-        if (result.isErr()) {
-          return { ok: false as const, error: result.error.message }
-        }
-        return { ok: true as const, results: result.value.results }
+        return resultToAgentToolResponse(result)
       },
     }),
   }

@@ -32,7 +32,7 @@ export type DisputeAgentWorkflowInput = {
   disputeCaseId: string
 }
 
-export type PrimeOnboardingInput = {
+export type PrimeProductSetupInput = {
   userId: UUIDv4
   productId: UUIDv4
   productName: string
@@ -77,12 +77,12 @@ export interface IDisputeAgentClient {
   resumeWorkflow: (input: DisputeAgentWorkflowInput) => Promise<Result<void, WorkflowError>>
   terminateWorkflow: (input: DisputeAgentWorkflowInput) => Promise<Result<void, WorkflowError>>
   /**
-   * Saves the onboarding welcome message into the per-product DisputeAgent DO so
+   * Saves the product setup welcome message into the per-product DisputeAgent DO so
    * the chat is populated before the merchant opens /agent. Idempotent on the DO
    * side (no-op if any messages already exist). Returns `Result.err(DOUnreachableError)`
    * if the DO RPC fails — caller decides whether to log-and-swallow or surface.
    */
-  primeOnboarding: (input: PrimeOnboardingInput) => Promise<Result<void, DOUnreachableError>>
+  primeProductSetup: (input: PrimeProductSetupInput) => Promise<Result<void, DOUnreachableError>>
   /**
    * Reads persisted chat history from the per-product DisputeAgent DO. The
    * `UIMessage<never>` specialization is our application-layer claim that no
@@ -246,12 +246,12 @@ export class DisputeAgentClient implements IDisputeAgentClient {
     )
   }
 
-  async primeOnboarding({
+  async primeProductSetup({
     userId,
     productId,
     productName,
     connectStripeUrl,
-  }: PrimeOnboardingInput): Promise<Result<void, DOUnreachableError>> {
+  }: PrimeProductSetupInput): Promise<Result<void, DOUnreachableError>> {
     return Result.tryPromise({
       try: async () => {
         // Pass `props` so the DO's `onStart` captures `userId` on first init.
@@ -262,7 +262,7 @@ export class DisputeAgentClient implements IDisputeAgentClient {
           productId,
           disputeAgentOptions(userId),
         )
-        await agent.primeOnboarding({ productName, connectStripeUrl })
+        await agent.primeProductSetup({ productName, connectStripeUrl })
       },
       catch: (cause) => new DOUnreachableError({ cause, retryable: isTransientError(cause) }),
     })

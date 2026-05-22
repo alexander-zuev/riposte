@@ -6,6 +6,7 @@ import {
   type ProductSetupCompletedAt,
   type ProductSetupState,
   type ProductSetupStep,
+  type ReadProductSetupSnapshotResult,
   type UUIDv4,
 } from '@riposte/core'
 import type { DisputePlaybook } from '@server/domain/dispute-playbooks'
@@ -23,6 +24,11 @@ export interface IProductSetupService {
   getState: (
     input: GetProductSetupStateInput,
   ) => Promise<Result<ProductSetupState, DatabaseError | EntityNotFoundError | DOUnreachableError>>
+  getSetupSnapshot: (
+    input: GetProductSetupStateInput,
+  ) => Promise<
+    Result<ReadProductSetupSnapshotResult, DatabaseError | EntityNotFoundError | DOUnreachableError>
+  >
 }
 
 export type GetProductSetupStateInput = {
@@ -31,7 +37,7 @@ export type GetProductSetupStateInput = {
 }
 
 /**
- * Owns onboarding step satisfaction rules. Reads the artifacts that back each step
+ * Owns product setup step satisfaction rules. Reads the artifacts that back each step
  * (product columns, stripe connection, verified app data sources, dispute playbook) and
  * projects them into a `ProductSetupState`. Caller (query handler) is a one-liner.
  */
@@ -68,25 +74,108 @@ export class ProductSetupService implements IProductSetupService {
     const appDataSourcesResult = await this.productAppDataSources.findByProductId(productId)
     if (appDataSourcesResult.isErr()) return Result.err(appDataSourcesResult.error)
 
-    const completedAt = ProductSetupService.computeCompletedAt({
+    return Result.ok(
+      ProductSetupService.buildSetupState({
+        productId,
+        product,
+        stripeConnection: stripeResult.value,
+        playbook: playbookResult.value,
+        appDataSourceConnectedAt: appDataSourcesResult.value[0]?.createdAt ?? null,
+      }),
+    )
+  }
+
+  async getSetupSnapshot({
+    userId,
+    productId,
+  }: GetProductSetupStateInput): Promise<
+    Result<ReadProductSetupSnapshotResult, DatabaseError | EntityNotFoundError | DOUnreachableError>
+  > {
+    const productResult = await this.products.findById(productId)
+    if (productResult.isErr()) return Result.err(productResult.error)
+    if (!productResult.value) {
+      return Result.err(new EntityNotFoundError({ entity: 'Product', id: productId }))
+    }
+    const product = productResult.value.serialize()
+    if (product.userId !== userId) {
+      return Result.err(new EntityNotFoundError({ entity: 'Product', id: productId }))
+    }
+
+    const stripeResult = await this.stripeConnections.findByProductId(productId)
+    if (stripeResult.isErr()) return Result.err(stripeResult.error)
+
+    const playbookResult = await this.disputePlaybooks.findLatestForProduct(productId)
+    if (playbookResult.isErr()) return Result.err(playbookResult.error)
+
+    const appDataSourcesResult = await this.productAppDataSources.findByProductId(productId)
+    if (appDataSourcesResult.isErr()) return Result.err(appDataSourcesResult.error)
+
+    const setup = ProductSetupService.buildSetupState({
+      productId,
       product,
       stripeConnection: stripeResult.value,
       playbook: playbookResult.value,
       appDataSourceConnectedAt: appDataSourcesResult.value[0]?.createdAt ?? null,
     })
-    const currentStep =
-      PRODUCT_SETUP_STEPS.find((step: ProductSetupStep) => completedAt[step] === null) ?? null
+    const stripe = stripeResult.value?.serialize() ?? null
+    const playbook = playbookResult.value
 
     return Result.ok({
-      productId,
-      currentStep,
-      completedAt,
-      snapshotAt: new Date().toISOString(),
+      snapshotAt: setup.snapshotAt,
+      product: {
+        id: product.id,
+        productName: product.productName,
+        url: product.url,
+        productType: product.productType,
+        status: product.status,
+        productDescription: product.productDescription,
+        serviceStartRule: product.serviceStartRule,
+        refundPolicyDisclosure: product.refundPolicyDisclosure,
+        cancellationPolicyDisclosure: product.cancellationPolicyDisclosure,
+        updatedAt: product.updatedAt.toISOString(),
+      },
+      setup,
+      stripe: {
+        connected: stripe?.status === 'active',
+        livemode: stripe?.livemode ?? null,
+        stripeAccountId: stripe?.stripeAccountId ?? null,
+        status: stripe?.status ?? 'missing',
+        updatedAt: stripe?.updatedAt.toISOString() ?? null,
+      },
+      appDataSources: appDataSourcesResult.value.map((source) => {
+        const snapshot = source.serialize()
+        return {
+          id: snapshot.id,
+          alias: snapshot.alias,
+          mcpServerId: snapshot.mcpServerId,
+          createdAt: snapshot.createdAt.toISOString(),
+        }
+      }),
+      playbook: {
+        exists: playbook !== null,
+        version: playbook?.version ?? null,
+        createdAt: playbook?.createdAt.toISOString() ?? null,
+      },
     })
   }
 
+  private static buildSetupState(
+    input: ComputeCompletedAtInput & { productId: UUIDv4 },
+  ): ProductSetupState {
+    const completedAt = ProductSetupService.computeCompletedAt(input)
+    const currentStep =
+      PRODUCT_SETUP_STEPS.find((step: ProductSetupStep) => completedAt[step] === null) ?? null
+
+    return {
+      productId: input.productId,
+      currentStep,
+      completedAt,
+      snapshotAt: new Date().toISOString(),
+    }
+  }
+
   /**
-   * Pure projection of onboarding artifacts → per-step completion timestamps.
+   * Pure projection of product setup artifacts → per-step completion timestamps.
    * Each step's `completedAt` is the timestamp of the artifact that satisfies it,
    * or `null` if the artifact does not exist yet. Single source of truth for
    * "what does it mean for step X to be done."

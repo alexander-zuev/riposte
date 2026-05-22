@@ -33,6 +33,7 @@ import {
   getProductSetupState,
   listProducts,
   notifyProductSetupChanged,
+  readProductSetupSnapshot,
   registerProductAppDataSource,
   restartProductSetup,
   updateProduct,
@@ -128,6 +129,7 @@ export const QUERY_HANDLERS = {
   ListDisputeCases: listDisputeCases,
   ListProducts: listProducts,
   GetProductSetupState: getProductSetupState,
+  ReadProductSetupSnapshot: readProductSetupSnapshot,
   GetChatMessages: getChatMessages,
 } satisfies QueryRegistry
 

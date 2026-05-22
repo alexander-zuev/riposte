@@ -38,13 +38,13 @@ export const getProductSetupStateResultSchema = productSetupStateSchema
 export type GetProductSetupState = z.infer<typeof getProductSetupStateSchema>
 export type GetProductSetupStateResult = z.infer<typeof getProductSetupStateResultSchema>
 
-export const readProductOnboardingStateSchema = baseQuerySchema.extend({
-  name: z.literal('ReadProductOnboardingState'),
+export const readProductSetupSnapshotSchema = baseQuerySchema.extend({
+  name: z.literal('ReadProductSetupSnapshot'),
   userId: UserIdSchema,
   productId: z.uuidv4(),
 })
 
-export const readProductOnboardingStateResultSchema = z.object({
+export const readProductSetupSnapshotResultSchema = z.object({
   snapshotAt: TimestamptzSchema,
   product: z.object({
     id: z.uuidv4(),
@@ -81,7 +81,5 @@ export const readProductOnboardingStateResultSchema = z.object({
   }),
 })
 
-export type ReadProductOnboardingState = z.infer<typeof readProductOnboardingStateSchema>
-export type ReadProductOnboardingStateResult = z.infer<
-  typeof readProductOnboardingStateResultSchema
->
+export type ReadProductSetupSnapshot = z.infer<typeof readProductSetupSnapshotSchema>
+export type ReadProductSetupSnapshotResult = z.infer<typeof readProductSetupSnapshotResultSchema>

@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 /**
- * Onboarding steps in fixed order. Each step is satisfied by the existence of a
+ * Product setup steps in fixed order. Each step is satisfied by the existence of a
  * concrete artifact (product row, stripe connection, app-data source, playbook,
  * dry-run completion, product status flip). The current step is derived from
  * artifact presence; it is never stored.

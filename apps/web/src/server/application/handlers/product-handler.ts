@@ -17,6 +17,8 @@ import type {
   ProductAppDataSourceDisconnected,
   ProductAppDataSourceRegistered,
   ProductSetupCompleted,
+  ReadProductSetupSnapshot,
+  ReadProductSetupSnapshotResult,
   RegisterProductAppDataSource,
   RegisterProductAppDataSourceResult,
   RestartProductSetup,
@@ -72,6 +74,16 @@ export const getProductSetupState: QueryHandler<
     .getState({ userId: query.userId, productId: query.productId })
 }
 
+export const readProductSetupSnapshot: QueryHandler<
+  ReadProductSetupSnapshot,
+  ReadProductSetupSnapshotResult,
+  DatabaseError | EntityNotFoundError | DOUnreachableError
+> = async (query, ctx) => {
+  return await ctx.deps.services
+    .productSetup()
+    .getSetupSnapshot({ userId: query.userId, productId: query.productId })
+}
+
 export const notifyProductSetupChanged: EventHandler<
   ProductSetupChangedEvent,
   DatabaseError | EntityNotFoundError | DOUnreachableError
@@ -109,7 +121,7 @@ export const createProduct: CommandHandler<
   const saved = await ctx.deps.repos.products(ctx.tx).save(product.value)
   if (saved.isErr()) return Result.err(saved.error)
 
-  // Prime the agent's onboarding chat. Non-fatal: orphan primes are harmless,
+  // Prime the agent's product setup chat. Non-fatal: orphan primes are harmless,
   // a missing prime can be re-primed later.
   const buildStripeOAuthCommand: BuildStripeOAuthInstallUrl = createCommand(
     'BuildStripeOAuthInstallUrl',
@@ -127,7 +139,7 @@ export const createProduct: CommandHandler<
     })
   }
 
-  const primed = await ctx.deps.services.disputeAgentClient().primeOnboarding({
+  const primed = await ctx.deps.services.disputeAgentClient().primeProductSetup({
     userId: command.userId,
     productId: saved.value.id,
     productName: command.productName,
@@ -136,7 +148,7 @@ export const createProduct: CommandHandler<
       : `/products/${saved.value.id}/connections`,
   })
   if (primed.isErr()) {
-    logger.error('prime_onboarding_failed', { productId: saved.value.id, error: primed.error })
+    logger.error('prime_product_setup_failed', { productId: saved.value.id, error: primed.error })
   }
 
   return Result.ok({ productId: saved.value.id })
@@ -256,7 +268,7 @@ export const restartProductSetup: CommandHandler<
   }
 
   const snapshot = product.value.serialize()
-  const primed = await ctx.deps.services.disputeAgentClient().primeOnboarding({
+  const primed = await ctx.deps.services.disputeAgentClient().primeProductSetup({
     userId: command.userId,
     productId: command.productId,
     productName: snapshot.productName,

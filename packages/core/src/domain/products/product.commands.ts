@@ -61,7 +61,7 @@ export type RestartProductSetup = z.infer<typeof restartProductSetupSchema>
 export type RestartProductSetupResult = z.infer<typeof restartProductSetupResultSchema>
 
 // TODO(review): revisit UpdateProduct shape. Currently accepts every updatable
-// field as optional via updateProductFieldsSchema.shape; once onboarding stops
+// field as optional via updateProductFieldsSchema.shape; once product setup stops
 // writing through update we may want narrower, intent-specific commands.
 export const updateProductSchema = baseCommandSchema
   .extend({

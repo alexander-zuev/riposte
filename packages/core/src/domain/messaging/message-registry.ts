@@ -52,7 +52,7 @@ import {
   productEnabledSchema,
   productSetupCompletedSchema,
   productUpdatedSchema,
-  readProductOnboardingStateSchema,
+  readProductSetupSnapshotSchema,
   registerProductAppDataSourceSchema,
   restartProductSetupSchema,
   updateProductSchema,
@@ -155,7 +155,7 @@ export const domainQuerySchema = z.discriminatedUnion('name', [
   listDisputeCasesSchema,
   listProductsSchema,
   getProductSetupStateSchema,
-  readProductOnboardingStateSchema,
+  readProductSetupSnapshotSchema,
   getChatMessagesSchema,
 ])
 

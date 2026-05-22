@@ -30,6 +30,7 @@ import {
   createMcpOAuthCallbackHandler,
   RiposteMcpOAuthProvider,
 } from '@server/infrastructure/agents/dispute-agent.oauth'
+import { buildDisputeAgentToolCallRepair } from '@server/infrastructure/agents/dispute-agent.repair'
 import { buildDisputeAgentTools } from '@server/infrastructure/agents/dispute-agent.tools'
 import {
   createDisputeAgentModel,
@@ -70,12 +71,12 @@ type ReadyMcpServerResult =
       message: string
     }
 
-type PrimeOnboardingArgs = {
+type PrimeProductSetupArgs = {
   productName: string
   connectStripeUrl: string
 }
 
-function buildOnboardingWelcomeMessage(args: PrimeOnboardingArgs): UIMessage<never> {
+function buildProductSetupWelcomeMessage(args: PrimeProductSetupArgs): UIMessage<never> {
   return {
     id: 'welcome',
     role: 'assistant',
@@ -113,7 +114,7 @@ export type DisputeAgentProps = {
 }
 
 const USER_ID_STORAGE_KEY = 'userId'
-const PRIME_ONBOARDING_STORAGE_KEY = 'primeOnboarding'
+const PRIME_PRODUCT_SETUP_STORAGE_KEY = 'primeProductSetup'
 
 type PrepareMessagesError = InternalServerError
 
@@ -269,6 +270,12 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
       model,
       instructions,
       tools,
+      experimental_repairToolCall: buildDisputeAgentToolCallRepair({
+        env: this.env,
+        mode: this.state.mode,
+        productId: this.name,
+        requestId: opts?.requestId,
+      }),
       onFinish: ({ usage }) => {
         // Use the LAST step's usage, not `totalUsage`. In a multi-step tool
         // loop, `totalUsage` is the billing aggregate across all steps and can
@@ -648,16 +655,16 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
   async signalStripeConnected(): Promise<void> {
     await this.appendSystemEvent(
       'stripe-connected',
-      'Connection event: Stripe authorization succeeded for this product. Continue onboarding from the previous step.',
+      'Connection event: Stripe authorization succeeded for this product. Continue product setup from the previous step.',
     )
     await this.refreshContextEstimate()
   }
 
-  /** Clears the current conversation and writes the onboarding welcome message. */
-  async primeOnboarding(args: PrimeOnboardingArgs) {
-    await this.ctx.storage.put(PRIME_ONBOARDING_STORAGE_KEY, args)
+  /** Clears the current conversation and writes the product setup welcome message. */
+  async primeProductSetup(args: PrimeProductSetupArgs) {
+    await this.ctx.storage.put(PRIME_PRODUCT_SETUP_STORAGE_KEY, args)
     await this.clearConversation()
-    await this.persistMessages([buildOnboardingWelcomeMessage(args)])
+    await this.persistMessages([buildProductSetupWelcomeMessage(args)])
     await this.refreshContextEstimate()
   }
 

@@ -254,16 +254,12 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
     const tools = buildDisputeAgentTools(this, this.ctx.storage)
     logger.debug('dispute_agent_tools_ready', {
       mode: this.state.mode,
-      productId: this.name,
       requestId: opts?.requestId,
-      toolNames: Object.keys(tools),
+      toolCount: Object.keys(tools).length,
       mcpServers: Object.fromEntries(
         Object.entries(this.getMcpServers().servers).map(([serverId, server]) => [
           serverId,
-          {
-            name: server.name,
-            state: server.state,
-          },
+          { name: server.name, state: server.state },
         ]),
       ),
     })
@@ -309,30 +305,19 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
     }
     const realInputTokens = usage.inputTokens ?? 0
     const estimatedTotalTokens = this.state.context.estimatedUsage.total
-    const byCategory = this.state.context.estimatedUsage.byCategory.map((bucket) => ({
-      category: bucket.category,
-      tokens: bucket.tokens,
-    }))
-    const staticTokens = byCategory
+    const staticTokens = this.state.context.estimatedUsage.byCategory
       .filter((b) => b.category !== 'messages')
       .reduce((sum, b) => sum + b.tokens, 0)
-    const messagesTokens = byCategory.find((b) => b.category === 'messages')?.tokens ?? 0
+    // Compact summary — full per-category breakdown is on state.context.estimatedUsage
+    // for the FE; logs only need the scalars we'd chart against.
     logger.debug('dispute_agent_usage_update', {
-      usage,
-      storedUsage: {
-        inputTokens: realInputTokens,
-        outputTokens: usage.outputTokens ?? 0,
-        totalTokens: usage.totalTokens,
-      },
+      inputTokens: realInputTokens,
+      outputTokens: usage.outputTokens ?? 0,
+      totalTokens: usage.totalTokens,
       compactAtTokens: this.state.context.compactAtTokens,
-      calibration: {
-        estimatedTotalTokens,
-        realInputTokens,
-        ratio: estimatedTotalTokens > 0 ? realInputTokens / estimatedTotalTokens : null,
-        byCategory,
-        staticTokens,
-        messagesTokens,
-      },
+      estimatedTotalTokens,
+      ratio: estimatedTotalTokens > 0 ? realInputTokens / estimatedTotalTokens : null,
+      staticTokens,
     })
     this.setState({
       ...this.state,
@@ -372,6 +357,13 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
 
   async cancelCompaction(): Promise<void> {
     this.compactionAbortController?.abort()
+  }
+
+  getCurrentUserId(): UserId {
+    if (!this.userId) {
+      throw new Error('DisputeAgent started without authenticated user context')
+    }
+    return this.userId
   }
 
   /**
@@ -417,9 +409,6 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
       totalTokens: this.state.context.usage.totalTokens,
       compactAtTokens: this.state.context.compactAtTokens,
       overlayCount: overlays.length,
-      rawMessageCount: this.messages.length,
-      modelMessageCount: messagesForModel.length,
-      productId: this.name,
     })
 
     if (this.state.context.status !== 'compact_required') {

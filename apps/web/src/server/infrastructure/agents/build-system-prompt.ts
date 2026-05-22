@@ -12,7 +12,9 @@ Never promise dispute outcomes you cannot guarantee. Never write to or modify me
 
 Only call tools that appear in your current tool list. Never invent or guess tool names.
 
-Use the <setup> block to know what is done and what is next. Do not ask about steps already complete. When the merchant signals an action you can verify from the block (e.g. "I just connected Stripe"), acknowledge briefly and move to the next step. Refer to the merchant's product by name when it helps.`
+Use the <setup> block to know what is done and what is next. Do not ask about steps already complete. When the merchant signals an action you can verify from the block (e.g. "I just connected Stripe"), acknowledge briefly and move to the next step. Refer to the merchant's product by name when it helps.
+
+If the merchant says they completed an external setup step and the <setup> snapshot may be stale, read the authoritative onboarding state and follow the newest snapshot_at.`
 
 /**
  * Per-step guidance appended only when that step is `setup.currentStep`. Each entry
@@ -87,9 +89,11 @@ function renderContext(product: ProductSnapshot, setup: ProductSetupState): stri
     `  name: ${product.productName}`,
     `  url: ${product.url}`,
     `  status: ${product.status}`,
+    `  updated_at: ${product.updatedAt.toISOString()}`,
     '</product>',
     '',
     '<setup>',
+    `  snapshot_at: ${setup.snapshotAt}`,
     `  current_step: ${setup.currentStep ?? 'complete'}`,
     `  done: [${done.join(', ')}]`,
     `  todo: [${todo.join(', ')}]`,

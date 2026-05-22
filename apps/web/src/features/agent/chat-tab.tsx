@@ -1,10 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { chatQueries } from '@web/entities/chat/chat-queries'
 import { Chat } from '@web/features/agent/chat'
-import type {
-  AgentTransportState,
-  DisputeAgentConnection,
-} from '@web/features/agent/hooks/use-dispute-agent-chat'
+import type { DisputeAgentConnection } from '@web/features/agent/hooks/use-dispute-agent-chat'
 import { Alert, AlertAction, AlertDescription, AlertTitle } from '@web/ui/components/ui/alert'
 import { Button } from '@web/ui/components/ui/button'
 import { Spinner } from '@web/ui/components/ui/spinner'
@@ -13,7 +10,6 @@ import type { MCPServersState } from 'agents'
 type ChatTabProps = {
   productId: string
   agent: DisputeAgentConnection
-  transportState: AgentTransportState
   mcp: MCPServersState | null
 }
 
@@ -23,7 +19,7 @@ type ChatTabProps = {
  * happen inside `<Chat>`; this layer owns initial-load loading and error
  * states. Renders inside the parent card — no card wrapper here.
  */
-export function ChatTab({ productId, agent, transportState, mcp }: ChatTabProps) {
+export function ChatTab({ productId, agent, mcp }: ChatTabProps) {
   const { data, isPending, isError, error, refetch } = useQuery(chatQueries.messages(productId))
 
   if (isPending) return <ChatLoading />
@@ -32,7 +28,6 @@ export function ChatTab({ productId, agent, transportState, mcp }: ChatTabProps)
     <Chat
       key={data.map((message) => message.id).join(':')}
       agent={agent}
-      transportState={transportState}
       initialMessages={data}
       productId={productId}
       mcp={mcp}

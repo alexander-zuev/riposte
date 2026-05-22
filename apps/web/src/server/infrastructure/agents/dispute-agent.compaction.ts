@@ -45,13 +45,9 @@ export async function compactDisputeAgentMessages(
   const messages = applyDisputeAgentCompactions(args.messages, args.overlays)
   logger.debug('dispute_agent_compaction_start', {
     rawMessageCount: args.messages.length,
-    overlayCount: args.overlays.length,
     modelMessageCount: messages.length,
-    rawTokenEstimate: estimateTokens(args.messages),
+    overlayCount: args.overlays.length,
     modelTokenEstimate: estimateTokens(messages),
-    protectHead: TEST_PROTECT_HEAD,
-    tailTokenBudget: TEST_TAIL_TOKEN_BUDGET,
-    minTailMessages: TEST_MIN_TAIL_MESSAGES,
   })
   const compact = createCompactFunction({
     summarize: async (prompt) =>
@@ -69,13 +65,12 @@ export async function compactDisputeAgentMessages(
   try {
     const compacted = await compact(messages)
     if (!compacted) {
+      // No-op signal — the SDK's createCompactFunction decided the tail
+      // budget already swallows everything. Worth knowing because the
+      // trigger will keep firing turn after turn (static-dominates case).
       logger.warn('dispute_agent_compaction_no_overlay', {
-        rawMessageCount: args.messages.length,
-        overlayCount: args.overlays.length,
         modelMessageCount: messages.length,
-        rawTokenEstimate: estimateTokens(args.messages),
         modelTokenEstimate: estimateTokens(messages),
-        protectHead: TEST_PROTECT_HEAD,
         tailTokenBudget: TEST_TAIL_TOKEN_BUDGET,
         minTailMessages: TEST_MIN_TAIL_MESSAGES,
       })

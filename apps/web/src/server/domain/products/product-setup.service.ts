@@ -77,7 +77,12 @@ export class ProductSetupService implements IProductSetupService {
     const currentStep =
       PRODUCT_SETUP_STEPS.find((step: ProductSetupStep) => completedAt[step] === null) ?? null
 
-    return Result.ok({ productId, currentStep, completedAt })
+    return Result.ok({
+      productId,
+      currentStep,
+      completedAt,
+      snapshotAt: new Date().toISOString(),
+    })
   }
 
   /**

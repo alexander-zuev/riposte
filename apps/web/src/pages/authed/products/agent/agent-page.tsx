@@ -4,10 +4,7 @@ import { ActivityTab } from '@web/features/agent/activity-tab'
 import { defaultTabFor, deriveAgentMode, subtitleFor } from '@web/features/agent/agent-mode'
 import { AgentSidebar } from '@web/features/agent/agent-sidebar'
 import { ChatTab } from '@web/features/agent/chat-tab'
-import {
-  getAgentTransportState,
-  useDisputeAgent,
-} from '@web/features/agent/hooks/use-dispute-agent-chat'
+import { useDisputeAgent } from '@web/features/agent/hooks/use-dispute-agent-chat'
 import { useProductSetup } from '@web/features/agent/hooks/use-product-setup'
 import { useRestartAgentSetup } from '@web/features/agent/hooks/use-restart-agent-setup'
 import { useStripeConnectedToast } from '@web/features/connections/hooks/use-stripe-connected-toast'
@@ -36,8 +33,7 @@ export function AgentPage() {
   const { stripeConnected } = agentRoute.useSearch()
   const setup = useProductSetup(product.id)
   const mode = deriveAgentMode(setup)
-  const { agent, mcp } = useDisputeAgent(product.id)
-  const transportState = getAgentTransportState(agent.readyState, agent.identified)
+  const { agent, mcp, transportState } = useDisputeAgent(product.id)
   const { restartSetup, isRestartingSetup } = useRestartAgentSetup({ productId: product.id })
 
   useStripeConnectedToast({ stripeConnected })
@@ -94,12 +90,7 @@ export function AgentPage() {
                   value="chat"
                   className="flex h-[calc(100vh-19rem)] flex-none flex-col data-[state=inactive]:hidden"
                 >
-                  <ChatTab
-                    productId={product.id}
-                    agent={agent}
-                    transportState={transportState}
-                    mcp={mcp}
-                  />
+                  <ChatTab productId={product.id} agent={agent} mcp={mcp} />
                 </TabsContent>
                 <TabsContent
                   value="activity"

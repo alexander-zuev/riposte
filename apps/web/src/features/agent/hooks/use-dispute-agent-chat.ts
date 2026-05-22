@@ -3,7 +3,7 @@ import { createLogger } from '@riposte/core/client'
 import { useProductSetupInvalidation } from '@web/features/agent/hooks/use-product-setup-invalidation'
 import type { MCPServersState } from 'agents'
 import { useAgent } from 'agents/react'
-import type { UIMessage } from 'ai'
+import type { ChatStatus, UIMessage } from 'ai'
 import { useState } from 'react'
 
 const logger = createLogger('dispute-agent-chat')
@@ -67,7 +67,18 @@ export function useDisputeAgent(productId: string) {
     name: productId,
     prefix: 'api/agents',
     onStateUpdate: (state, source) => {
-      logger.debug('state_update', { state, source })
+      // Log scalars only — full state (incl. estimatedUsage.byCategory tree)
+      // is on `agent.state` for whoever needs it. Logging the whole payload
+      // dumps ~100 lines per WS frame.
+      logger.debug('state_update', {
+        source,
+        mode: state.mode,
+        setupChangeId: state.setupChangeId,
+        status: state.context.status,
+        compactionStatus: state.context.compaction.status,
+        usageTotalTokens: state.context.usage.totalTokens,
+        estimatedTotalTokens: state.context.estimatedUsage.total,
+      })
       invalidateProductSetup(state, source)
     },
     onMcpUpdate: (next) => {
@@ -78,7 +89,11 @@ export function useDisputeAgent(productId: string) {
       setMcp(next)
     },
   })
-  return { agent, mcp }
+  return {
+    agent,
+    mcp,
+    transportState: getAgentTransportState(agent.readyState, agent.identified),
+  }
 }
 
 export type DisputeAgentConnection = ReturnType<typeof useDisputeAgent>['agent']
@@ -100,23 +115,26 @@ export function getAgentTransportState(
   }
 }
 
+// Reuse the AI SDK's ChatStatus directly so we stay aligned if the SDK ever
+// adds or renames a state. Same four values today.
+export type AssistantStatus = ChatStatus
+
 /**
- * Single hook for the per-product DisputeAgent chat. Opens a WebSocket to the
- * DO instance keyed by `productId` and seeds the chat with messages already
- * fetched via the `chatQueries.messages` TanStack Query (see `chat-tab.tsx`).
+ * Curated view of the SDK's `useAgentChat` for our consumers. Hides one
+ * SDK quirk — that `isStreaming` and `status === 'streaming'` diverge for
+ * server-initiated streams (saveMessages, another tab) — by overlaying
+ * `isStreaming` into the reported `status`. Everything else passes through.
  *
  * `getInitialMessages: null` disables the SDK's HTTP `/get-messages` prefetch
  * + `React.use()` suspension. We pre-fetch via a server fn → DO RPC so the
  * call carries the browser's auth cookie under SSR, and we render explicit
  * loading/error UI instead of bubbling Suspense to the route boundary.
- *
- * `onError` surfaces runtime chat stream failures to the browser console.
  */
 export function useDisputeAgentChat(
   agent: DisputeAgentConnection,
   initialMessages: UIMessage<never>[],
 ) {
-  return useAgentChat({
+  const chat = useAgentChat({
     agent,
     getInitialMessages: null,
     messages: initialMessages,
@@ -124,4 +142,23 @@ export function useDisputeAgentChat(
       logger.error('chat_error', { error })
     },
   })
+  return {
+    messages: chat.messages,
+    sendMessage: chat.sendMessage,
+    stop: chat.stop,
+    regenerate: chat.regenerate,
+    isStreaming: chat.isStreaming,
+    // `isStreaming` covers server-initiated streams too; overlay it onto
+    // status so consumers don't have to think about the divergence.
+    // `as const` pins the literal so TS doesn't widen the ternary to `string`.
+    status: chat.isStreaming ? ('streaming' as const) : chat.status,
+    error: chat.error,
+    // True when the WS is open AND the agent has identified (per the same
+    // semantics as `getAgentTransportState(... ) === 'connected'`). The page
+    // header still uses `getAgentTransportState` for the visual indicator;
+    // chat-input gating reads this directly.
+    isAvailable: agent.readyState === WebSocket.OPEN && agent.identified,
+  }
 }
+
+export type DisputeAssistant = ReturnType<typeof useDisputeAgentChat>

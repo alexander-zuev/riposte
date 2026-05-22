@@ -4,7 +4,6 @@ import {
   MonitorIcon,
   PlusIcon,
   SquareIcon,
-  XIcon,
 } from '@phosphor-icons/react'
 import { cn } from '@web/lib/utils'
 import {
@@ -1134,13 +1133,13 @@ export const PromptInputSubmit = ({
   const isSubmitted = status === 'submitted'
   const isStreaming = status === 'streaming'
 
-  let Icon = <ArrowElbowDownLeftIcon className="size-4" />
-
-  if (isStreaming) {
-    Icon = <SquareIcon className="size-4" />
-  } else if (status === 'error') {
-    Icon = <XIcon className="size-4" />
-  }
+  // Submit input has two visual states: send (default) or stop (while streaming).
+  // Error surfaces via the parent's error banner; no X icon here.
+  const Icon = isStreaming ? (
+    <SquareIcon className="size-4" />
+  ) : (
+    <ArrowElbowDownLeftIcon className="size-4" />
+  )
 
   const handleClick = useCallback(
     (e: Parameters<NonNullable<ComponentProps<typeof InputGroupButton>['onClick']>>[0]) => {

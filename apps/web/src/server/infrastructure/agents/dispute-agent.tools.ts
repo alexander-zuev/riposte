@@ -36,6 +36,96 @@ export function buildDisputeAgentTools(
 
   return {
     ...agent.mcp.getAITools(),
+    readOnboardingState: tool({
+      description:
+        'Read the authoritative onboarding state for this product. Use when the merchant says they completed an external setup step, after OAuth callbacks, after reconnects, or when the injected setup snapshot might be stale. The result includes `snapshotAt`; if it is newer than the prompt `snapshot_at`, treat it as the current state.',
+      inputSchema: z.object({}),
+      execute: async () => {
+        const userId = agent.getCurrentUserId()
+
+        const db = agent.deps.db()
+        const product = await agent.deps.repos.products(db).findById(agent.name)
+        if (product.isErr()) {
+          return { ok: false as const, error: product.error.message }
+        }
+        if (!product.value) {
+          return { ok: false as const, error: 'Product was not found.' }
+        }
+
+        const setup = await agent.deps.services.productSetup().getState({
+          userId,
+          productId: agent.name,
+        })
+        if (setup.isErr()) {
+          return { ok: false as const, error: setup.error.message }
+        }
+
+        const stripeConnection = await agent.deps.repos
+          .stripeConnections(db)
+          .findByProductId(agent.name)
+        if (stripeConnection.isErr()) {
+          return { ok: false as const, error: stripeConnection.error.message }
+        }
+
+        const appDataSources = await agent.deps.repos
+          .productAppDataSources(db)
+          .findByProductId(agent.name)
+        if (appDataSources.isErr()) {
+          return { ok: false as const, error: appDataSources.error.message }
+        }
+
+        const latestPlaybook = await agent.deps.repos
+          .disputePlaybooks(db)
+          .findLatestForProduct(agent.name)
+        if (latestPlaybook.isErr()) {
+          return { ok: false as const, error: latestPlaybook.error.message }
+        }
+
+        const productSnapshot = product.value.serialize()
+        const stripeSnapshot = stripeConnection.value?.serialize() ?? null
+        const playbook = latestPlaybook.value
+
+        return {
+          ok: true as const,
+          snapshotAt: setup.value.snapshotAt,
+          product: {
+            id: productSnapshot.id,
+            productName: productSnapshot.productName,
+            url: productSnapshot.url,
+            productType: productSnapshot.productType,
+            status: productSnapshot.status,
+            productDescription: productSnapshot.productDescription,
+            serviceStartRule: productSnapshot.serviceStartRule,
+            refundPolicyDisclosure: productSnapshot.refundPolicyDisclosure,
+            cancellationPolicyDisclosure: productSnapshot.cancellationPolicyDisclosure,
+            updatedAt: productSnapshot.updatedAt.toISOString(),
+          },
+          setup: setup.value,
+          stripe: {
+            connected: stripeSnapshot?.status === 'active',
+            livemode: stripeSnapshot?.livemode ?? null,
+            stripeAccountId: stripeSnapshot?.stripeAccountId ?? null,
+            status: stripeSnapshot?.status ?? 'missing',
+            updatedAt: stripeSnapshot?.updatedAt.toISOString() ?? null,
+          },
+          appDataSources: appDataSources.value.map((source) => {
+            const snapshot = source.serialize()
+            return {
+              id: snapshot.id,
+              alias: snapshot.alias,
+              mcpServerId: snapshot.mcpServerId,
+              createdAt: snapshot.createdAt.toISOString(),
+            }
+          }),
+          playbook: {
+            exists: playbook !== null,
+            version: playbook?.version ?? null,
+            createdAt: playbook?.createdAt.toISOString() ?? null,
+          },
+        }
+      },
+    }),
+
     connectMcpServer: tool({
       description:
         'Connect a Model Context Protocol (MCP) server so we can use its tools to find evidence proofs (e.g., the merchant\'s database for user activity). Provide a memorable `name` and the MCP server `url` you discovered via webSearch/fetchUrl. Prefer explaining the server you found and asking the merchant before connecting. If the server needs OAuth, returns `state: "authenticating"` with an `authUrl` — surface that to the merchant as a clickable markdown link so they can authorize. After authorization, you will be notified automatically and can continue without waiting for the merchant to type anything.',

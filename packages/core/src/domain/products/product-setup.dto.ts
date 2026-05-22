@@ -18,5 +18,6 @@ export const productSetupStateSchema = z.object({
   productId: z.uuidv4(),
   currentStep: z.enum(PRODUCT_SETUP_STEPS).nullable(),
   completedAt: productSetupCompletedAtSchema,
+  snapshotAt: TimestamptzSchema,
 })
 export type ProductSetupState = z.infer<typeof productSetupStateSchema>

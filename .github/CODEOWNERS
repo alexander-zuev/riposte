@@ -1,0 +1,3 @@
+# GitHub Actions and repo automation are security-sensitive.
+.github/ @alexander-zuev
+.github/workflows/ @alexander-zuev

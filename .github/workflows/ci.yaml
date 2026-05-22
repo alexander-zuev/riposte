@@ -10,11 +10,36 @@ on:
 permissions:
   contents: read
 
+# Action references intentionally use version tags instead of commit SHAs.
+# This is an explicit maintainability tradeoff.
+
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
+  actions-security:
+    name: GitHub Actions Security
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Run zizmor
+        uses: zizmorcore/zizmor-action@v0.5.6
+        with:
+          advanced-security: false
+          annotations: true
+          min-severity: medium
+          min-confidence: high
+
   check:
     name: Check
     runs-on: ubuntu-latest
@@ -37,14 +62,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-
-      - name: Unlock git-crypt
-        run: |
-          sudo apt-get install -y git-crypt
-          echo "${{ secrets.GIT_CRYPT_KEY }}" | base64 -d | git-crypt unlock -
+        with:
+          persist-credentials: false
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v5
+        uses: pnpm/action-setup@v6
         with:
           run_install: false
 
@@ -54,13 +76,23 @@ jobs:
           node-version-file: package.json
           cache: pnpm
 
+      - name: Setup Socket Firewall
+        uses: socketdev/action@v1
+        with:
+          mode: firewall
+
       - name: Seed test database
         run: psql "$TEST_DB_URL" -f db/init-db.sql
         env:
           TEST_DB_URL: postgres://postgres:postgres@localhost:5432/postgres
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: sfw pnpm install --frozen-lockfile
+
+      - name: Unlock git-crypt
+        run: |
+          sudo apt-get install -y git-crypt
+          echo "${{ secrets.GIT_CRYPT_KEY }}" | base64 -d | git-crypt unlock -
 
       - name: Generate Cloudflare types
         run: pnpm --filter @riposte/web run cf-typegen

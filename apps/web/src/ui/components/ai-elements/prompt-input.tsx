@@ -71,12 +71,9 @@ const convertBlobUrlToDataUrl = async (url: string): Promise<string | null> => {
     const response = await fetch(url)
     const blob = await response.blob()
     // FileReader uses callback-based API, wrapping in Promise is necessary
-    // oxlint-disable-next-line eslint-plugin-promise(avoid-new)
     return new Promise((resolve) => {
       const reader = new FileReader()
-      // oxlint-disable-next-line eslint-plugin-unicorn(prefer-add-event-listener)
       reader.onloadend = () => resolve(reader.result as string)
-      // oxlint-disable-next-line eslint-plugin-unicorn(prefer-add-event-listener)
       reader.onerror = () => resolve(null)
       reader.readAsDataURL(blob)
     })
@@ -104,11 +101,8 @@ const captureScreenshot = async (): Promise<File | null> => {
     video.srcObject = stream
 
     // Video element uses callback-based API, wrapping in Promise is necessary
-    // oxlint-disable-next-line eslint-plugin-promise(avoid-new)
     await new Promise<void>((resolve, reject) => {
-      // oxlint-disable-next-line eslint-plugin-unicorn(prefer-add-event-listener)
       video.onloadedmetadata = () => resolve()
-      // oxlint-disable-next-line eslint-plugin-unicorn(prefer-add-event-listener)
       video.onerror = () => reject(new Error('Failed to load screen stream'))
     })
 
@@ -130,7 +124,6 @@ const captureScreenshot = async (): Promise<File | null> => {
 
     context.drawImage(video, 0, 0, width, height)
     // canvas.toBlob uses callback-based API, wrapping in Promise is necessary
-    // oxlint-disable-next-line eslint-plugin-promise(avoid-new)
     const blob = await new Promise<Blob | null>((resolve) => {
       canvas.toBlob(resolve, 'image/png')
     })
@@ -185,8 +178,14 @@ export interface PromptInputControllerProps {
   __registerFileInput: (ref: RefObject<HTMLInputElement | null>, open: () => void) => void
 }
 
+type PromptInputActionContextValue = {
+  sendOrStop: () => Promise<void>
+  status?: ChatStatus
+}
+
 const PromptInputController = createContext<PromptInputControllerProps | null>(null)
 const ProviderAttachmentsContext = createContext<AttachmentsContext | null>(null)
+const LocalPromptInputActionContext = createContext<PromptInputActionContextValue | null>(null)
 
 export const usePromptInputController = () => {
   const ctx = useContext(PromptInputController)
@@ -232,7 +231,6 @@ export const PromptInputProvider = ({
   // ----- attachments state (global when wrapped)
   const [attachmentFiles, setAttachmentFiles] = useState<(FileUIPart & { id: string })[]>([])
   const fileInputRef = useRef<HTMLInputElement | null>(null)
-  // oxlint-disable-next-line eslint(no-empty-function)
   const openRef = useRef<() => void>(() => {})
 
   const add = useCallback((files: File[] | FileList) => {
@@ -472,7 +470,12 @@ export type PromptInputProps = Omit<HTMLAttributes<HTMLFormElement>, 'onSubmit' 
   // bytes
   maxFileSize?: number
   onError?: (err: { code: 'max_files' | 'max_file_size' | 'accept'; message: string }) => void
-  onSubmit: (message: PromptInputMessage, event: FormEvent<HTMLFormElement>) => void | Promise<void>
+  onSubmit: (
+    message: PromptInputMessage,
+    event: FormEvent<HTMLFormElement>,
+  ) => boolean | void | Promise<boolean | void>
+  onStop?: () => void | Promise<void>
+  status?: ChatStatus
 }
 
 export const PromptInput = ({
@@ -485,6 +488,8 @@ export const PromptInput = ({
   maxFileSize,
   onError,
   onSubmit,
+  onStop,
+  status,
   children,
   ...props
 }: PromptInputProps) => {
@@ -664,6 +669,35 @@ export const PromptInput = ({
     clearReferencedSources()
   }, [clearAttachments, clearReferencedSources])
 
+  const clearAfterSuccessfulSubmit = useCallback(
+    (form?: HTMLFormElement) => {
+      clear()
+      if (usingProvider) {
+        controller.textInput.clear()
+      } else {
+        form?.reset()
+      }
+    },
+    [usingProvider, controller, clear],
+  )
+
+  const sendOrStop = useCallback(async () => {
+    if (status === 'streaming') {
+      await onStop?.()
+      return
+    }
+
+    formRef.current?.requestSubmit()
+  }, [status, onStop])
+
+  const actionCtx = useMemo<PromptInputActionContextValue>(
+    () => ({
+      sendOrStop,
+      status,
+    }),
+    [sendOrStop, status],
+  )
+
   // Let provider know about our hidden file input so external menus can call openFileDialog()
   useEffect(() => {
     if (!usingProvider) {
@@ -804,12 +838,6 @@ export const PromptInput = ({
             return (formData.get('message') as string) || ''
           })()
 
-      // Reset form immediately after capturing text to avoid race condition
-      // where user input during async blob conversion would be lost
-      if (!usingProvider) {
-        form.reset()
-      }
-
       try {
         // Convert blob URLs to data URLs asynchronously
         const convertedFiles: FileUIPart[] = await Promise.all(
@@ -831,26 +859,20 @@ export const PromptInput = ({
         // Handle both sync and async onSubmit
         if (result instanceof Promise) {
           try {
-            await result
-            clear()
-            if (usingProvider) {
-              controller.textInput.clear()
-            }
+            const didSubmit = await result
+            if (didSubmit !== false) clearAfterSuccessfulSubmit(form)
           } catch {
             // Don't clear on error - user may want to retry
           }
         } else {
           // Sync function completed without throwing, clear inputs
-          clear()
-          if (usingProvider) {
-            controller.textInput.clear()
-          }
+          if (result !== false) clearAfterSuccessfulSubmit(form)
         }
       } catch {
         // Don't clear on error - user may want to retry
       }
     },
-    [usingProvider, controller, files, onSubmit, clear],
+    [usingProvider, controller, files, onSubmit, clearAfterSuccessfulSubmit],
   )
 
   // Render with or without local provider
@@ -880,9 +902,11 @@ export const PromptInput = ({
 
   // Always provide LocalAttachmentsContext so children get validated add function
   return (
-    <LocalAttachmentsContext.Provider value={attachmentsCtx}>
-      {withReferencedSources}
-    </LocalAttachmentsContext.Provider>
+    <LocalPromptInputActionContext.Provider value={actionCtx}>
+      <LocalAttachmentsContext.Provider value={attachmentsCtx}>
+        {withReferencedSources}
+      </LocalAttachmentsContext.Provider>
+    </LocalPromptInputActionContext.Provider>
   )
 }
 
@@ -902,6 +926,7 @@ export const PromptInputTextarea = ({
   ...props
 }: PromptInputTextareaProps) => {
   const controller = useOptionalPromptInputController()
+  const action = useContext(LocalPromptInputActionContext)
   const attachments = usePromptInputAttachments()
   const [isComposing, setIsComposing] = useState(false)
 
@@ -924,16 +949,14 @@ export const PromptInputTextarea = ({
         }
         e.preventDefault()
 
-        // Check if the submit button is disabled before submitting
-        const { form } = e.currentTarget
-        const submitButton = form?.querySelector(
-          'button[type="submit"]',
+        const submitButton = e.currentTarget.form?.querySelector(
+          '[data-prompt-input-submit="true"]',
         ) as HTMLButtonElement | null
-        if (submitButton?.disabled) {
+        if (submitButton?.disabled || !action) {
           return
         }
 
-        form?.requestSubmit()
+        action.sendOrStop()
       }
 
       // Remove last attachment when Backspace is pressed and textarea is empty
@@ -945,7 +968,7 @@ export const PromptInputTextarea = ({
         }
       }
     },
-    [onKeyDown, isComposing, attachments],
+    [onKeyDown, isComposing, attachments, action],
   )
 
   const handlePaste: ClipboardEventHandler<HTMLTextAreaElement> = useCallback(
@@ -1130,8 +1153,10 @@ export const PromptInputSubmit = ({
   children,
   ...props
 }: PromptInputSubmitProps) => {
-  const isSubmitted = status === 'submitted'
-  const isStreaming = status === 'streaming'
+  const action = useContext(LocalPromptInputActionContext)
+  const effectiveStatus = status ?? action?.status
+  const isSubmitted = effectiveStatus === 'submitted'
+  const isStreaming = effectiveStatus === 'streaming'
 
   // Submit input has two visual states: send (default) or stop (while streaming).
   // Error surfaces via the parent's error banner; no X icon here.
@@ -1143,23 +1168,33 @@ export const PromptInputSubmit = ({
 
   const handleClick = useCallback(
     (e: Parameters<NonNullable<ComponentProps<typeof InputGroupButton>['onClick']>>[0]) => {
+      onClick?.(e)
+      if (e.defaultPrevented) {
+        return
+      }
+
+      if (action) {
+        e.preventDefault()
+        action.sendOrStop()
+        return
+      }
+
       if (isStreaming && onStop) {
         e.preventDefault()
         onStop()
-        return
       }
-      onClick?.(e)
     },
-    [isStreaming, onStop, onClick],
+    [action, isStreaming, onStop, onClick],
   )
 
   return (
     <InputGroupButton
       aria-label={isStreaming ? 'Stop' : 'Submit'}
       className={cn(className)}
+      data-prompt-input-submit="true"
       onClick={handleClick}
       size={size}
-      type={isStreaming && onStop ? 'button' : 'submit'}
+      type={action || isStreaming ? 'button' : 'submit'}
       variant={variant}
       {...props}
       disabled={isSubmitted || props.disabled}

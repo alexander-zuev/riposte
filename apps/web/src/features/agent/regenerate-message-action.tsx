@@ -19,7 +19,7 @@ export const RegenerateMessageAction = memo(function RegenerateMessageAction({
   const handleClick = useCallback(() => onRegenerate(messageId), [messageId, onRegenerate])
   return (
     <MessageActions className="-ms-1.5">
-      <MessageAction tooltip="Regenerate" onClick={handleClick}>
+      <MessageAction tooltip="Try again" onClick={handleClick}>
         <ArrowsClockwiseIcon size={16} />
       </MessageAction>
     </MessageActions>

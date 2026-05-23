@@ -48,24 +48,28 @@ export function Chat({ agent, initialMessages, productId, mcp }: ChatProps) {
   const assistant = useDisputeAgentChat(agent, initialMessages)
   const { cancelCompaction } = useCancelAgentCompaction({ productId })
   const [errorDismissed, setErrorDismissed] = useState(false)
+  const [interruptedMessageId, setInterruptedMessageId] = useState<string | null>(null)
 
   const handleSubmit = useCallback(
     (message: { text?: string }) => {
-      if (!assistant.isAvailable) return
-      // Both Enter and the submit button funnel through here. The button has
-      // its own stop-vs-submit branch on click (handled in PromptInputSubmit),
-      // but Enter would otherwise bypass it. Single gate: never send while the
-      // assistant is mid-stream. User must explicitly click stop, then submit.
-      if (assistant.isStreaming) return
+      if (!assistant.isAvailable) return false
       const text = message.text?.trim()
-      if (!text) return
+      if (!text) return false
       assistant.sendMessage({ text })
       setErrorDismissed(false)
+      setInterruptedMessageId(null)
+      return true
     },
     [assistant],
   )
+  const handleStop = useCallback(async () => {
+    const lastAssistant = assistant.messages.findLast((m) => m.role === 'assistant')
+    await assistant.stop()
+    if (lastAssistant) setInterruptedMessageId(lastAssistant.id)
+  }, [assistant])
   const handleRegenerate = useCallback(
     (messageId: string) => {
+      setInterruptedMessageId(null)
       assistant.regenerate({ messageId }).catch((error) => {
         logger.warn('regenerate_failed', { error, messageId })
       })
@@ -90,7 +94,12 @@ export function Chat({ agent, initialMessages, productId, mcp }: ChatProps) {
                 ))}
               </MessageContent>
               {showActions && message.role === 'assistant' && (
-                <RegenerateMessageAction messageId={message.id} onRegenerate={handleRegenerate} />
+                <div className="flex items-center gap-2">
+                  <RegenerateMessageAction messageId={message.id} onRegenerate={handleRegenerate} />
+                  {interruptedMessageId === message.id && (
+                    <span className="text-xs text-muted-foreground italic">Interrupted</span>
+                  )}
+                </div>
               )}
             </Message>
           ))}
@@ -112,37 +121,40 @@ export function Chat({ agent, initialMessages, productId, mcp }: ChatProps) {
           // Full error.message is logged via the hook's onError ('chat_error').
           // The user sees a short, scannable summary — they don't need to read
           // raw stacks / Zod dumps.
-          <Alert variant="destructive" className="mx-4 mb-2">
-            <AlertTitle>The agent hit an error</AlertTitle>
-            <AlertDescription>Try again, or refresh if it keeps happening.</AlertDescription>
-            <AlertAction>
-              <Button
-                variant="ghost"
-                size="icon-xs"
-                aria-label="Dismiss error"
-                className="text-destructive hover:bg-destructive/10"
-                onClick={() => setErrorDismissed(true)}
-              >
-                <XIcon />
-              </Button>
-            </AlertAction>
-          </Alert>
+          <div className="px-4 pb-2">
+            <Alert variant="destructive">
+              <AlertTitle>The agent hit an error</AlertTitle>
+              <AlertDescription>Try again, or refresh if it keeps happening.</AlertDescription>
+              <AlertAction>
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  aria-label="Dismiss error"
+                  className="text-destructive hover:bg-destructive/10"
+                  onClick={() => setErrorDismissed(true)}
+                >
+                  <XIcon />
+                </Button>
+              </AlertAction>
+            </Alert>
+          </div>
         )}
-      <PromptInput className="w-full rounded-none border-0 border-t" onSubmit={handleSubmit}>
+      <PromptInput
+        className="w-full rounded-none border-0 border-t"
+        onSubmit={handleSubmit}
+        onStop={handleStop}
+        status={assistant.status}
+      >
         <PromptInputTextarea
           className="text-sm md:text-sm"
+          disabled={!assistant.isAvailable}
           placeholder="Type your message here..."
         />
         <PromptInputFooter className="text-sm">
           <PromptInputTools>
             <McpSourcesPopover mcp={mcp} productId={productId} />
           </PromptInputTools>
-          <PromptInputSubmit
-            className="text-sm"
-            disabled={!assistant.isAvailable}
-            status={assistant.status}
-            onStop={assistant.stop}
-          />
+          <PromptInputSubmit className="text-sm" disabled={!assistant.isAvailable} />
         </PromptInputFooter>
       </PromptInput>
     </div>

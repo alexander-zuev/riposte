@@ -317,6 +317,8 @@
         "POSTHOG_API_KEY": "",
         "GOOGLE_CLIENT_ID": "",
         "GITHUB_CLIENT_ID": "",
+        "AI_MOCK_BASE_URL": "http://127.0.0.1:41234/v1",
+        "AI_MOCK_API_KEY": "test",
         "BETTER_AUTH_SECRET": "test-secret",
         "GOOGLE_CLIENT_SECRET": "test",
         "GITHUB_CLIENT_SECRET": "test",

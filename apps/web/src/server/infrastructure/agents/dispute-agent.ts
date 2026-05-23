@@ -40,8 +40,9 @@ import {
   deriveActiveDisputeAgentTools,
 } from '@server/infrastructure/agents/dispute-agent.tools'
 import {
-  createDisputeAgentModel,
+  createDisputeAgentModels,
   DISPUTE_AGENT_MODEL,
+  type DisputeAgentModels,
 } from '@server/infrastructure/ai/model-factory'
 import type { IAnalyticsService } from '@server/infrastructure/analytics/analytics-service'
 import { createAppDeps, type AppDeps } from '@server/infrastructure/app-deps'
@@ -127,6 +128,7 @@ type PrepareMessagesError = InternalServerError
 
 class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps> {
   readonly deps: AppDeps
+  private readonly models: DisputeAgentModels
   private readonly analytics: IAnalyticsService
 
   initialState: DisputeAgentState = {
@@ -150,6 +152,7 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
       migrateDisputeAgentCompactionStorage(state.storage)
     })
     this.deps = createAppDeps(env, state)
+    this.models = createDisputeAgentModels(env)
     this.analytics = this.deps.services.analytics()
     // Refresh the FE estimate whenever MCP state transitions (server added,
     // OAuth completed, tools discovered, server removed). Per the SDK docs:
@@ -232,18 +235,17 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
     const setup = await this.loadProductSetupState()
     const instructions = await this.loadInstructions(setup)
 
-    const model = createDisputeAgentModel({
-      env: this.env,
-      tracing: {
-        phClient: this.analytics.posthog,
-        distinctId: this.userId,
-        traceId: opts?.requestId,
-        properties: {
-          mode: this.state.mode,
-          productId: this.name,
-        },
+    const tracing = {
+      phClient: this.analytics.posthog,
+      distinctId: this.userId,
+      traceId: opts?.requestId,
+      properties: {
+        mode: this.state.mode,
+        productId: this.name,
       },
-    })
+    }
+
+    const model = this.models.primary({ tracing })
 
     const prepared = await this.prepareMessagesForModel(model)
     if (prepared.isErr()) {
@@ -292,7 +294,8 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
         }
       },
       experimental_repairToolCall: buildDisputeAgentToolCallRepair({
-        env: this.env,
+        repairModel: (args) => this.models.repair(args),
+        tracing,
         mode: this.state.mode,
         productId: this.name,
         requestId: opts?.requestId,

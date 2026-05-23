@@ -1,9 +1,17 @@
+import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 
 import { cloudflareTest } from '@cloudflare/vitest-pool-workers'
+import { playwright } from '@vitest/browser-playwright'
 import { defineConfig } from 'vitest/config'
 
 const startStub = resolve(import.meta.dirname, 'test/mocks/tanstack-start-entry.ts')
+const systemChromePath = [
+  '/usr/bin/google-chrome',
+  '/usr/bin/google-chrome-stable',
+  '/usr/bin/chromium',
+  '/usr/bin/chromium-browser',
+].find((path) => existsSync(path))
 
 const cloudflareTestPlugin = cloudflareTest({
   miniflare: {
@@ -55,6 +63,14 @@ export default defineConfig({
       },
       {
         extends: true,
+        test: {
+          name: 'node-unit',
+          dir: 'test/node-unit',
+          include: ['**/*.test.ts'],
+        },
+      },
+      {
+        extends: true,
         plugins: [cloudflareTestPlugin],
         test: {
           name: 'integration',
@@ -63,6 +79,21 @@ export default defineConfig({
           globalSetup: ['test/integration/global-setup.ts'],
           setupFiles: ['test/integration/setup.ts'],
           isolate: false,
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: 'browser-e2e',
+          dir: 'test/browser-e2e',
+          include: ['**/*.test.ts'],
+          browser: {
+            enabled: true,
+            provider: playwright({
+              launchOptions: systemChromePath ? { executablePath: systemChromePath } : undefined,
+            }),
+            instances: [{ browser: 'chromium' }],
+          },
         },
       },
     ],

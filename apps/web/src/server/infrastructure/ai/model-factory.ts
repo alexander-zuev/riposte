@@ -1,9 +1,12 @@
+import { createOpenAI } from '@ai-sdk/openai'
 import { withTracing } from '@posthog/ai/vercel'
 import type { LanguageModel } from 'ai'
 import type { PostHog } from 'posthog-node'
 import { createWorkersAI, type WorkersAI } from 'workers-ai-provider'
 
 const DISPUTE_AGENT_GATEWAY_ID = 'riposte-prod'
+const AIMOCK_PRIMARY_MODEL_ID = 'gpt-4o-mini'
+const AIMOCK_REPAIR_MODEL_ID = 'gpt-4o-mini'
 
 /**
  * Primary dispute-agent model. `id` is the Workers AI binding identifier sent
@@ -38,6 +41,15 @@ export type TracingContext = {
 }
 
 type WorkersAIModelId = Parameters<WorkersAI>[0]
+type AiMockEnv = Env & {
+  AI_MOCK_BASE_URL?: string
+  AI_MOCK_API_KEY?: string
+}
+
+export type DisputeAgentModels = {
+  primary(args: { tracing: TracingContext }): LanguageModel
+  repair(args: { tracing: TracingContext }): LanguageModel
+}
 
 /**
  * Build a Workers AI model routed through our AI Gateway. Shared base for
@@ -50,8 +62,8 @@ type WorkersAIModelId = Parameters<WorkersAI>[0]
  * `tracing` is provided, PostHog also computes `$ai_total_cost_usd` from its
  * own price DB. No client-side override.
  *
- * Not exported — call sites should reach for `createDisputeAgentModel` or
- * `createToolRepairModel` so the model choice stays explicit at the boundary.
+ * Not exported — call sites should reach for `createDisputeAgentModels` so the
+ * runtime provider stays explicit at the boundary.
  */
 function createWorkersAIModel(args: {
   env: Env
@@ -75,28 +87,56 @@ function createWorkersAIModel(args: {
 }
 
 /**
- * Primary dispute-agent model: Gemma 4 with PostHog `$ai_generation` capture.
- * Chain: Workers AI binding → AI Gateway → PostHog `withTracing` → AI SDK.
+ * Runtime dispute-agent models. Chain:
+ * Workers AI binding → AI Gateway → optional PostHog tracing → AI SDK.
  */
-export function createDisputeAgentModel(args: {
-  env: Env
-  tracing: TracingContext
-}): LanguageModel {
-  return createWorkersAIModel({
-    env: args.env,
-    modelId: DISPUTE_AGENT_MODEL.id as WorkersAIModelId,
-    tracing: args.tracing,
-  })
+export function createDisputeAgentModels(env: Env): DisputeAgentModels {
+  const aiMockBaseUrl = (env as AiMockEnv).AI_MOCK_BASE_URL
+  if (aiMockBaseUrl) {
+    return createAimockDisputeAgentModels({
+      baseUrl: aiMockBaseUrl,
+      apiKey: (env as AiMockEnv).AI_MOCK_API_KEY ?? 'test',
+    })
+  }
+
+  return createRuntimeDisputeAgentModels(env)
 }
 
-/**
- * Tool-call repair model: Kimi K2.6 without PostHog tracing. Repair is
- * low-volume and we already log per-attempt outcomes via
- * `tool_call_repair_*` events.
- */
-export function createToolRepairModel(args: { env: Env }): LanguageModel {
-  return createWorkersAIModel({
-    env: args.env,
-    modelId: TOOL_REPAIR_MODEL.id as WorkersAIModelId,
+export function createRuntimeDisputeAgentModels(env: Env): DisputeAgentModels {
+  return {
+    primary(args) {
+      return createWorkersAIModel({
+        env,
+        modelId: DISPUTE_AGENT_MODEL.id as WorkersAIModelId,
+        tracing: args.tracing,
+      })
+    },
+    repair(args) {
+      return createWorkersAIModel({
+        env,
+        modelId: TOOL_REPAIR_MODEL.id as WorkersAIModelId,
+        tracing: args.tracing,
+      })
+    },
+  }
+}
+
+export function createAimockDisputeAgentModels(args: {
+  baseUrl: string
+  apiKey: string
+}): DisputeAgentModels {
+  const openai = createOpenAI({
+    name: 'aimock',
+    baseURL: args.baseUrl,
+    apiKey: args.apiKey,
   })
+
+  return {
+    primary() {
+      return openai.chat(AIMOCK_PRIMARY_MODEL_ID)
+    },
+    repair() {
+      return openai.chat(AIMOCK_REPAIR_MODEL_ID)
+    },
+  }
 }

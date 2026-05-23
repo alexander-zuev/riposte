@@ -1,10 +1,11 @@
 import { safeParseJSON } from '@ai-sdk/provider-utils'
 import { createLogger } from '@riposte/core'
-import { createToolRepairModel } from '@server/infrastructure/ai/model-factory'
+import type { TracingContext } from '@server/infrastructure/ai/model-factory'
 import {
   generateText,
   InvalidToolInputError,
   jsonSchema,
+  type LanguageModel,
   NoSuchToolError,
   Output,
   type ToolCallRepairFunction,
@@ -16,7 +17,8 @@ import { jsonrepair } from 'jsonrepair'
 const logger = createLogger('dispute-agent')
 
 type RepairContext = {
-  env: Env
+  repairModel: (args: { tracing: TracingContext }) => LanguageModel
+  tracing: TracingContext
   mode: string
   productId: string
   requestId: string | undefined
@@ -102,7 +104,16 @@ export function buildDisputeAgentToolCallRepair<T extends ToolSet>(
         try: async () => {
           const schema = await inputSchema({ toolName: toolCall.toolName })
           const { output } = await generateText({
-            model: createToolRepairModel({ env: ctx.env }),
+            model: ctx.repairModel({
+              tracing: {
+                ...ctx.tracing,
+                properties: {
+                  ...ctx.tracing.properties,
+                  modelPurpose: 'tool_call_repair',
+                  repairedToolName: toolCall.toolName,
+                },
+              },
+            }),
             output: Output.object({ schema: jsonSchema(schema) }),
             prompt: [
               `The model tried to call the tool "${toolCall.toolName}" with these inputs:`,

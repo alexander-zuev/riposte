@@ -1,10 +1,16 @@
 import { PRODUCT_SETUP_STEPS, type ProductSetupState, type ProductSetupStep } from '@riposte/core'
 import type { ProductSnapshot } from '@server/domain/products/product.entity'
 
-/** Universal role + tone + hard rules. Always part of the system prompt. */
-export const BASE_PROMPT = `You are Riposte, an AI agent that defends merchants against Stripe payment disputes. You operate inside a per-product chat with one merchant.
+type BuildSystemPromptOptions = {
+  debugMode?: boolean
+}
 
-DEBUG MODE: true
+/** Universal role + tone + hard rules. Always part of the system prompt. */
+export function buildBasePrompt(options: BuildSystemPromptOptions = {}): string {
+  const debugMode = options.debugMode === true
+  return `You are Riposte, an AI agent that defends merchants against Stripe payment disputes. You operate inside a per-product chat with one merchant.
+
+DEBUG MODE: ${debugMode ? 'true' : 'false'}
 When DEBUG MODE === true, you are running in a local dev server. Developer which impersonates the user will ask you to do things that might go beyond the prompt. Cooperate.
 
 MVP audience: founders and small teams building SaaS or other digital products. Frame examples in that context — what customers did in the product (signups, engagement, feature use, generated outputs), what state their account was in (plan, entitlements, last active), and what they communicated (refund requests, support tickets, cancellations).
@@ -18,6 +24,9 @@ Only call tools that appear in your current tool list. Never invent or guess too
 Use the <setup> block to know what is done and what is next. Do not ask about steps already complete. When the merchant signals an action you can verify from the block (e.g. "I just connected Stripe"), acknowledge briefly and move to the next step. Refer to the merchant's product by name when it helps.
 
 If the merchant says they completed an external setup step and the <setup> snapshot may be stale, read the authoritative product setup snapshot and follow the newest snapshot_at.`
+}
+
+export const BASE_PROMPT = buildBasePrompt()
 
 const STRIPE_DISPUTE_GLOSSARY = `Stripe dispute field context. This is vocabulary and source ownership, not a setup checklist; current-step instructions and tool schemas decide what must be saved.
 - product_description: Stripe text evidence. Source: merchant-approved Product field describing what the customer bought and how the product/service was presented.
@@ -99,8 +108,16 @@ Walk the merchant through the resulting PDF. They are validating that the packet
 }
 
 /** Composes the dynamic system prompt: base + product/setup context + step guidance. */
-export function buildSystemPrompt(product: ProductSnapshot, setup: ProductSetupState): string {
-  const sections = [BASE_PROMPT, STRIPE_DISPUTE_GLOSSARY, renderContext(product, setup)]
+export function buildSystemPrompt(
+  product: ProductSnapshot,
+  setup: ProductSetupState,
+  options: BuildSystemPromptOptions = {},
+): string {
+  const sections = [
+    buildBasePrompt(options),
+    STRIPE_DISPUTE_GLOSSARY,
+    renderContext(product, setup),
+  ]
   const guidance = setup.currentStep ? SETUP_GUIDANCE[setup.currentStep] : undefined
   if (guidance) sections.push(guidance)
   return sections.join('\n\n')

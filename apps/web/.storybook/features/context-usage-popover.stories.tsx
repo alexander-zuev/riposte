@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
+import { ContextUsageMeter } from '@web/features/agent/context-usage-meter'
 import { ContextUsagePopover } from '@web/features/agent/context-usage-popover'
 import type {
   ContextCategoryUsage,
@@ -144,6 +145,18 @@ function Showcase({ context }: { context: DisputeAgentContextState }) {
   )
 }
 
+function MeterShowcase({ context }: { context: DisputeAgentContextState }) {
+  return (
+    <div className="flex min-h-[520px] items-end justify-center p-8">
+      <ContextUsageMeter
+        context={context}
+        onCancelCompaction={() => console.info('cancel compaction clicked')}
+        defaultOpen
+      />
+    </div>
+  )
+}
+
 const meta: Meta<typeof Showcase> = {
   title: 'Features/Disputes/Components/Context Usage Popover',
   component: Showcase,
@@ -225,6 +238,25 @@ export const Compacting: Story = {
       realInputTokens: 210_500,
       compactAtTokens: 200_000,
       compaction: { status: 'compacting', startedAt: new Date().toISOString() },
+    }),
+  },
+}
+
+export const CompactingFullMeter: StoryObj<typeof MeterShowcase> = {
+  name: 'Compacting in progress (full meter)',
+  render: (args) => <MeterShowcase {...args} />,
+  args: {
+    context: buildContext({
+      systemPromptTokens: 1_240,
+      systemTools: SYSTEM_TOOLS,
+      mcpTools: MCP_TOOLS,
+      messagesTokens: 205_000,
+      realInputTokens: 210_500,
+      compactAtTokens: 200_000,
+      compaction: {
+        status: 'compacting',
+        startedAt: new Date(Date.now() - 12_000).toISOString(),
+      },
     }),
   },
 }

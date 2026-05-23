@@ -9,6 +9,7 @@ import {
 import { McpSourcesPopover } from '@web/features/agent/mcp-sources-popover'
 import { AgentMessagePart, keyedAgentMessageParts } from '@web/features/agent/message-part'
 import { RegenerateMessageAction } from '@web/features/agent/regenerate-message-action'
+import { cn } from '@web/lib/utils'
 import {
   Conversation,
   ConversationContent,
@@ -27,7 +28,7 @@ import { Button } from '@web/ui/components/ui/button'
 import { Spinner } from '@web/ui/components/ui/spinner'
 import type { MCPServersState } from 'agents'
 import type { UIMessage } from 'ai'
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 const logger = createLogger('chat')
 
@@ -46,6 +47,12 @@ type ChatProps = {
  */
 export function Chat({ agent, initialMessages, productId, mcp }: ChatProps) {
   const assistant = useDisputeAgentChat(agent, initialMessages)
+  const animateEntrance = useRef(
+    initialMessages.length === 1 && initialMessages[0]?.role === 'assistant',
+  )
+  useEffect(() => {
+    animateEntrance.current = false
+  }, [])
   const { cancelCompaction } = useCancelAgentCompaction({ productId })
   const [errorDismissed, setErrorDismissed] = useState(false)
   const [interruptedMessageId, setInterruptedMessageId] = useState<string | null>(null)
@@ -88,13 +95,20 @@ export function Chat({ agent, initialMessages, productId, mcp }: ChatProps) {
         <ConversationContent>
           {assistant.messages.map((message) => (
             <Message key={message.id} from={message.role}>
-              <MessageContent>
+              <MessageContent
+                className={animateEntrance.current ? 'animate-typewriter-reveal' : undefined}
+              >
                 {keyedAgentMessageParts(message.parts).map(({ key, part }) => (
                   <AgentMessagePart key={key} isStreaming={assistant.isStreaming} part={part} />
                 ))}
               </MessageContent>
               {showActions && message.role === 'assistant' && (
-                <div className="flex items-center gap-2">
+                <div
+                  className={cn(
+                    'flex items-center gap-2',
+                    animateEntrance.current && 'animate-entrance-fade',
+                  )}
+                >
                   <RegenerateMessageAction messageId={message.id} onRegenerate={handleRegenerate} />
                   {interruptedMessageId === message.id && (
                     <span className="text-xs text-muted-foreground italic">Interrupted</span>

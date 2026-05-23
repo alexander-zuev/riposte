@@ -2,7 +2,7 @@ import { GaugeIcon } from '@phosphor-icons/react'
 import { ContextUsagePopover } from '@web/features/agent/context-usage-popover'
 import { formatTokens } from '@web/features/agent/format-tokens'
 import type { DisputeAgentContextState } from '@web/features/agent/hooks/use-dispute-agent-chat'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 const MS_IN_S = 1000
 
@@ -11,6 +11,8 @@ type ContextUsageMeterProps = {
   context: DisputeAgentContextState
   /** Fired when the user clicks Cancel inside the popover's compacting banner. */
   onCancelCompaction: () => void
+  /** Storybook-only escape hatch: render with the popover already open. */
+  defaultOpen?: boolean
 }
 
 /**
@@ -23,8 +25,9 @@ export function ContextUsageMeter({
   className,
   context,
   onCancelCompaction,
+  defaultOpen,
 }: ContextUsageMeterProps) {
-  const compactionDuration = useCompactionDuration(context.compaction.status === 'compacting')
+  const compactionDuration = useCompactionDuration(context.compaction)
   return (
     <ContextUsagePopover
       context={context}
@@ -37,6 +40,7 @@ export function ContextUsageMeter({
       ariaLabel={getContextAriaLabel(context, compactionDuration)}
       className={className}
       onCancelCompaction={onCancelCompaction}
+      defaultOpen={defaultOpen}
     />
   )
 }
@@ -76,28 +80,23 @@ function getContextAriaLabel(
  * Ticks every second while a compaction is in flight so the meter label can
  * report elapsed time ("Compacting… 5s"). Returns 0 when idle.
  */
-function useCompactionDuration(isCompacting: boolean): number {
-  const startTimeRef = useRef<number | null>(null)
+function useCompactionDuration(compaction: DisputeAgentContextState['compaction']): number {
   const [duration, setDuration] = useState(0)
 
   useEffect(() => {
-    if (isCompacting) {
-      if (startTimeRef.current === null) {
-        startTimeRef.current = Date.now()
-        setDuration(0)
-      }
+    if (compaction.status === 'compacting') {
+      const startedAt = new Date(compaction.startedAt).getTime()
+      const getDuration = () => Math.max(0, Math.floor((Date.now() - startedAt) / MS_IN_S))
+      setDuration(getDuration())
       const interval = setInterval(() => {
-        if (startTimeRef.current !== null) {
-          setDuration(Math.floor((Date.now() - startTimeRef.current) / MS_IN_S))
-        }
+        setDuration(getDuration())
       }, MS_IN_S)
       return () => clearInterval(interval)
     }
 
-    startTimeRef.current = null
     setDuration(0)
     return undefined
-  }, [isCompacting])
+  }, [compaction])
 
   return duration
 }

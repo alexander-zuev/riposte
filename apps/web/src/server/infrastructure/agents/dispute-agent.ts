@@ -7,7 +7,10 @@ import {
   type UserId,
 } from '@riposte/core'
 import * as Sentry from '@sentry/cloudflare'
-import { BASE_PROMPT, buildSystemPrompt } from '@server/infrastructure/agents/build-system-prompt'
+import {
+  buildBasePrompt,
+  buildSystemPrompt,
+} from '@server/infrastructure/agents/build-system-prompt'
 import {
   applyDisputeAgentCompactions,
   compactDisputeAgentMessages,
@@ -463,20 +466,22 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
     return Result.ok(compaction.messages)
   }
 
-  /** Builds the dynamic system prompt for this turn. Fail-soft: falls back to {@link BASE_PROMPT} so chat still works if PG is degraded. */
+  /** Builds the dynamic system prompt for this turn. Fail-soft so chat still works if PG is degraded. */
   private async loadInstructions(): Promise<string> {
-    if (!this.userId) return BASE_PROMPT
+    const debugMode = this.deps.env.ENV === 'development'
+    const basePrompt = buildBasePrompt({ debugMode })
+    if (!this.userId) return basePrompt
     const product = await this.deps.repos.products(this.deps.db()).findById(this.name)
     if (product.isErr()) {
       logger.error('load_instructions_product_repo_failed', {
         productId: this.name,
         error: product.error,
       })
-      return BASE_PROMPT
+      return basePrompt
     }
     if (!product.value) {
       logger.error('load_instructions_product_not_found', { productId: this.name })
-      return BASE_PROMPT
+      return basePrompt
     }
     const setup = await this.deps.services
       .productSetup()
@@ -487,9 +492,9 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
         userId: this.userId,
         error: setup.error,
       })
-      return BASE_PROMPT
+      return basePrompt
     }
-    return buildSystemPrompt(product.value.serialize(), setup.value)
+    return buildSystemPrompt(product.value.serialize(), setup.value, { debugMode })
   }
 
   /** RPC seed for the agent page — WS doesn't replay history on connect. */

@@ -62,13 +62,27 @@ export const DISPUTE_AGENT_CONTEXT_WINDOW = 256_000
 export const DISPUTE_AGENT_COMPACT_AT_TOKENS = 40_000
 
 /**
- * Tool definitions tokenize denser than English prose (JSON brackets, quotes,
- * short property names land closer to ~3 chars/token vs ~4 for prose). Bump
- * the tools estimate by this factor to compensate. Calibrated empirically
- * against Gemma 4: 1.2 over-estimated by ~25%, 1.1 lands ratio closer to 1.0
- * while keeping a small safety margin over the heuristic.
+ * Local tool estimate decision:
+ * We estimate tools from local AI SDK/Zod tool objects because the AI SDK does
+ * not expose a stable provider-normalized tool payload here. That raw object is
+ * larger than the function declarations counted by the provider, so we apply a
+ * calibration factor instead of treating the raw stringify estimate as truth.
+ *
+ * Calibration method:
+ * Compare provider-reported input tokens for the same product/model/prompt with
+ * 0 active tools, 1 active tool, and all 9 local tools. The measured all-tool
+ * overhead was ~1484 provider tokens versus a raw estimate of 3424, or ~0.43x.
+ * Use 0.4 to keep the UI closer to observed reality while preserving that this
+ * is still an estimate, not an exact tokenizer.
  */
-export const TOOLS_FUDGE_FACTOR = 1.1
+export const SYSTEM_TOOLS_ESTIMATE_CALIBRATION = 0.4
+
+/**
+ * MCP tools arrive from the MCP client manager in a different shape than local
+ * AI SDK/Zod tools. The local 0.4 calibration under-counted a PlanetScale MCP
+ * toolset by ~41%, so keep MCP tools unscaled until calibrated separately.
+ */
+export const MCP_TOOLS_ESTIMATE_CALIBRATION = 1.0
 
 export const INITIAL_USAGE: DisputeAgentUsage = {
   inputTokens: 0,
@@ -143,9 +157,8 @@ export function getDisputeAgentContextStatus(args: {
  *
  * Messages strategy:
  *   - When `lastRealTotalTokens > 0`, derive messages from the real number:
- *     `messages = max(0, real − systemPrompt − systemTools − mcpTools)`. Anchors
- *     the row to a real model response (input + output, since the assistant
- *     reply is now part of `this.messages` and travels on the next call).
+ *     `messages = max(0, real − systemPrompt − systemTools − mcpTools)`. This
+ *     anchors the row to provider usage once a turn has completed.
  *   - On turn 0 (no usage yet), fall back to `estimateMessages(messages)`.
  */
 export function buildEstimatedUsage(args: {
@@ -169,15 +182,21 @@ export function buildEstimatedUsage(args: {
     args.systemTools,
     'system_tools',
     args.estimateString,
+    SYSTEM_TOOLS_ESTIMATE_CALIBRATION,
   )
-  const mcpToolChildren = estimateToolChildren(args.mcpTools, 'mcp_tools', args.estimateString)
-  const systemToolsTokens = sumTokens(systemToolChildren)
-  const mcpToolsTokens = sumTokens(mcpToolChildren)
+  const mcpToolChildren = estimateToolChildren(
+    args.mcpTools,
+    'mcp_tools',
+    args.estimateString,
+    MCP_TOOLS_ESTIMATE_CALIBRATION,
+  )
+  const systemToolInputTokens = sumTokens(systemToolChildren)
+  const mcpToolInputTokens = sumTokens(mcpToolChildren)
 
-  const totalStaticTokens = systemPromptTokens + systemToolsTokens + mcpToolsTokens
-  const messagesTokens =
+  const systemAndToolInputTokens = systemPromptTokens + systemToolInputTokens + mcpToolInputTokens
+  const messageInputTokens =
     args.lastRealTotalTokens > 0
-      ? Math.max(0, args.lastRealTotalTokens - totalStaticTokens)
+      ? Math.max(0, args.lastRealTotalTokens - systemAndToolInputTokens)
       : args.estimateMessages(args.messages)
 
   const byCategory: ContextCategoryUsage[] = [
@@ -185,21 +204,21 @@ export function buildEstimatedUsage(args: {
     {
       label: 'System tools',
       category: 'system_tools',
-      tokens: systemToolsTokens,
+      tokens: systemToolInputTokens,
       children: systemToolChildren,
     },
     {
       label: 'MCP tools',
       category: 'mcp_tools',
-      tokens: mcpToolsTokens,
+      tokens: mcpToolInputTokens,
       children: mcpToolChildren,
     },
-    { label: 'Messages', category: 'messages', tokens: messagesTokens },
+    { label: 'Messages', category: 'messages', tokens: messageInputTokens },
   ]
 
   return {
     byCategory,
-    total: totalStaticTokens + messagesTokens,
+    total: systemAndToolInputTokens + messageInputTokens,
   }
 }
 
@@ -207,6 +226,7 @@ function estimateToolChildren(
   tools: Record<string, unknown>,
   category: ContextCategory,
   estimateString: (text: string) => number,
+  calibration: number,
 ): ContextCategoryUsage[] {
   return Object.entries(tools)
     .map<ContextCategoryUsage>(([name, tool]) => {
@@ -217,7 +237,7 @@ function estimateToolChildren(
       return {
         label: name,
         category,
-        tokens: Math.round(estimateString(payload) * TOOLS_FUDGE_FACTOR),
+        tokens: Math.round(estimateString(payload) * calibration),
       }
     })
     .toSorted((a, b) => b.tokens - a.tokens)

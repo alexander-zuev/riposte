@@ -77,7 +77,7 @@ export function useDisputeAgent(productId: string) {
         status: state.context.status,
         compactionStatus: state.context.compaction.status,
         usageTotalTokens: state.context.usage.totalTokens,
-        estimatedTotalTokens: state.context.estimatedUsage.total,
+        estimatedInputTokens: state.context.estimatedUsage.total,
       })
       invalidateProductSetup(state, source)
     },

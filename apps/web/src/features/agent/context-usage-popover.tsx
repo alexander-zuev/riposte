@@ -1,4 +1,5 @@
 import { CaretRightIcon } from '@phosphor-icons/react'
+import { createLogger } from '@riposte/core/client'
 import { formatTokens } from '@web/features/agent/format-tokens'
 import type {
   ContextCategoryUsage,
@@ -19,7 +20,9 @@ import {
   PopoverTitle,
   PopoverTrigger,
 } from '@web/ui/components/ui/popover'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+
+const logger = createLogger('context-usage-popover')
 
 type ContextUsagePopoverProps = {
   context: DisputeAgentContextState
@@ -55,6 +58,14 @@ export function ContextUsagePopover({
   const used = estimatedUsage.total
   const free = Math.max(0, windowTokens - used)
   const usedPct = pct(used, windowTokens)
+
+  useEffect(() => {
+    logger.debug('context_usage_popover_render', {
+      compactionStatus: compaction.status,
+      estimatedInputTokens: estimatedUsage.total,
+      usageTotalTokens: context.usage.totalTokens,
+    })
+  }, [compaction.status, context.usage.totalTokens, estimatedUsage.total])
 
   return (
     <Popover defaultOpen={defaultOpen}>

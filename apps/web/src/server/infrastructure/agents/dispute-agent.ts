@@ -4,6 +4,7 @@ import {
   createLogger,
   createSentryOptions,
   InternalServerError,
+  type ProductSetupState,
   type UserId,
 } from '@riposte/core'
 import * as Sentry from '@sentry/cloudflare'
@@ -34,7 +35,10 @@ import {
   RiposteMcpOAuthProvider,
 } from '@server/infrastructure/agents/dispute-agent.oauth'
 import { buildDisputeAgentToolCallRepair } from '@server/infrastructure/agents/dispute-agent.repair'
-import { buildDisputeAgentTools } from '@server/infrastructure/agents/dispute-agent.tools'
+import {
+  buildDisputeAgentTools,
+  deriveActiveDisputeAgentTools,
+} from '@server/infrastructure/agents/dispute-agent.tools'
 import {
   createDisputeAgentModel,
   DISPUTE_AGENT_MODEL,
@@ -225,7 +229,8 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
     // TODO(perf): when `opts?.continuation === true` (auto-continue after a
     // tool result), instructions + tools are guaranteed identical to the prior
     // step — cache them per-turn to skip 2 Postgres reads on every continuation.
-    const instructions = await this.loadInstructions()
+    const setup = await this.loadProductSetupState()
+    const instructions = await this.loadInstructions(setup)
 
     const model = createDisputeAgentModel({
       env: this.env,
@@ -255,11 +260,17 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
     await this.mcp.waitForConnections({ timeout: 10_000 })
 
     // TODO(agent): add a wall-clock-based `stopWhen` (not step count) — see spec bounds.
-    const tools = buildDisputeAgentTools(this, this.ctx.storage)
+    const builtTools = buildDisputeAgentTools({
+      agent: this,
+      storage: this.ctx.storage,
+      setup,
+    })
+    const { tools, activeTools } = builtTools
     logger.debug('dispute_agent_tools_ready', {
       mode: this.state.mode,
       requestId: opts?.requestId,
       toolCount: Object.keys(tools).length,
+      activeToolCount: activeTools.length,
       mcpServers: Object.fromEntries(
         Object.entries(this.getMcpServers().servers).map(([serverId, server]) => [
           serverId,
@@ -273,6 +284,13 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
       model,
       instructions,
       tools,
+      activeTools,
+      prepareStep: async () => {
+        const nextSetup = await this.loadProductSetupState()
+        return {
+          activeTools: deriveActiveDisputeAgentTools({ tools, setup: nextSetup }),
+        }
+      },
       experimental_repairToolCall: buildDisputeAgentToolCallRepair({
         env: this.env,
         mode: this.state.mode,
@@ -314,10 +332,25 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
       return
     }
     const realInputTokens = usage.inputTokens ?? 0
-    const estimatedTotalTokens = this.state.context.estimatedUsage.total
-    const staticTokens = this.state.context.estimatedUsage.byCategory
+    const estimatedInputTokens = this.state.context.estimatedUsage.total
+    const estimatedSystemAndToolInputTokens = this.state.context.estimatedUsage.byCategory
       .filter((b) => b.category !== 'messages')
       .reduce((sum, b) => sum + b.tokens, 0)
+    const estimatedMessageInputTokens =
+      this.state.context.estimatedUsage.byCategory.find((b) => b.category === 'messages')?.tokens ??
+      0
+    const systemAndToolInputOverProviderInputTokens = Math.max(
+      0,
+      estimatedSystemAndToolInputTokens - realInputTokens,
+    )
+    const topToolEstimates = this.state.context.estimatedUsage.byCategory
+      .flatMap((part) => part.children ?? [])
+      .toSorted((a, b) => b.tokens - a.tokens)
+      .slice(0, 5)
+      .map((toolEstimate) => ({
+        tool: toolEstimate.label,
+        estimatedTokens: toolEstimate.tokens,
+      }))
     // Compact summary — full per-category breakdown is on state.context.estimatedUsage
     // for the FE; logs only need the scalars we'd chart against.
     logger.debug('dispute_agent_usage_update', {
@@ -325,9 +358,27 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
       outputTokens: usage.outputTokens ?? 0,
       totalTokens: usage.totalTokens,
       compactAtTokens: this.state.context.compactAtTokens,
-      estimatedTotalTokens,
-      ratio: estimatedTotalTokens > 0 ? realInputTokens / estimatedTotalTokens : null,
-      staticTokens,
+      estimatedInputTokens,
+      inputEstimateRatio: estimatedInputTokens > 0 ? realInputTokens / estimatedInputTokens : null,
+      estimatedSystemAndToolInputTokens,
+    })
+    logger.debug('dispute_agent_usage_estimate_accuracy', {
+      model: this.state.context.modelName,
+      productId: this.name,
+      providerInputTokens: realInputTokens,
+      providerOutputTokens: usage.outputTokens ?? 0,
+      providerTotalTokens: usage.totalTokens,
+      estimatedInputTokens,
+      estimatedSystemAndToolInputTokens,
+      estimatedMessageInputTokens,
+      inputEstimateDeltaTokens: estimatedInputTokens - realInputTokens,
+      inputEstimateRatio: estimatedInputTokens > 0 ? realInputTokens / estimatedInputTokens : null,
+      inputEstimateErrorPercent:
+        realInputTokens > 0
+          ? ((estimatedInputTokens - realInputTokens) / realInputTokens) * 100
+          : null,
+      systemAndToolInputOverProviderInputTokens,
+      topToolEstimates,
     })
     this.setState({
       ...this.state,
@@ -386,9 +437,18 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
    * change.
    */
   private async refreshContextEstimate(): Promise<void> {
-    const instructions = await this.loadInstructions()
+    const setup = await this.loadProductSetupState()
+    const instructions = await this.loadInstructions(setup)
     const mcpTools = this.mcp.getAITools() as Record<string, unknown>
-    const allTools = buildDisputeAgentTools(this, this.ctx.storage) as Record<string, unknown>
+    const { tools, activeTools } = buildDisputeAgentTools({
+      agent: this,
+      storage: this.ctx.storage,
+      setup,
+    })
+    const activeToolSet = new Set(activeTools)
+    const allTools = Object.fromEntries(
+      Object.entries(tools).filter(([key]) => activeToolSet.has(key)),
+    )
     const systemTools = Object.fromEntries(
       Object.entries(allTools).filter(([key]) => !(key in mcpTools)),
     )
@@ -441,18 +501,19 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
       // the deadlock is "static overhead exceeds threshold" (compaction can't
       // help) vs "messages legitimately failed to summarize".
       const byCategory = this.state.context.estimatedUsage.byCategory
-      const staticTokens = byCategory
+      const systemAndToolInputTokens = byCategory
         .filter((b) => b.category !== 'messages')
         .reduce((sum, b) => sum + b.tokens, 0)
-      const messagesTokens = byCategory.find((b) => b.category === 'messages')?.tokens ?? 0
+      const messageInputTokens = byCategory.find((b) => b.category === 'messages')?.tokens ?? 0
       logger.warn('dispute_agent_compaction_failed', {
         error: compaction.error,
         productId: this.name,
         compactAtTokens: this.state.context.compactAtTokens,
         usageTotalTokens: this.state.context.usage.totalTokens,
-        staticTokens,
-        messagesTokens,
-        staticExceedsThreshold: staticTokens >= this.state.context.compactAtTokens,
+        systemAndToolInputTokens,
+        messageInputTokens,
+        systemAndToolInputExceedsThreshold:
+          systemAndToolInputTokens >= this.state.context.compactAtTokens,
       })
       this.failCompaction(compaction.error)
       return Result.err(
@@ -466,8 +527,24 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
     return Result.ok(compaction.messages)
   }
 
+  private async loadProductSetupState(): Promise<ProductSetupState | null> {
+    if (!this.userId) return null
+    const setup = await this.deps.services
+      .productSetup()
+      .getState({ userId: this.userId, productId: this.name })
+    if (setup.isErr()) {
+      logger.error('load_product_setup_state_failed', {
+        productId: this.name,
+        userId: this.userId,
+        error: setup.error,
+      })
+      return null
+    }
+    return setup.value
+  }
+
   /** Builds the dynamic system prompt for this turn. Fail-soft so chat still works if PG is degraded. */
-  private async loadInstructions(): Promise<string> {
+  private async loadInstructions(setup: ProductSetupState | null): Promise<string> {
     const debugMode = this.deps.env.ENV === 'development'
     const basePrompt = buildBasePrompt({ debugMode })
     if (!this.userId) return basePrompt
@@ -483,18 +560,10 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
       logger.error('load_instructions_product_not_found', { productId: this.name })
       return basePrompt
     }
-    const setup = await this.deps.services
-      .productSetup()
-      .getState({ userId: this.userId, productId: this.name })
-    if (setup.isErr()) {
-      logger.error('load_instructions_setup_failed', {
-        productId: this.name,
-        userId: this.userId,
-        error: setup.error,
-      })
+    if (!setup) {
       return basePrompt
     }
-    return buildSystemPrompt(product.value.serialize(), setup.value, { debugMode })
+    return buildSystemPrompt(product.value.serialize(), setup, { debugMode })
   }
 
   /** RPC seed for the agent page — WS doesn't replay history on connect. */

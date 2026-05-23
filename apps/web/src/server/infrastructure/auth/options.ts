@@ -13,7 +13,7 @@ const logger = createLogger('auth')
 const TRUSTED_ORIGINS: Record<string, string[]> = {
   production: ['https://riposte.sh'],
   staging: ['https://staging.riposte.sh'],
-  development: ['http://localhost:3000'],
+  development: ['http://localhost:3000', 'https://tunnel.riposte.sh'],
 }
 
 export function createBetterAuthOptions(

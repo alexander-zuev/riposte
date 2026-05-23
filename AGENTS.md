@@ -345,6 +345,20 @@ Agents, when added:
 - Test route behavior with `exports.default.fetch(...)` or direct `worker.fetch(request, env, ctx)` plus `waitOnExecutionContext(ctx)`.
 - For internal state, apply the same DO rules: unique IDs/names, `runInDurableObject` only for setup/inspection, and alarm draining when alarms are involved.
 
+AI SDK:
+
+- Do not call real models from routine unit tests. Use `MockLanguageModelV3` from `ai/test` for
+  `generateText`, `streamText`, and `ToolLoopAgent` contract tests.
+- Assert against `model.doGenerateCalls` / `model.doStreamCalls` when behavior depends on what the
+  SDK sends to the provider, such as `prompt`, `tools`, `toolChoice`, and active-tool filtering.
+- For streaming tests, import `simulateReadableStream` from `ai`, not `ai/test`; the `ai/test`
+  re-export is deprecated.
+- Use `mockValues` from `ai/test` for multi-step tool-loop tests where one model call returns a
+  tool call and the next returns final text.
+- Keep app policy separate from SDK contract tests: test active-tool derivation, context estimates,
+  MCP readiness, and compaction logic in local unit suites; test only SDK integration semantics in
+  AI SDK suites.
+
 Workers AI (`AI`):
 
 - Local simulation is not available; Cloudflare recommends `remote: true`.

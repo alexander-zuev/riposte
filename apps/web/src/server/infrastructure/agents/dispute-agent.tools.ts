@@ -6,6 +6,7 @@ import {
   createCommand,
   createQuery,
   playbookVerificationSchema,
+  type ProductSetupState,
 } from '@riposte/core'
 import { resultToAgentToolResponse } from '@server/infrastructure/agents/agent-tool-result'
 import type { DisputeAgentType } from '@server/infrastructure/agents/dispute-agent'
@@ -40,16 +41,41 @@ const productEvidenceFieldsSchema = z.object({
   cancellationPolicyDisclosure: z.string().trim().min(1).max(STRIPE_EVIDENCE_TEXT_MAX_LENGTH),
 })
 
+export const DISPUTE_AGENT_COMMON_TOOL_NAMES = [
+  'readProductSetupSnapshot',
+  'connectMcpServer',
+  'listMcpServers',
+  'fetchUrl',
+  'webSearch',
+  'reportUnknownTool',
+] as const
+
+export const DISPUTE_AGENT_CONNECT_APP_DATA_TOOL_NAMES = ['registerAppDataSource'] as const
+export const DISPUTE_AGENT_PLAYBOOK_TOOL_NAMES = [
+  'saveProductEvidenceFields',
+  'saveDisputePlaybook',
+] as const
+
+export type BuiltDisputeAgentTools = {
+  tools: ToolSet
+  activeTools: string[]
+}
+
 /**
  * Static product setup tools, merged with MCP tools from the connected servers.
  * `onChatMessage` waits for MCP connections before this builder runs so
  * programmatic `saveMessages()` turns after OAuth see freshly discovered tools.
  */
-export function buildDisputeAgentTools(
-  agent: DisputeAgentType,
-  storage: DurableObjectStorage,
-): ToolSet {
-  return {
+export function buildDisputeAgentTools({
+  agent,
+  storage,
+  setup,
+}: {
+  agent: DisputeAgentType
+  storage: DurableObjectStorage
+  setup: ProductSetupState | null
+}): BuiltDisputeAgentTools {
+  const tools = {
     ...agent.mcp.getAITools(),
     readProductSetupSnapshot: tool({
       description:
@@ -64,7 +90,6 @@ export function buildDisputeAgentTools(
         return resultToAgentToolResponse(result)
       },
     }),
-
     connectMcpServer: tool({
       description:
         'Connect a Model Context Protocol (MCP) server so we can use its tools to find evidence proofs (e.g., the merchant\'s database for user activity). Provide a memorable `name` and the MCP server `url` you discovered via webSearch/fetchUrl. Prefer explaining the server you found and asking the merchant before connecting. If the server needs OAuth, returns `state: "authenticating"` with an `authUrl` — surface that to the merchant as a clickable markdown link so they can authorize. After authorization, you will be notified automatically and can continue without waiting for the merchant to type anything.',
@@ -77,7 +102,6 @@ export function buildDisputeAgentTools(
           try: async () => {
             const { servers } = agent.getMcpServers()
             const existing = Object.entries(servers).find(([, s]) => s.server_url === url)
-
             if (existing) {
               const [id, server] = existing
               switch (server.state) {
@@ -104,7 +128,6 @@ export function buildDisputeAgentTools(
                   break
               }
             }
-
             // `agentsPrefix` must match the catchall route's `prefix: 'api/agents'`
             // (routes/api/agents/$.ts); without it the SDK builds a 404'ing redirect_uri.
             const added = await agent.addMcpServer(name, url, { agentsPrefix: 'api/agents' })
@@ -115,11 +138,9 @@ export function buildDisputeAgentTools(
           },
           catch: () => new InternalServerError({ message: 'Failed to connect MCP server' }),
         })
-
         return resultToAgentToolResponse(result)
       },
     }),
-
     listMcpServers: tool({
       description:
         'List connected MCP servers with their internal server ids, display names, URLs, and connection states. Use this after an OAuth connection event when you need the server id for readiness checks or app data registration.',
@@ -134,11 +155,9 @@ export function buildDisputeAgentTools(
             state: server.state,
           })),
         })
-
         return resultToAgentToolResponse(result)
       },
     }),
-
     registerAppDataSource: tool({
       description:
         'Register a ready MCP server as a merchant app data source for this product. Use only after the MCP server is authorized, ready, represents merchant-owned app/customer/usage data, and you have successfully made one harmless read-only call with its MCP tools. Do not use for Stripe. `serverId` must be the internal MCP server id from listMcpServers or connectMcpServer, not the display name. Choose a stable snake_case alias such as `primary_db`, `usage_db`, or `support_tool`; the alias may be referenced by future playbooks.',
@@ -156,10 +175,8 @@ export function buildDisputeAgentTools(
             message: readyServer.message,
             ...(readyServer.reason === 'not_ready' ? { state: readyServer.state } : {}),
           })
-
           return resultToAgentToolResponse(result)
         }
-
         const command = createCommand('RegisterProductAppDataSource', {
           productId: agent.name,
           mcpServerId: serverId,
@@ -175,7 +192,6 @@ export function buildDisputeAgentTools(
         })
       },
     }),
-
     saveProductEvidenceFields: tool({
       description:
         'Save merchant-approved product evidence fields used by deterministic Stripe evidence packet generation: product description, service date derivation rule, refund policy disclosure, and cancellation policy disclosure. Use only after presenting the drafted fields to the merchant and receiving approval.',
@@ -190,7 +206,6 @@ export function buildDisputeAgentTools(
         return resultToAgentToolResponse(result, { ok: () => fields })
       },
     }),
-
     saveDisputePlaybook: tool({
       description:
         'Save the product dispute playbook markdown after merchant approval. Provide structured playbookVerification from the onboarding walkthrough: customer/activity must be verified with tool call IDs; cancellation/refund may be verified or explicitly marked not applicable / Stripe-only.',
@@ -209,7 +224,6 @@ export function buildDisputeAgentTools(
         return resultToAgentToolResponse(result)
       },
     }),
-
     fetchUrl: tool({
       description:
         'Fetch a URL as markdown. Returns a chunk (8000 chars max) starting at `offset` (default 0), plus `nextOffset` to continue reading. Call again with the same `url` and `offset = nextOffset` to page through long pages. `nextOffset` is null when no more content remains. Cached for 60min per URL; re-fetched if expired.',
@@ -232,7 +246,6 @@ export function buildDisputeAgentTools(
             }
             await storage.put(key, cached)
           }
-
           const chunk = cached.content.slice(offset, offset + FETCH_CHUNK_SIZE)
           const nextOffset = offset + chunk.length
           return Result.ok({
@@ -243,11 +256,9 @@ export function buildDisputeAgentTools(
             nextOffset: nextOffset < cached.content.length ? nextOffset : null,
           })
         })
-
         return resultToAgentToolResponse(result)
       },
     }),
-
     webSearch: tool({
       description:
         'Search the web for open-ended discovery. Returns SERP entries (title, URL, description) without page contents — call fetchUrl on a promising result if you need to read it. Use for finding an MCP server URL or unknown docs page; do not use when the exact URL is already known.',
@@ -261,7 +272,6 @@ export function buildDisputeAgentTools(
         return resultToAgentToolResponse(result)
       },
     }),
-
     reportUnknownTool: tool({
       description:
         'INTERNAL fallback. Do not call directly. The agent runtime redirects calls to non-existent tools here so the model can see what went wrong and pick a real tool next step.',
@@ -274,4 +284,56 @@ export function buildDisputeAgentTools(
       }),
     }),
   }
+  const activeTools = deriveActiveDisputeAgentTools({ tools, setup })
+  return {
+    tools,
+    activeTools: activeTools,
+  }
+}
+
+export function deriveActiveDisputeAgentTools({
+  tools,
+  setup,
+}: {
+  tools: ToolSet
+  setup: ProductSetupState | null
+}): string[] {
+  const allToolNames = Object.keys(tools)
+  if (!setup) return allToolNames
+
+  const active = new Set<string>()
+  const addToolNames = (names: readonly string[]) => {
+    for (const name of names) active.add(name)
+  }
+  const addMcpToolNames = () => {
+    for (const name of allToolNames) {
+      if (name.startsWith('tool_')) active.add(name)
+    }
+  }
+
+  addMcpToolNames()
+  addToolNames(DISPUTE_AGENT_COMMON_TOOL_NAMES)
+
+  switch (setup.currentStep) {
+    case 'add_product':
+    case 'connect_stripe':
+      break
+    case 'connect_app_data':
+      addToolNames(DISPUTE_AGENT_CONNECT_APP_DATA_TOOL_NAMES)
+      break
+    case 'playbook':
+      addToolNames(DISPUTE_AGENT_CONNECT_APP_DATA_TOOL_NAMES)
+      addToolNames(DISPUTE_AGENT_PLAYBOOK_TOOL_NAMES)
+      break
+    case 'dry_run':
+    case 'review':
+    case null:
+      addToolNames(DISPUTE_AGENT_CONNECT_APP_DATA_TOOL_NAMES)
+      addToolNames(DISPUTE_AGENT_PLAYBOOK_TOOL_NAMES)
+      break
+    default:
+      break
+  }
+
+  return allToolNames.filter((name) => active.has(name))
 }

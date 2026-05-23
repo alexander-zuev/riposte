@@ -14,6 +14,7 @@ export default defineConfig(() => {
     plugins: [
       cloudflare({
         viteEnvironment: { name: 'ssr' },
+        tunnel: { name: 'riposte-dev', autoStart: true },
       }),
       ...tanstackStart({
         router: {

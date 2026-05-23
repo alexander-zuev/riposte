@@ -85,39 +85,18 @@ export function buildDisputeAgentToolCallRepair<T extends ToolSet>(
         if (parsed.success) {
           logger.info('tool_call_repaired_via_jsonrepair', {
             toolName: toolCall.toolName,
+            originalInput: toolCall.input,
+            repairedInput: parsed.value,
             mode: ctx.mode,
             productId: ctx.productId,
             requestId: ctx.requestId,
           })
           return { ...toolCall, input: JSON.stringify(parsed.value) }
         }
-        logger.info('tool_call_jsonrepair_skipped', {
-          reason: 'schema_mismatch',
-          toolName: toolCall.toolName,
-          schemaError: parsed.error.message,
-          mode: ctx.mode,
-          productId: ctx.productId,
-          requestId: ctx.requestId,
-        })
-      } catch (jsonRepairError) {
-        // jsonrepair throws when the input is unrecoverable; fall through.
-        logger.info('tool_call_jsonrepair_skipped', {
-          reason: 'jsonrepair_threw',
-          toolName: toolCall.toolName,
-          error:
-            jsonRepairError instanceof Error ? jsonRepairError.message : String(jsonRepairError),
-          mode: ctx.mode,
-          productId: ctx.productId,
-          requestId: ctx.requestId,
-        })
+        // jsonrepair output didn't satisfy the schema; fall through to slow path.
+      } catch {
+        // jsonrepair threw on unrecoverable input; fall through to slow path.
       }
-
-      logger.info('tool_call_repair_attempted', {
-        toolName: toolCall.toolName,
-        mode: ctx.mode,
-        productId: ctx.productId,
-        requestId: ctx.requestId,
-      })
 
       const repaired = await Result.tryPromise({
         try: async () => {
@@ -143,6 +122,8 @@ export function buildDisputeAgentToolCallRepair<T extends ToolSet>(
         ok: (repairedInput) => {
           logger.info('tool_call_repair_succeeded', {
             toolName: toolCall.toolName,
+            originalInput: toolCall.input,
+            repairedInput,
             mode: ctx.mode,
             productId: ctx.productId,
             requestId: ctx.requestId,
@@ -152,6 +133,7 @@ export function buildDisputeAgentToolCallRepair<T extends ToolSet>(
         err: (repairError) => {
           logger.warn('tool_call_repair_failed', {
             toolName: toolCall.toolName,
+            originalInput: toolCall.input,
             error: repairError,
             mode: ctx.mode,
             productId: ctx.productId,

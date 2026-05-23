@@ -300,7 +300,7 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
           productId: this.name,
           requestId: opts?.requestId,
         })
-        throw error
+        return error instanceof Error ? error.message : String(error)
       },
     })
   }

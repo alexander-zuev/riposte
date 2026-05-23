@@ -136,31 +136,3 @@ JetBrains Mono for IDs, timestamps, logs, events, metadata
   animation: slide-up 100ms ease-out;
 }
 
-@keyframes typewriter-reveal {
-  from {
-    clip-path: inset(0 100% 0 0);
-  }
-  to {
-    clip-path: inset(0 0 0 0);
-  }
-}
-
-@utility animate-typewriter-reveal {
-  animation: typewriter-reveal 600ms ease-out both;
-}
-
-@keyframes entrance-fade {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@utility animate-entrance-fade {
-  opacity: 0;
-  animation: entrance-fade 200ms ease-out 600ms forwards;
-}

@@ -4,7 +4,7 @@ import { useProductSetupInvalidation } from '@web/features/agent/hooks/use-produ
 import type { MCPServersState } from 'agents'
 import { useAgent } from 'agents/react'
 import type { ChatStatus, UIMessage } from 'ai'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 const logger = createLogger('dispute-agent-chat')
 
@@ -134,14 +134,44 @@ export function useDisputeAgentChat(
   agent: DisputeAgentConnection,
   initialMessages: UIMessage<never>[],
 ) {
+  const snapshotRef = useRef({
+    messageCount: initialMessages.length,
+    lastMessageId: initialMessages.at(-1)?.id ?? null,
+    lastMessageRole: initialMessages.at(-1)?.role ?? null,
+    status: 'initializing',
+    isStreaming: false,
+  })
   const chat = useAgentChat({
     agent,
     getInitialMessages: null,
     messages: initialMessages,
     onError: (error) => {
-      logger.error('chat_error', { error })
+      logger.error('chat_error', { error, snapshot: snapshotRef.current })
     },
   })
+
+  useEffect(() => {
+    const next = {
+      messageCount: chat.messages.length,
+      lastMessageId: chat.messages.at(-1)?.id ?? null,
+      lastMessageRole: chat.messages.at(-1)?.role ?? null,
+      status: chat.status,
+      isStreaming: chat.isStreaming,
+    }
+    const prev = snapshotRef.current
+    const changed =
+      prev.messageCount !== next.messageCount ||
+      prev.lastMessageId !== next.lastMessageId ||
+      prev.lastMessageRole !== next.lastMessageRole ||
+      prev.status !== next.status ||
+      prev.isStreaming !== next.isStreaming
+
+    if (changed) {
+      logger.debug('chat_state', next)
+      snapshotRef.current = next
+    }
+  }, [chat.isStreaming, chat.messages, chat.status])
+
   return {
     messages: chat.messages,
     sendMessage: chat.sendMessage,

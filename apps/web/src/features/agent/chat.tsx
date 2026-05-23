@@ -9,7 +9,6 @@ import {
 import { McpSourcesPopover } from '@web/features/agent/mcp-sources-popover'
 import { AgentMessagePart, keyedAgentMessageParts } from '@web/features/agent/message-part'
 import { RegenerateMessageAction } from '@web/features/agent/regenerate-message-action'
-import { cn } from '@web/lib/utils'
 import {
   Conversation,
   ConversationContent,
@@ -28,6 +27,7 @@ import { Button } from '@web/ui/components/ui/button'
 import { Spinner } from '@web/ui/components/ui/spinner'
 import type { MCPServersState } from 'agents'
 import type { UIMessage } from 'ai'
+import { motion } from 'motion/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 const logger = createLogger('chat')
@@ -95,25 +95,56 @@ export function Chat({ agent, initialMessages, productId, mcp }: ChatProps) {
         <ConversationContent>
           {assistant.messages.map((message) => (
             <Message key={message.id} from={message.role}>
-              <MessageContent
-                className={animateEntrance.current ? 'animate-typewriter-reveal' : undefined}
-              >
-                {keyedAgentMessageParts(message.parts).map(({ key, part }) => (
-                  <AgentMessagePart key={key} isStreaming={assistant.isStreaming} part={part} />
-                ))}
-              </MessageContent>
-              {showActions && message.role === 'assistant' && (
-                <div
-                  className={cn(
-                    'flex items-center gap-2',
-                    animateEntrance.current && 'animate-entrance-fade',
+              {animateEntrance.current ? (
+                <>
+                  <motion.div
+                    initial={{ opacity: 0, y: 8, filter: 'blur(3px)' }}
+                    animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                    transition={{ duration: 0.5, ease: 'easeOut' }}
+                  >
+                    <MessageContent>
+                      {keyedAgentMessageParts(message.parts).map(({ key, part }) => (
+                        <AgentMessagePart
+                          key={key}
+                          isStreaming={assistant.isStreaming}
+                          part={part}
+                        />
+                      ))}
+                    </MessageContent>
+                  </motion.div>
+                  {showActions && message.role === 'assistant' && (
+                    <motion.div
+                      className="flex items-center gap-2"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.2, delay: 0.5, ease: 'easeOut' }}
+                    >
+                      <RegenerateMessageAction
+                        messageId={message.id}
+                        onRegenerate={handleRegenerate}
+                      />
+                    </motion.div>
                   )}
-                >
-                  <RegenerateMessageAction messageId={message.id} onRegenerate={handleRegenerate} />
-                  {interruptedMessageId === message.id && (
-                    <span className="text-xs text-muted-foreground italic">Interrupted</span>
+                </>
+              ) : (
+                <>
+                  <MessageContent>
+                    {keyedAgentMessageParts(message.parts).map(({ key, part }) => (
+                      <AgentMessagePart key={key} isStreaming={assistant.isStreaming} part={part} />
+                    ))}
+                  </MessageContent>
+                  {showActions && message.role === 'assistant' && (
+                    <div className="flex items-center gap-2">
+                      <RegenerateMessageAction
+                        messageId={message.id}
+                        onRegenerate={handleRegenerate}
+                      />
+                      {interruptedMessageId === message.id && (
+                        <span className="text-xs text-muted-foreground italic">Interrupted</span>
+                      )}
+                    </div>
                   )}
-                </div>
+                </>
               )}
             </Message>
           ))}
@@ -161,7 +192,6 @@ export function Chat({ agent, initialMessages, productId, mcp }: ChatProps) {
       >
         <PromptInputTextarea
           className="text-sm md:text-sm"
-          disabled={!assistant.isAvailable}
           placeholder="Type your message here..."
         />
         <PromptInputFooter className="text-sm">

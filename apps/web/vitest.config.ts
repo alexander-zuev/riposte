@@ -7,11 +7,14 @@ import { defineConfig } from 'vitest/config'
 
 const startStub = resolve(import.meta.dirname, 'test/mocks/tanstack-start-entry.ts')
 const systemChromePath = [
+  process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH,
+  '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+  '/Applications/Chromium.app/Contents/MacOS/Chromium',
   '/usr/bin/google-chrome',
   '/usr/bin/google-chrome-stable',
   '/usr/bin/chromium',
   '/usr/bin/chromium-browser',
-].find((path) => existsSync(path))
+].find((path) => path && existsSync(path))
 
 const cloudflareTestPlugin = cloudflareTest({
   miniflare: {

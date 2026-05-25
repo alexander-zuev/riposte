@@ -31,7 +31,7 @@
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "catalog:",
+    "@cloudflare/workers-types": "^4.20260523.1",
     "@types/node": "catalog:",
     "tsdown": "catalog:",
     "typescript": "catalog:",

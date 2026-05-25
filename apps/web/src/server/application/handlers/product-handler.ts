@@ -15,6 +15,7 @@ import type {
   GetProductSetupStateResult,
   ListProducts,
   ListProductsResult,
+  McpOAuthRefreshFailed,
   ProductAppDataSourceDisconnected,
   ProductAppDataSourceRegistered,
   ProductSetupCompleted,
@@ -351,6 +352,11 @@ export const updateProduct: CommandHandler<
  * deleted, never existed, or belongs to someone else — return success without
  * emitting a ProductDeleted event. This avoids leaking existence across users.
  */
+// TODO: wire up user notification when MCP OAuth refresh fails permanently
+export const handleMcpOAuthRefreshFailed: EventHandler<McpOAuthRefreshFailed> = async (_event) => {
+  return Result.ok(undefined)
+}
+
 export const deleteProduct: CommandHandler<
   DeleteProduct,
   DeleteProductResult,

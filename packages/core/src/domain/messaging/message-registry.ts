@@ -44,6 +44,7 @@ import {
   disconnectProductAppDataSourceSchema,
   getProductSetupStateSchema,
   listProductsSchema,
+  mcpOAuthRefreshFailedSchema,
   productCreatedSchema,
   productAppDataSourceDisconnectedSchema,
   productAppDataSourceRegisteredSchema,
@@ -136,6 +137,7 @@ export const domainEventSchema = z.discriminatedUnion('name', [
   stripeConnectionCreatedSchema,
   stripeConnectionRevokedSchema,
   stripeConnectionTokenRefreshedSchema,
+  mcpOAuthRefreshFailedSchema,
   r2EventSchema,
 ])
 

@@ -54,12 +54,10 @@ export type DisputeAgentContextState = {
 }
 
 export const DISPUTE_AGENT_CONTEXT_WINDOW = 256_000
-// TODO(context): restore after local compaction testing.
-// export const DISPUTE_AGENT_COMPACT_THRESHOLD = 0.8
-// export const DISPUTE_AGENT_COMPACT_AT_TOKENS = Math.floor(
-//   DISPUTE_AGENT_CONTEXT_WINDOW * DISPUTE_AGENT_COMPACT_THRESHOLD,
-// )
-export const DISPUTE_AGENT_COMPACT_AT_TOKENS = 40_000
+export const DISPUTE_AGENT_COMPACT_THRESHOLD = 0.8
+export const DISPUTE_AGENT_COMPACT_AT_TOKENS = Math.floor(
+  DISPUTE_AGENT_CONTEXT_WINDOW * DISPUTE_AGENT_COMPACT_THRESHOLD,
+)
 
 /**
  * Local tool estimate decision:

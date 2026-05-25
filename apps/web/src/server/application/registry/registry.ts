@@ -31,6 +31,7 @@ import {
   deleteProduct,
   disconnectProductAppDataSource,
   getProductSetupState,
+  handleMcpOAuthRefreshFailed,
   listProducts,
   notifyProductSetupChanged,
   readProductSetupSnapshot,
@@ -124,6 +125,9 @@ export const EVENT_HANDLERS = {
   ProductUpdated: [{ id: 'productSetup.notifyChanged', handle: notifyProductSetupChanged }],
   DisputePlaybookCreated: [{ id: 'productSetup.notifyChanged', handle: notifyProductSetupChanged }],
   ProductSetupCompleted: [{ id: 'productSetup.notifyChanged', handle: notifyProductSetupChanged }],
+  McpOAuthRefreshFailed: [
+    { id: 'product.handleMcpOAuthRefreshFailed', handle: handleMcpOAuthRefreshFailed },
+  ],
 } satisfies EventRegistry
 
 export const QUERY_HANDLERS = {

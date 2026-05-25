@@ -73,3 +73,11 @@ export const productEnabledSchema = baseEventSchema.extend({
 })
 
 export type ProductEnabled = z.infer<typeof productEnabledSchema>
+
+export const mcpOAuthRefreshFailedSchema = baseEventSchema.extend({
+  name: z.literal('McpOAuthRefreshFailed'),
+  productId: z.string().min(1),
+  mcpServerId: z.string().min(1),
+})
+
+export type McpOAuthRefreshFailed = z.infer<typeof mcpOAuthRefreshFailedSchema>

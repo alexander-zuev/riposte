@@ -66,14 +66,6 @@ export default defineConfig({
       },
       {
         extends: true,
-        test: {
-          name: 'node-unit',
-          dir: 'test/node-unit',
-          include: ['**/*.test.ts'],
-        },
-      },
-      {
-        extends: true,
         plugins: [cloudflareTestPlugin],
         test: {
           name: 'integration',

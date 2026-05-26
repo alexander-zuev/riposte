@@ -12,7 +12,6 @@
     "preview": "dotenvx run -- vite preview",
     "test": "vitest run --reporter=dot --silent",
     "test:unit": "vitest run --project unit --reporter=dot --silent",
-    "test:node-unit": "vitest run --project node-unit --reporter=dot --silent",
     "test:integration": "vitest run --project integration --reporter=dot --silent",
     "test:browser-e2e": "vitest run --project browser-e2e --reporter=dot --silent",
     "test:verbose": "vitest run",

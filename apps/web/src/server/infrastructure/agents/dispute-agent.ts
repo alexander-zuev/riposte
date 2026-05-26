@@ -1,20 +1,6 @@
 import { AIChatAgent, type OnChatMessageOptions } from '@cloudflare/ai-chat'
 import {
-  discoverOAuthServerInfo,
-  refreshAuthorization,
-  selectResourceURL,
-} from '@modelcontextprotocol/sdk/client/auth.js'
-import {
-  InvalidClientError,
-  InvalidGrantError,
-  ServerError,
-  TemporarilyUnavailableError,
-  TooManyRequestsError,
-  UnauthorizedClientError,
-} from '@modelcontextprotocol/sdk/server/auth/errors.js'
-import {
   createCommand,
-  createEvent,
   createLogger,
   createSentryOptions,
   InternalServerError,
@@ -51,14 +37,11 @@ import {
 } from '@server/infrastructure/agents/dispute-agent.tools'
 import {
   createMcpOAuthCallbackHandler,
-  loadMcpOAuthTokenSchedule,
+  type IMcpOAuthService,
+  McpOAuthService,
   removeMcpOAuthTokenExpiry,
   RiposteMcpOAuthProvider,
 } from '@server/infrastructure/agents/mcp-oauth'
-import {
-  computeNextMcpOAuthRefreshAt,
-  selectDueMcpOAuthRefreshServerIds,
-} from '@server/infrastructure/agents/mcp-oauth-refresh'
 import {
   createDisputeAgentModels,
   DISPUTE_AGENT_MODEL,
@@ -66,7 +49,6 @@ import {
 } from '@server/infrastructure/ai/model-factory'
 import type { IAnalyticsService } from '@server/infrastructure/analytics/analytics-service'
 import { createAppDeps, type AppDeps } from '@server/infrastructure/app-deps'
-import { isTransientError, RETRY } from '@server/infrastructure/resilience/retry'
 import type { AgentMcpOAuthProvider } from 'agents'
 import { estimateMessageTokens, estimateStringTokens } from 'agents/experimental/memory/utils'
 import {
@@ -148,25 +130,11 @@ const REFRESH_MCP_OAUTH_TOKENS_CALLBACK = 'refreshMcpOauthTokens'
 
 type PrepareMessagesError = InternalServerError
 
-type StoredMcpServerRow = {
-  id: string
-  name: string
-  server_url: string
-  client_id: string | null
-  auth_url: string | null
-  callback_url: string
-  server_options: string | null
-}
-
-type McpOAuthRefreshError = {
-  cause: unknown
-  retryable: boolean
-}
-
 class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps> {
   readonly deps: AppDeps
   private readonly models: DisputeAgentModels
   private readonly analytics: IAnalyticsService
+  private readonly mcpOAuth: IMcpOAuthService
 
   initialState: DisputeAgentState = {
     mode: 'setup',
@@ -191,6 +159,11 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
     this.deps = createAppDeps(env, state)
     this.models = createDisputeAgentModels(env)
     this.analytics = this.deps.services.analytics()
+    this.mcpOAuth = new McpOAuthService({
+      storage: state.storage,
+      productId: this.name,
+      queueClient: () => this.deps.services.queueClient(),
+    })
     // Refresh the FE estimate whenever MCP state transitions (server added,
     // OAuth completed, tools discovered, server removed). Per the SDK docs:
     // `onServerStateChanged is an Event<void>` returning a disposable.
@@ -203,7 +176,12 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
   }
 
   createMcpOAuthProvider(callbackUrl: string): AgentMcpOAuthProvider {
-    return new RiposteMcpOAuthProvider(this.ctx.storage, this.name, callbackUrl)
+    return new RiposteMcpOAuthProvider(
+      this.ctx.storage,
+      this.name,
+      callbackUrl,
+      (serverId, tokens, now) => this.mcpOAuth.saveTokenExpiry(serverId, tokens, now),
+    )
   }
 
   async onStart(props?: DisputeAgentProps): Promise<void> {
@@ -617,7 +595,7 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
     await Promise.all(
       Object.keys(servers).map(async (serverId) => {
         await this.removeMcpServer(serverId)
-        await removeMcpOAuthTokenExpiry(this.ctx.storage, serverId)
+        await this.mcpOAuth.removeTokenExpiry(serverId)
       }),
     )
     await this.scheduleNextMcpOAuthRefresh()
@@ -747,7 +725,7 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
     if (!server) return false
 
     await this.removeMcpServer(mcpServerId)
-    await removeMcpOAuthTokenExpiry(this.ctx.storage, mcpServerId)
+    await this.mcpOAuth.removeTokenExpiry(mcpServerId)
     await this.signalMcpDisconnected(server.name)
 
     if (!this.userId) {
@@ -780,10 +758,7 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
       }
     }
 
-    const schedule = await loadMcpOAuthTokenSchedule(this.ctx.storage)
-    if (!schedule) return
-
-    const nextAt = computeNextMcpOAuthRefreshAt(schedule)
+    const nextAt = await this.mcpOAuth.computeNextRefreshAt()
     if (nextAt) {
       await this.schedule(nextAt, REFRESH_MCP_OAUTH_TOKENS_CALLBACK)
     }
@@ -791,124 +766,10 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
 
   async refreshMcpOauthTokens(): Promise<void> {
     try {
-      const schedule = await loadMcpOAuthTokenSchedule(this.ctx.storage)
-      if (!schedule) return
-
-      const serverIds = selectDueMcpOAuthRefreshServerIds(schedule)
-
-      for (const serverId of serverIds) {
-        await this.refreshMcpOauthToken(serverId)
-      }
+      await this.mcpOAuth.refreshDueTokens()
     } finally {
       await this.scheduleNextMcpOAuthRefresh()
     }
-  }
-
-  private async refreshMcpOauthToken(serverId: string): Promise<void> {
-    const server = this.getStoredMcpServer(serverId)
-    if (!server) {
-      await removeMcpOAuthTokenExpiry(this.ctx.storage, serverId)
-      return
-    }
-
-    if (!server.client_id) {
-      logger.warn('mcp_oauth_refresh_no_client_id', { serverId, productId: this.name })
-      await this.emitMcpOAuthRefreshFailed(serverId)
-      return
-    }
-
-    const provider = new RiposteMcpOAuthProvider(this.ctx.storage, this.name, server.callback_url)
-    provider.serverId = server.id
-    provider.clientId = server.client_id
-
-    const [tokens, clientInformation] = await Promise.all([
-      provider.tokens(),
-      provider.clientInformation(),
-    ])
-
-    const refreshToken = tokens?.refresh_token
-    if (!refreshToken || !clientInformation) {
-      logger.warn('mcp_oauth_refresh_missing_credentials', { serverId, productId: this.name })
-      await this.emitMcpOAuthRefreshFailed(serverId)
-      return
-    }
-
-    const result = await Result.tryPromise(
-      {
-        try: async () => {
-          const info = await discoverOAuthServerInfo(server.server_url, { fetchFn: fetch })
-          const resource = await selectResourceURL(
-            server.server_url,
-            provider,
-            info.resourceMetadata,
-          )
-          const refreshed = await refreshAuthorization(info.authorizationServerUrl, {
-            metadata: info.authorizationServerMetadata,
-            clientInformation,
-            refreshToken,
-            resource,
-            fetchFn: fetch,
-          })
-          await provider.saveTokens(refreshed)
-        },
-        catch: (cause): McpOAuthRefreshError => ({
-          cause,
-          retryable: isRetryableMcpOAuthRefreshError(cause),
-        }),
-      },
-      RETRY.externalApi,
-    )
-
-    if (!result.isErr()) {
-      logger.debug('mcp_oauth_refresh_success', { serverId, productId: this.name })
-      return
-    }
-
-    logger.warn('mcp_oauth_refresh_failed', {
-      serverId,
-      productId: this.name,
-      cause: result.error.cause,
-      reauth: isReauthMcpOAuthRefreshError(result.error.cause),
-    })
-    await this.emitMcpOAuthRefreshFailed(serverId)
-  }
-
-  private async emitMcpOAuthRefreshFailed(serverId: string): Promise<void> {
-    await removeMcpOAuthTokenExpiry(this.ctx.storage, serverId)
-    const event = createEvent('McpOAuthRefreshFailed', {
-      productId: this.name,
-      mcpServerId: serverId,
-    })
-    const sent = await this.deps.services.queueClient().send(event)
-    if (sent.isErr()) {
-      logger.error('mcp_oauth_refresh_failed_event_send_error', {
-        serverId,
-        productId: this.name,
-        error: sent.error,
-      })
-    }
-  }
-
-  private getStoredMcpServer(serverId: string): StoredMcpServerRow | null {
-    const rows = this.ctx.storage.sql
-      .exec<StoredMcpServerRow>(
-        `
-          SELECT
-            id,
-            name,
-            server_url,
-            client_id,
-            auth_url,
-            callback_url,
-            server_options
-          FROM cf_agents_mcp_servers
-          WHERE id = ?
-        `,
-        serverId,
-      )
-      .toArray()
-
-    return rows[0] ?? null
   }
 
   async signalStripeConnected(): Promise<void> {
@@ -952,23 +813,6 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
       workflowName,
     })
   }
-}
-
-function isRetryableMcpOAuthRefreshError(cause: unknown): boolean {
-  if (isTransientError(cause)) return true
-  if (cause instanceof ServerError) return true
-  if (cause instanceof TemporarilyUnavailableError) return true
-  if (cause instanceof TooManyRequestsError) return true
-
-  return false
-}
-
-function isReauthMcpOAuthRefreshError(cause: unknown): boolean {
-  if (cause instanceof InvalidGrantError) return true
-  if (cause instanceof InvalidClientError) return true
-  if (cause instanceof UnauthorizedClientError) return true
-
-  return false
 }
 
 export const InstrumentedDisputeAgent = Sentry.instrumentDurableObjectWithSentry(

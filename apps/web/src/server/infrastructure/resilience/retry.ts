@@ -13,6 +13,7 @@ const TRANSIENT_ERROR_PATTERNS = [
   /timeout/,
   /timed?\s*out/,
   /connection.*(lost|reset|refused|closed|aborted)/,
+  /durable object storage write caused object to be reset/,
   /econnreset/,
   /econnrefused/,
   /etimedout/,

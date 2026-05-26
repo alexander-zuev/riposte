@@ -226,18 +226,27 @@ export class SlackApiError extends TaggedError('SlackApiError')<{
   }
 }
 
+export class McpOAuthRefreshError extends TaggedError('McpOAuthRefreshError')<{
+  message: string
+  cause: unknown
+  retryable: boolean
+}>() {
+  constructor(args: { cause: unknown; retryable: boolean; message?: string }) {
+    super({
+      message: args.message ?? 'MCP OAuth token refresh failed',
+      cause: args.cause,
+      retryable: args.retryable,
+    })
+  }
+}
+
 export class SearchError extends TaggedError('SearchError')<{
   message: string
   cause: unknown
   retryable: boolean
   status?: number
 }>() {
-  constructor(args: {
-    cause: unknown
-    retryable: boolean
-    message?: string
-    status?: number
-  }) {
+  constructor(args: { cause: unknown; retryable: boolean; message?: string; status?: number }) {
     super({
       message: args.message ?? 'Search failed',
       cause: args.cause,

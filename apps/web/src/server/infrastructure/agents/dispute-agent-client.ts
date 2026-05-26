@@ -7,10 +7,6 @@ import { Result } from 'better-result'
 const DISPUTE_AGENT_BINDING = 'DisputeAgent'
 const DISPUTE_AGENT_WORKFLOW_BINDING = 'DISPUTE_AGENT_WORKFLOW'
 
-// TODO(agent-scope): decide whether DisputeAgent DO names and workflow instances
-// should be user-scoped or product-scoped before app-data MCP setup becomes
-// durable product behavior.
-
 /** Build `getAgentByName` options. `props` is required so the DO's `onStart`
  * captures `userId` on first init — see `dispute-agent.ts`. `routingRetry`
  * handles transient DO routing blips; overloaded errors are skipped by the SDK. */
@@ -29,6 +25,7 @@ export type DisputeAgentWorkflowParams = {
 
 export type DisputeAgentWorkflowInput = {
   userId: string
+  productId: UUIDv4
   disputeCaseId: string
 }
 
@@ -115,6 +112,7 @@ export class DisputeAgentClient implements IDisputeAgentClient {
 
   async startWorkflow({
     userId,
+    productId,
     disputeCaseId,
   }: DisputeAgentWorkflowInput): Promise<Result<void, WorkflowError>> {
     const instanceId = disputeAgentWorkflowInstanceId(disputeCaseId)
@@ -124,7 +122,7 @@ export class DisputeAgentClient implements IDisputeAgentClient {
         try: async () => {
           const agent = await getAgentByName(
             this.env.DisputeAgent,
-            userId,
+            productId,
             disputeAgentOptions(userId),
           )
 
@@ -136,12 +134,13 @@ export class DisputeAgentClient implements IDisputeAgentClient {
               agentBinding: DISPUTE_AGENT_BINDING,
               metadata: {
                 disputeCaseId,
+                productId,
                 userId,
               },
             },
           )
 
-          logger.debug('start_workflow_succeeded', { disputeCaseId, instanceId, userId })
+          logger.debug('start_workflow_succeeded', { disputeCaseId, instanceId, productId, userId })
         },
         catch: (cause) =>
           new WorkflowError({
@@ -158,6 +157,7 @@ export class DisputeAgentClient implements IDisputeAgentClient {
 
   async pauseWorkflow({
     userId,
+    productId,
     disputeCaseId,
   }: DisputeAgentWorkflowInput): Promise<Result<void, WorkflowError>> {
     const instanceId = disputeAgentWorkflowInstanceId(disputeCaseId)
@@ -167,11 +167,11 @@ export class DisputeAgentClient implements IDisputeAgentClient {
         try: async () => {
           const agent = await getAgentByName(
             this.env.DisputeAgent,
-            userId,
+            productId,
             disputeAgentOptions(userId),
           )
           await agent.pauseWorkflow(instanceId)
-          logger.debug('pause_workflow_succeeded', { disputeCaseId, instanceId, userId })
+          logger.debug('pause_workflow_succeeded', { disputeCaseId, instanceId, productId, userId })
         },
         catch: (cause) =>
           new WorkflowError({
@@ -188,6 +188,7 @@ export class DisputeAgentClient implements IDisputeAgentClient {
 
   async resumeWorkflow({
     userId,
+    productId,
     disputeCaseId,
   }: DisputeAgentWorkflowInput): Promise<Result<void, WorkflowError>> {
     const instanceId = disputeAgentWorkflowInstanceId(disputeCaseId)
@@ -197,11 +198,16 @@ export class DisputeAgentClient implements IDisputeAgentClient {
         try: async () => {
           const agent = await getAgentByName(
             this.env.DisputeAgent,
-            userId,
+            productId,
             disputeAgentOptions(userId),
           )
           await agent.resumeWorkflow(instanceId)
-          logger.debug('resume_workflow_succeeded', { disputeCaseId, instanceId, userId })
+          logger.debug('resume_workflow_succeeded', {
+            disputeCaseId,
+            instanceId,
+            productId,
+            userId,
+          })
         },
         catch: (cause) =>
           new WorkflowError({
@@ -218,6 +224,7 @@ export class DisputeAgentClient implements IDisputeAgentClient {
 
   async terminateWorkflow({
     userId,
+    productId,
     disputeCaseId,
   }: DisputeAgentWorkflowInput): Promise<Result<void, WorkflowError>> {
     const instanceId = disputeAgentWorkflowInstanceId(disputeCaseId)
@@ -227,11 +234,16 @@ export class DisputeAgentClient implements IDisputeAgentClient {
         try: async () => {
           const agent = await getAgentByName(
             this.env.DisputeAgent,
-            userId,
+            productId,
             disputeAgentOptions(userId),
           )
           await agent.terminateWorkflow(instanceId)
-          logger.debug('terminate_workflow_succeeded', { disputeCaseId, instanceId, userId })
+          logger.debug('terminate_workflow_succeeded', {
+            disputeCaseId,
+            instanceId,
+            productId,
+            userId,
+          })
         },
         catch: (cause) =>
           new WorkflowError({

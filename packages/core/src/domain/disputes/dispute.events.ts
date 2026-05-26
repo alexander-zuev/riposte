@@ -9,6 +9,7 @@ import {
 export const disputeCaseReceivedSchema = baseEventSchema.extend({
   name: z.literal('DisputeCaseReceived'),
   disputeCaseId: z.string().min(1),
+  productId: z.uuidv4(),
   userId: z.string().min(1),
 })
 

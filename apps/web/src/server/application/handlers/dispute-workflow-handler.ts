@@ -75,6 +75,7 @@ export async function startDisputeAgentWorkflow(
 ): Promise<Result<void, DisputeAgentWorkflowHandlerError>> {
   const started = await deps.services.disputeAgentClient().startWorkflow({
     disputeCaseId: event.disputeCaseId,
+    productId: event.productId,
     userId: event.userId,
   })
   if (started.isErr()) return Result.err(started.error)

@@ -359,6 +359,37 @@ AI SDK:
   MCP readiness, and compaction logic in local unit suites; test only SDK integration semantics in
   AI SDK suites.
 
+Playwright E2E with AIMock:
+
+- Run with `pnpm --filter @riposte/web test:e2e`; headed/debug runs use
+  `pnpm --filter @riposte/web test:e2e:ui`.
+- `apps/web/playwright.config.ts` owns two `webServer` entries: AIMock first, then the real Vite /
+  TanStack Start app. Do not replace this with Vitest browser mode for app E2E.
+- Start AIMock with `pnpm exec aimock --config aimock.config.json`, not `llmock`. The app reaches it
+  through `AI_MOCK_BASE_URL` in the `wrangler.jsonc` `test` env.
+- The app server command must keep `CLOUDFLARE_ENV=test` so Workers bindings/vars come from the
+  Wrangler `test` environment. Do not invent a Vite mode such as `--mode e2e`; server config rejects
+  unknown modes.
+- `.env.test` is for fake secrets only (`BETTER_AUTH_SECRET`, OAuth client secrets, Stripe test
+  secrets, `E2E_DATABASE_URL`, etc.). Non-secret values such as client IDs, `APP_URL`, and
+  `AI_MOCK_BASE_URL` belong in `wrangler.jsonc` under `env.test.vars`.
+- Authenticate through the real Better Auth endpoint in the browser test:
+  `page.request.post('/api/auth/sign-up/email', { headers: { origin: VITE_APP_URL,
+  'x-captcha-response': 'XXXX.DUMMY.TOKEN.XXXX' } })`. Do not manually construct Better Auth
+  cookies.
+- If a protected page redirects to `/sign-in`, debug auth/session wiring first. It usually means the
+  app server env and the test request env are not aligned.
+- Create products through `/products/new` in E2E tests unless the test explicitly targets a lower
+  layer. This caught the transaction/agent-priming race where the Durable Object read product setup
+  before the product transaction committed.
+- Do not add production hydration markers only for tests. Prefer Playwright locators and UI-visible
+  readiness (`getByLabel`, `getByRole`, connected state, URL navigation).
+- AIMock fixtures live under `apps/web/test/e2e/aimock/`. Use explicit prompt sentinels like
+  `E2E_CHAT_STREAMS_AND_PERSISTS`; for tool loops use one fixture with `hasToolResult: false`
+  returning `toolCalls`, and one with `hasToolResult: true` returning final text.
+- Keep E2E workers at `1` unless fixtures and database cleanup are explicitly isolated for parallel
+  runs. Clean up rows by the unique test user/product IDs only.
+
 Workers AI (`AI`):
 
 - Local simulation is not available; Cloudflare recommends `remote: true`.

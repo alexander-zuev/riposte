@@ -3,6 +3,7 @@ import { existsSync } from 'node:fs'
 import { defineConfig, devices } from '@playwright/test'
 
 const port = 3137
+const aiMockPort = 41234
 const baseURL = `http://localhost:${port}`
 const chromeExecutablePath = [
   '/usr/bin/google-chrome',
@@ -35,11 +36,20 @@ export default defineConfig({
       },
     },
   ],
-  webServer: {
-    command: `CLOUDFLARE_ENV=test pnpm exec dotenvx run -f .env.test -- vite --host localhost --port ${port} --strictPort`,
-    cwd: import.meta.dirname,
-    url: baseURL,
-    reuseExistingServer: !process.env.CI,
-    timeout: 90_000,
-  },
+  webServer: [
+    {
+      command: `pnpm exec aimock --config aimock.config.json --host 127.0.0.1 --port ${aiMockPort}`,
+      cwd: import.meta.dirname,
+      url: `http://127.0.0.1:${aiMockPort}/v1/models`,
+      reuseExistingServer: false,
+      timeout: 30_000,
+    },
+    {
+      command: `CLOUDFLARE_ENV=test pnpm exec dotenvx run -f .env.test -- vite --host localhost --port ${port} --strictPort`,
+      cwd: import.meta.dirname,
+      url: baseURL,
+      reuseExistingServer: !process.env.CI,
+      timeout: 90_000,
+    },
+  ],
 })

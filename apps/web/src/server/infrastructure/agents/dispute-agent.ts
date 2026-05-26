@@ -785,7 +785,6 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
     await this.ctx.storage.put(PRIME_PRODUCT_SETUP_STORAGE_KEY, args)
     await this.clearConversation()
     await this.persistMessages([buildProductSetupWelcomeMessage(args)])
-    await this.refreshContextEstimate()
   }
 
   private async clearConversation(): Promise<void> {

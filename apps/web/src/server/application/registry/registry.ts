@@ -112,6 +112,7 @@ export const EVENT_HANDLERS = {
     { id: 'stripeApp.fanOutScheduledDisputeSync', handle: fanOutScheduledDisputeSync },
   ],
   UserSignedUp: [{ id: 'auth.handleUserSignedUp', handle: handleUserSignedUp }],
+  ProductCreated: [{ id: 'productSetup.notifyChanged', handle: notifyProductSetupChanged }],
   StripeConnectionCreated: [
     { id: 'agent.signalStripeConnected', handle: handleStripeConnectionCreated },
     { id: 'productSetup.notifyChanged', handle: notifyProductSetupChanged },

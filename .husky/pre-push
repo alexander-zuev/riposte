@@ -1,2 +1,3 @@
 pnpm turbo run build --ui stream
 pnpm test:integration
+pnpm test:e2e

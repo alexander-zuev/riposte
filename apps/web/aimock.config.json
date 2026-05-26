@@ -1,0 +1,8 @@
+{
+  "host": "127.0.0.1",
+  "port": 41234,
+  "strict": true,
+  "llm": {
+    "fixtures": "test/e2e/aimock"
+  }
+}

@@ -18,6 +18,7 @@ import type {
   McpOAuthRefreshFailed,
   ProductAppDataSourceDisconnected,
   ProductAppDataSourceRegistered,
+  ProductCreated,
   ProductSetupCompleted,
   ProductUpdated,
   ReadProductSetupSnapshot,
@@ -43,6 +44,7 @@ import { Result } from 'better-result'
 const logger = createLogger('product-handler')
 
 type ProductSetupChangedEvent =
+  | ProductCreated
   | StripeConnectionCreated
   | ProductAppDataSourceRegistered
   | ProductAppDataSourceDisconnected

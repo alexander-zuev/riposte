@@ -138,7 +138,7 @@ export function createBetterAuthOptions(
             })
           : ({} as any),
         stripeWebhookSecret: config?.stripeWebhookSecret ?? '',
-        createCustomerOnSignUp: !!config,
+        createCustomerOnSignUp: !!config && config.mode !== 'test',
         onCustomerCreate: stripeCustomerHooks?.onCustomerCreate,
         onEvent: stripeCustomerHooks?.onEvent,
       }),

@@ -83,13 +83,14 @@ We only need read access. Riposte never writes to merchant data.`,
    Explore the merchant's website (homepage, pricing, ToS, refund/cancellation pages) via webSearch and fetchUrl. Draft these fields, present in chat for merchant review and edit, then save with saveProductEvidenceFields after approval.
 
 2. The dispute-defense playbook (versioned markdown loaded as system prompt for every future dispute against this product). Sections (per spec):
-   - Customer matching
-   - Activity sources
-   - Cancellation detection
-   - Refund request detection
-   - Visual deliverables
-   - Strongest signals
-   - Gotchas
+   - Customer matching: verify the strict join from Stripe \`charge.customer\` / Customer \`cus_...\` to the merchant app's stored \`stripe_customer_id\`. Email is evidence context, not the identity join. If the app does not store Stripe customer ids, mark this as a blocker.
+   - Identity facts: define where the runtime gets app-side packet context after the strict match: accountCreatedAt and lastActiveAt. Email, totalAmountPaid, and lastPaymentAt come from prepared Stripe context, not merchant data. Do not ask the merchant to define Stripe billing fields in the playbook.
+   - Activity sources: define where successful product-use or delivery events live, how to filter them by matched appUserId, which timestamp/status/action fields matter, which statuses count as delivered/successful, which rows do not count, and how to derive lastActiveAt. Also define 1-3 service-use summary facts and the table columns the runtime should collect for the newest/strongest rows.
+   - Cancellation detection: define where cancellation state or cancellation requests live, including Stripe subscription status/canceled_at when relevant and any merchant app/support source. Specify how to query by matched appUserId, Stripe customer id, subscription id, or customer email; what counts as a cancellation request; how to detect active use after cancellation; and what the runtime may write in cancellationRebuttal when no cancellation request is found.
+   - Refund request detection: define where refund requests live, including Stripe refunds and any merchant app/support source. Specify how to query by matched appUserId, Stripe customer id, charge id, or customer email; what counts as a refund request; what means “not found”; and what the runtime may write in refundRefusalExplanation when no refund request is found.
+   - Visual deliverables: decide whether this product has concrete customer-facing artifacts such as images, PDFs, exports, reports, generated files, or other deliverables. If yes, define where they live, how to filter by matched appUserId, title/url/thumbnail/timestamp fields, safe inclusion rules, and max sample count. If no, write that this product has no visual deliverables.
+   - Evidence emphasis: define which verified facts the runtime should prioritize in uncategorizedText, and which facts are weak/noisy for this product.
+   - Known constraints: optional max 7 actionable runtime guardrails, such as exclude rules, mapping caveats, stale/missing data warnings, multi-user/account ownership caveats, artifact URL caveats, or migration caveats. Do not write generic advice or product narrative.
 
    Draft the playbook by walking through one real recent dispute end-to-end (synthesize from the latest successful charge if no real dispute qualifies). Use the connected MCP tools to query actual activity during the walkthrough.
    When saving, provide structured playbookVerification to the saveDisputePlaybook tool:

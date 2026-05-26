@@ -19,6 +19,7 @@ export function getServerConfig() {
   const mode = env.ENV as Mode
   const baseConfig = {
     appUrl: env.APP_URL as string,
+    authSecret: env.BETTER_AUTH_SECRET,
 
     google: {
       clientId: env.GOOGLE_CLIENT_ID as string,

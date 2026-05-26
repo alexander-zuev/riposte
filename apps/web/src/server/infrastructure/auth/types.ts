@@ -27,6 +27,7 @@ export interface RateLimiterStub {
 export interface AuthConfig {
   mode: Mode
   baseURL: string
+  secret: string
 
   googleClientId: string
   googleClientSecret: string

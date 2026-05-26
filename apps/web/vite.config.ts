@@ -9,12 +9,13 @@ import { defineConfig } from 'vite'
 export default defineConfig(() => {
   const hasSentrySourcemapAuthToken =
     typeof process.env.SENTRY_AUTH_TOKEN === 'string' && process.env.SENTRY_AUTH_TOKEN.length > 0
+  const isTest = process.env.CLOUDFLARE_ENV === 'test'
 
   return {
     plugins: [
       cloudflare({
         viteEnvironment: { name: 'ssr' },
-        tunnel: { name: 'riposte-dev', autoStart: true },
+        tunnel: isTest ? false : { name: 'riposte-dev', autoStart: true },
       }),
       ...tanstackStart({
         router: {

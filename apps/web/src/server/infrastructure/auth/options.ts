@@ -14,6 +14,7 @@ const TRUSTED_ORIGINS: Record<string, string[]> = {
   production: ['https://riposte.sh'],
   staging: ['https://staging.riposte.sh'],
   development: ['http://localhost:3000', 'https://tunnel.riposte.sh'],
+  test: ['http://localhost:3137'],
 }
 
 export function createBetterAuthOptions(
@@ -32,6 +33,7 @@ export function createBetterAuthOptions(
   return {
     appName: 'riposte',
     baseURL: config?.baseURL,
+    secret: config?.secret,
     basePath: '/api/auth',
     database,
 
@@ -60,7 +62,10 @@ export function createBetterAuthOptions(
 
     databaseHooks,
 
-    trustedOrigins: TRUSTED_ORIGINS[config?.mode ?? ''] ?? [],
+    trustedOrigins: [
+      ...(TRUSTED_ORIGINS[config?.mode ?? ''] ?? []),
+      ...(config?.baseURL ? [config.baseURL] : []),
+    ],
 
     advanced: {
       database: {
@@ -72,7 +77,7 @@ export function createBetterAuthOptions(
       ...(config && {
         backgroundTasks: { handler: config.waitUntil },
       }),
-      ...(config?.mode === 'development' && {
+      ...((config?.mode === 'development' || config?.mode === 'test') && {
         defaultCookieAttributes: {
           sameSite: 'lax' as const,
           secure: false,

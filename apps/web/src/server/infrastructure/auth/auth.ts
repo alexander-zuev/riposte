@@ -18,6 +18,7 @@ export function getAuthInstance(plugins?: BetterAuthOptions['plugins']) {
   const config: AuthConfig = {
     mode: cfg.mode,
     baseURL: cfg.appUrl,
+    secret: cfg.authSecret,
     googleClientId: cfg.google.clientId,
     googleClientSecret: cfg.google.clientSecret,
     githubClientId: cfg.github.clientId,

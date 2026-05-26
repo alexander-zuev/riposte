@@ -62,8 +62,10 @@ export type FraudDigitalStripeEvidencePayload = {
 export type EvidenceQuality = 'low' | 'medium' | 'high'
 
 export type CollectedDisputeEvidence = {
-  accessActivityLog: string | null
-  merchantPosition: string | null
+  accessActivityLogText: string | null
+  uncategorizedText: string | null
+  refundRefusalExplanation: string | null
+  cancellationRebuttal: string | null
 }
 
 export type DisputeEvidencePacketSnapshot = {
@@ -309,13 +311,13 @@ function buildFraudDigitalStripeEvidencePayload(
     billing_address: stripeEvidenceString(caseSnapshot.evidence.billing_address),
     refund_policy_disclosure: null,
     cancellation_policy_disclosure: null,
-    refund_refusal_explanation: null,
-    cancellation_rebuttal: null,
+    refund_refusal_explanation: nonEmptyString(input.collectedEvidence?.refundRefusalExplanation),
+    cancellation_rebuttal: nonEmptyString(input.collectedEvidence?.cancellationRebuttal),
     customer_purchase_ip: caseSnapshot.customerPurchaseIp,
     customer_name: customerName,
     customer_email_address: customerEmail,
-    access_activity_log: nonEmptyString(input.collectedEvidence?.accessActivityLog),
-    uncategorized_text: nonEmptyString(input.collectedEvidence?.merchantPosition),
+    access_activity_log: nonEmptyString(input.collectedEvidence?.accessActivityLogText),
+    uncategorized_text: nonEmptyString(input.collectedEvidence?.uncategorizedText),
   }
 }
 

@@ -75,10 +75,12 @@ function buildDevFraudEvidencePdfPreview(category: DevEvidencePdfCategory): DevE
     disputeCase,
     disputeContext,
     collectedEvidence: {
-      accessActivityLog:
+      accessActivityLogText:
         'The customer account accessed the digital service after payment. Server activity shows authenticated access from a consistent device and network profile after the charge succeeded.',
-      merchantPosition:
+      uncategorizedText:
         'Based on payment method verification, customer identity signals, account access, and prior transaction history, the evidence supports that the legitimate cardholder authorized and used the purchased service.',
+      refundRefusalExplanation: null,
+      cancellationRebuttal: null,
     },
     previousPacket: null,
   })

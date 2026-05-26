@@ -476,6 +476,27 @@ export class DisputeCase extends Entity<DisputeCaseSnapshot> {
     this.touch(now)
   }
 
+  finishEvidenceCollection(
+    input: {
+      workflowInstanceId: string
+      action: 'collected' | 'awaiting_human'
+    },
+    now: Date = new Date(),
+  ): Result<void, ValidationError> {
+    this.ensureStatus(['collecting_evidence'], 'finish evidence collection')
+
+    this.addEvent(
+      createEvent('DisputeEvidenceCollectionFinished', {
+        disputeCaseId: this.id,
+        workflowInstanceId: requireNonBlank(input.workflowInstanceId, 'workflowInstanceId'),
+        action: input.action,
+      }),
+    )
+    this.touch(now)
+
+    return Result.ok(undefined)
+  }
+
   awaitTriageReview(code: ContestDecisionCode, now: Date = new Date()): void {
     this.ensureStatus(['evaluated', 'collecting_evidence'], 'await triage review')
     this.state = {

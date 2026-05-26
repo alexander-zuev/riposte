@@ -17,9 +17,14 @@ import { NonRetryableError } from 'cloudflare:workflows'
 
 const logger = createLogger('dispute-agent-workflow')
 const DISPUTE_HUMAN_RESPONSE_EVENT = 'dispute_human_response'
+const DISPUTE_EVIDENCE_COLLECTION_FINISHED_EVENT = 'dispute_evidence_collection_finished'
 const SUBMISSION_APPROVAL_WAIT_EVENT = {
   type: DISPUTE_HUMAN_RESPONSE_EVENT,
   timeout: '7 days',
+} as const
+const EVIDENCE_COLLECTION_WAIT_EVENT = {
+  type: DISPUTE_EVIDENCE_COLLECTION_FINISHED_EVENT,
+  timeout: '30 minutes',
 } as const
 
 const internalStepConfig = {
@@ -105,17 +110,23 @@ class DisputeAgentWorkflow extends AgentWorkflow<DisputeAgentType, DisputeAgentW
       return unwrapWorkflowStepResult('enrich dispute context', result)
     })
 
-    const collected = await step.do('collect evidence', externalStepConfig, async () => {
+    await step.do('start evidence collection', internalStepConfig, async () => {
       const command = createCommand(
-        'CollectDisputeEvidence',
-        { disputeCaseId },
+        'StartDisputeEvidenceCollection',
+        { disputeCaseId, workflowInstanceId: event.instanceId },
         `workflow:${event.instanceId}:collect-evidence`,
       )
       const result = await this.deps.services.messageBus().handle(command)
-      return unwrapWorkflowStepResult('collect evidence', result)
+      return unwrapWorkflowStepResult('start evidence collection', result)
     })
 
-    if (collected.action !== 'collected') return { disputeCaseId }
+    const collected = await step.waitForEvent<{
+      action: 'collected' | 'awaiting_human'
+      disputeCaseId: string
+    }>('wait for evidence collection', EVIDENCE_COLLECTION_WAIT_EVENT)
+
+    // TODO(HITL): persist/surface the evidence blocker and resume from explicit merchant input.
+    if (collected.payload.action !== 'collected') return { disputeCaseId }
 
     const packet = await step.do('generate evidence packet', externalStepConfig, async () => {
       const command = createCommand(

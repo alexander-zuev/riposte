@@ -29,6 +29,19 @@ export type DisputeAgentWorkflowInput = {
   disputeCaseId: string
 }
 
+export type SendEvidenceCollectionWorkflowEventInput = DisputeAgentWorkflowInput & {
+  workflowInstanceId: string
+  action: 'collected' | 'awaiting_human'
+}
+
+export type StartEvidenceCollectionInput = DisputeAgentWorkflowInput & {
+  workflowInstanceId: string
+}
+
+export type StartEvidenceCollectionResult = {
+  fiberId: string
+}
+
 export type PrimeProductSetupInput = {
   userId: UUIDv4
   productId: UUIDv4
@@ -73,6 +86,12 @@ export interface IDisputeAgentClient {
   pauseWorkflow: (input: DisputeAgentWorkflowInput) => Promise<Result<void, WorkflowError>>
   resumeWorkflow: (input: DisputeAgentWorkflowInput) => Promise<Result<void, WorkflowError>>
   terminateWorkflow: (input: DisputeAgentWorkflowInput) => Promise<Result<void, WorkflowError>>
+  startEvidenceCollection: (
+    input: StartEvidenceCollectionInput,
+  ) => Promise<Result<StartEvidenceCollectionResult, DOUnreachableError>>
+  sendEvidenceCollectionWorkflowEvent: (
+    input: SendEvidenceCollectionWorkflowEventInput,
+  ) => Promise<Result<void, WorkflowError>>
   /**
    * Saves the product setup welcome message into the per-product DisputeAgent DO so
    * the chat is populated before the merchant opens /agent. Idempotent on the DO
@@ -250,6 +269,78 @@ export class DisputeAgentClient implements IDisputeAgentClient {
             operation: 'terminate',
             workflowName: DISPUTE_AGENT_WORKFLOW_BINDING,
             instanceId,
+            cause,
+            retryable: isTransientError(cause),
+          }),
+      },
+      RETRY.transient,
+    )
+  }
+
+  async startEvidenceCollection({
+    userId,
+    productId,
+    disputeCaseId,
+    workflowInstanceId,
+  }: StartEvidenceCollectionInput): Promise<
+    Result<StartEvidenceCollectionResult, DOUnreachableError>
+  > {
+    return Result.tryPromise({
+      try: async () => {
+        const agent = await getAgentByName(
+          this.env.DisputeAgent,
+          productId,
+          disputeAgentOptions(userId as UUIDv4),
+        )
+        const receipt = await agent.startEvidenceCollection({
+          disputeCaseId,
+          workflowInstanceId,
+        })
+        logger.debug('start_evidence_collection_succeeded', {
+          disputeCaseId,
+          fiberId: receipt.fiberId,
+          instanceId: workflowInstanceId,
+          productId,
+          userId,
+        })
+        return receipt
+      },
+      catch: (cause) => new DOUnreachableError({ cause, retryable: isTransientError(cause) }),
+    })
+  }
+
+  async sendEvidenceCollectionWorkflowEvent({
+    userId,
+    productId,
+    disputeCaseId,
+    workflowInstanceId,
+    action,
+  }: SendEvidenceCollectionWorkflowEventInput): Promise<Result<void, WorkflowError>> {
+    return Result.tryPromise(
+      {
+        try: async () => {
+          const agent = await getAgentByName(
+            this.env.DisputeAgent,
+            productId,
+            disputeAgentOptions(userId as UUIDv4),
+          )
+          await agent.sendWorkflowEvent(workflowInstanceId, {
+            type: 'dispute_evidence_collection_finished',
+            payload: { action, disputeCaseId },
+          })
+          logger.debug('evidence_collection_workflow_event_sent', {
+            action,
+            disputeCaseId,
+            instanceId: workflowInstanceId,
+            productId,
+            userId,
+          })
+        },
+        catch: (cause) =>
+          new WorkflowError({
+            operation: 'send_event',
+            workflowName: DISPUTE_AGENT_WORKFLOW_BINDING,
+            instanceId: workflowInstanceId,
             cause,
             retryable: isTransientError(cause),
           }),

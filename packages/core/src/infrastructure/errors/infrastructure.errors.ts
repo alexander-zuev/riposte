@@ -43,14 +43,14 @@ export class DOUnreachableError extends TaggedError('DOUnreachableError')<{
 
 export class WorkflowError extends TaggedError('WorkflowError')<{
   message: string
-  operation: 'start' | 'status' | 'pause' | 'resume' | 'terminate'
+  operation: 'start' | 'status' | 'pause' | 'resume' | 'terminate' | 'send_event'
   workflowName: string
   instanceId: string
   cause: unknown
   retryable: boolean
 }>() {
   constructor(args: {
-    operation: 'start' | 'status' | 'pause' | 'resume' | 'terminate'
+    operation: 'start' | 'status' | 'pause' | 'resume' | 'terminate' | 'send_event'
     workflowName: string
     instanceId: string
     cause: unknown

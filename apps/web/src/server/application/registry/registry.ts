@@ -8,12 +8,14 @@ import { getChatMessages } from '@server/application/handlers/chat-handler'
 import { getConnectionsStatus } from '@server/application/handlers/connection-handler'
 import { listDisputeCases } from '@server/application/handlers/dispute-case-handler'
 import {
-  collectDisputeEvidence,
+  completeDisputeEvidenceCollection,
   decideDisputeSubmissionPolicy,
   enrichDisputeContext,
   failDisputeCase,
   generateEvidencePacket,
   handleDisputeSubmissionApprovalResponse,
+  sendEvidenceCollectionWorkflowEvent,
+  startDisputeEvidenceCollection,
   startDisputeAgentWorkflow,
   submitDisputeResponse,
   triageDisputeCaseHandler,
@@ -82,7 +84,8 @@ export const COMMAND_HANDLERS = {
   SetNotificationChannelPreference: setNotificationChannelPreference,
   TriageDisputeCase: triageDisputeCaseHandler,
   EnrichDisputeContext: enrichDisputeContext,
-  CollectDisputeEvidence: collectDisputeEvidence,
+  StartDisputeEvidenceCollection: startDisputeEvidenceCollection,
+  CompleteDisputeEvidenceCollection: completeDisputeEvidenceCollection,
   GenerateEvidencePacket: generateEvidencePacket,
   DecideDisputeSubmissionPolicy: decideDisputeSubmissionPolicy,
   SubmitDisputeResponse: submitDisputeResponse,
@@ -107,6 +110,12 @@ export const EVENT_HANDLERS = {
   ],
   DisputeCaseFailed: [
     { id: 'notifications.notifyOnDisputeCaseFailed', handle: notifyOnDisputeCaseFailed },
+  ],
+  DisputeEvidenceCollectionFinished: [
+    {
+      id: 'dispute.sendEvidenceCollectionWorkflowEvent',
+      handle: sendEvidenceCollectionWorkflowEvent,
+    },
   ],
   ScheduledDisputeSyncDue: [
     { id: 'stripeApp.fanOutScheduledDisputeSync', handle: fanOutScheduledDisputeSync },

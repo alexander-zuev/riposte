@@ -57,8 +57,15 @@ export const enrichDisputeContextSchema = disputeWorkflowCommandBase.extend({
   name: z.literal('EnrichDisputeContext'),
 })
 
-export const collectDisputeEvidenceSchema = disputeWorkflowCommandBase.extend({
-  name: z.literal('CollectDisputeEvidence'),
+export const startDisputeEvidenceCollectionSchema = disputeWorkflowCommandBase.extend({
+  name: z.literal('StartDisputeEvidenceCollection'),
+  workflowInstanceId: z.string().min(1),
+})
+
+export const completeDisputeEvidenceCollectionSchema = disputeWorkflowCommandBase.extend({
+  name: z.literal('CompleteDisputeEvidenceCollection'),
+  workflowInstanceId: z.string().min(1),
+  action: z.enum(['collected', 'awaiting_human']),
 })
 
 export const generateEvidencePacketSchema = disputeWorkflowCommandBase.extend({
@@ -113,7 +120,10 @@ export const failDisputeCaseSchema = disputeWorkflowCommandBase.extend({
 
 export type TriageDisputeCase = z.infer<typeof triageDisputeCaseSchema>
 export type EnrichDisputeContext = z.infer<typeof enrichDisputeContextSchema>
-export type CollectDisputeEvidence = z.infer<typeof collectDisputeEvidenceSchema>
+export type StartDisputeEvidenceCollection = z.infer<typeof startDisputeEvidenceCollectionSchema>
+export type CompleteDisputeEvidenceCollection = z.infer<
+  typeof completeDisputeEvidenceCollectionSchema
+>
 export type GenerateEvidencePacket = z.infer<typeof generateEvidencePacketSchema>
 export type DecideDisputeSubmissionPolicy = z.infer<typeof decideDisputeSubmissionPolicySchema>
 export type SubmitDisputeResponse = z.infer<typeof submitDisputeResponseSchema>

@@ -87,6 +87,11 @@ type PrimeProductSetupArgs = {
   connectStripeUrl: string
 }
 
+type StartEvidenceCollectionArgs = {
+  disputeCaseId: string
+  workflowInstanceId: string
+}
+
 function buildProductSetupWelcomeMessage(args: PrimeProductSetupArgs): UIMessage<never> {
   return {
     id: 'welcome',
@@ -614,6 +619,48 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
   async signalProductSetupChanged(setupChangeId: string): Promise<void> {
     this.setState({ ...this.state, setupChangeId })
     await this.refreshContextEstimate()
+  }
+
+  async startEvidenceCollection(args: StartEvidenceCollectionArgs): Promise<{ fiberId: string }> {
+    const receipt = await this.startFiber(
+      'collect-dispute-evidence',
+      async () => {
+        await this.runEvidenceCollection(args)
+      },
+      {
+        metadata: {
+          disputeCaseId: args.disputeCaseId,
+          workflowInstanceId: args.workflowInstanceId,
+        },
+      },
+    )
+    return { fiberId: receipt.fiberId }
+  }
+
+  private async runEvidenceCollection(args: StartEvidenceCollectionArgs): Promise<void> {
+    // STUB
+    await this.completeEvidenceCollectionTool(args)
+  }
+
+  private async completeEvidenceCollectionTool(args: StartEvidenceCollectionArgs): Promise<void> {
+    const command = createCommand(
+      'CompleteDisputeEvidenceCollection',
+      {
+        disputeCaseId: args.disputeCaseId,
+        workflowInstanceId: args.workflowInstanceId,
+        action: 'collected',
+      },
+      `agent:${this.name}:collect-evidence:${args.disputeCaseId}:complete`,
+    )
+    const result = await this.deps.services.messageBus().handle(command)
+    if (result.isErr()) {
+      logger.error('dispute_evidence_collection_stub_complete_failed', {
+        disputeCaseId: args.disputeCaseId,
+        error: result.error,
+        productId: this.name,
+        workflowInstanceId: args.workflowInstanceId,
+      })
+    }
   }
 
   async getReadyMcpServer(serverId: string): Promise<ReadyMcpServerResult> {

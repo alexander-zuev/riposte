@@ -24,7 +24,7 @@ type ActivityFeedProps = {
 export function ActivityFeed({ entries, emptyTitle, emptyMessage }: ActivityFeedProps) {
   if (entries.length === 0) {
     return (
-      <section className="flex flex-col items-center gap-2 border border-dashed bg-surface px-6 py-12 text-center">
+      <section className="flex flex-col items-center gap-2 bg-surface px-6 py-12 text-center">
         <SparkleIcon weight="duotone" className="size-8 text-muted-foreground" />
         <strong>{emptyTitle}</strong>
         <small className="text-muted-foreground">{emptyMessage}</small>

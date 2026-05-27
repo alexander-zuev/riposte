@@ -324,7 +324,7 @@ export class DisputeAgentClient implements IDisputeAgentClient {
             productId,
             disputeAgentOptions(userId as UUIDv4),
           )
-          await agent.sendWorkflowEvent(workflowInstanceId, {
+          await agent.sendWorkflowEvent(DISPUTE_AGENT_WORKFLOW_BINDING, workflowInstanceId, {
             type: 'dispute_evidence_collection_finished',
             payload: { action, disputeCaseId },
           })

@@ -64,8 +64,6 @@ export const startDisputeEvidenceCollectionSchema = disputeWorkflowCommandBase.e
 
 export const completeDisputeEvidenceCollectionSchema = disputeWorkflowCommandBase.extend({
   name: z.literal('CompleteDisputeEvidenceCollection'),
-  workflowInstanceId: z.string().min(1),
-  action: z.enum(['collected', 'awaiting_human']),
 })
 
 export const generateEvidencePacketSchema = disputeWorkflowCommandBase.extend({

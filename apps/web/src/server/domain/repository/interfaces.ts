@@ -16,6 +16,7 @@ import type { ProductAppDataSource } from '@server/domain/app-data-sources'
 import type { DisputePlaybook } from '@server/domain/dispute-playbooks'
 import type {
   DisputeCase,
+  DisputeCollectedEvidence,
   DisputeEvidencePacket,
   StripeDisputeContext,
 } from '@server/domain/disputes'
@@ -88,6 +89,15 @@ export interface IDisputeCaseRepository {
     input: Omit<ListDisputeCases, 'type' | 'name'>,
   ) => Promise<Result<DisputeCaseListPage, DatabaseError>>
   save: (disputeCase: DisputeCase) => Promise<Result<DisputeCase, DatabaseError>>
+}
+
+export interface IDisputeCollectedEvidenceRepository {
+  findByDisputeCaseId: (
+    disputeCaseId: string,
+  ) => Promise<Result<DisputeCollectedEvidence | null, DatabaseError>>
+  save: (
+    evidence: DisputeCollectedEvidence,
+  ) => Promise<Result<DisputeCollectedEvidence, DatabaseError>>
 }
 
 /* -------------------------------------------------------------------------------------------------

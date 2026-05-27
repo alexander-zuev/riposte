@@ -45,15 +45,23 @@ export const disputeEvidencePacketCreatedSchema = baseEventSchema.extend({
 
 export type DisputeEvidencePacketCreated = z.infer<typeof disputeEvidencePacketCreatedSchema>
 
-export const disputeEvidenceCollectionFinishedSchema = baseEventSchema.extend({
-  name: z.literal('DisputeEvidenceCollectionFinished'),
+export const disputeEvidenceCollectionCompletedSchema = baseEventSchema.extend({
+  name: z.literal('DisputeEvidenceCollectionCompleted'),
   disputeCaseId: z.string().min(1),
-  workflowInstanceId: z.string().min(1),
-  action: z.enum(['collected', 'awaiting_human']),
 })
 
-export type DisputeEvidenceCollectionFinished = z.infer<
-  typeof disputeEvidenceCollectionFinishedSchema
+export type DisputeEvidenceCollectionCompleted = z.infer<
+  typeof disputeEvidenceCollectionCompletedSchema
+>
+
+export const disputeEvidenceCollectionNeedsInputSchema = baseEventSchema.extend({
+  name: z.literal('DisputeEvidenceCollectionNeedsInput'),
+  disputeCaseId: z.string().min(1),
+  missingInputs: z.array(z.string().min(1)),
+})
+
+export type DisputeEvidenceCollectionNeedsInput = z.infer<
+  typeof disputeEvidenceCollectionNeedsInputSchema
 >
 
 export const scheduledDisputeSyncDueSchema = baseEventSchema.extend({

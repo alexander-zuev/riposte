@@ -30,8 +30,7 @@ export type DisputeAgentWorkflowInput = {
 }
 
 export type SendEvidenceCollectionWorkflowEventInput = DisputeAgentWorkflowInput & {
-  workflowInstanceId: string
-  action: 'collected' | 'awaiting_human'
+  outcome: 'completed' | 'needs_input'
 }
 
 export type StartEvidenceCollectionInput = DisputeAgentWorkflowInput & {
@@ -313,9 +312,10 @@ export class DisputeAgentClient implements IDisputeAgentClient {
     userId,
     productId,
     disputeCaseId,
-    workflowInstanceId,
-    action,
+    outcome,
   }: SendEvidenceCollectionWorkflowEventInput): Promise<Result<void, WorkflowError>> {
+    const workflowInstanceId = disputeAgentWorkflowInstanceId(disputeCaseId)
+
     return Result.tryPromise(
       {
         try: async () => {
@@ -326,12 +326,15 @@ export class DisputeAgentClient implements IDisputeAgentClient {
           )
           await agent.sendWorkflowEvent(DISPUTE_AGENT_WORKFLOW_BINDING, workflowInstanceId, {
             type: 'dispute_evidence_collection_finished',
-            payload: { action, disputeCaseId },
+            payload: {
+              action: outcome === 'completed' ? 'collected' : 'awaiting_human',
+              disputeCaseId,
+            },
           })
           logger.debug('evidence_collection_workflow_event_sent', {
-            action,
             disputeCaseId,
             instanceId: workflowInstanceId,
+            outcome,
             productId,
             userId,
           })

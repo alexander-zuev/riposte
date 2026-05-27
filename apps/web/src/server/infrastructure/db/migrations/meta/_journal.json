@@ -239,6 +239,13 @@
       "when": 1779356003379,
       "tag": "0033_damp_puppet_master",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1779897019897,
+      "tag": "0034_unknown_speed",
+      "breakpoints": true
     }
   ]
 }

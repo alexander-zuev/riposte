@@ -645,11 +645,7 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
   private async completeEvidenceCollectionTool(args: StartEvidenceCollectionArgs): Promise<void> {
     const command = createCommand(
       'CompleteDisputeEvidenceCollection',
-      {
-        disputeCaseId: args.disputeCaseId,
-        workflowInstanceId: args.workflowInstanceId,
-        action: 'collected',
-      },
+      { disputeCaseId: args.disputeCaseId },
       `agent:${this.name}:collect-evidence:${args.disputeCaseId}:complete`,
     )
     const result = await this.deps.services.messageBus().handle(command)

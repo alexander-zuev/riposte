@@ -28,8 +28,9 @@ import {
 } from '../disputes/dispute.commands'
 import {
   disputeCaseCompletedSchema,
+  disputeEvidenceCollectionCompletedSchema,
+  disputeEvidenceCollectionNeedsInputSchema,
   disputeEvidencePacketCreatedSchema,
-  disputeEvidenceCollectionFinishedSchema,
   disputeCaseFailedSchema,
   disputeCaseReceivedSchema,
   scheduledDisputeSyncDueSchema,
@@ -127,7 +128,8 @@ export const domainEventSchema = z.discriminatedUnion('name', [
   disputeCaseCompletedSchema,
   disputeCaseFailedSchema,
   disputeEvidencePacketCreatedSchema,
-  disputeEvidenceCollectionFinishedSchema,
+  disputeEvidenceCollectionCompletedSchema,
+  disputeEvidenceCollectionNeedsInputSchema,
   scheduledDisputeSyncDueSchema,
   productCreatedSchema,
   productAppDataSourceRegisteredSchema,

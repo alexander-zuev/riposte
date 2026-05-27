@@ -4,7 +4,8 @@ import type {
   DatabaseError,
   DecideDisputeSubmissionPolicy,
   DisputeCaseReceived,
-  DisputeEvidenceCollectionFinished,
+  DisputeEvidenceCollectionCompleted,
+  DisputeEvidenceCollectionNeedsInput,
   EnrichDisputeContext,
   EvidencePdfRenderError,
   FailDisputeCase,
@@ -20,7 +21,11 @@ import type {
 } from '@riposte/core'
 import { createLogger, EntityNotFoundError, ValidationError } from '@riposte/core'
 import type { HandlerContext } from '@server/application/registry/types'
-import { DisputeEvidencePacket, StripeDisputeContext } from '@server/domain/disputes'
+import {
+  DisputeCollectedEvidence,
+  DisputeEvidencePacket,
+  StripeDisputeContext,
+} from '@server/domain/disputes'
 import type {
   DisputeCaseEvaluation,
   DisputeEvidencePacketArtifact,
@@ -55,7 +60,7 @@ export type StartDisputeEvidenceCollectionResult = {
 }
 
 export type CompleteDisputeEvidenceCollectionResult = {
-  action: 'collected' | 'awaiting_human'
+  action: 'completed'
 }
 
 export type GenerateEvidencePacketResult = {
@@ -98,7 +103,7 @@ export async function startDisputeAgentWorkflow(
 }
 
 export async function sendEvidenceCollectionWorkflowEvent(
-  event: DisputeEvidenceCollectionFinished,
+  event: DisputeEvidenceCollectionCompleted | DisputeEvidenceCollectionNeedsInput,
   { deps, tx }: HandlerContext,
 ): Promise<Result<void, DisputeWorkflowCommandError | WorkflowError>> {
   const found = await deps.repos.disputeCases(tx).findById(event.disputeCaseId)
@@ -112,15 +117,13 @@ export async function sendEvidenceCollectionWorkflowEvent(
     userId: found.value.userId,
     productId: found.value.productId,
     disputeCaseId: event.disputeCaseId,
-    workflowInstanceId: event.workflowInstanceId,
-    action: event.action,
+    outcome: event.name === 'DisputeEvidenceCollectionCompleted' ? 'completed' : 'needs_input',
   })
   if (sent.isErr()) return Result.err(sent.error)
 
   logger.info('dispute_evidence_collection_workflow_event_sent', {
-    action: event.action,
     disputeCaseId: event.disputeCaseId,
-    workflowInstanceId: event.workflowInstanceId,
+    outcome: event.name,
   })
 
   return Result.ok(undefined)
@@ -205,6 +208,15 @@ export async function startDisputeEvidenceCollection(
     return Result.err(new EntityNotFoundError({ entity: 'DisputeCase', id: command.disputeCaseId }))
   }
 
+  const evidenceRepo = deps.repos.disputeCollectedEvidence(tx)
+  const existingEvidence = await evidenceRepo.findByDisputeCaseId(command.disputeCaseId)
+  if (existingEvidence.isErr()) return Result.err(existingEvidence.error)
+
+  if (!existingEvidence.value) {
+    const created = await evidenceRepo.save(DisputeCollectedEvidence.create(command.disputeCaseId))
+    if (created.isErr()) return Result.err(created.error)
+  }
+
   const started = await deps.services.disputeAgentClient().startEvidenceCollection({
     userId: found.value.userId,
     productId: found.value.productId,
@@ -233,22 +245,30 @@ export async function completeDisputeEvidenceCollection(
     return Result.err(new EntityNotFoundError({ entity: 'DisputeCase', id: command.disputeCaseId }))
   }
 
-  const finished = found.value.finishEvidenceCollection({
-    workflowInstanceId: command.workflowInstanceId,
-    action: command.action,
-  })
-  if (finished.isErr()) return Result.err(finished.error)
+  const evidenceRepo = deps.repos.disputeCollectedEvidence(tx)
+  const existingEvidence = await evidenceRepo.findByDisputeCaseId(command.disputeCaseId)
+  if (existingEvidence.isErr()) return Result.err(existingEvidence.error)
 
-  const saved = await deps.repos.disputeCases(tx).save(found.value)
+  if (!existingEvidence.value) {
+    return Result.err(
+      new EntityNotFoundError({
+        entity: 'DisputeCollectedEvidence',
+        id: command.disputeCaseId,
+      }),
+    )
+  }
+
+  const collectedEvidence = existingEvidence.value
+  collectedEvidence.complete()
+
+  const saved = await evidenceRepo.save(collectedEvidence)
   if (saved.isErr()) return Result.err(saved.error)
 
   logger.info('dispute_evidence_collection_finished', {
-    action: command.action,
     disputeCaseId: command.disputeCaseId,
-    workflowInstanceId: command.workflowInstanceId,
   })
 
-  return Result.ok({ action: command.action })
+  return Result.ok({ action: 'completed' })
 }
 
 export async function generateEvidencePacket(

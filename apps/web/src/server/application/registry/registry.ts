@@ -111,7 +111,13 @@ export const EVENT_HANDLERS = {
   DisputeCaseFailed: [
     { id: 'notifications.notifyOnDisputeCaseFailed', handle: notifyOnDisputeCaseFailed },
   ],
-  DisputeEvidenceCollectionFinished: [
+  DisputeEvidenceCollectionCompleted: [
+    {
+      id: 'dispute.sendEvidenceCollectionWorkflowEvent',
+      handle: sendEvidenceCollectionWorkflowEvent,
+    },
+  ],
+  DisputeEvidenceCollectionNeedsInput: [
     {
       id: 'dispute.sendEvidenceCollectionWorkflowEvent',
       handle: sendEvidenceCollectionWorkflowEvent,

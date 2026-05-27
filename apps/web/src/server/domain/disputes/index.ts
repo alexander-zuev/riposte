@@ -2,6 +2,7 @@ export type { DisputeCaseWorkflowStatus } from '@riposte/core'
 
 export * from './deadline.vo'
 export * from './dispute-case.entity'
+export * from './dispute-collected-evidence.entity'
 export * from './dispute-evidence-packet.entity'
 export * from './dispute-evidence-packet-template.service'
 export * from './dispute.schemas'

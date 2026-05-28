@@ -68,13 +68,9 @@ export function useUpdateProductMutation(productId: string) {
   })
 }
 
-/**
- * Disconnects a merchant MCP source for a product. The DO clears its MCP state
- * and broadcasts the new `MCPServersState` over the WS — so we deliberately
- * do not invalidate any query here. The popover updates via `onMcpUpdate` push
- * (see `useDisputeAgent`).
- */
 export function useDisconnectMcpMutation(productId: string) {
+  const queryClient = useQueryClient()
+
   return useMutation({
     mutationFn: async (input: { mcpServerId: string; serverName: string }) =>
       unwrapRpc(
@@ -82,11 +78,15 @@ export function useDisconnectMcpMutation(productId: string) {
           data: { productId, mcpServerId: input.mcpServerId },
         }),
       ),
-    onSuccess: (_data, variables) => {
-      toast.success(`Disconnected ${variables.serverName} MCP server`)
+    onSuccess: async (_data, variables) => {
+      await queryClient.invalidateQueries({ queryKey: productQueries.setup(productId).queryKey })
+      await queryClient.invalidateQueries({
+        queryKey: productQueries.setupSnapshot(productId).queryKey,
+      })
+      toast.success(`Disconnected ${variables.serverName}`)
     },
     onError: (_error, variables) => {
-      toast.error(`Failed to disconnect ${variables.serverName} MCP server`)
+      toast.error(`Failed to disconnect ${variables.serverName}`)
     },
   })
 }

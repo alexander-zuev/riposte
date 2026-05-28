@@ -25,9 +25,7 @@ export type SlackNotificationConnection = {
 
 export type ConnectionsStatus = {
   stripe: StripeConnectionState
-  appDatabase: AppDatabaseConnectionState
   notifications: NotificationConnectionState
-  evidenceTools: EvidenceToolsConnectionState
 }
 
 export type StripeConnectionState =
@@ -43,10 +41,6 @@ export type StripeConnectionState =
       connection: StripeConnectionSnapshot
     }
 
-export type AppDatabaseConnectionState = {
-  status: 'not_connected'
-}
-
 export type NotificationChannelConnection = {
   channel: NotificationChannel
   health: ConnectionHealth
@@ -58,10 +52,6 @@ export type NotificationChannelConnection = {
 
 export type NotificationConnectionState = {
   channels: NotificationChannelConnection[]
-}
-
-export type EvidenceToolsConnectionState = {
-  status: 'not_defined'
 }
 
 export function createConnectionsStatus(input: {
@@ -77,9 +67,7 @@ export function createConnectionsStatus(input: {
   if (!input.stripeConnection) {
     return {
       stripe: { status: 'not_connected' },
-      appDatabase: { status: 'not_connected' },
       notifications,
-      evidenceTools: { status: 'not_defined' },
     }
   }
 
@@ -88,9 +76,7 @@ export function createConnectionsStatus(input: {
       status: input.stripeConnection.status === 'revoked' ? 'revoked' : 'connected',
       connection: input.stripeConnection.serialize(),
     },
-    appDatabase: { status: 'not_connected' },
     notifications,
-    evidenceTools: { status: 'not_defined' },
   }
 }
 

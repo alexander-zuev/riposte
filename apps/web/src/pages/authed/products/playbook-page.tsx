@@ -21,28 +21,83 @@ export function PlaybookPage() {
   const { productId } = productRoute.useParams()
   const playbookQuery = useQuery(productQueries.playbook(productId))
 
-  if (playbookQuery.isPending) return <PlaybookSkeleton />
+  const playbook = !playbookQuery.isError && !playbookQuery.isPending ? playbookQuery.data : null
+  const notFound =
+    playbookQuery.isError && isTaggedErrorWithTag(playbookQuery.error, 'EntityNotFoundError')
 
-  if (playbookQuery.isError) {
-    if (isTaggedErrorWithTag(playbookQuery.error, 'EntityNotFoundError')) {
-      return <PlaybookEmpty productId={productId} />
-    }
-    return <PlaybookError onRetry={() => playbookQuery.refetch()} />
-  }
-
-  return <PlaybookContent productName={product.productName} playbook={playbookQuery.data} />
-}
-
-function PlaybookEmpty({ productId }: { productId: string }) {
   return (
     <div className="grid gap-8 text-foreground">
       <PageHeader
         eyebrow="Playbook"
         icon={ScrollIcon}
-        title="No playbook yet"
-        description="The playbook defines how the agent collects evidence and defends disputes for this product"
+        title="Playbook"
+        description="Evidence collection rules the agent follows when defending disputes"
+        meta={playbook ? <PlaybookMeta playbook={playbook} /> : undefined}
+        action={
+          playbook ? (
+            <Button
+              variant="secondary"
+              onClick={() => downloadPlaybook(product.productName, playbook)}
+            >
+              <DownloadSimpleIcon data-icon="inline-start" />
+              Download
+            </Button>
+          ) : undefined
+        }
       />
 
+      <PlaybookBody
+        playbook={playbook}
+        isPending={playbookQuery.isPending}
+        isNotFound={notFound}
+        isError={playbookQuery.isError && !notFound}
+        productId={productId}
+        onRetry={() => playbookQuery.refetch()}
+      />
+    </div>
+  )
+}
+
+function PlaybookMeta({ playbook }: { playbook: ReadDisputePlaybookResult }) {
+  return (
+    <span className="flex items-center gap-2">
+      <span>v{playbook.revision}</span>
+      {playbook.validation.complete ? (
+        <Badge variant="success">
+          <CheckCircleIcon data-icon="inline-start" />
+          Complete
+        </Badge>
+      ) : (
+        <Badge variant="warning">
+          <WarningCircleIcon data-icon="inline-start" />
+          Incomplete
+        </Badge>
+      )}
+    </span>
+  )
+}
+
+function PlaybookBody({
+  playbook,
+  isPending,
+  isNotFound,
+  isError,
+  productId,
+  onRetry,
+}: {
+  playbook: ReadDisputePlaybookResult | null
+  isPending: boolean
+  isNotFound: boolean
+  isError: boolean
+  productId: string
+  onRetry: () => void
+}) {
+  if (isPending) {
+    return <div className="h-64 animate-pulse rounded-md border border-border bg-muted/30" />
+  }
+
+  if (isNotFound) {
+    return (
       <div className="flex max-w-xl flex-col items-start gap-4 rounded-md border border-dashed border-border p-6">
         <p className="text-sm text-muted-foreground">
           The agent builds your playbook during onboarding by discovering your database schema,
@@ -53,19 +108,11 @@ function PlaybookEmpty({ productId }: { productId: string }) {
           Open chat
         </Button>
       </div>
-    </div>
-  )
-}
+    )
+  }
 
-function PlaybookError({ onRetry }: { onRetry: () => void }) {
-  return (
-    <div className="grid gap-8 text-foreground">
-      <PageHeader
-        eyebrow="Playbook"
-        icon={ScrollIcon}
-        title="Playbook"
-        description="Could not load playbook"
-      />
+  if (isError || !playbook) {
+    return (
       <div className="flex max-w-xl flex-col items-start gap-4 rounded-md border border-destructive/30 p-6">
         <p className="text-sm text-muted-foreground">
           Something went wrong loading the playbook. Try again
@@ -74,50 +121,11 @@ function PlaybookError({ onRetry }: { onRetry: () => void }) {
           Retry
         </Button>
       </div>
-    </div>
-  )
-}
+    )
+  }
 
-function PlaybookContent({
-  productName,
-  playbook,
-}: {
-  productName: string
-  playbook: ReadDisputePlaybookResult
-}) {
   return (
-    <div className="grid gap-8 text-foreground">
-      <PageHeader
-        eyebrow="Playbook"
-        icon={ScrollIcon}
-        title="Playbook"
-        description="Evidence collection rules the agent follows when defending disputes"
-        meta={
-          <span className="flex items-center gap-2">
-            <span>v{playbook.revision}</span>
-            {playbook.validation.complete ? (
-              <Badge variant="success">
-                <CheckCircleIcon data-icon="inline-start" />
-                Complete
-              </Badge>
-            ) : (
-              <Badge variant="warning">
-                <WarningCircleIcon data-icon="inline-start" />
-                Incomplete
-              </Badge>
-            )}
-          </span>
-        }
-        action={
-          <div className="flex items-center gap-2">
-            <Button variant="secondary" onClick={() => downloadPlaybook(productName, playbook)}>
-              <DownloadSimpleIcon data-icon="inline-start" />
-              Download
-            </Button>
-          </div>
-        }
-      />
-
+    <>
       {!playbook.validation.complete ? (
         <ValidationSummary issues={playbook.validation.remaining} />
       ) : null}
@@ -125,7 +133,7 @@ function PlaybookContent({
       <article className="prose prose-sm max-w-none rounded-md border border-border p-6">
         <pre className="text-sm leading-relaxed whitespace-pre-wrap">{playbook.content}</pre>
       </article>
-    </div>
+    </>
   )
 }
 
@@ -143,15 +151,6 @@ function ValidationSummary({ issues }: { issues: PlaybookValidationIssue[] }) {
           </li>
         ))}
       </ul>
-    </div>
-  )
-}
-
-function PlaybookSkeleton() {
-  return (
-    <div className="grid gap-8 text-foreground">
-      <PageHeader eyebrow="Playbook" icon={ScrollIcon} title="Playbook" />
-      <div className="h-64 animate-pulse rounded-md border border-border bg-muted/30" />
     </div>
   )
 }

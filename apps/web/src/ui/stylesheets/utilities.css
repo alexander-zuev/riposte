@@ -136,3 +136,13 @@ JetBrains Mono for IDs, timestamps, logs, events, metadata
   animation: slide-up 100ms ease-out;
 }
 
+@keyframes grid-rain {
+  0%, 100% { opacity: 0.1; }
+  20% { opacity: 1; }
+  50% { opacity: 0.1; }
+}
+
+@utility animate-grid-rain {
+  animation: grid-rain 1.2s ease-in infinite;
+}
+

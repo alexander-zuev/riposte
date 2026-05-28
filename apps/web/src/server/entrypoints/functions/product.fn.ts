@@ -84,6 +84,19 @@ export const updateProduct = createServerFn({ method: 'POST' })
     return toServerFnRpc(result)
   })
 
+export const readProductSetupSnapshot = createServerFn({ method: 'GET' })
+  .middleware([requireAuth])
+  .inputValidator(getProductSetupStateFnInputSchema)
+  .handler(async ({ data, context }) => {
+    const query = createQuery('ReadProductSetupSnapshot', {
+      userId: context.user.id,
+      productId: data.productId,
+    })
+    const result = await context.deps.services.messageBus().handle(query)
+
+    return toServerFnRpc(result)
+  })
+
 export const readDisputePlaybook = createServerFn({ method: 'GET' })
   .middleware([requireAuth])
   .inputValidator(readPlaybookFnInputSchema)

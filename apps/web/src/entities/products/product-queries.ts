@@ -4,6 +4,7 @@ import {
   getProductSetupState,
   listProducts,
   readDisputePlaybook,
+  readProductSetupSnapshot,
 } from '@web/server/entrypoints/functions/product.fn'
 
 export const productQueries = {
@@ -16,6 +17,11 @@ export const productQueries = {
     queryOptions({
       queryKey: ['products', 'setup', productId] as const,
       queryFn: async () => unwrapRpc(await getProductSetupState({ data: { productId } })),
+    }),
+  setupSnapshot: (productId: string) =>
+    queryOptions({
+      queryKey: ['products', 'setup-snapshot', productId] as const,
+      queryFn: async () => unwrapRpc(await readProductSetupSnapshot({ data: { productId } })),
     }),
   playbook: (productId: string) =>
     queryOptions({

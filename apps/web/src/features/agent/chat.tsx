@@ -24,7 +24,7 @@ import {
 } from '@web/ui/components/ai-elements/prompt-input'
 import { Alert, AlertAction, AlertDescription, AlertTitle } from '@web/ui/components/ui/alert'
 import { Button } from '@web/ui/components/ui/button'
-import { Spinner } from '@web/ui/components/ui/spinner'
+import { GridLoader } from '@web/ui/components/ui/grid-loader'
 import type { MCPServersState } from 'agents'
 import type { UIMessage } from 'ai'
 import { motion } from 'motion/react'
@@ -144,7 +144,7 @@ export function Chat({ agent, initialMessages, productId, mcp }: ChatProps) {
         <ConversationScrollButton />
       </Conversation>
       <div className="flex min-h-8 items-center gap-2 px-4 py-2 text-muted-foreground">
-        {assistant.isStreaming && <Spinner className="size-4" />}
+        {(assistant.status === 'submitted' || assistant.status === 'streaming') && <GridLoader />}
         {agent.state ? (
           <ContextUsageMeter
             className="ml-auto"

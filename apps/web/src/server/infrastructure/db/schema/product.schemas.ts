@@ -1,11 +1,12 @@
 import type { ProductStatus, ProductType, ServiceStartRule } from '@server/domain/products'
-import { PRODUCT_TYPES } from '@server/domain/products'
+import { PRODUCT_TYPES, SERVICE_START_RULES } from '@server/domain/products'
 import { sql } from 'drizzle-orm'
 import { check, index, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core'
 
 import { user } from './auth.schemas'
 
 const productTypeCheckValues = PRODUCT_TYPES.map((value) => `'${value}'`).join(', ')
+const serviceStartRuleCheckValues = SERVICE_START_RULES.map((value) => `'${value}'`).join(', ')
 
 export const products = pgTable(
   'products',
@@ -56,7 +57,7 @@ export const products = pgTable(
     ),
     check(
       'products_service_start_rule_check',
-      sql`${table.serviceStartRule} is null or ${table.serviceStartRule} in ('charge_succeeded_at', 'billing_period_start', 'app_entitlement_started_at', 'first_verified_usage_at', 'merchant_provided')`,
+      sql`${table.serviceStartRule} is null or ${table.serviceStartRule} in (${sql.raw(serviceStartRuleCheckValues)})`,
     ),
   ],
 )

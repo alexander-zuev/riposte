@@ -240,7 +240,7 @@ const reasoningHeavyConversation: UIMessage[] = [
     id: 'msg_b',
     role: 'assistant',
     parts: [
-      t(`Your product type is \`digital_product_or_service\` with the \`app_entitlement_started_at\` rule. The playbook says service starts when the workspace row is created with \`plan_status = 'active'\`, not when the Stripe subscription begins (subscriptions can be created without a workspace, and Stripe sometimes back-dates \`start_date\` after trials).
+      t(`Your product type is \`digital_product_or_service\` with the \`access_granted\` rule. The playbook says service starts when the workspace row is created with \`plan_status = 'active'\`, not when the Stripe subscription begins (subscriptions can be created without a workspace, and Stripe sometimes back-dates \`start_date\` after trials).
 
 Concretely, on this dispute:
 

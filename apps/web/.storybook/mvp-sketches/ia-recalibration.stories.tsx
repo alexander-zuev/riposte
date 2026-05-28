@@ -1701,7 +1701,7 @@ function PlaybookDraftAction({ product, onApprove }: { product: Product; onAppro
           </div>
           <div className="text-muted-foreground">
             <div className="text-foreground">## Service start</div>
-            Rule: <strong className="text-foreground">app_entitlement_started_at</strong>. Use{' '}
+            Rule: <strong className="text-foreground">access_granted</strong>. Use{' '}
             <code>workspaces.plan_started_at</code> when present, fall back to{' '}
             <code>charge.created</code>.
           </div>

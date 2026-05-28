@@ -101,7 +101,7 @@ export const ToolHeader = ({
         <span className="font-medium">{title ?? derivedName}</span>
         {getStatusBadge(state)}
       </div>
-      <CaretDownIcon className="size-4 transition-transform group-data-[state=open]:rotate-180" />
+      <CaretDownIcon className="size-4 -rotate-90 transition-transform group-data-[open]:rotate-0" />
     </CollapsibleTrigger>
   )
 }
@@ -111,7 +111,7 @@ export type ToolContentProps = ComponentProps<typeof CollapsibleContent>
 export const ToolContent = ({ className, ...props }: ToolContentProps) => (
   <CollapsibleContent
     className={cn(
-      'mt-2 flex flex-col gap-4 text-foreground outline-none data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-top-2 data-[state=closed]:animate-out data-[state=open]:slide-in-from-top-2 data-[state=open]:animate-in',
+      'mt-2 flex flex-col gap-4 text-foreground outline-none data-[closed]:fade-out-0 data-[closed]:slide-out-to-top-2 data-[closed]:animate-out data-[open]:slide-in-from-top-2 data-[open]:animate-in',
       className,
     )}
     {...props}

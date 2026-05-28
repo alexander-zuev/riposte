@@ -32,7 +32,7 @@ export const SourcesTrigger = ({ className, count, children, ...props }: Sources
       <>
         <BookOpenIcon className="size-4" />
         <span className="font-medium">Used {count} sources</span>
-        <CaretDownIcon className="size-4 -rotate-90 transition-transform group-data-[state=open]:rotate-0" />
+        <CaretDownIcon className="size-4 -rotate-90 transition-transform group-data-[open]:rotate-0" />
       </>
     )}
   </CollapsibleTrigger>
@@ -44,7 +44,7 @@ export const SourcesContent = ({ className, ...props }: SourcesContentProps) => 
   <CollapsibleContent
     className={cn(
       'mt-2 flex w-fit flex-col gap-2',
-      'outline-none data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-top-2 data-[state=closed]:animate-out data-[state=open]:slide-in-from-top-2 data-[state=open]:animate-in',
+      'outline-none data-[closed]:fade-out-0 data-[closed]:slide-out-to-top-2 data-[closed]:animate-out data-[open]:slide-in-from-top-2 data-[open]:animate-in',
       className,
     )}
     {...props}

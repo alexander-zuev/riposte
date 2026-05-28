@@ -1,6 +1,7 @@
 import { FetchError, SearchError } from '@riposte/core'
 import { isTransientError, RETRY } from '@server/infrastructure/resilience/retry'
 import { Result } from 'better-result'
+import { z } from 'zod'
 
 type JinaConfig = {
   apiKey: string
@@ -38,22 +39,31 @@ export interface IJinaClient {
   webSearch: (input: WebSearchInput) => Promise<Result<WebSearchOutput, SearchError>>
 }
 
-type JinaReaderResponse = {
-  data?: {
-    title?: string
-    url?: string
-    content?: string
-  }
-}
+// Lenient runtime contracts for the external Jina responses. We validate shape
+// at the boundary (loud on mismatch) but keep leaf fields optional strings —
+// downstream code already defaults missing values.
+const jinaReaderResponseSchema = z.object({
+  data: z
+    .object({
+      title: z.string().nullish(),
+      url: z.string().nullish(),
+      content: z.string().nullish(),
+    })
+    .nullish(),
+})
 
-type JinaSearchResponse = {
-  data?: Array<{
-    title?: string
-    url?: string
-    description?: string
-    date?: string
-  }>
-}
+const jinaSearchResponseSchema = z.object({
+  data: z
+    .array(
+      z.object({
+        title: z.string().nullish(),
+        url: z.string().nullish(),
+        description: z.string().nullish(),
+        date: z.string().nullish(),
+      }),
+    )
+    .nullish(),
+})
 
 export class JinaClient implements IJinaClient {
   constructor(private readonly config: JinaConfig) {}
@@ -74,7 +84,7 @@ export class JinaClient implements IJinaClient {
 
           if (!response.ok) throwHttpFailure(response.status)
 
-          const body = await response.json()
+          const body = jinaReaderResponseSchema.parse(await response.json())
           const content = body.data?.content ?? ''
 
           return {
@@ -108,7 +118,7 @@ export class JinaClient implements IJinaClient {
 
           if (!response.ok) throwHttpFailure(response.status)
 
-          const body = await response.json()
+          const body = jinaSearchResponseSchema.parse(await response.json())
           const entries = body.data ?? []
           const limit = input.numResults ?? 5
 

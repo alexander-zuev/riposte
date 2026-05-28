@@ -7,7 +7,7 @@ import {
   useDisputeAgentChat,
 } from '@web/features/agent/hooks/use-dispute-agent-chat'
 import { McpSourcesPopover } from '@web/features/agent/mcp-sources-popover'
-import { AgentMessagePart, keyedAgentMessageParts } from '@web/features/agent/message-part'
+import { MessageParts } from '@web/features/agent/message-part'
 import { RegenerateMessageAction } from '@web/features/agent/regenerate-message-action'
 import {
   Conversation,
@@ -103,13 +103,7 @@ export function Chat({ agent, initialMessages, productId, mcp }: ChatProps) {
                     transition={{ duration: 0.5, ease: 'easeOut' }}
                   >
                     <MessageContent>
-                      {keyedAgentMessageParts(message.parts).map(({ key, part }) => (
-                        <AgentMessagePart
-                          key={key}
-                          isStreaming={assistant.isStreaming}
-                          part={part}
-                        />
-                      ))}
+                      <MessageParts parts={message.parts} isStreaming={assistant.isStreaming} />
                     </MessageContent>
                   </motion.div>
                   {showActions && message.role === 'assistant' && (
@@ -129,9 +123,7 @@ export function Chat({ agent, initialMessages, productId, mcp }: ChatProps) {
               ) : (
                 <>
                   <MessageContent>
-                    {keyedAgentMessageParts(message.parts).map(({ key, part }) => (
-                      <AgentMessagePart key={key} isStreaming={assistant.isStreaming} part={part} />
-                    ))}
+                    <MessageParts parts={message.parts} isStreaming={assistant.isStreaming} />
                   </MessageContent>
                   {showActions && message.role === 'assistant' && (
                     <div className="flex items-center gap-2">

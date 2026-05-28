@@ -8,6 +8,7 @@ import {
   type IProductSetupService,
 } from '@server/domain/products/product-setup.service'
 import type {
+  IDisputeCaseMessageRepository,
   IDisputeCaseRepository,
   IDisputeCollectedEvidenceRepository,
   IDisputeEvidenceArtifactBlobRepository,
@@ -50,6 +51,7 @@ import {
 } from '@server/infrastructure/queues/outbox-relay-wakeup'
 import type { IQueueClient } from '@server/infrastructure/queues/queue-client'
 import { QueueClient } from '@server/infrastructure/queues/queue-client'
+import { DisputeCaseMessageRepository } from '@server/infrastructure/repositories/dispute-case-message.repository'
 import { DisputeCaseRepository } from '@server/infrastructure/repositories/dispute-case.repository'
 import { DisputeCollectedEvidenceRepository } from '@server/infrastructure/repositories/dispute-collected-evidence.repository'
 import { DisputeEvidenceArtifactBlobRepository } from '@server/infrastructure/repositories/dispute-evidence-artifact-blob.repository'
@@ -94,6 +96,7 @@ export type AppDeps = {
 
   repos: {
     disputeCases: (tx: DrizzleDb) => IDisputeCaseRepository
+    disputeCaseMessages: (tx: DrizzleDb) => IDisputeCaseMessageRepository
     disputeCollectedEvidence: (tx: DrizzleDb) => IDisputeCollectedEvidenceRepository
     disputeEvidenceArtifactBlobs: () => IDisputeEvidenceArtifactBlobRepository
     disputeEvidencePackets: (tx: DrizzleDb) => IDisputeEvidencePacketRepository
@@ -150,6 +153,7 @@ export function createAppDeps(env: Env, ctx: WaitUntilContext): AppDeps {
     },
     repos: {
       disputeCases: (tx) => new DisputeCaseRepository(tx),
+      disputeCaseMessages: (tx) => new DisputeCaseMessageRepository(tx),
       disputeCollectedEvidence: (tx) => new DisputeCollectedEvidenceRepository(tx),
       disputeEvidenceArtifactBlobs: () =>
         new DisputeEvidenceArtifactBlobRepository(env.RIPOSTE_BUCKET),

@@ -1,12 +1,17 @@
 import type {
+  AppendDisputeCaseMessages,
   BlobStorageError,
   CredentialEncryptionError,
   DatabaseError,
+  DisputeCaseActivity,
+  DisputeCaseMessage,
   DomainEvent,
   DuplicateMessageError,
   DuplicateProductUrlError,
   EntityNotFoundError,
   JoinWaitlist,
+  ListDisputeCaseActivity,
+  ListDisputeCaseMessages,
   ListDisputeCases,
   ListDisputeCasesResult,
   DisputeSyncState,
@@ -98,6 +103,25 @@ export interface IDisputeCollectedEvidenceRepository {
   save: (
     evidence: DisputeCollectedEvidence,
   ) => Promise<Result<DisputeCollectedEvidence, DatabaseError>>
+}
+
+/* -------------------------------------------------------------------------------------------------
+ * Dispute Case Message Repository
+ * Append-only audit log of UIMessages emitted by the evidence-collection loop.
+ * `appendBatch` is idempotent on (disputeCaseId, messageId) via the unique
+ * constraint — re-running a step is safe.
+ * ------------------------------------------------------------------------------------------------- */
+
+export interface IDisputeCaseMessageRepository {
+  appendBatch: (
+    input: Omit<AppendDisputeCaseMessages, 'id' | 'type' | 'name' | 'userId'>,
+  ) => Promise<Result<void, DatabaseError>>
+  listMessages: (
+    input: Omit<ListDisputeCaseMessages, 'type' | 'name' | 'userId'>,
+  ) => Promise<Result<DisputeCaseMessage[], DatabaseError>>
+  listCaseActivity: (
+    input: Omit<ListDisputeCaseActivity, 'type' | 'name' | 'userId'>,
+  ) => Promise<Result<DisputeCaseActivity[], DatabaseError>>
 }
 
 /* -------------------------------------------------------------------------------------------------

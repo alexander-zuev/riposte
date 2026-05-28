@@ -1,5 +1,6 @@
 import { useAgentChat } from '@cloudflare/ai-chat/react'
-import { createLogger } from '@riposte/core/client'
+import { createLogger, type DisputeCaseMessagesUpdatedBroadcast } from '@riposte/core/client'
+import { useQueryClient } from '@tanstack/react-query'
 import { useProductSetupInvalidation } from '@web/features/agent/hooks/use-product-setup-invalidation'
 import type { MCPServersState } from 'agents'
 import { useAgent } from 'agents/react'
@@ -61,6 +62,7 @@ type DisputeAgentState = {
  */
 export function useDisputeAgent(productId: string) {
   const [mcp, setMcp] = useState<MCPServersState | null>(null)
+  const queryClient = useQueryClient()
   const invalidateProductSetup = useProductSetupInvalidation(productId)
   const agent = useAgent<DisputeAgentState>({
     agent: 'dispute-agent',
@@ -88,6 +90,26 @@ export function useDisputeAgent(productId: string) {
       })
       setMcp(next)
     },
+    onMessage: (event) => {
+      const message = parseAgentMessageEvent(event)
+      const type = getAgentMessageType(message)
+      switch (type) {
+        case 'dispute_case_messages_updated': {
+          const broadcast = message as DisputeCaseMessagesUpdatedBroadcast
+          logger.debug('dispute_case_messages_updated', {
+            disputeCaseId: broadcast.disputeCaseId,
+            runId: broadcast.runId,
+          })
+          queryClient.invalidateQueries({
+            queryKey: ['dispute-case-messages', productId],
+            exact: false,
+          })
+          break
+        }
+        default:
+          break
+      }
+    },
   })
   return {
     agent,
@@ -97,6 +119,20 @@ export function useDisputeAgent(productId: string) {
 }
 
 export type DisputeAgentConnection = ReturnType<typeof useDisputeAgent>['agent']
+
+function parseAgentMessageEvent(event: MessageEvent): unknown {
+  if (typeof event.data !== 'string') return event.data
+  try {
+    return JSON.parse(event.data) as unknown
+  } catch {
+    return null
+  }
+}
+
+function getAgentMessageType(message: unknown): unknown {
+  if (typeof message !== 'object' || message === null || !('type' in message)) return null
+  return message.type
+}
 
 export function getAgentTransportState(
   readyState: number,

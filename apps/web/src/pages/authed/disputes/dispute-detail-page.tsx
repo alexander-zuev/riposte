@@ -10,7 +10,7 @@ export function DisputeDetailPage({ disputeId }: DisputeDetailPageProps) {
   return (
     <SurfaceStubPage
       title={`Dispute ${disputeId}`}
-      description="Case detail for status, evidence packet, required actions, deadline, outcome, and agent activity"
+      description="Case detail for status, evidence packet, required actions, deadline, and outcome"
       icon={FileTextIcon}
       sections={[
         {
@@ -24,9 +24,9 @@ export function DisputeDetailPage({ disputeId }: DisputeDetailPageProps) {
           items: ['Timeline', 'Usage evidence', 'PDF links'],
         },
         {
-          title: 'Agent console',
-          description: 'Case-scoped activity log and founder corrections',
-          items: ['Runtime actions', 'Blocked steps', 'Founder input'],
+          title: 'Founder input',
+          description: 'Blocked steps and founder corrections for this case',
+          items: ['Blocked steps', 'Founder input', 'Resume'],
         },
       ]}
     />

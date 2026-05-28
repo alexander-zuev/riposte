@@ -9,6 +9,11 @@ import {
 import { getChatMessagesSchema } from '../chat'
 import { getConnectionsStatusSchema } from '../connections'
 import { disputePlaybookCreatedSchema, saveDisputePlaybookSchema } from '../dispute-playbooks'
+import { appendDisputeCaseMessagesSchema } from '../disputes/dispute-case-message.commands'
+import {
+  listDisputeCaseActivitySchema,
+  listDisputeCaseMessagesSchema,
+} from '../disputes/dispute-case-message.queries'
 import {
   ingestDisputeClosedSchema,
   ingestDisputeCreatedSchema,
@@ -22,6 +27,7 @@ import {
   generateEvidencePacketSchema,
   handleDisputeSubmissionApprovalResponseSchema,
   startDisputeEvidenceCollectionSchema,
+  startDryRunSchema,
   submitDisputeResponseSchema,
   syncDisputesSchema,
   triageDisputeCaseSchema,
@@ -90,7 +96,9 @@ export const domainCommandSchema = z.discriminatedUnion('name', [
   triageDisputeCaseSchema,
   enrichDisputeContextSchema,
   startDisputeEvidenceCollectionSchema,
+  startDryRunSchema,
   completeDisputeEvidenceCollectionSchema,
+  appendDisputeCaseMessagesSchema,
   generateEvidencePacketSchema,
   decideDisputeSubmissionPolicySchema,
   submitDisputeResponseSchema,
@@ -162,6 +170,8 @@ export const domainQuerySchema = z.discriminatedUnion('name', [
   getConnectionsStatusSchema,
   getStripeAppSettingsSchema,
   listDisputeCasesSchema,
+  listDisputeCaseActivitySchema,
+  listDisputeCaseMessagesSchema,
   listProductsSchema,
   getProductSetupStateSchema,
   readProductSetupSnapshotSchema,

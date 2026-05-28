@@ -246,6 +246,13 @@
       "when": 1779897019897,
       "tag": "0034_unknown_speed",
       "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1779909288403,
+      "tag": "0035_fresh_apocalypse",
+      "breakpoints": true
     }
   ]
 }

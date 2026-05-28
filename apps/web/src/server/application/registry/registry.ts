@@ -8,6 +8,12 @@ import { getChatMessages } from '@server/application/handlers/chat-handler'
 import { getConnectionsStatus } from '@server/application/handlers/connection-handler'
 import { listDisputeCases } from '@server/application/handlers/dispute-case-handler'
 import {
+  appendDisputeCaseMessages,
+  listDisputeCaseActivity,
+  listDisputeCaseMessages,
+} from '@server/application/handlers/dispute-case-message-handler'
+import { startDryRun } from '@server/application/handlers/dispute-dry-run-handler'
+import {
   completeDisputeEvidenceCollection,
   decideDisputeSubmissionPolicy,
   enrichDisputeContext,
@@ -85,7 +91,9 @@ export const COMMAND_HANDLERS = {
   TriageDisputeCase: triageDisputeCaseHandler,
   EnrichDisputeContext: enrichDisputeContext,
   StartDisputeEvidenceCollection: startDisputeEvidenceCollection,
+  StartDryRun: startDryRun,
   CompleteDisputeEvidenceCollection: completeDisputeEvidenceCollection,
+  AppendDisputeCaseMessages: appendDisputeCaseMessages,
   GenerateEvidencePacket: generateEvidencePacket,
   DecideDisputeSubmissionPolicy: decideDisputeSubmissionPolicy,
   SubmitDisputeResponse: submitDisputeResponse,
@@ -151,6 +159,8 @@ export const QUERY_HANDLERS = {
   GetConnectionsStatus: getConnectionsStatus,
   GetStripeAppSettings: getStripeAppSettings,
   ListDisputeCases: listDisputeCases,
+  ListDisputeCaseActivity: listDisputeCaseActivity,
+  ListDisputeCaseMessages: listDisputeCaseMessages,
   ListProducts: listProducts,
   GetProductSetupState: getProductSetupState,
   ReadProductSetupSnapshot: readProductSetupSnapshot,

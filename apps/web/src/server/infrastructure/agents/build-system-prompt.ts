@@ -124,6 +124,39 @@ export function buildSystemPrompt(
   return sections.join('\n\n')
 }
 
+/**
+ * System prompt for the evidence-collection fiber. Stable per product.
+ * Distinct from the chat prompt: no setup-step guidance, read-only mandate,
+ * explicit completion signal via the `completeEvidenceCollection` tool.
+ *
+ * TODO(playbook): load the merchant-authored playbook for the product and
+ * include it in the prompt. v1 ships generic instructions only.
+ * TODO(product-context): include the product snapshot (name, url, status)
+ * so the agent has merchant context without an extra tool call.
+ */
+export function buildEvidenceInstructions(options: BuildSystemPromptOptions = {}): string {
+  return [
+    buildBasePrompt(options),
+    STRIPE_DISPUTE_GLOSSARY,
+    [
+      '<role>',
+      'You are running a background evidence-collection task for a Stripe dispute.',
+      'A user kickoff message will tell you which dispute case to work on.',
+      '</role>',
+      '',
+      '<rules>',
+      '- Read-only. Do not call any tool that mutates external state.',
+      '- Use available read tools (Stripe, MCP, internal lookups) to gather facts.',
+      '- When you have collected sufficient evidence or have determined no further',
+      '  progress is possible, call `completeEvidenceCollection` exactly once with a',
+      '  brief reason. That ends the run and advances the workflow.',
+      '- If you cannot make progress (missing connections, no data), still call',
+      '  `completeEvidenceCollection` with the reason — never just stop.',
+      '</rules>',
+    ].join('\n'),
+  ].join('\n\n')
+}
+
 function renderContext(product: ProductSnapshot, setup: ProductSetupState): string {
   const done: ProductSetupStep[] = []
   const todo: ProductSetupStep[] = []

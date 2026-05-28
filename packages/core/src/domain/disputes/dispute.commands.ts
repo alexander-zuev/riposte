@@ -62,6 +62,17 @@ export const startDisputeEvidenceCollectionSchema = disputeWorkflowCommandBase.e
   workflowInstanceId: z.string().min(1),
 })
 
+/**
+ * Dispatched from the chat agent's `startDryRun` tool during setup mode.
+ * Handler creates a synthetic `dispute_cases` row and triggers the evidence
+ * loop. v1 only — replaced by Stripe test-mode integration in slice 5.
+ */
+export const startDryRunSchema = baseCommandSchema.extend({
+  name: z.literal('StartDryRun'),
+  productId: z.uuidv4(),
+})
+export type StartDryRun = z.infer<typeof startDryRunSchema>
+
 export const completeDisputeEvidenceCollectionSchema = disputeWorkflowCommandBase.extend({
   name: z.literal('CompleteDisputeEvidenceCollection'),
 })

@@ -1,4 +1,5 @@
 export * from './auth.schemas'
+export * from './dispute-case-message.schemas'
 export * from './dispute-case.schemas'
 export * from './dispute-collected-evidence.schemas'
 export * from './dispute-evidence-packet.schemas'

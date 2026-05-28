@@ -96,7 +96,7 @@ export function AgentPage() {
                   value="activity"
                   className="flex max-h-[calc(100vh-19rem)] flex-col data-[state=inactive]:hidden"
                 >
-                  <ActivityTab mode={mode} />
+                  <ActivityTab mode={mode} productId={product.id} />
                 </TabsContent>
               </CardContent>
             </Card>

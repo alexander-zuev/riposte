@@ -55,6 +55,11 @@ export const DISPUTE_AGENT_PLAYBOOK_TOOL_NAMES = [
   'saveProductEvidenceFields',
   'saveDisputePlaybook',
 ] as const
+export const DISPUTE_AGENT_EVIDENCE_TOOL_NAMES = [
+  'readDisputeCaseMessages',
+  'completeDisputeEvidenceCollection',
+] as const
+export const DISPUTE_AGENT_DRY_RUN_TOOL_NAMES = ['startDryRun'] as const
 
 export type BuiltDisputeAgentTools = {
   tools: ToolSet
@@ -87,6 +92,53 @@ export function buildDisputeAgentTools({
           productId: agent.name,
         })
         const result = await agent.deps.services.messageBus().handle(query)
+        return resultToAgentToolResponse(result)
+      },
+    }),
+    readDisputeCaseMessages: tool({
+      description:
+        'Read persisted agent activity messages for a dispute case. Use this to inspect previous evidence-collection steps for the current dispute before continuing or retrying work.',
+      inputSchema: z.object({
+        disputeCaseId: z.string().min(1),
+        limit: z.number().int().min(1).max(100).optional(),
+      }),
+      execute: async ({ disputeCaseId, limit = 50 }) => {
+        const query = createQuery('ListDisputeCaseMessages', {
+          productId: agent.name,
+          disputeCaseId,
+          limit,
+        })
+        const result = await agent.deps.services.messageBus().handle(query)
+        return resultToAgentToolResponse(result)
+      },
+    }),
+    completeDisputeEvidenceCollection: tool({
+      description:
+        'Mark dispute evidence collection complete after the agent has persisted the required collected evidence. Call this exactly once at the end of a successful evidence-collection run.',
+      inputSchema: z.object({
+        disputeCaseId: z.string().min(1),
+      }),
+      execute: async ({ disputeCaseId }) => {
+        const command = createCommand(
+          'CompleteDisputeEvidenceCollection',
+          { disputeCaseId },
+          `agent:${agent.name}:collect-evidence:${disputeCaseId}:complete`,
+        )
+        const result = await agent.deps.services.messageBus().handle(command)
+        return resultToAgentToolResponse(result)
+      },
+    }),
+    // TODO(dry-run): swap synthetic case for Stripe test-mode dispute (slice 5);
+    // delete the synthetic-builder block in dispute-dry-run-handler.ts at the same time.
+    startDryRun: tool({
+      description:
+        'Start a dry run of dispute defense for this product. Creates a synthetic dispute case and triggers the evidence-collection loop against it. ' +
+        'Use this once the merchant has saved their playbook and confirms they want to see the agent in action. ' +
+        'The run progress appears in the Activity tab. Returns the synthetic dispute case id and fiber id.',
+      inputSchema: z.object({}),
+      execute: async () => {
+        const command = createCommand('StartDryRun', { productId: agent.name })
+        const result = await agent.deps.services.messageBus().handle(command)
         return resultToAgentToolResponse(result)
       },
     }),
@@ -291,6 +343,63 @@ export function buildDisputeAgentTools({
   }
 }
 
+/**
+ * Tools for the background evidence-collection fiber. Distinct from chat:
+ * - `completeEvidenceCollection` takes no args and captures `disputeCaseId`
+ *   from the closure, so the agent cannot complete the wrong case
+ * - Includes MCP read tools (merchant DB, etc) so the agent can gather facts
+ * - No setup/playbook mutation tools (those belong to chat)
+ *
+ * Same file as `buildDisputeAgentTools` so shared helpers stay reachable;
+ * the two are independent contracts otherwise.
+ *
+ * TODO(tools): the v1 set is intentionally tiny (MCP + completion). Expand
+ * with: a typed `getDisputeCaseDetails(disputeCaseId)` lookup, Stripe-read
+ * tools (charge/customer/transaction history), and the merchant-evidence
+ * write tool. Each addition needs its own description + schema, not a
+ * blanket import from chat.
+ * TODO(idempotency): the completion command's idempotency key only dedupes
+ * per case; if a single case has multiple runs across days, this collapses
+ * them. Decide whether to include `runId` in the key once we have a
+ * `dispute_evidence_runs` table.
+ */
+export function buildEvidenceCollectionTools({
+  agent,
+  disputeCaseId,
+}: {
+  agent: DisputeAgentType
+  disputeCaseId: string
+}): BuiltDisputeAgentTools {
+  const tools: ToolSet = {
+    ...agent.mcp.getAITools(),
+    completeEvidenceCollection: tool({
+      description:
+        'Call exactly once when you have collected sufficient evidence or cannot make further progress. ' +
+        'Ends the run and advances the workflow. Always call this — never just stop.',
+      inputSchema: z.object({
+        reason: z.string().min(1).describe('One-line summary of why collection is complete'),
+      }),
+      execute: async ({ reason }) => {
+        const command = createCommand(
+          'CompleteDisputeEvidenceCollection',
+          { disputeCaseId },
+          `agent:${agent.name}:collect-evidence:${disputeCaseId}:complete`,
+        )
+        const result = await agent.deps.services.messageBus().handle(command)
+        return result.match({
+          ok: () => ({ completed: true, reason, error: null as string | null }),
+          err: (error) => ({ completed: false, reason, error: error.message as string | null }),
+        })
+      },
+    }),
+  }
+
+  return {
+    tools,
+    activeTools: Object.keys(tools),
+  }
+}
+
 export function deriveActiveDisputeAgentTools({
   tools,
   setup,
@@ -326,10 +435,15 @@ export function deriveActiveDisputeAgentTools({
       addToolNames(DISPUTE_AGENT_PLAYBOOK_TOOL_NAMES)
       break
     case 'dry_run':
+      addToolNames(DISPUTE_AGENT_CONNECT_APP_DATA_TOOL_NAMES)
+      addToolNames(DISPUTE_AGENT_PLAYBOOK_TOOL_NAMES)
+      addToolNames(DISPUTE_AGENT_DRY_RUN_TOOL_NAMES)
+      break
     case 'review':
     case null:
       addToolNames(DISPUTE_AGENT_CONNECT_APP_DATA_TOOL_NAMES)
       addToolNames(DISPUTE_AGENT_PLAYBOOK_TOOL_NAMES)
+      addToolNames(DISPUTE_AGENT_DRY_RUN_TOOL_NAMES)
       break
     default:
       break

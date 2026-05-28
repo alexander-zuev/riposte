@@ -25,6 +25,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "ai": "catalog:",
     "better-result": "catalog:",
     "postgres": "catalog:",
     "stripe": "catalog:",

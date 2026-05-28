@@ -19,7 +19,8 @@ const logger = createLogger('dispute-agent')
 type RepairContext = {
   repairModel: (args: { tracing: TracingContext }) => LanguageModel
   tracing: TracingContext
-  mode: string
+  // Where the loop is running ('chat' | 'evidence_collection'). Log-tag only.
+  surface: string
   productId: string
   requestId: string | undefined
 }
@@ -45,7 +46,7 @@ export function buildDisputeAgentToolCallRepair<T extends ToolSet>(
     if (NoSuchToolError.isInstance(error)) {
       logger.info('tool_call_redirected_to_unknown_tool_fallback', {
         attemptedToolName: toolCall.toolName,
-        mode: ctx.mode,
+        surface: ctx.surface,
         productId: ctx.productId,
         requestId: ctx.requestId,
       })
@@ -89,7 +90,7 @@ export function buildDisputeAgentToolCallRepair<T extends ToolSet>(
             toolName: toolCall.toolName,
             originalInput: toolCall.input,
             repairedInput: parsed.value,
-            mode: ctx.mode,
+            surface: ctx.surface,
             productId: ctx.productId,
             requestId: ctx.requestId,
           })
@@ -135,7 +136,7 @@ export function buildDisputeAgentToolCallRepair<T extends ToolSet>(
             toolName: toolCall.toolName,
             originalInput: toolCall.input,
             repairedInput,
-            mode: ctx.mode,
+            surface: ctx.surface,
             productId: ctx.productId,
             requestId: ctx.requestId,
           })
@@ -146,7 +147,7 @@ export function buildDisputeAgentToolCallRepair<T extends ToolSet>(
             toolName: toolCall.toolName,
             originalInput: toolCall.input,
             error: repairError,
-            mode: ctx.mode,
+            surface: ctx.surface,
             productId: ctx.productId,
             requestId: ctx.requestId,
           })
@@ -163,7 +164,7 @@ export function buildDisputeAgentToolCallRepair<T extends ToolSet>(
       toolName: toolCall.toolName,
       errorName: unhandled instanceof Error ? unhandled.name : typeof unhandled,
       error: unhandled,
-      mode: ctx.mode,
+      surface: ctx.surface,
       productId: ctx.productId,
       requestId: ctx.requestId,
     })

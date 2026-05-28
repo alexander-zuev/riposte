@@ -6,10 +6,12 @@ import {
   InternalServerError,
   type ProductSetupState,
   type UserId,
+  uuidv7,
 } from '@riposte/core'
 import * as Sentry from '@sentry/cloudflare'
 import {
   buildBasePrompt,
+  buildEvidenceInstructions,
   buildSystemPrompt,
 } from '@server/infrastructure/agents/build-system-prompt'
 import {
@@ -30,9 +32,10 @@ import {
   INITIAL_USAGE,
   nextDisputeAgentContextState,
 } from '@server/infrastructure/agents/dispute-agent.context'
-import { buildDisputeAgentToolCallRepair } from '@server/infrastructure/agents/dispute-agent.repair'
+import { buildDisputeAgentLoop } from '@server/infrastructure/agents/build-dispute-agent-loop'
 import {
   buildDisputeAgentTools,
+  buildEvidenceCollectionTools,
   deriveActiveDisputeAgentTools,
 } from '@server/infrastructure/agents/dispute-agent.tools'
 import {
@@ -53,10 +56,12 @@ import type { AgentMcpOAuthProvider } from 'agents'
 import { estimateMessageTokens, estimateStringTokens } from 'agents/experimental/memory/utils'
 import {
   convertToModelMessages,
+  createUIMessageStream,
+  hasToolCall,
   type LanguageModel,
   type LanguageModelUsage,
+  stepCountIs,
   type StreamTextOnFinishCallback,
-  ToolLoopAgent,
   type ToolSet,
   type UIMessage,
 } from 'ai'
@@ -302,25 +307,25 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
       ),
     })
 
-    const agent = new ToolLoopAgent({
+    const agent = buildDisputeAgentLoop({
       id: 'dispute-agent',
       model,
       instructions,
       tools,
       activeTools,
+      repair: {
+        repairModel: (args) => this.models.repair(args),
+        tracing,
+        surface: 'chat',
+        productId: this.name,
+        requestId: opts?.requestId,
+      },
       prepareStep: async () => {
         const nextSetup = await this.loadProductSetupState()
         return {
           activeTools: deriveActiveDisputeAgentTools({ tools, setup: nextSetup }),
         }
       },
-      experimental_repairToolCall: buildDisputeAgentToolCallRepair({
-        repairModel: (args) => this.models.repair(args),
-        tracing,
-        mode: this.state.mode,
-        productId: this.name,
-        requestId: opts?.requestId,
-      }),
       onFinish: ({ usage }) => {
         // Use the LAST step's usage, not `totalUsage`. In a multi-step tool
         // loop, `totalUsage` is the billing aggregate across all steps and can
@@ -623,7 +628,7 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
 
   async startEvidenceCollection(args: StartEvidenceCollectionArgs): Promise<{ fiberId: string }> {
     const receipt = await this.startFiber(
-      'collect-dispute-evidence',
+      `collect-dispute-evidence:${args.disputeCaseId}`,
       async () => {
         await this.runEvidenceCollection(args)
       },
@@ -637,25 +642,151 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
     return { fiberId: receipt.fiberId }
   }
 
+  /**
+   * Background evidence-collection loop. Runs inside a `runFiber` callback
+   * (see `startEvidenceCollection`). Uses the shared `buildDisputeAgentLoop`
+   * factory for repair plumbing but builds its own tools + prompt; chat
+   * state and `this.messages` are not touched.
+   *
+   * Per-step output is persisted to PG via `AppendDisputeCaseMessages` and
+   * a payload-free `dispute_case_messages_updated` ping broadcasts to the FE.
+   * The agent calls `completeEvidenceCollection` to end the run; a step-cap
+   * fallback fires the same command (idempotent) if the agent never does.
+   *
+   * TODO(stop-when): tune step cap once we observe real runs.
+   * TODO(cancel): wire `signal` from the fiber into `agent.stream` so a
+   * cancel request from the workflow aborts mid-step.
+   * TODO(test): integration test through `runInDurableObject` once the
+   * shape is stable.
+   * TODO(error-handling): if the stream itself throws (provider outage,
+   * repair give-up), the workflow currently hangs. Decide between firing
+   * `CompleteDisputeEvidenceCollection` with a failure reason vs a separate
+   * `FailDisputeCase` command.
+   */
   private async runEvidenceCollection(args: StartEvidenceCollectionArgs): Promise<void> {
-    // STUB
-    await this.completeEvidenceCollectionTool(args)
-  }
+    const runId = uuidv7()
 
-  private async completeEvidenceCollectionTool(args: StartEvidenceCollectionArgs): Promise<void> {
-    const command = createCommand(
-      'CompleteDisputeEvidenceCollection',
-      { disputeCaseId: args.disputeCaseId },
-      `agent:${this.name}:collect-evidence:${args.disputeCaseId}:complete`,
-    )
-    const result = await this.deps.services.messageBus().handle(command)
-    if (result.isErr()) {
-      logger.error('dispute_evidence_collection_stub_complete_failed', {
-        disputeCaseId: args.disputeCaseId,
-        error: result.error,
+    const tracing = {
+      phClient: this.analytics.posthog,
+      distinctId: this.userId,
+      traceId: runId,
+      properties: {
+        kind: 'evidence_collection',
         productId: this.name,
-        workflowInstanceId: args.workflowInstanceId,
+        disputeCaseId: args.disputeCaseId,
+        runId,
+      },
+    }
+
+    const model = this.models.primary({ tracing })
+    const { tools, activeTools } = buildEvidenceCollectionTools({
+      agent: this,
+      disputeCaseId: args.disputeCaseId,
+    })
+    const debugMode = (this.deps.env.ENV as string) === 'development'
+    const instructions = buildEvidenceInstructions({ debugMode })
+
+    const loop = buildDisputeAgentLoop({
+      id: 'dispute-evidence-collection',
+      model,
+      instructions,
+      tools,
+      activeTools,
+      stopWhen: [stepCountIs(50), hasToolCall('completeEvidenceCollection')],
+      repair: {
+        repairModel: (repairArgs) => this.models.repair(repairArgs),
+        tracing,
+        surface: 'evidence_collection',
+        productId: this.name,
+        requestId: runId,
+      },
+    })
+
+    const result = await loop.stream({
+      prompt:
+        `A new dispute has come in: ${args.disputeCaseId}. ` +
+        `Read its details, gather evidence per your instructions, ` +
+        `and call completeEvidenceCollection when done.`,
+    })
+
+    // `result.toUIMessageStream` has no per-step hook. Wrap it via
+    // `createUIMessageStream`, which DOES expose `onStepFinish` and gives us
+    // a built `responseMessage: UIMessage` per step — no manual mapping.
+    const stream = createUIMessageStream<UIMessage<never>>({
+      execute: async ({ writer }) => {
+        writer.merge(result.toUIMessageStream<UIMessage<never>>())
+      },
+      onStepFinish: async ({ responseMessage }) => {
+        const append = await this.deps.services.messageBus().handle(
+          createCommand('AppendDisputeCaseMessages', {
+            productId: this.name,
+            disputeCaseId: args.disputeCaseId,
+            runId,
+            messages: [
+              {
+                id: responseMessage.id,
+                role: responseMessage.role,
+                parts: responseMessage.parts,
+              },
+            ],
+          }),
+        )
+        if (append.isOk()) {
+          this.broadcast(
+            JSON.stringify({
+              type: 'dispute_case_messages_updated',
+              disputeCaseId: args.disputeCaseId,
+              runId,
+            }),
+          )
+        } else {
+          logger.warn('evidence_step_persist_failed', {
+            error: append.error,
+            runId,
+            disputeCaseId: args.disputeCaseId,
+            productId: this.name,
+          })
+        }
+      },
+    })
+
+    // The SDK stream is lazy: callbacks fire only as the stream is consumed.
+    // Chat hands the stream to the HTTP client via toUIMessageStreamResponse;
+    // this fiber has no client, so we read+discard to drive the pipeline.
+    const reader = stream.getReader()
+    while (true) {
+      const next = await reader.read()
+      if (next.done) break
+    }
+
+    // Fallback: agent hit the step cap without calling completeEvidenceCollection.
+    // Fire the command with the same idempotency key the tool uses so the bus
+    // dedupes if the agent also called it.
+    const steps = await result.steps
+    const completionCalled = steps.some((s) =>
+      s.toolCalls.some((tc) => tc.toolName === 'completeEvidenceCollection'),
+    )
+    if (!completionCalled) {
+      logger.warn('evidence_collection_hit_step_cap', {
+        runId,
+        disputeCaseId: args.disputeCaseId,
+        productId: this.name,
       })
+      const complete = await this.deps.services.messageBus().handle(
+        createCommand(
+          'CompleteDisputeEvidenceCollection',
+          { disputeCaseId: args.disputeCaseId },
+          `agent:${this.name}:collect-evidence:${args.disputeCaseId}:complete`,
+        ),
+      )
+      if (complete.isErr()) {
+        logger.error('evidence_collection_fallback_complete_failed', {
+          error: complete.error,
+          runId,
+          disputeCaseId: args.disputeCaseId,
+          productId: this.name,
+        })
+      }
     }
   }
 

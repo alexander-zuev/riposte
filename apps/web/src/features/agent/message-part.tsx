@@ -1,3 +1,4 @@
+import { createLogger } from '@riposte/core/client'
 import {
   Attachment,
   AttachmentInfo,
@@ -25,11 +26,18 @@ import {
   ToolOutput,
 } from '@web/ui/components/ai-elements/tool'
 import { isDataUIPart, isFileUIPart, isReasoningUIPart, isToolUIPart, type UIMessage } from 'ai'
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
+
+const logger = createLogger('agent-message-part')
 
 type AgentMessagePartProps = {
   part: UIMessage['parts'][number]
   isStreaming: boolean
+}
+
+type MessagePartsProps = {
+  parts: UIMessage['parts']
+  isStreaming?: boolean
 }
 
 type KeyedAgentMessagePart = {
@@ -64,6 +72,21 @@ function FilePartView({ part }: { part: FilePart }) {
       </Attachment>
     </Attachments>
   )
+}
+
+function ToolInputPart({ part }: { part: Extract<UIMessage['parts'][number], { input?: unknown }> }) {
+  useEffect(() => {
+    if (part.input !== undefined) return
+    logger.warn('tool_part_missing_input', {
+      type: part.type,
+      state: 'state' in part ? part.state : undefined,
+      toolCallId: 'toolCallId' in part ? part.toolCallId : undefined,
+    })
+  }, [part])
+
+  if (part.input === undefined) return null
+
+  return <ToolInput input={part.input} />
 }
 
 export function AgentMessagePart({ part, isStreaming }: AgentMessagePartProps) {
@@ -112,7 +135,7 @@ export function AgentMessagePart({ part, isStreaming }: AgentMessagePartProps) {
           <ToolHeader type={part.type} state={part.state} />
         )}
         <ToolContent>
-          {part.state !== 'input-streaming' && <ToolInput input={part.input} />}
+          {part.state !== 'input-streaming' && <ToolInputPart part={part} />}
           {part.state === 'output-available' && (
             <ToolOutput output={part.output} errorText={undefined} />
           )}
@@ -125,6 +148,12 @@ export function AgentMessagePart({ part, isStreaming }: AgentMessagePartProps) {
   }
 
   return <CodeBlock code={JSON.stringify(part, null, 2)} language="json" />
+}
+
+export function MessageParts({ parts, isStreaming = false }: MessagePartsProps) {
+  return keyedAgentMessageParts(parts).map(({ key, part }) => (
+    <AgentMessagePart key={key} isStreaming={isStreaming} part={part} />
+  ))
 }
 
 /**

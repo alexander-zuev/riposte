@@ -13,6 +13,10 @@ const startStubs = path.resolve(
 )
 const storybookRoot = path.resolve(__dirname)
 const disputeCaseFnMock = path.resolve(storybookRoot, 'mocks/dispute-case.fn.ts')
+const disputeCaseMessageFnMock = path.resolve(
+  storybookRoot,
+  'mocks/dispute-case-message.fn.ts',
+)
 
 function mockPlatformModules(): Plugin {
   const mocks: Record<string, string> = {
@@ -65,6 +69,7 @@ export default defineConfig({
       '@tanstack/react-start/server': startStubs,
       '@storybook-local': storybookRoot,
       '@web/server/entrypoints/functions/dispute-case.fn': disputeCaseFnMock,
+      '@web/server/entrypoints/functions/dispute-case-message.fn': disputeCaseMessageFnMock,
     },
   },
   optimizeDeps: {

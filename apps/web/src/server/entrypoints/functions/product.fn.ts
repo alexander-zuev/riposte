@@ -19,6 +19,10 @@ const updateProductFnInputSchema = updateProductFieldsSchema.extend({
   productId: z.uuidv4(),
 })
 
+const readPlaybookFnInputSchema = z.object({
+  productId: z.uuidv4(),
+})
+
 const deleteProductFnInputSchema = z.object({
   productId: z.uuidv4(),
 })
@@ -76,6 +80,19 @@ export const updateProduct = createServerFn({ method: 'POST' })
       ...fields,
     })
     const result = await context.deps.services.messageBus().handle(command)
+
+    return toServerFnRpc(result)
+  })
+
+export const readDisputePlaybook = createServerFn({ method: 'GET' })
+  .middleware([requireAuth])
+  .inputValidator(readPlaybookFnInputSchema)
+  .handler(async ({ data, context }) => {
+    const query = createQuery('ReadDisputePlaybook', {
+      userId: context.user.id,
+      productId: data.productId,
+    })
+    const result = await context.deps.services.messageBus().handle(query)
 
     return toServerFnRpc(result)
   })

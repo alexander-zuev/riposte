@@ -1,6 +1,10 @@
 import { unwrapRpc } from '@riposte/core/client'
 import { queryOptions } from '@tanstack/react-query'
-import { getProductSetupState, listProducts } from '@web/server/entrypoints/functions/product.fn'
+import {
+  getProductSetupState,
+  listProducts,
+  readDisputePlaybook,
+} from '@web/server/entrypoints/functions/product.fn'
 
 export const productQueries = {
   list: () =>
@@ -12,5 +16,10 @@ export const productQueries = {
     queryOptions({
       queryKey: ['products', 'setup', productId] as const,
       queryFn: async () => unwrapRpc(await getProductSetupState({ data: { productId } })),
+    }),
+  playbook: (productId: string) =>
+    queryOptions({
+      queryKey: ['products', 'playbook', productId] as const,
+      queryFn: async () => unwrapRpc(await readDisputePlaybook({ data: { productId } })),
     }),
 }

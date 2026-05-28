@@ -36,10 +36,16 @@ export const Route = createFileRoute('/api/stripe/oauth/callback')({
         const result = await deps.services.messageBus().handle(command)
 
         return resultToApiResponse(result, {
-          ok: (value) =>
-            redirectToPath(url, value.redirectAfter ?? '/notifications', {
+          ok: (value) => {
+            if (value.redirectAfter?.endsWith('/agent')) {
+              return new Response('<script>window.close();</script>', {
+                headers: { 'content-type': 'text/html' },
+              })
+            }
+            return redirectToPath(url, value.redirectAfter ?? '/notifications', {
               stripeConnected: 'true',
-            }),
+            })
+          },
           err: (failure) => {
             if (StripeOAuthCallbackError.is(failure)) {
               return redirectToPath(url, '/notifications', { stripeError: failure.reason })

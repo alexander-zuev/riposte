@@ -1,64 +1,73 @@
-## 🤺 Riposte
+## Riposte
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![Status: Early Development](https://img.shields.io/badge/Status-Early_Development-orange.svg)]()
+[![Status: Alpha](https://img.shields.io/badge/Status-Alpha-orange.svg)]()
 [![Deploy to Cloudflare Workers](https://img.shields.io/badge/Deploy_to-Cloudflare_Workers-F38020.svg?logo=cloudflare)](https://developers.cloudflare.com/workers/)
 [![CI](https://github.com/alexander-zuev/riposte/actions/workflows/ci.yaml/badge.svg)](https://github.com/alexander-zuev/riposte/actions/workflows/ci.yaml)
 
-Open-source AI agent that wins your Stripe disputes on autopilot.
+[riposte.sh](https://riposte.sh) | Open-source AI agent that fights your Stripe disputes on autopilot
 
-**[Get started at riposte.sh →](https://riposte.sh)**
+### 🚀 Getting started
 
-### Why
+**Cloud** — hosted setup at [riposte.sh](https://riposte.sh): connect Stripe, connect your data, done.
 
-**Disputes are existential.** Exceed 0.75% dispute rate and card networks put you in a monitoring program. If you can't bring it down, fines start (Mastercard: $5K/month escalating to $100K/month over 19+ months of non-compliance). Worst case: they cut you off from processing payments entirely.
+**Self-hosted** — run it on your own Cloudflare account. See Self-hosting below.
 
-**But fighting them is a losing game.** Collecting evidence takes hours per case. Every dispute costs $15, contest and lose = $30. Most businesses just eat the loss.
+### 💸 Why
 
-**Existing tools can't help.** They all pull generic payment data. None of them can access your app's database, user activity logs, or the actual product your customer received. That's why the evidence is shallow and win rates stay low.
+**Chargebacks are revenue you fight to win back** — hours per case, and most teams just eat the loss.
 
-**Riposte reads your actual data.** It queries your database for real user activity, pulls screenshots of what they received, and builds evidence that answers the only question the bank cares about: _"Did this person get what they paid for?"_
+**Managed services take ~30% of what they recover**, on thin generic-payment-data evidence (looking at you Stripe Smart Disputes).
 
-### How it works
+**Riposte wins them back automatically, with your data, no cut.** It reads what the customer actually did and received to answer the bank's only question: _did they get what they paid for?_
 
-**Cloud** — 1-click hosted setup. Connect Stripe, connect your DB, done.
-
-**Self-hosted** — deploy to your own Cloudflare account:
-
-```bash
-git clone https://github.com/alexander-zuev/riposte
-pnpm install && pnpm deploy
-```
-
-Both use the same agent. 90% deterministic, 10% AI.
+### ⚙️ How it works
 
 ```
-1. CONNECT     Stripe key + DB connection + describe your product
-                          ↓
-2. DISCOVER    Agent reads your schema, finds user activity tables
-                          ↓
-3. AUTOPILOT   Webhook fires → pulls evidence → generates PDF → submits to Stripe
-                          ↓
-4. NOTIFY      Slack / Telegram / Discord / Email
+CONNECT     Stripe + your data source (MCP)
+   ↓
+SETUP       the agent reads your schema and drafts your dispute playbook
+   ↓
+REVIEW      dry-run on a real dispute, you approve
+   ↓
+GO LIVE     every new dispute now runs automatically:
 ```
 
-### Tech stack
+```
+WEBHOOK     Stripe dispute opens
+   ↓
+ENRICH      pull the dispute context
+   ↓
+COLLECT     read your data via the playbook (MCP)
+   ↓
+GENERATE    build the evidence PDF
+   ↓
+SUBMIT      to Stripe   ·   approve-first optional (HITL)
+```
 
-| Layer               | What                                                       |
-| ------------------- | ---------------------------------------------------------- |
-| Agent runtime       | Cloudflare Workers + Agents SDK                            |
-| LLM                 | Claude via @ai-sdk/anthropic                               |
-| DB access           | MCP (PlanetScale, Supabase, Postgres)                      |
-| PDF generation      | Deterministic (structured layout, image resize, 5MB limit) |
-| Evidence submission | Stripe Disputes API                                        |
-| Notifications       | Slack / Telegram / Discord / Email                         |
+### 🧱 Tech stack
 
-### Docs
+| Layer         | What                                                         |
+| ------------- | ------------------------------------------------------------ |
+| Agent runtime | Cloudflare Workers + Agents SDK (Durable Objects, Workflows) |
+| LLM           | Cloudflare Workers AI — Gemma 4, Kimi K2                     |
+| Database      | Postgres via Hyperdrive                                      |
+| Evidence PDF  | Deterministic renderer (structured layout, image resize)    |
+| Submission    | Stripe Disputes API                                         |
+| Notifications | Slack, Email                                                |
 
-Public docs live in `docs/public`. Internal working docs live in `docs/private` and are encrypted with git-crypt because they may contain product research, launch planning, private screenshots, draft specs, security assumptions, and operational notes.
+### 🏠 Self-hosting
 
-The code is open for inspection and self-hosting. Internal strategy and private research are not part of the public distribution.
+Configure your Cloudflare bindings and secrets, then `wrangler deploy`. Not turnkey yet — see `docs/public`.
 
-### License
+### 🤝 Contributing
 
-AGPLv3 — free to use, modify, and self-host. Hosted version coming soon.
+Ideas and contributions welcome — open an issue to start.
+
+### 📚 Docs
+
+`docs/public` is open. `docs/private` (product research, launch planning, specs, screenshots) is git-crypt-encrypted and not part of the public distribution.
+
+### ⚖️ License
+
+AGPLv3

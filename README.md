@@ -23,6 +23,8 @@
 
 ### ⚙️ How it works
 
+**Setup** — once, guided by the agent in chat:
+
 ```
 CONNECT     Stripe + your data source (MCP)
    ↓
@@ -30,31 +32,44 @@ SETUP       the agent reads your schema and drafts your dispute playbook
    ↓
 REVIEW      dry-run on a real dispute, you approve
    ↓
-GO LIVE     every new dispute now runs automatically:
+GO LIVE     you're live
 ```
 
+**Runtime** — then every new dispute is handled automatically:
+
 ```
-WEBHOOK     Stripe dispute opens
-   ↓
-ENRICH      pull the dispute context
-   ↓
-COLLECT     read your data via the playbook (MCP)
-   ↓
-GENERATE    build the evidence PDF
-   ↓
-SUBMIT      to Stripe   ·   approve-first optional (HITL)
+   ┌──────────────┐
+   │   WEBHOOK    │   Stripe reports a new dispute
+   └──────┬───────┘
+          ▼
+   ┌──────────────┐
+   │    ENRICH    │   pull the charge, customer, and prior refunds
+   └──────┬───────┘
+          ▼
+   ┌──────────────┐  ◄─ your playbook + database (MCP)
+   │   COLLECT    │   match the customer, pull their real usage since the charge
+   └──────┬───────┘
+          ▼
+   ┌──────────────┐
+   │   GENERATE   │   assemble a deterministic evidence PDF
+   └──────┬───────┘
+          ▼
+   ┌──────────────┐
+   │    SUBMIT    │   file with Stripe  ·  or approve first (HITL)
+   └──────┬───────┘
+          ▼
+       won / lost  →  Slack + email
 ```
 
 ### 🧱 Tech stack
 
 | Layer         | What                                                         |
 | ------------- | ------------------------------------------------------------ |
-| Agent runtime | Cloudflare Workers + Agents SDK (Durable Objects, Workflows) |
-| LLM           | Cloudflare Workers AI — Gemma 4, Kimi K2                     |
-| Database      | Postgres via Hyperdrive                                      |
-| Evidence PDF  | Deterministic renderer (structured layout, image resize)    |
-| Submission    | Stripe Disputes API                                         |
-| Notifications | Slack, Email                                                |
+| Agent runtime | Cloudflare Workers + Agents SDK + Workflows                  |
+| LLM           | Cloudflare Workers AI — Gemma 4                              |
+| DB            | PlanetScale Postgres                                         |
+| Stripe        | Official Stripe App + API integration                        |
+| Notifications | Slack, Email                                                 |
 
 ### 🏠 Self-hosting
 

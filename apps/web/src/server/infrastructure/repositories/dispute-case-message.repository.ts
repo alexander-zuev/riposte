@@ -1,46 +1,46 @@
 import type {
-  AppendDisputeCaseMessages,
   DisputeCaseActivity,
   DisputeCaseMessage,
   GetDisputeCaseActivity,
   ListDisputeCaseActivity,
+  SaveDisputeCaseMessage,
 } from '@riposte/core'
-import { DatabaseError, uuidv7 } from '@riposte/core'
+import { DatabaseError } from '@riposte/core'
 import type { IDisputeCaseMessageRepository } from '@server/domain/repository/interfaces'
 import type { DbDisputeCaseMessage, DrizzleDb } from '@server/infrastructure/db'
 import { disputeCaseMessages } from '@server/infrastructure/db'
 import { Result } from 'better-result'
 import { and, asc, desc, eq, inArray, min } from 'drizzle-orm'
 
-type AppendInput = Omit<AppendDisputeCaseMessages, 'id' | 'type' | 'name' | 'userId'>
+type SaveInput = Omit<SaveDisputeCaseMessage, 'id' | 'type' | 'name' | 'userId'>
 type GetCaseMessagesInput = Omit<GetDisputeCaseActivity, 'type' | 'name' | 'userId'>
 type ListCaseActivityInput = Omit<ListDisputeCaseActivity, 'type' | 'name' | 'userId'>
 
 export class DisputeCaseMessageRepository implements IDisputeCaseMessageRepository {
   constructor(private readonly db: DrizzleDb) {}
 
-  async appendBatch(input: AppendInput): Promise<Result<void, DatabaseError>> {
-    const rows = input.messages.map((m) => ({
-      id: uuidv7(),
+  async save(input: SaveInput): Promise<Result<void, DatabaseError>> {
+    const row = {
+      id: input.message.id,
       productId: input.productId,
       disputeCaseId: input.disputeCaseId,
       runId: input.runId,
-      messageId: m.id,
-      role: m.role,
-      parts: m.parts,
-    }))
+      role: input.message.role,
+      parts: input.message.parts,
+    }
 
     return Result.tryPromise({
       try: async () => {
         await this.db
           .insert(disputeCaseMessages)
-          .values(rows)
-          .onConflictDoNothing({
-            target: [disputeCaseMessages.disputeCaseId, disputeCaseMessages.messageId],
+          .values(row)
+          .onConflictDoUpdate({
+            target: disputeCaseMessages.id,
+            set: { parts: row.parts },
           })
       },
       catch: (cause) =>
-        new DatabaseError({ message: 'Failed to append dispute case messages', cause }),
+        new DatabaseError({ message: 'Failed to save dispute case message', cause }),
     })
   }
 
@@ -131,7 +131,6 @@ function toDisputeCaseMessage(row: DbDisputeCaseMessage): DisputeCaseMessage {
     productId: row.productId,
     disputeCaseId: row.disputeCaseId,
     runId: row.runId,
-    messageId: row.messageId,
     role: row.role,
     parts: row.parts,
     createdAt: row.createdAt.toISOString(),

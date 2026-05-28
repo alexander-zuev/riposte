@@ -280,6 +280,32 @@ export class FetchError extends TaggedError('FetchError')<{
   }
 }
 
+/**
+ * Background evidence-collection loop failed (timeout, provider/gateway error,
+ * or repair give-up). `retryable` drives the app-level retry; intentional
+ * timeouts (AbortError) are non-retryable, so a doom loop fails fast to a human.
+ */
+export class EvidenceCollectionFailedError extends TaggedError('EvidenceCollectionFailedError')<{
+  message: string
+  disputeCaseId: string
+  cause: unknown
+  retryable: boolean
+}>() {
+  constructor(args: {
+    disputeCaseId: string
+    cause: unknown
+    retryable: boolean
+    message?: string
+  }) {
+    super({
+      message: args.message ?? 'Evidence collection failed',
+      disputeCaseId: args.disputeCaseId,
+      cause: args.cause,
+      retryable: args.retryable,
+    })
+  }
+}
+
 function getErrorMessage(cause: unknown): string | undefined {
   if (cause instanceof Error) return cause.message
   if (

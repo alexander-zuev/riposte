@@ -8,9 +8,9 @@ import { getChatMessages } from '@server/application/handlers/chat-handler'
 import { getConnectionsStatus } from '@server/application/handlers/connection-handler'
 import { listDisputeCases } from '@server/application/handlers/dispute-case-handler'
 import {
-  appendDisputeCaseMessages,
   getDisputeCaseActivity,
   listDisputeCaseActivity,
+  saveDisputeCaseMessage,
 } from '@server/application/handlers/dispute-case-message-handler'
 import { startDryRun } from '@server/application/handlers/dispute-dry-run-handler'
 import {
@@ -93,7 +93,7 @@ export const COMMAND_HANDLERS = {
   StartDisputeEvidenceCollection: startDisputeEvidenceCollection,
   StartDryRun: startDryRun,
   CompleteDisputeEvidenceCollection: completeDisputeEvidenceCollection,
-  AppendDisputeCaseMessages: appendDisputeCaseMessages,
+  SaveDisputeCaseMessage: saveDisputeCaseMessage,
   GenerateEvidencePacket: generateEvidencePacket,
   DecideDisputeSubmissionPolicy: decideDisputeSubmissionPolicy,
   SubmitDisputeResponse: submitDisputeResponse,
@@ -126,6 +126,12 @@ export const EVENT_HANDLERS = {
     },
   ],
   DisputeEvidenceCollectionNeedsInput: [
+    {
+      id: 'dispute.sendEvidenceCollectionWorkflowEvent',
+      handle: sendEvidenceCollectionWorkflowEvent,
+    },
+  ],
+  DisputeEvidenceCollectionFailed: [
     {
       id: 'dispute.sendEvidenceCollectionWorkflowEvent',
       handle: sendEvidenceCollectionWorkflowEvent,

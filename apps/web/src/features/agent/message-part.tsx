@@ -74,7 +74,11 @@ function FilePartView({ part }: { part: FilePart }) {
   )
 }
 
-function ToolInputPart({ part }: { part: Extract<UIMessage['parts'][number], { input?: unknown }> }) {
+function ToolInputPart({
+  part,
+}: {
+  part: Extract<UIMessage['parts'][number], { input?: unknown }>
+}) {
   useEffect(() => {
     if (part.input !== undefined) return
     logger.warn('tool_part_missing_input', {
@@ -128,7 +132,7 @@ export function AgentMessagePart({ part, isStreaming }: AgentMessagePartProps) {
 
   if (isToolUIPart(part)) {
     return (
-      <Tool defaultOpen={part.state === 'output-error'}>
+      <Tool>
         {part.type === 'dynamic-tool' ? (
           <ToolHeader type="dynamic-tool" state={part.state} toolName={part.toolName} />
         ) : (

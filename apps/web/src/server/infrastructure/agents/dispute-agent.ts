@@ -1,8 +1,10 @@
 import { AIChatAgent, type OnChatMessageOptions } from '@cloudflare/ai-chat'
 import {
   createCommand,
+  createEvent,
   createLogger,
   createSentryOptions,
+  EvidenceCollectionFailedError,
   InternalServerError,
   type ProductSetupState,
   type UserId,
@@ -52,10 +54,13 @@ import {
 } from '@server/infrastructure/ai/model-factory'
 import type { IAnalyticsService } from '@server/infrastructure/analytics/analytics-service'
 import { createAppDeps, type AppDeps } from '@server/infrastructure/app-deps'
+import { isTransientError, RETRY } from '@server/infrastructure/resilience/retry'
 import type { AgentMcpOAuthProvider } from 'agents'
 import { estimateMessageTokens, estimateStringTokens } from 'agents/experimental/memory/utils'
 import {
+  consumeStream,
   convertToModelMessages,
+  createUIMessageStream,
   hasToolCall,
   type LanguageModel,
   type LanguageModelUsage,
@@ -65,8 +70,6 @@ import {
   type UIMessage,
 } from 'ai'
 import { Result, type Result as ResultType } from 'better-result'
-
-import { stepResultToUiMessage } from './ai-sdk-ui-message'
 
 type ReadyMcpServerResult =
   | {
@@ -318,6 +321,8 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
       instructions,
       tools,
       activeTools,
+      // Cap the tool/repair loop so a spin can't run forever; the user can restart.
+      stopWhen: [stepCountIs(30)],
       repair: {
         repairModel: (args) => this.models.repair(args),
         tracing,
@@ -345,6 +350,8 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
     const result = await agent.stream({
       messages: await convertToModelMessages(prepared.value),
       abortSignal: opts?.abortSignal,
+      // Wall-clock backstop: kill a wedged or runaway turn; the user restarts.
+      timeout: { totalMs: 300_000 },
     })
 
     return result.toUIMessageStreamResponse({
@@ -653,23 +660,23 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
    * factory for repair plumbing but builds its own tools + prompt; chat
    * state and `this.messages` are not touched.
    *
-   * Per-step output is persisted to PG via `AppendDisputeCaseMessages` and
-   * a payload-free `dispute_case_messages_updated` ping broadcasts to the FE.
-   * The agent calls `completeEvidenceCollection` to end the run; a step-cap
-   * fallback fires the same command (idempotent) if the agent never does.
+   * The run's assembled UIMessage is persisted via `SaveDisputeCaseMessage`
+   * (upsert by message id) on every step for the live feed and once more on
+   * finish as a guard; a payload-free `dispute_case_messages_updated` ping
+   * broadcasts per step and `dispute_case_messages_finished` on completion. The
+   * agent calls `completeEvidenceCollection` to end
+   * the run; a step-cap fallback fires the same command if the agent never does.
    *
    * TODO(stop-when): tune step cap once we observe real runs.
-   * TODO(cancel): wire `signal` from the fiber into `agent.generate` so a
-   * cancel request from the workflow aborts mid-step.
    * TODO(test): integration test through `runInDurableObject` once the
    * shape is stable.
-   * TODO(error-handling): if generation throws (provider outage,
-   * repair give-up), the workflow currently hangs. Decide between firing
-   * `CompleteDisputeEvidenceCollection` with a failure reason vs a separate
-   * `FailDisputeCase` command.
    */
   private async runEvidenceCollection(args: RunEvidenceCollectionArgs): Promise<void> {
     const runId = uuidv7()
+    // One message id per run, reused across retry attempts (like `runId`). A
+    // transient retry then upserts over its own partial row instead of leaving
+    // an orphan; the failed attempt's detail still lives in the PostHog trace.
+    const messageId = uuidv7()
 
     const tracing = {
       phClient: this.analytics.posthog,
@@ -707,46 +714,107 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
       },
     })
 
-    const result = await loop.generate({
-      abortSignal: args.abortSignal,
-      prompt:
-        `A new dispute has come in: ${args.disputeCaseId}. ` +
-        `Read its details, gather evidence per your instructions, ` +
-        `and call completeEvidenceCollection when done.`,
-      onStepFinish: async (step) => {
-        const message = stepResultToUiMessage(step)
-        const append = await this.deps.services.messageBus().handle(
-          createCommand('AppendDisputeCaseMessages', {
-            productId: this.name,
+    const saveMessage = async (
+      message: UIMessage<never>,
+      event: 'dispute_case_messages_updated' | 'dispute_case_messages_finished',
+    ): Promise<void> => {
+      const saved = await this.deps.services.messageBus().handle(
+        createCommand('SaveDisputeCaseMessage', {
+          productId: this.name,
+          disputeCaseId: args.disputeCaseId,
+          runId,
+          message: { id: messageId, role: message.role, parts: message.parts },
+        }),
+      )
+      if (saved.isOk()) {
+        this.broadcastJson({ type: event, disputeCaseId: args.disputeCaseId, runId })
+      } else {
+        logger.warn('evidence_step_persist_failed', {
+          error: saved.error,
+          runId,
+          disputeCaseId: args.disputeCaseId,
+          productId: this.name,
+        })
+      }
+    }
+
+    const turn = await Result.tryPromise(
+      {
+        try: async () => {
+          const streamResult = await loop.stream({
+            abortSignal: args.abortSignal,
+            // Wall-clock backstop under the workflow's 30-min waitForEvent; catches doom loops/hangs.
+            timeout: { totalMs: 600_000 },
+            prompt:
+              `A new dispute has come in: ${args.disputeCaseId}. ` +
+              `Read its details, gather evidence per your instructions, ` +
+              `and call completeEvidenceCollection when done.`,
+          })
+          // The SDK assembles one UIMessage per turn (stable id, parts grow over
+          // steps). `onStepFinish` upserts it for the live feed; `onFinish`
+          // upserts the final message as a guard if a step write failed. No HTTP
+          // client consumes this stream, so `consumeStream` drives it to finish.
+          await consumeStream({
+            stream: createUIMessageStream<UIMessage<never>>({
+              execute: ({ writer }) => {
+                writer.merge(streamResult.toUIMessageStream({ generateMessageId: () => messageId }))
+              },
+              onStepFinish: ({ responseMessage }) =>
+                saveMessage(responseMessage, 'dispute_case_messages_updated'),
+              onFinish: ({ responseMessage }) =>
+                saveMessage(responseMessage, 'dispute_case_messages_finished'),
+            }),
+          })
+          // `stream()` resolves even when generation fails; awaiting a result
+          // promise rethrows the error so RETRY + the failure event engage.
+          await streamResult.finishReason
+          return streamResult
+        },
+        catch: (cause) =>
+          new EvidenceCollectionFailedError({
             disputeCaseId: args.disputeCaseId,
-            runId,
-            messages: [message],
+            cause,
+            retryable: isTransientError(cause),
           }),
-        )
-        if (append.isOk()) {
-          this.broadcastJson({
-            type: 'dispute_case_messages_updated',
-            disputeCaseId: args.disputeCaseId,
-            runId,
-          })
-        } else {
-          // TODO: understand how to handle this better. We should either batch / throttle writes to PG or not.
-          // Or retry cleanly
-          logger.warn('evidence_step_persist_failed', {
-            error: append.error,
-            runId,
-            disputeCaseId: args.disputeCaseId,
-            productId: this.name,
-          })
-        }
       },
+      RETRY.externalApi,
+    )
+
+    if (turn.isErr()) {
+      logger.error('evidence_collection_failed', {
+        error: turn.error,
+        runId,
+        disputeCaseId: args.disputeCaseId,
+        productId: this.name,
+      })
+      const sent = await this.deps.services
+        .queueClient()
+        .send(createEvent('DisputeEvidenceCollectionFailed', { disputeCaseId: args.disputeCaseId }))
+      if (sent.isErr()) {
+        logger.error('evidence_collection_fail_event_send_error', {
+          error: sent.error,
+          runId,
+          disputeCaseId: args.disputeCaseId,
+          productId: this.name,
+        })
+      }
+      return
+    }
+
+    const steps = await turn.value.steps
+    const finishReason = await turn.value.finishReason
+
+    logger.debug('evidence_turn_payload_observed', {
+      runId,
+      disputeCaseId: args.disputeCaseId,
+      productId: this.name,
+      finishReason,
+      stepCount: steps.length,
     })
 
     // Fallback: agent hit the step cap without calling completeEvidenceCollection.
     // Fire the command with the same idempotency key the tool uses so the bus
     // dedupes if the agent also called it.
-    // TODO: interesting mechanism need to explore this?
-    const steps = result.steps
     const completionCalled = steps.some((s) =>
       s.toolCalls.some((tc) => tc.toolName === 'completeEvidenceCollection'),
     )
@@ -924,7 +992,9 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
 
     const nextAt = await this.mcpOAuth.computeNextRefreshAt()
     if (nextAt) {
-      await this.schedule(nextAt, REFRESH_MCP_OAUTH_TOKENS_CALLBACK)
+      await this.schedule(nextAt, REFRESH_MCP_OAUTH_TOKENS_CALLBACK, undefined, {
+        idempotent: true,
+      })
     }
   }
 

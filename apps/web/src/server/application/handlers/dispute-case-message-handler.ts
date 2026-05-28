@@ -1,24 +1,24 @@
 import type {
-  AppendDisputeCaseMessages,
   DatabaseError,
   GetDisputeCaseActivity,
   GetDisputeCaseActivityResult,
   ListDisputeCaseActivity,
   ListDisputeCaseActivityResult,
+  SaveDisputeCaseMessage,
 } from '@riposte/core'
 import type { CommandHandler, QueryHandler } from '@server/application/registry/types'
 import { Result } from 'better-result'
 
-export const appendDisputeCaseMessages: CommandHandler<
-  AppendDisputeCaseMessages,
+export const saveDisputeCaseMessage: CommandHandler<
+  SaveDisputeCaseMessage,
   void,
   DatabaseError
 > = async (command, ctx) =>
-  ctx.deps.repos.disputeCaseMessages(ctx.deps.db()).appendBatch({
+  ctx.deps.repos.disputeCaseMessages(ctx.deps.db()).save({
     productId: command.productId,
     disputeCaseId: command.disputeCaseId,
     runId: command.runId,
-    messages: command.messages,
+    message: command.message,
   })
 
 export const getDisputeCaseActivity: QueryHandler<

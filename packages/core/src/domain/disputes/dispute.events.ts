@@ -64,6 +64,13 @@ export type DisputeEvidenceCollectionNeedsInput = z.infer<
   typeof disputeEvidenceCollectionNeedsInputSchema
 >
 
+export const disputeEvidenceCollectionFailedSchema = baseEventSchema.extend({
+  name: z.literal('DisputeEvidenceCollectionFailed'),
+  disputeCaseId: z.string().min(1),
+})
+
+export type DisputeEvidenceCollectionFailed = z.infer<typeof disputeEvidenceCollectionFailedSchema>
+
 export const scheduledDisputeSyncDueSchema = baseEventSchema.extend({
   name: z.literal('ScheduledDisputeSyncDue'),
 })

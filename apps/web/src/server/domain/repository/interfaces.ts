@@ -1,5 +1,4 @@
 import type {
-  AppendDisputeCaseMessages,
   BlobStorageError,
   CredentialEncryptionError,
   DatabaseError,
@@ -15,6 +14,7 @@ import type {
   ListDisputeCases,
   ListDisputeCasesResult,
   DisputeSyncState,
+  SaveDisputeCaseMessage,
   UUIDv4,
 } from '@riposte/core'
 import type { ProductAppDataSource } from '@server/domain/app-data-sources'
@@ -107,14 +107,14 @@ export interface IDisputeCollectedEvidenceRepository {
 
 /* -------------------------------------------------------------------------------------------------
  * Dispute Case Message Repository
- * Append-only audit log of UIMessages emitted by the evidence-collection loop.
- * `appendBatch` is idempotent on (disputeCaseId, messageId) via the unique
- * constraint — re-running a step is safe.
+ * One row per agent turn: the evidence-collection loop's assembled UIMessage.
+ * `save` upserts on the message id, so the per-step and turn-finish writes
+ * overwrite the same row as the message grows.
  * ------------------------------------------------------------------------------------------------- */
 
 export interface IDisputeCaseMessageRepository {
-  appendBatch: (
-    input: Omit<AppendDisputeCaseMessages, 'id' | 'type' | 'name' | 'userId'>,
+  save: (
+    input: Omit<SaveDisputeCaseMessage, 'id' | 'type' | 'name' | 'userId'>,
   ) => Promise<Result<void, DatabaseError>>
   getCaseMessages: (
     input: Omit<GetDisputeCaseActivity, 'type' | 'name' | 'userId'>,

@@ -5,6 +5,7 @@ import type {
   DecideDisputeSubmissionPolicy,
   DisputeCaseReceived,
   DisputeEvidenceCollectionCompleted,
+  DisputeEvidenceCollectionFailed,
   DisputeEvidenceCollectionNeedsInput,
   EnrichDisputeContext,
   EvidencePdfRenderError,
@@ -103,7 +104,10 @@ export async function startDisputeAgentWorkflow(
 }
 
 export async function sendEvidenceCollectionWorkflowEvent(
-  event: DisputeEvidenceCollectionCompleted | DisputeEvidenceCollectionNeedsInput,
+  event:
+    | DisputeEvidenceCollectionCompleted
+    | DisputeEvidenceCollectionNeedsInput
+    | DisputeEvidenceCollectionFailed,
   { deps, tx }: HandlerContext,
 ): Promise<Result<void, DisputeWorkflowCommandError | WorkflowError>> {
   const found = await deps.repos.disputeCases(tx).findById(event.disputeCaseId)

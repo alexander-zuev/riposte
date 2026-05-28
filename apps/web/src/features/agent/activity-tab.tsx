@@ -46,7 +46,7 @@ export function ActivityTab({ mode, productId }: ActivityTabProps) {
                   productId={productId}
                   disputeCaseId={caseActivity.disputeCaseId}
                   startedAt={caseActivity.messages[0]?.createdAt}
-                  stepCount={caseActivity.messages.length}
+                  stepCount={countSteps(caseActivity.messages)}
                 />
                 {caseActivity.messages.map((message) => (
                   <ActivityMessage key={message.id} message={message} />
@@ -68,6 +68,17 @@ function ActivityMessage({ message }: { message: DisputeCaseMessage }) {
         <MessageParts parts={message.parts} />
       </MessageContent>
     </Message>
+  )
+}
+
+/**
+ * Steps the agent took, from the `step-start` markers the SDK writes into each
+ * turn message. A run is one message now, so row count is not the step count.
+ */
+function countSteps(messages: DisputeCaseMessage[]): number {
+  return messages.reduce(
+    (total, message) => total + message.parts.filter((part) => part.type === 'step-start').length,
+    0,
   )
 }
 

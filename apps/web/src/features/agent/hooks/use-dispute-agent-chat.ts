@@ -1,5 +1,9 @@
 import { useAgentChat } from '@cloudflare/ai-chat/react'
-import { createLogger, type DisputeCaseMessagesUpdatedBroadcast } from '@riposte/core/client'
+import {
+  createLogger,
+  type DisputeCaseMessagesFinishedBroadcast,
+  type DisputeCaseMessagesUpdatedBroadcast,
+} from '@riposte/core/client'
 import { useQueryClient } from '@tanstack/react-query'
 import { useProductSetupInvalidation } from '@web/features/agent/hooks/use-product-setup-invalidation'
 import type { MCPServersState } from 'agents'
@@ -94,9 +98,12 @@ export function useDisputeAgent(productId: string) {
       const message = parseAgentMessageEvent(event)
       const type = getAgentMessageType(message)
       switch (type) {
-        case 'dispute_case_messages_updated': {
-          const broadcast = message as DisputeCaseMessagesUpdatedBroadcast
-          logger.debug('dispute_case_messages_updated', {
+        case 'dispute_case_messages_updated':
+        case 'dispute_case_messages_finished': {
+          const broadcast = message as
+            | DisputeCaseMessagesUpdatedBroadcast
+            | DisputeCaseMessagesFinishedBroadcast
+          logger.debug(broadcast.type, {
             disputeCaseId: broadcast.disputeCaseId,
             runId: broadcast.runId,
           })

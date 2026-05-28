@@ -11,7 +11,7 @@ import {
   ShieldCheckIcon,
   StripeLogoIcon,
 } from '@phosphor-icons/react'
-import type { Meta, StoryObj } from '@storybook/react-vite'
+import type { Meta, StoryObj } from '@storybook/tanstack-react'
 import Section from '@web/ui/components/layout/section'
 import { Badge } from '@web/ui/components/ui/badge'
 

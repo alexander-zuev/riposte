@@ -1,13 +1,11 @@
-import type { StorybookConfig } from '@storybook/react-vite'
-import { tanstackStartPlugin } from 'storybook-addon-tanstack-start/plugin'
-import { mergeConfig } from 'vite'
+import type { StorybookConfig } from '@storybook/tanstack-react'
 
 const config: StorybookConfig = {
   stories: ['./**/*.stories.@(js|jsx|mjs|ts|tsx)'],
   addons: ['@storybook/addon-themes'],
   staticDirs: ['../public'],
   framework: {
-    name: '@storybook/react-vite',
+    name: '@storybook/tanstack-react',
     options: {
       builder: {
         viteConfigPath: '.storybook/vite.config.ts',
@@ -16,15 +14,6 @@ const config: StorybookConfig = {
   },
   core: {
     disableTelemetry: true,
-  },
-  async viteFinal(config) {
-    return mergeConfig(config, {
-      plugins: [
-        tanstackStartPlugin({
-          additionalServerModules: ['@tanstack/react-start/server'],
-        }),
-      ],
-    })
   },
 }
 

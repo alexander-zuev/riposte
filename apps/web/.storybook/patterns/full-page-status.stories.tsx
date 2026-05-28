@@ -4,7 +4,7 @@ import {
   QuestionIcon,
   WarningOctagonIcon,
 } from '@phosphor-icons/react'
-import type { Meta, StoryObj } from '@storybook/react-vite'
+import type { Meta, StoryObj } from '@storybook/tanstack-react'
 import { FullPageStatus } from '@web/ui/components/layout/full-page-status'
 import { Button } from '@web/ui/components/ui/button'
 

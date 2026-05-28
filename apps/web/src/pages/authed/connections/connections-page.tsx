@@ -10,27 +10,17 @@ import {
 import { useQuery } from '@tanstack/react-query'
 import { getRouteApi, useRouter } from '@tanstack/react-router'
 import { connectionsQueries } from '@web/entities/connections'
+import {
+  CardErrorMessage,
+  ConnectionStatusCard,
+  Section,
+  type ConnectionStatus,
+} from '@web/features/connections/connection-status-card'
 import { useStripeConnectedToast } from '@web/features/connections/hooks/use-stripe-connected-toast'
 import { useStripeOAuthMutation } from '@web/pages/authed/connections/hooks/use-stripe-oauth-mutation'
 import { PageHeader } from '@web/pages/authed/shared/page-header'
-import { Badge } from '@web/ui/components/ui/badge'
 import { Button } from '@web/ui/components/ui/button'
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@web/ui/components/ui/card'
-import { useCallback, type ComponentProps, type ComponentType, type ReactNode } from 'react'
-
-type BadgeVariant = ComponentProps<typeof Badge>['variant']
-
-type ConnectionStatus = {
-  variant: BadgeVariant
-  label: string
-}
+import { useCallback } from 'react'
 
 const connectionsRoute = getRouteApi('/_authed/products/$productId/connections')
 
@@ -167,66 +157,6 @@ export function ConnectionsPage() {
         </div>
       </Section>
     </div>
-  )
-}
-
-function Section({
-  title,
-  description,
-  children,
-}: {
-  title: string
-  description: string
-  children: ReactNode
-}) {
-  return (
-    <section className="grid gap-4">
-      <div>
-        <h3>{title}</h3>
-        <p className="mt-1 text-muted-foreground">{description}</p>
-      </div>
-      {children}
-    </section>
-  )
-}
-
-function ConnectionStatusCard({
-  icon: Icon,
-  title,
-  description,
-  status,
-  children,
-}: {
-  icon: ComponentType<{ className?: string }>
-  title: string
-  description: string
-  status: ConnectionStatus
-  children: ReactNode
-}) {
-  return (
-    <Card>
-      <CardHeader className="gap-3 sm:grid-cols-[1fr_auto]">
-        <div>
-          <CardTitle className="flex items-center gap-2">
-            <Icon className="size-4 text-muted-foreground" />
-            {title}
-          </CardTitle>
-          <CardDescription>{description}</CardDescription>
-        </div>
-        <CardAction className="static col-auto row-auto justify-self-start sm:justify-self-end">
-          <Badge variant={status.variant}>{status.label}</Badge>
-        </CardAction>
-      </CardHeader>
-      <CardContent className="grid gap-3">{children}</CardContent>
-    </Card>
-  )
-}
-
-function CardErrorMessage({ message }: { message: string | null }) {
-  return (
-    <small className="text-destructive-muted-foreground" aria-live="polite">
-      {message ?? ' '}
-    </small>
   )
 }
 

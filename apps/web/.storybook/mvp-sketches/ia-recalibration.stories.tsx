@@ -23,7 +23,7 @@ import {
   TrophyIcon,
   WarningIcon,
 } from '@phosphor-icons/react'
-import type { Meta, StoryObj } from '@storybook/react-vite'
+import type { Meta, StoryObj } from '@storybook/tanstack-react'
 import { useMemo, useState } from 'react'
 
 const meta: Meta = {

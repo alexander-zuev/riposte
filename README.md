@@ -7,6 +7,8 @@
 
 Open-source AI agent that wins your Stripe disputes on autopilot.
 
+**[Get started at riposte.sh →](https://riposte.sh)**
+
 ### Why
 
 **Disputes are existential.** Exceed 0.75% dispute rate and card networks put you in a monitoring program. If you can't bring it down, fines start (Mastercard: $5K/month escalating to $100K/month over 19+ months of non-compliance). Worst case: they cut you off from processing payments entirely.
@@ -19,7 +21,7 @@ Open-source AI agent that wins your Stripe disputes on autopilot.
 
 ### How it works
 
-**Cloud** — 1-click setup at [riposte.sh](https://riposte.sh). Connect Stripe, connect your DB, done.
+**Cloud** — 1-click hosted setup. Connect Stripe, connect your DB, done.
 
 **Self-hosted** — deploy to your own Cloudflare account:
 

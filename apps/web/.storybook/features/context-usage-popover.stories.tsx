@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react-vite'
+import type { Meta, StoryObj } from '@storybook/tanstack-react'
 import { ContextUsageMeter } from '@web/features/agent/context-usage-meter'
 import { ContextUsagePopover } from '@web/features/agent/context-usage-popover'
 import type {

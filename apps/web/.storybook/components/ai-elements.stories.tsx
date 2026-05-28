@@ -1,5 +1,5 @@
 import { CopyIcon, ThumbsUpIcon } from '@phosphor-icons/react'
-import type { Meta, StoryObj } from '@storybook/react-vite'
+import type { Meta, StoryObj } from '@storybook/tanstack-react'
 import { CodeBlock } from '@web/ui/components/ai-elements/code-block'
 import {
   Conversation,

@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react-vite'
+import type { Meta, StoryObj } from '@storybook/tanstack-react'
 import { Logo, LogoIcon } from '@web/ui/components/ui/logo'
 import { useCallback, useRef } from 'react'
 

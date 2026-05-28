@@ -1,6 +1,6 @@
 import type { ListDisputeCasesResult } from '@riposte/core/client'
 import { seedStorybookQuery } from '@storybook-local/query-client'
-import type { Meta, StoryObj } from '@storybook/react-vite'
+import type { Meta, StoryObj } from '@storybook/tanstack-react'
 import { disputeQueries } from '@web/entities/disputes/dispute-queries'
 import { DisputesPage } from '@web/pages/authed/disputes/disputes-page'
 

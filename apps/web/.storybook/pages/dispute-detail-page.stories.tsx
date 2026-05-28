@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react-vite'
+import type { Meta, StoryObj } from '@storybook/tanstack-react'
 import { DisputeDetailPage } from '@web/pages/authed/disputes/dispute-detail-page'
 
 const meta = {

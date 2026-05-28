@@ -57,7 +57,9 @@
         "typescript/explicit-function-return-type": "off",
         "react-perf/jsx-no-new-object-as-prop": "off",
         "react-perf/jsx-no-new-function-as-prop": "off",
-        "jsx-a11y/label-has-associated-control": "off"
+        "jsx-a11y/label-has-associated-control": "off",
+        "jsx-a11y/control-has-associated-label": "off",
+        "jsx-a11y/anchor-is-valid": "off"
       }
     },
     {

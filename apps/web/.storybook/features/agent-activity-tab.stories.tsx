@@ -1,7 +1,7 @@
 import type { ListDisputeCaseActivityResult } from '@riposte/core/client'
 import { setDisputeCaseActivityMockState } from '@storybook-local/mocks/dispute-case-message.fn'
 import { storybookQueryClient } from '@storybook-local/query-client'
-import type { Meta, StoryObj } from '@storybook/react-vite'
+import type { Meta, StoryObj } from '@storybook/tanstack-react'
 import { ActivityTab } from '@web/features/agent/activity-tab'
 
 const productId = '226dd7e2-81a9-4ae7-87c7-9087321676ce'

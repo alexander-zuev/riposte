@@ -9,8 +9,8 @@ import { getConnectionsStatus } from '@server/application/handlers/connection-ha
 import { listDisputeCases } from '@server/application/handlers/dispute-case-handler'
 import {
   appendDisputeCaseMessages,
+  getDisputeCaseActivity,
   listDisputeCaseActivity,
-  listDisputeCaseMessages,
 } from '@server/application/handlers/dispute-case-message-handler'
 import { startDryRun } from '@server/application/handlers/dispute-dry-run-handler'
 import {
@@ -160,7 +160,7 @@ export const QUERY_HANDLERS = {
   GetStripeAppSettings: getStripeAppSettings,
   ListDisputeCases: listDisputeCases,
   ListDisputeCaseActivity: listDisputeCaseActivity,
-  ListDisputeCaseMessages: listDisputeCaseMessages,
+  GetDisputeCaseActivity: getDisputeCaseActivity,
   ListProducts: listProducts,
   GetProductSetupState: getProductSetupState,
   ReadProductSetupSnapshot: readProductSetupSnapshot,

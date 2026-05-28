@@ -1,69 +1,79 @@
-import type { ListDisputeCaseMessagesResult } from '@riposte/core/client'
-import { setDisputeCaseMessagesMockState } from '@storybook-local/mocks/dispute-case-message.fn'
+import type { ListDisputeCaseActivityResult } from '@riposte/core/client'
+import { setDisputeCaseActivityMockState } from '@storybook-local/mocks/dispute-case-message.fn'
 import { storybookQueryClient } from '@storybook-local/query-client'
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { ActivityTab } from '@web/features/agent/activity-tab'
 
 const productId = '226dd7e2-81a9-4ae7-87c7-9087321676ce'
 
-const populatedMessages = {
-  items: [
+const populatedActivity = {
+  cases: [
     {
-      id: '018fc37c-85ee-7000-9000-000000000001',
-      productId,
-      disputeCaseId: 'du_recent_002',
-      runId: '6d05eb97-bc98-4638-8ef3-e7393c875918',
-      messageId: 'msg_recent_start',
-      role: 'assistant',
-      parts: [{ type: 'text', text: 'Started evidence collection for the dispute.' }],
-      createdAt: '2026-05-27T10:12:00.000Z',
-    },
-    {
-      id: '018fc37c-85ee-7000-9000-000000000002',
-      productId,
-      disputeCaseId: 'du_recent_002',
-      runId: '6d05eb97-bc98-4638-8ef3-e7393c875918',
-      messageId: 'msg_recent_tool',
-      role: 'assistant',
-      parts: [
+      disputeCaseId: 'du_older_001',
+      messages: [
         {
-          type: 'dynamic-tool',
-          toolName: 'getDisputeCase',
-          toolCallId: 'call_get_dispute_case',
-          state: 'output-available',
-          input: { disputeCaseId: 'du_recent_002' },
-          output: { stripeReason: 'fraudulent', amount: '$20.00' },
+          id: '018fc37c-85ee-7000-9000-000000000003',
+          productId,
+          disputeCaseId: 'du_older_001',
+          runId: '4a802f5b-e4ba-4dfc-a69d-a2d9038f9bfb',
+          messageId: 'msg_older_start',
+          role: 'assistant',
+          parts: [{ type: 'text', text: 'Loaded Stripe charge and customer context.' }],
+          createdAt: '2026-05-27T09:54:00.000Z',
+        },
+        {
+          id: '018fc37c-85ee-7000-9000-000000000004',
+          productId,
+          disputeCaseId: 'du_older_001',
+          runId: '4a802f5b-e4ba-4dfc-a69d-a2d9038f9bfb',
+          messageId: 'msg_older_match',
+          role: 'assistant',
+          parts: [
+            {
+              type: 'text',
+              text: 'Matched the Stripe customer id to the merchant user and found 28 delivered events.',
+            },
+          ],
+          createdAt: '2026-05-27T09:56:00.000Z',
         },
       ],
-      createdAt: '2026-05-27T10:13:00.000Z',
     },
     {
-      id: '018fc37c-85ee-7000-9000-000000000003',
-      productId,
-      disputeCaseId: 'du_older_001',
-      runId: '4a802f5b-e4ba-4dfc-a69d-a2d9038f9bfb',
-      messageId: 'msg_older_start',
-      role: 'assistant',
-      parts: [{ type: 'text', text: 'Loaded Stripe charge and customer context.' }],
-      createdAt: '2026-05-27T09:54:00.000Z',
-    },
-    {
-      id: '018fc37c-85ee-7000-9000-000000000004',
-      productId,
-      disputeCaseId: 'du_older_001',
-      runId: '4a802f5b-e4ba-4dfc-a69d-a2d9038f9bfb',
-      messageId: 'msg_older_match',
-      role: 'assistant',
-      parts: [
+      disputeCaseId: 'du_recent_002',
+      messages: [
         {
-          type: 'text',
-          text: 'Matched the Stripe customer id to the merchant user and found 28 delivered events.',
+          id: '018fc37c-85ee-7000-9000-000000000001',
+          productId,
+          disputeCaseId: 'du_recent_002',
+          runId: '6d05eb97-bc98-4638-8ef3-e7393c875918',
+          messageId: 'msg_recent_start',
+          role: 'assistant',
+          parts: [{ type: 'text', text: 'Started evidence collection for the dispute.' }],
+          createdAt: '2026-05-27T10:12:00.000Z',
+        },
+        {
+          id: '018fc37c-85ee-7000-9000-000000000002',
+          productId,
+          disputeCaseId: 'du_recent_002',
+          runId: '6d05eb97-bc98-4638-8ef3-e7393c875918',
+          messageId: 'msg_recent_tool',
+          role: 'assistant',
+          parts: [
+            {
+              type: 'dynamic-tool',
+              toolName: 'getDisputeCase',
+              toolCallId: 'call_get_dispute_case',
+              state: 'output-available',
+              input: { disputeCaseId: 'du_recent_002' },
+              output: { stripeReason: 'fraudulent', amount: '$20.00' },
+            },
+          ],
+          createdAt: '2026-05-27T10:13:00.000Z',
         },
       ],
-      createdAt: '2026-05-27T09:56:00.000Z',
     },
   ],
-} satisfies ListDisputeCaseMessagesResult
+} satisfies ListDisputeCaseActivityResult
 
 function resetQueryCache() {
   storybookQueryClient.clear()
@@ -91,7 +101,7 @@ export const Populated: Story = {
   args: { mode: 'setup', productId },
   beforeEach: () => {
     resetQueryCache()
-    setDisputeCaseMessagesMockState({ status: 'success', data: populatedMessages })
+    setDisputeCaseActivityMockState({ status: 'success', data: populatedActivity })
   },
 }
 
@@ -99,7 +109,7 @@ export const Empty: Story = {
   args: { mode: 'setup', productId },
   beforeEach: () => {
     resetQueryCache()
-    setDisputeCaseMessagesMockState({ status: 'success', data: { items: [] } })
+    setDisputeCaseActivityMockState({ status: 'success', data: { cases: [] } })
   },
 }
 
@@ -107,7 +117,7 @@ export const Loading: Story = {
   args: { mode: 'setup', productId },
   beforeEach: () => {
     resetQueryCache()
-    setDisputeCaseMessagesMockState({ status: 'loading' })
+    setDisputeCaseActivityMockState({ status: 'loading' })
   },
 }
 
@@ -115,7 +125,7 @@ export const Error: Story = {
   args: { mode: 'setup', productId },
   beforeEach: () => {
     resetQueryCache()
-    setDisputeCaseMessagesMockState({
+    setDisputeCaseActivityMockState({
       status: 'error',
       message: 'Database connection timed out',
     })

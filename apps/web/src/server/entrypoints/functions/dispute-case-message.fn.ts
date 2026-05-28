@@ -1,13 +1,13 @@
 import {
   createQuery,
+  getDisputeCaseActivitySchema,
   listDisputeCaseActivitySchema,
-  listDisputeCaseMessagesSchema,
   toServerFnRpc,
 } from '@riposte/core'
 import { requireAuth } from '@server/infrastructure/middleware/auth.middleware'
 import { createServerFn } from '@tanstack/react-start'
 
-const listDisputeCaseMessagesInputSchema = listDisputeCaseMessagesSchema.omit({
+const getDisputeCaseActivityInputSchema = getDisputeCaseActivitySchema.omit({
   type: true,
   name: true,
 })
@@ -17,11 +17,11 @@ const listDisputeCaseActivityInputSchema = listDisputeCaseActivitySchema.omit({
   name: true,
 })
 
-export const listDisputeCaseMessages = createServerFn({ method: 'GET' })
+export const getDisputeCaseActivity = createServerFn({ method: 'GET' })
   .middleware([requireAuth])
-  .inputValidator(listDisputeCaseMessagesInputSchema)
+  .inputValidator(getDisputeCaseActivityInputSchema)
   .handler(async ({ data, context }) => {
-    const query = createQuery('ListDisputeCaseMessages', data)
+    const query = createQuery('GetDisputeCaseActivity', data)
     const result = await context.deps.services.messageBus().handle(query)
 
     return toServerFnRpc(result)

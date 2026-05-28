@@ -289,7 +289,7 @@ export class DisputeAgentClient implements IDisputeAgentClient {
         const agent = await getAgentByName(
           this.env.DisputeAgent,
           productId,
-          disputeAgentOptions(userId as UUIDv4),
+          disputeAgentOptions(userId),
         )
         const receipt = await agent.startEvidenceCollection({
           disputeCaseId,
@@ -322,7 +322,7 @@ export class DisputeAgentClient implements IDisputeAgentClient {
           const agent = await getAgentByName(
             this.env.DisputeAgent,
             productId,
-            disputeAgentOptions(userId as UUIDv4),
+            disputeAgentOptions(userId),
           )
           await agent.sendWorkflowEvent(DISPUTE_AGENT_WORKFLOW_BINDING, workflowInstanceId, {
             type: 'dispute_evidence_collection_finished',

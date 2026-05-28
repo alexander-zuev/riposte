@@ -74,7 +74,7 @@ export class JinaClient implements IJinaClient {
 
           if (!response.ok) throwHttpFailure(response.status)
 
-          const body = (await response.json()) as JinaReaderResponse
+          const body = await response.json()
           const content = body.data?.content ?? ''
 
           return {
@@ -108,7 +108,7 @@ export class JinaClient implements IJinaClient {
 
           if (!response.ok) throwHttpFailure(response.status)
 
-          const body = (await response.json()) as JinaSearchResponse
+          const body = await response.json()
           const entries = body.data ?? []
           const limit = input.numResults ?? 5
 

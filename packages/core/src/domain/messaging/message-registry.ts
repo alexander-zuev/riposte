@@ -11,8 +11,8 @@ import { getConnectionsStatusSchema } from '../connections'
 import { disputePlaybookCreatedSchema, saveDisputePlaybookSchema } from '../dispute-playbooks'
 import { appendDisputeCaseMessagesSchema } from '../disputes/dispute-case-message.commands'
 import {
+  getDisputeCaseActivitySchema,
   listDisputeCaseActivitySchema,
-  listDisputeCaseMessagesSchema,
 } from '../disputes/dispute-case-message.queries'
 import {
   ingestDisputeClosedSchema,
@@ -171,7 +171,7 @@ export const domainQuerySchema = z.discriminatedUnion('name', [
   getStripeAppSettingsSchema,
   listDisputeCasesSchema,
   listDisputeCaseActivitySchema,
-  listDisputeCaseMessagesSchema,
+  getDisputeCaseActivitySchema,
   listProductsSchema,
   getProductSetupStateSchema,
   readProductSetupSnapshotSchema,

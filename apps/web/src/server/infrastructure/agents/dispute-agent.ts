@@ -9,6 +9,7 @@ import {
   uuidv7,
 } from '@riposte/core'
 import * as Sentry from '@sentry/cloudflare'
+import { buildDisputeAgentLoop } from '@server/infrastructure/agents/build-dispute-agent-loop'
 import {
   buildBasePrompt,
   buildEvidenceInstructions,
@@ -32,7 +33,6 @@ import {
   INITIAL_USAGE,
   nextDisputeAgentContextState,
 } from '@server/infrastructure/agents/dispute-agent.context'
-import { buildDisputeAgentLoop } from '@server/infrastructure/agents/build-dispute-agent-loop'
 import {
   buildDisputeAgentTools,
   buildEvidenceCollectionTools,
@@ -56,7 +56,6 @@ import type { AgentMcpOAuthProvider } from 'agents'
 import { estimateMessageTokens, estimateStringTokens } from 'agents/experimental/memory/utils'
 import {
   convertToModelMessages,
-  createUIMessageStream,
   hasToolCall,
   type LanguageModel,
   type LanguageModelUsage,
@@ -66,6 +65,8 @@ import {
   type UIMessage,
 } from 'ai'
 import { Result, type Result as ResultType } from 'better-result'
+
+import { stepResultToUiMessage } from './ai-sdk-ui-message'
 
 type ReadyMcpServerResult =
   | {
@@ -95,6 +96,10 @@ type PrimeProductSetupArgs = {
 type StartEvidenceCollectionArgs = {
   disputeCaseId: string
   workflowInstanceId: string
+}
+
+type RunEvidenceCollectionArgs = StartEvidenceCollectionArgs & {
+  abortSignal?: AbortSignal
 }
 
 function buildProductSetupWelcomeMessage(args: PrimeProductSetupArgs): UIMessage<never> {
@@ -190,7 +195,7 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
       this.ctx.storage,
       this.name,
       callbackUrl,
-      (serverId, tokens, now) => this.mcpOAuth.saveTokenExpiry(serverId, tokens, now),
+      async (serverId, tokens, now) => this.mcpOAuth.saveTokenExpiry(serverId, tokens, now),
     )
   }
 
@@ -629,8 +634,8 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
   async startEvidenceCollection(args: StartEvidenceCollectionArgs): Promise<{ fiberId: string }> {
     const receipt = await this.startFiber(
       `collect-dispute-evidence:${args.disputeCaseId}`,
-      async () => {
-        await this.runEvidenceCollection(args)
+      async (ctx) => {
+        await this.runEvidenceCollection({ ...args, abortSignal: ctx.signal })
       },
       {
         metadata: {
@@ -654,16 +659,16 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
    * fallback fires the same command (idempotent) if the agent never does.
    *
    * TODO(stop-when): tune step cap once we observe real runs.
-   * TODO(cancel): wire `signal` from the fiber into `agent.stream` so a
+   * TODO(cancel): wire `signal` from the fiber into `agent.generate` so a
    * cancel request from the workflow aborts mid-step.
    * TODO(test): integration test through `runInDurableObject` once the
    * shape is stable.
-   * TODO(error-handling): if the stream itself throws (provider outage,
+   * TODO(error-handling): if generation throws (provider outage,
    * repair give-up), the workflow currently hangs. Decide between firing
    * `CompleteDisputeEvidenceCollection` with a failure reason vs a separate
    * `FailDisputeCase` command.
    */
-  private async runEvidenceCollection(args: StartEvidenceCollectionArgs): Promise<void> {
+  private async runEvidenceCollection(args: RunEvidenceCollectionArgs): Promise<void> {
     const runId = uuidv7()
 
     const tracing = {
@@ -702,44 +707,31 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
       },
     })
 
-    const result = await loop.stream({
+    const result = await loop.generate({
+      abortSignal: args.abortSignal,
       prompt:
         `A new dispute has come in: ${args.disputeCaseId}. ` +
         `Read its details, gather evidence per your instructions, ` +
         `and call completeEvidenceCollection when done.`,
-    })
-
-    // `result.toUIMessageStream` has no per-step hook. Wrap it via
-    // `createUIMessageStream`, which DOES expose `onStepFinish` and gives us
-    // a built `responseMessage: UIMessage` per step — no manual mapping.
-    const stream = createUIMessageStream<UIMessage<never>>({
-      execute: async ({ writer }) => {
-        writer.merge(result.toUIMessageStream<UIMessage<never>>())
-      },
-      onStepFinish: async ({ responseMessage }) => {
+      onStepFinish: async (step) => {
+        const message = stepResultToUiMessage(step)
         const append = await this.deps.services.messageBus().handle(
           createCommand('AppendDisputeCaseMessages', {
             productId: this.name,
             disputeCaseId: args.disputeCaseId,
             runId,
-            messages: [
-              {
-                id: responseMessage.id,
-                role: responseMessage.role,
-                parts: responseMessage.parts,
-              },
-            ],
+            messages: [message],
           }),
         )
         if (append.isOk()) {
-          this.broadcast(
-            JSON.stringify({
-              type: 'dispute_case_messages_updated',
-              disputeCaseId: args.disputeCaseId,
-              runId,
-            }),
-          )
+          this.broadcastJson({
+            type: 'dispute_case_messages_updated',
+            disputeCaseId: args.disputeCaseId,
+            runId,
+          })
         } else {
+          // TODO: understand how to handle this better. We should either batch / throttle writes to PG or not.
+          // Or retry cleanly
           logger.warn('evidence_step_persist_failed', {
             error: append.error,
             runId,
@@ -750,19 +742,11 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
       },
     })
 
-    // The SDK stream is lazy: callbacks fire only as the stream is consumed.
-    // Chat hands the stream to the HTTP client via toUIMessageStreamResponse;
-    // this fiber has no client, so we read+discard to drive the pipeline.
-    const reader = stream.getReader()
-    while (true) {
-      const next = await reader.read()
-      if (next.done) break
-    }
-
     // Fallback: agent hit the step cap without calling completeEvidenceCollection.
     // Fire the command with the same idempotency key the tool uses so the bus
     // dedupes if the agent also called it.
-    const steps = await result.steps
+    // TODO: interesting mechanism need to explore this?
+    const steps = result.steps
     const completionCalled = steps.some((s) =>
       s.toolCalls.some((tc) => tc.toolName === 'completeEvidenceCollection'),
     )
@@ -772,13 +756,15 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
         disputeCaseId: args.disputeCaseId,
         productId: this.name,
       })
-      const complete = await this.deps.services.messageBus().handle(
-        createCommand(
-          'CompleteDisputeEvidenceCollection',
-          { disputeCaseId: args.disputeCaseId },
-          `agent:${this.name}:collect-evidence:${args.disputeCaseId}:complete`,
-        ),
-      )
+      const complete = await this.deps.services
+        .messageBus()
+        .handle(
+          createCommand(
+            'CompleteDisputeEvidenceCollection',
+            { disputeCaseId: args.disputeCaseId },
+            `agent:${this.name}:collect-evidence:${args.disputeCaseId}:complete`,
+          ),
+        )
       if (complete.isErr()) {
         logger.error('evidence_collection_fallback_complete_failed', {
           error: complete.error,
@@ -788,6 +774,10 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
         })
       }
     }
+  }
+
+  private broadcastJson(payload: Record<string, unknown>): void {
+    this.broadcast(JSON.stringify(payload))
   }
 
   async getReadyMcpServer(serverId: string): Promise<ReadyMcpServerResult> {

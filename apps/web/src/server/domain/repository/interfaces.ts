@@ -10,8 +10,8 @@ import type {
   DuplicateProductUrlError,
   EntityNotFoundError,
   JoinWaitlist,
+  GetDisputeCaseActivity,
   ListDisputeCaseActivity,
-  ListDisputeCaseMessages,
   ListDisputeCases,
   ListDisputeCasesResult,
   DisputeSyncState,
@@ -116,8 +116,8 @@ export interface IDisputeCaseMessageRepository {
   appendBatch: (
     input: Omit<AppendDisputeCaseMessages, 'id' | 'type' | 'name' | 'userId'>,
   ) => Promise<Result<void, DatabaseError>>
-  listMessages: (
-    input: Omit<ListDisputeCaseMessages, 'type' | 'name' | 'userId'>,
+  getCaseMessages: (
+    input: Omit<GetDisputeCaseActivity, 'type' | 'name' | 'userId'>,
   ) => Promise<Result<DisputeCaseMessage[], DatabaseError>>
   listCaseActivity: (
     input: Omit<ListDisputeCaseActivity, 'type' | 'name' | 'userId'>,

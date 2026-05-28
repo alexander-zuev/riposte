@@ -253,7 +253,7 @@ export class McpOAuthService implements IMcpOAuthService {
       this.deps.storage,
       this.deps.productId,
       server.callback_url,
-      (savedServerId, tokens, now) => this.saveTokenExpiry(savedServerId, tokens, now),
+      async (savedServerId, tokens, now) => this.saveTokenExpiry(savedServerId, tokens, now),
     )
     provider.serverId = server.id
     provider.clientId = clientId
@@ -270,7 +270,7 @@ export class RiposteMcpOAuthProvider extends DurableObjectOAuthClientProvider {
       serverId: string,
       tokens: OAuthTokens,
       now?: Date,
-    ) => Promise<void> = (serverId, tokens, now) =>
+    ) => Promise<void> = async (serverId, tokens, now) =>
       setMcpOAuthTokenExpiry(storage, serverId, tokens, now),
   ) {
     super(storage, clientName, baseRedirectUrl)

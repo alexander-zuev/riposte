@@ -94,7 +94,7 @@ export function AgentPage() {
                 </TabsContent>
                 <TabsContent
                   value="activity"
-                  className="flex max-h-[calc(100vh-19rem)] flex-col data-[state=inactive]:hidden"
+                  className="flex h-[calc(100vh-19rem)] flex-none flex-col data-[state=inactive]:hidden"
                 >
                   <ActivityTab mode={mode} productId={product.id} />
                 </TabsContent>

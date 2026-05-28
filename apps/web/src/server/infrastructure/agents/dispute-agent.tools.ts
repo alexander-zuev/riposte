@@ -67,6 +67,24 @@ export type BuiltDisputeAgentTools = {
 }
 
 /**
+ * Internal repair fallback shared by every dispute-agent surface (chat and the
+ * background evidence-collection fiber). `experimental_repairToolCall` rewrites
+ * any `NoSuchToolError` to this tool name, so it MUST be registered wherever the
+ * repair runs — otherwise the redirect itself throws a second `NoSuchToolError`.
+ */
+const reportUnknownTool = tool({
+  description:
+    'INTERNAL fallback. Do not call directly. The agent runtime redirects calls to non-existent tools here so the model can see what went wrong and pick a real tool next step.',
+  inputSchema: z.object({
+    attemptedToolName: z.string(),
+    availableTools: z.array(z.string()),
+  }),
+  execute: async ({ attemptedToolName, availableTools }) => ({
+    error: `Tool "${attemptedToolName}" does not exist. Pick one from: ${availableTools.join(', ')}.`,
+  }),
+})
+
+/**
  * Static product setup tools, merged with MCP tools from the connected servers.
  * `onChatMessage` waits for MCP connections before this builder runs so
  * programmatic `saveMessages()` turns after OAuth see freshly discovered tools.
@@ -103,7 +121,7 @@ export function buildDisputeAgentTools({
         limit: z.number().int().min(1).max(100).optional(),
       }),
       execute: async ({ disputeCaseId, limit = 50 }) => {
-        const query = createQuery('ListDisputeCaseMessages', {
+        const query = createQuery('GetDisputeCaseActivity', {
           productId: agent.name,
           disputeCaseId,
           limit,
@@ -324,17 +342,7 @@ export function buildDisputeAgentTools({
         return resultToAgentToolResponse(result)
       },
     }),
-    reportUnknownTool: tool({
-      description:
-        'INTERNAL fallback. Do not call directly. The agent runtime redirects calls to non-existent tools here so the model can see what went wrong and pick a real tool next step.',
-      inputSchema: z.object({
-        attemptedToolName: z.string(),
-        availableTools: z.array(z.string()),
-      }),
-      execute: async ({ attemptedToolName, availableTools }) => ({
-        error: `Tool "${attemptedToolName}" does not exist. Pick one from: ${availableTools.join(', ')}.`,
-      }),
-    }),
+    reportUnknownTool,
   }
   const activeTools = deriveActiveDisputeAgentTools({ tools, setup })
   return {
@@ -348,6 +356,9 @@ export function buildDisputeAgentTools({
  * - `completeEvidenceCollection` takes no args and captures `disputeCaseId`
  *   from the closure, so the agent cannot complete the wrong case
  * - Includes MCP read tools (merchant DB, etc) so the agent can gather facts
+ * - Includes the shared `reportUnknownTool` repair fallback so the loop's
+ *   `experimental_repairToolCall` redirect resolves here instead of throwing a
+ *   second `NoSuchToolError` when the model invents a tool
  * - No setup/playbook mutation tools (those belong to chat)
  *
  * Same file as `buildDisputeAgentTools` so shared helpers stay reachable;
@@ -372,6 +383,7 @@ export function buildEvidenceCollectionTools({
 }): BuiltDisputeAgentTools {
   const tools: ToolSet = {
     ...agent.mcp.getAITools(),
+    reportUnknownTool,
     completeEvidenceCollection: tool({
       description:
         'Call exactly once when you have collected sufficient evidence or cannot make further progress. ' +

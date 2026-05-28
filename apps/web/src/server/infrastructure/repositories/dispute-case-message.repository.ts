@@ -2,18 +2,18 @@ import type {
   AppendDisputeCaseMessages,
   DisputeCaseActivity,
   DisputeCaseMessage,
+  GetDisputeCaseActivity,
   ListDisputeCaseActivity,
-  ListDisputeCaseMessages,
 } from '@riposte/core'
 import { DatabaseError, uuidv7 } from '@riposte/core'
 import type { IDisputeCaseMessageRepository } from '@server/domain/repository/interfaces'
 import type { DbDisputeCaseMessage, DrizzleDb } from '@server/infrastructure/db'
 import { disputeCaseMessages } from '@server/infrastructure/db'
 import { Result } from 'better-result'
-import { and, asc, desc, eq, inArray, max } from 'drizzle-orm'
+import { and, asc, desc, eq, inArray, min } from 'drizzle-orm'
 
 type AppendInput = Omit<AppendDisputeCaseMessages, 'id' | 'type' | 'name' | 'userId'>
-type ListInput = Omit<ListDisputeCaseMessages, 'type' | 'name' | 'userId'>
+type GetCaseMessagesInput = Omit<GetDisputeCaseActivity, 'type' | 'name' | 'userId'>
 type ListCaseActivityInput = Omit<ListDisputeCaseActivity, 'type' | 'name' | 'userId'>
 
 export class DisputeCaseMessageRepository implements IDisputeCaseMessageRepository {
@@ -44,7 +44,9 @@ export class DisputeCaseMessageRepository implements IDisputeCaseMessageReposito
     })
   }
 
-  async listMessages(input: ListInput): Promise<Result<DisputeCaseMessage[], DatabaseError>> {
+  async getCaseMessages(
+    input: GetCaseMessagesInput,
+  ): Promise<Result<DisputeCaseMessage[], DatabaseError>> {
     return Result.tryPromise({
       try: async () => {
         const rows = await this.db
@@ -71,21 +73,22 @@ export class DisputeCaseMessageRepository implements IDisputeCaseMessageReposito
   ): Promise<Result<DisputeCaseActivity[], DatabaseError>> {
     return Result.tryPromise({
       try: async () => {
-        const latestMessageCreatedAt = max(disputeCaseMessages.createdAt).as(
-          'latest_message_created_at',
-        )
+        const startedAt = min(disputeCaseMessages.createdAt).as('started_at')
         const caseRows = await this.db
           .select({
             disputeCaseId: disputeCaseMessages.disputeCaseId,
-            latestMessageCreatedAt,
+            startedAt,
           })
           .from(disputeCaseMessages)
           .where(eq(disputeCaseMessages.productId, input.productId))
           .groupBy(disputeCaseMessages.disputeCaseId)
-          .orderBy(desc(latestMessageCreatedAt))
+          .orderBy(desc(startedAt))
           .limit(input.disputeCaseLimit)
 
-        const activeCaseRows = caseRows.filter(hasLatestMessageCreatedAt)
+        // Select the N most-recently-started cases, then reverse so the feed
+        // reads oldest→newest start (newest run at the bottom, conversation-style).
+        // `startedAt` is stable per case, so a block never jumps as it gains steps.
+        const activeCaseRows = [...caseRows].toReversed()
         const disputeCaseIds = activeCaseRows.map((row) => row.disputeCaseId)
         if (disputeCaseIds.length === 0) return []
 
@@ -113,7 +116,6 @@ export class DisputeCaseMessageRepository implements IDisputeCaseMessageReposito
 
         return activeCaseRows.map((row) => ({
           disputeCaseId: row.disputeCaseId,
-          latestMessageCreatedAt: toIsoString(row.latestMessageCreatedAt),
           messages: messagesByCase.get(row.disputeCaseId) ?? [],
         }))
       },
@@ -134,14 +136,4 @@ function toDisputeCaseMessage(row: DbDisputeCaseMessage): DisputeCaseMessage {
     parts: row.parts,
     createdAt: row.createdAt.toISOString(),
   }
-}
-
-function toIsoString(value: Date | string): string {
-  return value instanceof Date ? value.toISOString() : value
-}
-
-function hasLatestMessageCreatedAt<T extends { latestMessageCreatedAt: Date | null }>(
-  row: T,
-): row is T & { latestMessageCreatedAt: Date } {
-  return row.latestMessageCreatedAt !== null
 }

@@ -1,6 +1,7 @@
-import type { DisputeCaseMessage } from '@riposte/core/client'
 import { SparkleIcon, WarningCircleIcon } from '@phosphor-icons/react'
-import { useDisputeCaseMessages } from '@web/entities/disputes/use-dispute-case-messages'
+import type { DisputeCaseMessage } from '@riposte/core/client'
+import { Link } from '@tanstack/react-router'
+import { useDisputeCaseActivity } from '@web/entities/disputes/use-dispute-case-activity'
 import type { AgentMode } from '@web/features/agent/agent-mode'
 import { MessageParts } from '@web/features/agent/message-part'
 import {
@@ -23,7 +24,7 @@ type ActivityTabProps = {
  * chat tab height so switching tabs does not resize the agent card.
  */
 export function ActivityTab({ mode, productId }: ActivityTabProps) {
-  const { groups, isPending, isError, error, refetch } = useDisputeCaseMessages({
+  const { cases, isPending, isError, error, refetch } = useDisputeCaseActivity({
     productId,
     disputeCaseLimit: 15,
   })
@@ -34,22 +35,20 @@ export function ActivityTab({ mode, productId }: ActivityTabProps) {
         <ActivityLoading />
       ) : isError ? (
         <ActivityError error={error} onRetry={async () => refetch()} />
-      ) : groups.length === 0 ? (
+      ) : cases.length === 0 ? (
         <ActivityEmpty mode={mode} />
       ) : (
         <Conversation className="min-h-0 flex-1">
           <ConversationContent>
-            {groups.map((group) => (
-              <section key={group.disputeCaseId} className="flex flex-col gap-3">
-                <header className="flex items-center justify-between gap-3 border-b border-border pb-2">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">{group.disputeCaseId}</p>
-                    <small className="text-muted-foreground">
-                      Message created {formatActivityTimestamp(group.latestCreatedAt)}
-                    </small>
-                  </div>
-                </header>
-                {group.messages.map((message) => (
+            {cases.map((caseActivity) => (
+              <section key={caseActivity.disputeCaseId} className="flex flex-col gap-3">
+                <DisputeCaseSeparator
+                  productId={productId}
+                  disputeCaseId={caseActivity.disputeCaseId}
+                  startedAt={caseActivity.messages[0]?.createdAt}
+                  stepCount={caseActivity.messages.length}
+                />
+                {caseActivity.messages.map((message) => (
                   <ActivityMessage key={message.id} message={message} />
                 ))}
               </section>
@@ -66,9 +65,50 @@ function ActivityMessage({ message }: { message: DisputeCaseMessage }) {
   return (
     <Message from={message.role}>
       <MessageContent>
-        <MessageParts parts={message.parts as UIMessage<never>['parts']} />
+        <MessageParts parts={message.parts} />
       </MessageContent>
     </Message>
+  )
+}
+
+function DisputeCaseSeparator({
+  productId,
+  disputeCaseId,
+  startedAt,
+  stepCount,
+}: {
+  productId: string
+  disputeCaseId: string
+  startedAt?: string
+  stepCount: number
+}) {
+  return (
+    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+      <div className="h-px flex-1 bg-border" />
+      <div className="flex items-center gap-2">
+        <Link
+          to="/products/$productId/disputes/$disputeId"
+          params={{ productId, disputeId: disputeCaseId }}
+          className="font-mono text-foreground hover:underline"
+          title={disputeCaseId}
+        >
+          {shortenDisputeId(disputeCaseId)}
+        </Link>
+        <span aria-hidden>·</span>
+        <span>
+          {stepCount} {stepCount === 1 ? 'step' : 'steps'}
+        </span>
+        {startedAt ? (
+          <>
+            <span aria-hidden>·</span>
+            <time dateTime={startedAt} title={formatActivityTimestamp(startedAt)}>
+              {formatRelativeTime(startedAt)}
+            </time>
+          </>
+        ) : null}
+      </div>
+      <div className="h-px flex-1 bg-border" />
+    </div>
   )
 }
 
@@ -137,4 +177,23 @@ function formatActivityTimestamp(value: string): string {
     hour: 'numeric',
     minute: '2-digit',
   }).format(new Date(value))
+}
+
+/** `du_1TbnvADTNmjFIavLnaETo1mO` → `du_1TbnvA…To1mO`. Full id is on hover/title. */
+function shortenDisputeId(id: string): string {
+  if (id.length <= 16) return id
+  return `${id.slice(0, 9)}…${id.slice(-5)}`
+}
+
+function formatRelativeTime(value: string): string {
+  const then = new Date(value).getTime()
+  if (Number.isNaN(then)) return 'unknown time'
+  const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' })
+  const diffSec = Math.round((then - Date.now()) / 1000)
+  if (Math.abs(diffSec) < 60) return rtf.format(diffSec, 'second')
+  const diffMin = Math.round(diffSec / 60)
+  if (Math.abs(diffMin) < 60) return rtf.format(diffMin, 'minute')
+  const diffHr = Math.round(diffMin / 60)
+  if (Math.abs(diffHr) < 24) return rtf.format(diffHr, 'hour')
+  return rtf.format(Math.round(diffHr / 24), 'day')
 }

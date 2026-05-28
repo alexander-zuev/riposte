@@ -53,13 +53,13 @@ export class DisputeCollectedEvidence extends Entity<DisputeCollectedEvidenceSna
   }
 
   get id(): UUIDv4 {
-    return this.disputeCaseId as UUIDv4
+    return this.disputeCaseId
   }
 
   static create(disputeCaseId: DisputeCaseId): DisputeCollectedEvidence {
     const now = new Date()
     return new DisputeCollectedEvidence(
-      requireNonBlank(disputeCaseId, 'disputeCaseId') as DisputeCaseId,
+      requireNonBlank(disputeCaseId, 'disputeCaseId'),
       null,
       null,
       null,

@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { chatQueries } from '@web/entities/chat/chat-queries'
-import { disputeCaseMessageQueries } from '@web/entities/disputes/dispute-case-message-queries'
+import { disputeCaseActivityQueries } from '@web/entities/disputes/dispute-case-activity-queries'
 import { productQueries } from '@web/entities/products/product-queries'
 import { AgentPage } from '@web/pages/authed/products/agent/agent-page'
 import { z } from 'zod'
@@ -19,7 +19,7 @@ export const Route = createFileRoute('/_authed/products/$productId/agent')({
       context.queryClient.ensureQueryData(productQueries.setup(params.productId)),
       context.queryClient.prefetchQuery(chatQueries.messages(params.productId)),
       context.queryClient.prefetchQuery(
-        disputeCaseMessageQueries.activity({
+        disputeCaseActivityQueries.list({
           productId: params.productId,
           disputeCaseLimit: 15,
         }),

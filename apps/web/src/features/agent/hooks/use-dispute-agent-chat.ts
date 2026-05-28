@@ -100,8 +100,10 @@ export function useDisputeAgent(productId: string) {
             disputeCaseId: broadcast.disputeCaseId,
             runId: broadcast.runId,
           })
+          // Activity feed (`dispute-case-activity`) and the per-case detail view
+          // (`dispute-case-messages`) are separate query keys; refresh both.
           queryClient.invalidateQueries({
-            queryKey: ['dispute-case-messages', productId],
+            queryKey: ['dispute-case-activity', productId],
             exact: false,
           })
           break

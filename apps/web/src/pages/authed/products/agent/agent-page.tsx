@@ -1,4 +1,4 @@
-import { ArrowClockwiseIcon, BrainIcon, ChatCircleIcon, PulseIcon } from '@phosphor-icons/react'
+import { BrainIcon, ChatCircleIcon, PulseIcon } from '@phosphor-icons/react'
 import { getRouteApi } from '@tanstack/react-router'
 import { ActivityTab } from '@web/features/agent/activity-tab'
 import { defaultTabFor, deriveAgentMode, subtitleFor } from '@web/features/agent/agent-mode'
@@ -6,14 +6,12 @@ import { AgentSidebar } from '@web/features/agent/agent-sidebar'
 import { ChatTab } from '@web/features/agent/chat-tab'
 import { useDisputeAgent } from '@web/features/agent/hooks/use-dispute-agent-chat'
 import { useProductSetup } from '@web/features/agent/hooks/use-product-setup'
-import { useRestartAgentSetup } from '@web/features/agent/hooks/use-restart-agent-setup'
+import { RestartSetupButton } from '@web/features/agent/restart-setup-button'
 import { useStripeConnectedToast } from '@web/features/connections/hooks/use-stripe-connected-toast'
 import { PageHeader } from '@web/pages/authed/shared/page-header'
-import { Button } from '@web/ui/components/ui/button'
 import { Card, CardAction, CardContent, CardHeader } from '@web/ui/components/ui/card'
 import { ConnectionIndicator } from '@web/ui/components/ui/connection-indicator'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@web/ui/components/ui/tabs'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@web/ui/components/ui/tooltip'
 
 const productRoute = getRouteApi('/_authed/products/$productId')
 const agentRoute = getRouteApi('/_authed/products/$productId/agent')
@@ -34,7 +32,6 @@ export function AgentPage() {
   const setup = useProductSetup(product.id)
   const mode = deriveAgentMode(setup)
   const { agent, mcp, transportState } = useDisputeAgent(product.id)
-  const { restartSetup, isRestartingSetup } = useRestartAgentSetup({ productId: product.id })
 
   useStripeConnectedToast({ stripeConnected })
 
@@ -62,25 +59,10 @@ export function AgentPage() {
                   </TabsTrigger>
                 </TabsList>
                 <CardAction className="static col-auto row-auto flex items-center gap-2 self-center justify-self-end">
-                  <Tooltip>
-                    <TooltipTrigger
-                      render={
-                        <Button
-                          type="button"
-                          size="icon-xs"
-                          variant="ghost"
-                          aria-label="Restart setup"
-                          disabled={isRestartingSetup}
-                          onClick={restartSetup}
-                        >
-                          <ArrowClockwiseIcon />
-                        </Button>
-                      }
-                    />
-                    <TooltipContent side="top" align="end">
-                      Restart setup
-                    </TooltipContent>
-                  </Tooltip>
+                  <RestartSetupButton
+                    productId={product.id}
+                    connected={transportState === 'connected'}
+                  />
                   <ConnectionIndicator state={transportState} />
                 </CardAction>
               </CardHeader>

@@ -153,7 +153,7 @@ export class ProductSetupService implements IProductSetupService {
       }),
       playbook: {
         exists: playbook !== null,
-        version: playbook?.version ?? null,
+        revision: playbook?.revision ?? null,
         createdAt: playbook?.createdAt.toISOString() ?? null,
       },
     })
@@ -219,7 +219,11 @@ export class ProductSetupService implements IProductSetupService {
     product: ProductSnapshot,
     playbook: DisputePlaybook | null,
   ): playbook is DisputePlaybook {
-    return playbook !== null && Product.deserialize(product).hasApprovedProductEvidenceFields()
+    return (
+      playbook !== null &&
+      playbook.validate().complete &&
+      Product.deserialize(product).hasApprovedProductEvidenceFields()
+    )
   }
 
   private static isReviewStepComplete(product: ProductSnapshot): boolean {

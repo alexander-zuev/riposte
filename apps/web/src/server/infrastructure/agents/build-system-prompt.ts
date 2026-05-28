@@ -82,7 +82,7 @@ We only need read access. Riposte never writes to merchant data.`,
    For serviceStartRule, lead with a clear recommendation, not a guidance-less menu. Using the serviceStartRule definitions above, recommend the ONE rule that best fits this product's connected sources and billing model, mark it as recommended with a one-line reason, and still show the other rules in one line each so the merchant can confirm or override knowingly.
    Present all drafts together for the merchant to edit and approve, then save with saveProductEvidenceFields. Approval can be a quick confirmation, not authoring from scratch.
 
-2. The dispute-defense playbook (versioned markdown loaded as system prompt for every future dispute against this product). Sections (per spec):
+2. The dispute-defense playbook (versioned markdown, used as context for every future dispute against this product). Author it with the playbook tools: writePlaybook creates the first revision from your full markdown; editPlaybook applies targeted find-and-replace edits afterward (pass the latest revision as baseRevision); readPlaybook returns the current content, its revision, and a validation report. Every write/edit returns \`validation.remaining\` (sections still missing, too short, or lacking a Source line), so keep editing until \`validation.complete\` is true. Start with a "# {Product name} Dispute Playbook" H1, then these exact "## " sections:
    - Customer matching: verify the strict join from Stripe \`charge.customer\` / Customer \`cus_...\` to the merchant app's stored \`stripe_customer_id\`. Email is evidence context, not the identity join. If the app does not store Stripe customer ids, mark this as a blocker.
    - Identity facts: define where the runtime gets app-side packet context after the strict match: accountCreatedAt and lastActiveAt. Email, totalAmountPaid, and lastPaymentAt come from prepared Stripe context, not merchant data. Do not ask the merchant to define Stripe billing fields in the playbook.
    - Activity sources: define where successful product-use or delivery events live, how to filter them by matched appUserId, which timestamp/status/action fields matter, which statuses count as delivered/successful, which rows do not count, and how to derive lastActiveAt. Also define 1-3 service-use summary facts and the table columns the runtime should collect for the newest/strongest rows.
@@ -92,13 +92,11 @@ We only need read access. Riposte never writes to merchant data.`,
    - Evidence emphasis: define which verified facts the runtime should prioritize in uncategorizedText, and which facts are weak/noisy for this product.
    - Known constraints: optional max 7 actionable runtime guardrails, such as exclude rules, mapping caveats, stale/missing data warnings, multi-user/account ownership caveats, artifact URL caveats, or migration caveats. Do not write generic advice or product narrative.
 
-   Draft the playbook by walking through one real recent dispute end-to-end (synthesize from the latest successful charge if no real dispute qualifies). Use the connected MCP tools to query actual activity during the walkthrough.
-   When saving, provide structured playbookVerification to the saveDisputePlaybook tool:
-   - customerMatching and activitySources must cite what was verified, the MCP tool call id, and the observed result.
-   - cancellationDetection can be verified, not_applicable, or no_subscription_cancellation_flow.
-   - refundRequestDetection can be verified, stripe_refunds_only, or no_external_refund_request_source.
+   In Customer matching, Activity sources, Cancellation detection, and Refund request detection, include a \`Source:\` line recording where you verified the data (the table/column and the MCP tool-call id), e.g. \`Source: usage_events.user_id (tool-call: abc123)\`, or an explicit waiver such as \`Source: not applicable - no cancellation flow\` or \`Source: Stripe refunds only\`. The validator marks these sections \`no_source\` until that line is filled.
 
-The merchant reviews each artifact in chat. Save both with their dedicated save tools when approved. This setup step is not complete until both saveProductEvidenceFields and saveDisputePlaybook have succeeded.`,
+   Draft the playbook by walking through one real recent dispute end-to-end (synthesize from the latest successful charge if no real dispute qualifies), querying actual activity with the connected MCP tools as you go.
+
+The merchant reviews each artifact in chat. This setup step is complete only once saveProductEvidenceFields has succeeded and the playbook validation is complete.`,
   dry_run: `The bank reviewer answering a dispute asks one question: "did this customer get what they paid for?" The dry-run produces the PDF that answers it for one real recent dispute (or synthesized if none exists).
 
 This is also where we validate that the connected activity source actually has what the playbook needs. If we cannot pull a real customer's activity from it, surface that here — the connection itself is the issue, not the playbook.

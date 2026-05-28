@@ -1,11 +1,13 @@
 import {
+  EntityNotFoundError,
   InternalServerError,
   PLAYBOOK_MD_MAX_LENGTH,
+  PlaybookEditError,
+  RevisionConflictError,
   SERVICE_START_RULES,
   STRIPE_EVIDENCE_TEXT_MAX_LENGTH,
   createCommand,
   createQuery,
-  playbookVerificationSchema,
   type ProductSetupState,
 } from '@riposte/core'
 import { resultToAgentToolResponse } from '@server/infrastructure/agents/agent-tool-result'
@@ -53,7 +55,9 @@ export const DISPUTE_AGENT_COMMON_TOOL_NAMES = [
 export const DISPUTE_AGENT_CONNECT_APP_DATA_TOOL_NAMES = ['registerAppDataSource'] as const
 export const DISPUTE_AGENT_PLAYBOOK_TOOL_NAMES = [
   'saveProductEvidenceFields',
-  'saveDisputePlaybook',
+  'readPlaybook',
+  'writePlaybook',
+  'editPlaybook',
 ] as const
 export const DISPUTE_AGENT_EVIDENCE_TOOL_NAMES = [
   'readDisputeCaseMessages',
@@ -276,22 +280,82 @@ export function buildDisputeAgentTools({
         return resultToAgentToolResponse(result, { ok: () => fields })
       },
     }),
-    saveDisputePlaybook: tool({
+    readPlaybook: tool({
       description:
-        'Save the product dispute playbook markdown after merchant approval. Provide structured playbookVerification from the onboarding walkthrough: customer/activity must be verified with tool call IDs; cancellation/refund may be verified or explicitly marked not applicable / Stripe-only.',
-      inputSchema: z.object({
-        playbookMd: z.string().trim().min(1).max(PLAYBOOK_MD_MAX_LENGTH),
-        playbookVerification: playbookVerificationSchema,
-      }),
-      execute: async ({ playbookMd, playbookVerification }) => {
-        const command = createCommand('SaveDisputePlaybook', {
+        'Read the current dispute playbook for this product. Returns the markdown `content`, its `revision` number, and a `validation` report (`complete` plus a `remaining` checklist of sections still missing, too short, or lacking a Source line). If no playbook exists yet it returns an error — create one with writePlaybook. Pass the returned `revision` as `baseRevision` to editPlaybook.',
+      inputSchema: z.object({}),
+      execute: async () => {
+        const query = createQuery('ReadDisputePlaybook', {
           userId: agent.getCurrentUserId(),
           productId: agent.name,
-          playbookMd,
-          playbookVerification,
+        })
+        const result = await agent.deps.services.messageBus().handle(query)
+        return resultToAgentToolResponse(result, {
+          err: (error) =>
+            EntityNotFoundError.is(error)
+              ? {
+                  ok: false,
+                  error: 'not_found',
+                  message: 'No playbook yet. Use writePlaybook to create the first revision.',
+                }
+              : undefined,
+        })
+      },
+    }),
+    writePlaybook: tool({
+      description:
+        'Create the dispute playbook (its first revision) from the full markdown `content` drafted with the merchant. Use once, when no playbook exists; afterwards use editPlaybook for every change. Returns the new `revision` and a `validation` report of what still needs work.',
+      inputSchema: z.object({
+        content: z.string().trim().min(1).max(PLAYBOOK_MD_MAX_LENGTH),
+      }),
+      execute: async ({ content }) => {
+        const command = createCommand('WriteDisputePlaybook', {
+          userId: agent.getCurrentUserId(),
+          productId: agent.name,
+          content,
         })
         const result = await agent.deps.services.messageBus().handle(command)
         return resultToAgentToolResponse(result)
+      },
+    }),
+    editPlaybook: tool({
+      description:
+        'Apply a find-and-replace edit to the existing playbook. `baseRevision` must be the latest revision you read (stale edits are rejected). `old` must locate exactly one place in the current content (whitespace-tolerant). Returns the new `revision` and a `validation` report. On `revision_conflict` re-read with readPlaybook; on `edit_not_found`/`edit_ambiguous` adjust `old` and retry.',
+      inputSchema: z.object({
+        baseRevision: z.number().int().positive(),
+        old: z.string().min(1),
+        new: z.string().max(PLAYBOOK_MD_MAX_LENGTH),
+      }),
+      execute: async ({ baseRevision, old, new: replacement }) => {
+        const command = createCommand('EditDisputePlaybook', {
+          userId: agent.getCurrentUserId(),
+          productId: agent.name,
+          baseRevision,
+          old,
+          new: replacement,
+        })
+        const result = await agent.deps.services.messageBus().handle(command)
+        return resultToAgentToolResponse(result, {
+          err: (error) => {
+            if (RevisionConflictError.is(error)) {
+              return {
+                ok: false,
+                error: 'revision_conflict',
+                currentRevision: error.currentRevision,
+                message: error.message,
+              }
+            }
+            if (PlaybookEditError.is(error)) {
+              return {
+                ok: false,
+                error: error.kind,
+                matchCount: error.matchCount,
+                message: error.message,
+              }
+            }
+            return undefined
+          },
+        })
       },
     }),
     fetchUrl: tool({

@@ -37,15 +37,6 @@ export type BuildDisputeAgentLoopArgs = {
 }
 
 /**
- * Conservative frequency penalty on the primary (Gemma) generation to curb its
- * repetition doom loops (e.g. "Wait, I'll just do it." x∞). Kept low on purpose:
- * Gemma also emits structured output (tool-call JSON, SQL) that legitimately
- * repeats tokens, and a high penalty corrupts that — causing *more* tool
- * failures. Tune empirically, one notch at a time. Range -2..2, 0 = off.
- */
-const DISPUTE_AGENT_FREQUENCY_PENALTY = 0.2
-
-/**
  * Google's officially recommended Gemma 4 sampling config (model card §1):
  * temperature=1.0, top_p=0.95, top_k=64. Cloudflare Workers AI defaults text
  * generation to temperature 0.6 — below Gemma's intended operating point, where
@@ -63,7 +54,6 @@ export function buildDisputeAgentLoop(args: BuildDisputeAgentLoopArgs): ToolLoop
     instructions: args.instructions,
     tools: args.tools,
     activeTools: args.activeTools,
-    frequencyPenalty: DISPUTE_AGENT_FREQUENCY_PENALTY,
     temperature: DISPUTE_AGENT_TEMPERATURE,
     topP: DISPUTE_AGENT_TOP_P,
     prepareStep: args.prepareStep,

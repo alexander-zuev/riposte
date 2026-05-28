@@ -24,7 +24,7 @@ export const disputePlaybooks = pgTable(
       .notNull()
       .references(() => products.id, { onDelete: 'cascade' }),
 
-    version: integer('version').notNull(),
+    revision: integer('revision').notNull(),
 
     playbookMd: text('playbook_md').notNull(),
     playbookHash: text('playbook_hash').notNull(),
@@ -36,9 +36,9 @@ export const disputePlaybooks = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
-    uniqueIndex('dispute_playbooks_product_version_unique').on(table.productId, table.version),
-    index('dispute_playbooks_product_version_idx').on(table.productId, table.version.desc()),
-    check('dispute_playbooks_version_positive_check', sql`${table.version} > 0`),
+    uniqueIndex('dispute_playbooks_product_revision_unique').on(table.productId, table.revision),
+    index('dispute_playbooks_product_revision_idx').on(table.productId, table.revision.desc()),
+    check('dispute_playbooks_revision_positive_check', sql`${table.revision} > 0`),
   ],
 )
 

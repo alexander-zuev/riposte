@@ -267,6 +267,13 @@
       "when": 1779969397354,
       "tag": "0037_red_zuras",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1779978632464,
+      "tag": "0038_confused_kang",
+      "breakpoints": true
     }
   ]
 }

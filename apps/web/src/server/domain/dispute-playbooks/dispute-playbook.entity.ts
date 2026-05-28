@@ -1,27 +1,21 @@
 import {
-  ValidationError,
   createEvent,
-  createPlaybookInputSchema,
-  type CreatePlaybookInput,
-  type PlaybookVerification,
+  type PlaybookValidation,
+  type PlaybookValidationIssue,
   type UUIDv4,
 } from '@riposte/core'
 import { Entity } from '@server/domain/models/base.models'
 import type { DbDisputePlaybook, DbNewDisputePlaybook } from '@server/infrastructure/db'
-import { Result } from 'better-result'
 
-import { validateDisputePlaybookMarkdown } from './dispute-playbook-markdown.validator'
+import { PLAYBOOK_SECTIONS, PLAYBOOK_SOURCE_MARKER } from './dispute-playbook.sections'
 
-export type CreateDisputePlaybookInput = CreatePlaybookInput & {
-  playbookVerification?: PlaybookVerification
-  previousPlaybook?: DisputePlaybook | null
-}
+const MIN_SECTION_BODY_LENGTH = 40
 
 export class DisputePlaybook extends Entity<DbNewDisputePlaybook> {
   private constructor(
     readonly id: UUIDv4,
     readonly productId: UUIDv4,
-    readonly version: number,
+    readonly revision: number,
     public playbookMd: string,
     readonly playbookHash: string,
     readonly createdBy: UUIDv4,
@@ -30,60 +24,90 @@ export class DisputePlaybook extends Entity<DbNewDisputePlaybook> {
     super()
   }
 
-  static async createRevision(
-    input: CreateDisputePlaybookInput,
-  ): Promise<Result<DisputePlaybook, ValidationError>> {
-    const parsed = createPlaybookInputSchema.safeParse(input)
-    if (!parsed.success) {
-      return Result.err(
-        new ValidationError({
-          issues: parsed.error.issues.map((issue) => ({
-            code: issue.code,
-            path: issue.path.map(String),
-            message: issue.message,
-          })),
-        }),
-      )
-    }
-
-    const markdownIssues = validateDisputePlaybookMarkdown(parsed.data.playbookMd, {
-      initialRevision: input.previousPlaybook === null || input.previousPlaybook === undefined,
-      playbookVerification: input.playbookVerification,
-    })
-    if (markdownIssues.length > 0) {
-      return Result.err(new ValidationError({ issues: markdownIssues }))
-    }
-
-    const version = (input.previousPlaybook?.version ?? 0) + 1
-    const playbookHash = await sha256Hex(parsed.data.playbookMd)
-
+  /** Write: the first revision of a product's playbook. */
+  static async create(input: {
+    productId: UUIDv4
+    createdBy: UUIDv4
+    playbookMd: string
+  }): Promise<DisputePlaybook> {
     const playbook = new DisputePlaybook(
       crypto.randomUUID() as UUIDv4,
-      parsed.data.productId,
-      version,
-      parsed.data.playbookMd,
-      playbookHash,
-      parsed.data.createdBy,
+      input.productId,
+      1,
+      input.playbookMd,
+      await sha256Hex(input.playbookMd),
+      input.createdBy,
       new Date(),
     )
-
     playbook.addEvent(
       createEvent('DisputePlaybookCreated', {
         disputePlaybookId: playbook.id,
         productId: playbook.productId,
         userId: playbook.createdBy,
-        version: playbook.version,
+        revision: playbook.revision,
       }),
     )
+    return playbook
+  }
 
-    return Result.ok(playbook)
+  /** Edit: the next revision with new content. Append-only — does not mutate the receiver. */
+  async revise(input: { createdBy: UUIDv4; playbookMd: string }): Promise<DisputePlaybook> {
+    const playbook = new DisputePlaybook(
+      crypto.randomUUID() as UUIDv4,
+      this.productId,
+      this.revision + 1,
+      input.playbookMd,
+      await sha256Hex(input.playbookMd),
+      input.createdBy,
+      new Date(),
+    )
+    playbook.addEvent(
+      createEvent('DisputePlaybookRevised', {
+        disputePlaybookId: playbook.id,
+        productId: playbook.productId,
+        userId: playbook.createdBy,
+        revision: playbook.revision,
+      }),
+    )
+    return playbook
+  }
+
+  /**
+   * Progressive completeness check: what still blocks the playbook from being done.
+   * A query, not a guard — `create`/`revise` never gate on it, so the playbook may be
+   * persisted incomplete and refined revision by revision. `complete` is true only when
+   * nothing remains; the setup-completion step is the hard gate that consumes it.
+   */
+  validate(): PlaybookValidation {
+    const remaining: PlaybookValidationIssue[] = []
+
+    if (!/^#\s+\S.*$/m.test(this.playbookMd)) {
+      remaining.push({ section: 'Title', issue: 'missing' })
+    }
+
+    for (const section of PLAYBOOK_SECTIONS) {
+      const body = sectionBody(this.playbookMd, section.heading)
+      if (body === null) {
+        if (section.required) remaining.push({ section: section.heading, issue: 'missing' })
+        continue
+      }
+      if (body.length < MIN_SECTION_BODY_LENGTH) {
+        remaining.push({ section: section.heading, issue: 'too_short' })
+        continue
+      }
+      if (section.needsSource && !hasFilledSource(body)) {
+        remaining.push({ section: section.heading, issue: 'no_source' })
+      }
+    }
+
+    return { complete: remaining.length === 0, remaining }
   }
 
   static deserialize(row: DbDisputePlaybook): DisputePlaybook {
     return new DisputePlaybook(
       row.id,
       row.productId,
-      row.version,
+      row.revision,
       row.playbookMd,
       row.playbookHash,
       row.createdBy,
@@ -95,13 +119,34 @@ export class DisputePlaybook extends Entity<DbNewDisputePlaybook> {
     return {
       id: this.id,
       productId: this.productId,
-      version: this.version,
+      revision: this.revision,
       playbookMd: this.playbookMd,
       playbookHash: this.playbookHash,
       createdBy: this.createdBy,
       createdAt: this.createdAt,
     }
   }
+}
+
+function hasFilledSource(body: string): boolean {
+  return body.split('\n').some((line) => {
+    const trimmed = line.trim()
+    return (
+      trimmed.startsWith(PLAYBOOK_SOURCE_MARKER) &&
+      trimmed.slice(PLAYBOOK_SOURCE_MARKER.length).trim().length > 0
+    )
+  })
+}
+
+function sectionBody(content: string, heading: string): string | null {
+  const lines = content.split(/\r?\n/)
+  const start = lines.findIndex((line) => line.trim() === `## ${heading}`)
+  if (start === -1) return null
+  const next = lines.findIndex((line, index) => index > start && line.trim().startsWith('## '))
+  return lines
+    .slice(start + 1, next === -1 ? undefined : next)
+    .join('\n')
+    .trim()
 }
 
 async function sha256Hex(value: string): Promise<string> {

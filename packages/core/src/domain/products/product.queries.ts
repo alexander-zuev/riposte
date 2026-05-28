@@ -76,7 +76,7 @@ export const readProductSetupSnapshotResultSchema = z.object({
   ),
   playbook: z.object({
     exists: z.boolean(),
-    version: z.number().int().positive().nullable(),
+    revision: z.number().int().positive().nullable(),
     createdAt: TimestamptzSchema.nullable(),
   }),
 })

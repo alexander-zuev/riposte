@@ -1,4 +1,10 @@
-import { createCommand, createLogger, EntityNotFoundError } from '@riposte/core'
+import {
+  createCommand,
+  createLogger,
+  EntityNotFoundError,
+  RevisionConflictError,
+  ValidationError,
+} from '@riposte/core'
 import type {
   BuildStripeOAuthInstallUrl,
   CreateProduct,
@@ -10,6 +16,7 @@ import type {
   DisconnectProductAppDataSource,
   DisconnectProductAppDataSourceResult,
   DisputePlaybookCreated,
+  DisputePlaybookRevised,
   DuplicateProductUrlError,
   GetProductSetupState,
   GetProductSetupStateResult,
@@ -27,17 +34,20 @@ import type {
   RegisterProductAppDataSourceResult,
   RestartProductSetup,
   RestartProductSetupResult,
-  SaveDisputePlaybook,
-  SaveDisputePlaybookResult,
+  WriteDisputePlaybook,
+  EditDisputePlaybook,
+  ReadDisputePlaybook,
+  ReadDisputePlaybookResult,
+  DisputePlaybookRevisionResult,
+  PlaybookEditError,
   StripeConnectionCreated,
   UpdateProduct,
   UpdateProductResult,
-  ValidationError,
 } from '@riposte/core'
 import { buildStripeOAuthInstallUrl } from '@server/application/handlers/stripe-oauth-handler'
 import type { CommandHandler, EventHandler, QueryHandler } from '@server/application/registry/types'
 import { ProductAppDataSource } from '@server/domain/app-data-sources'
-import { DisputePlaybook } from '@server/domain/dispute-playbooks'
+import { applyPlaybookEdit, DisputePlaybook } from '@server/domain/dispute-playbooks'
 import { Product } from '@server/domain/products'
 import { Result } from 'better-result'
 
@@ -50,6 +60,7 @@ type ProductSetupChangedEvent =
   | ProductAppDataSourceDisconnected
   | ProductUpdated
   | DisputePlaybookCreated
+  | DisputePlaybookRevised
   | ProductSetupCompleted
 
 export const listProducts: QueryHandler<ListProducts, ListProductsResult, DatabaseError> = async (
@@ -291,9 +302,36 @@ export const restartProductSetup: CommandHandler<
   return Result.ok({ productId: command.productId })
 }
 
-export const saveDisputePlaybook: CommandHandler<
-  SaveDisputePlaybook,
-  SaveDisputePlaybookResult,
+export const readDisputePlaybook: QueryHandler<
+  ReadDisputePlaybook,
+  ReadDisputePlaybookResult,
+  DatabaseError | EntityNotFoundError
+> = async (query, ctx) => {
+  const db = ctx.deps.db()
+  const product = await ctx.deps.repos.products(db).findById(query.productId)
+  if (product.isErr()) return Result.err(product.error)
+  if (!product.value || product.value.userId !== query.userId) {
+    return Result.err(new EntityNotFoundError({ entity: 'Product', id: query.productId }))
+  }
+
+  const latest = await ctx.deps.repos.disputePlaybooks(db).findLatestForProduct(query.productId)
+  if (latest.isErr()) return Result.err(latest.error)
+
+  // Absent is the caller's call: setup reads it as "none yet, write one", runtime as failure.
+  if (!latest.value) {
+    return Result.err(new EntityNotFoundError({ entity: 'DisputePlaybook', id: query.productId }))
+  }
+
+  return Result.ok({
+    revision: latest.value.revision,
+    content: latest.value.playbookMd,
+    validation: latest.value.validate(),
+  })
+}
+
+export const writeDisputePlaybook: CommandHandler<
+  WriteDisputePlaybook,
+  DisputePlaybookRevisionResult,
   DatabaseError | EntityNotFoundError | ValidationError
 > = async (command, ctx) => {
   const product = await ctx.deps.repos.products(ctx.tx).findById(command.productId)
@@ -303,25 +341,79 @@ export const saveDisputePlaybook: CommandHandler<
   }
 
   const repo = ctx.deps.repos.disputePlaybooks(ctx.tx)
-  const previousPlaybook = await repo.findLatestForProduct(command.productId)
-  if (previousPlaybook.isErr()) return Result.err(previousPlaybook.error)
+  const existing = await repo.findLatestForProduct(command.productId)
+  if (existing.isErr()) return Result.err(existing.error)
+  // Write is create-only: once a playbook exists, all changes go through editPlaybook.
+  if (existing.value) {
+    return Result.err(
+      new ValidationError({
+        issues: [
+          {
+            code: 'playbook_exists',
+            path: ['content'],
+            message: 'Playbook already exists. Use editPlaybook to modify it.',
+          },
+        ],
+        message: 'Playbook already exists. Use editPlaybook to modify it.',
+      }),
+    )
+  }
 
-  const playbook = await DisputePlaybook.createRevision({
+  const playbook = await DisputePlaybook.create({
     productId: command.productId,
     createdBy: command.userId,
-    playbookMd: command.playbookMd,
-    playbookVerification: command.playbookVerification,
-    previousPlaybook: previousPlaybook.value,
+    playbookMd: command.content,
   })
-  if (playbook.isErr()) return Result.err(playbook.error)
 
-  const saved = await repo.save(playbook.value)
+  const saved = await repo.save(playbook)
   if (saved.isErr()) return Result.err(saved.error)
 
   return Result.ok({
-    disputePlaybookId: saved.value.id,
-    version: saved.value.version,
-    playbookHash: saved.value.playbookHash,
+    revision: saved.value.revision,
+    validation: saved.value.validate(),
+  })
+}
+
+export const editDisputePlaybook: CommandHandler<
+  EditDisputePlaybook,
+  DisputePlaybookRevisionResult,
+  DatabaseError | EntityNotFoundError | RevisionConflictError | PlaybookEditError
+> = async (command, ctx) => {
+  const product = await ctx.deps.repos.products(ctx.tx).findById(command.productId)
+  if (product.isErr()) return Result.err(product.error)
+  if (!product.value || product.value.userId !== command.userId) {
+    return Result.err(new EntityNotFoundError({ entity: 'Product', id: command.productId }))
+  }
+
+  const repo = ctx.deps.repos.disputePlaybooks(ctx.tx)
+  const latest = await repo.findLatestForProduct(command.productId)
+  if (latest.isErr()) return Result.err(latest.error)
+  if (!latest.value) {
+    return Result.err(new EntityNotFoundError({ entity: 'DisputePlaybook', id: command.productId }))
+  }
+  if (latest.value.revision !== command.baseRevision) {
+    return Result.err(
+      new RevisionConflictError({
+        currentRevision: latest.value.revision,
+        baseRevision: command.baseRevision,
+      }),
+    )
+  }
+
+  const edited = applyPlaybookEdit(latest.value.playbookMd, command.old, command.new)
+  if (edited.isErr()) return Result.err(edited.error)
+
+  const playbook = await latest.value.revise({
+    createdBy: command.userId,
+    playbookMd: edited.value,
+  })
+
+  const saved = await repo.save(playbook)
+  if (saved.isErr()) return Result.err(saved.error)
+
+  return Result.ok({
+    revision: saved.value.revision,
+    validation: saved.value.validate(),
   })
 }
 

@@ -8,7 +8,13 @@ import {
 } from '../auth/auth.messages'
 import { getChatMessagesSchema } from '../chat'
 import { getConnectionsStatusSchema } from '../connections'
-import { disputePlaybookCreatedSchema, saveDisputePlaybookSchema } from '../dispute-playbooks'
+import {
+  disputePlaybookCreatedSchema,
+  disputePlaybookRevisedSchema,
+  editDisputePlaybookSchema,
+  readDisputePlaybookSchema,
+  writeDisputePlaybookSchema,
+} from '../dispute-playbooks'
 import { saveDisputeCaseMessageSchema } from '../disputes/dispute-case-message.commands'
 import {
   getDisputeCaseActivitySchema,
@@ -116,7 +122,8 @@ export const domainCommandSchema = z.discriminatedUnion('name', [
   registerProductAppDataSourceSchema,
   disconnectProductAppDataSourceSchema,
   restartProductSetupSchema,
-  saveDisputePlaybookSchema,
+  writeDisputePlaybookSchema,
+  editDisputePlaybookSchema,
   updateProductSchema,
   deleteProductSchema,
 ])
@@ -150,6 +157,7 @@ export const domainEventSchema = z.discriminatedUnion('name', [
   productEnabledSchema,
   productSetupCompletedSchema,
   disputePlaybookCreatedSchema,
+  disputePlaybookRevisedSchema,
   stripeConnectionCreatedSchema,
   stripeConnectionRevokedSchema,
   stripeConnectionTokenRefreshedSchema,
@@ -174,6 +182,7 @@ export const domainQuerySchema = z.discriminatedUnion('name', [
   listDisputeCasesSchema,
   listDisputeCaseActivitySchema,
   getDisputeCaseActivitySchema,
+  readDisputePlaybookSchema,
   listProductsSchema,
   getProductSetupStateSchema,
   readProductSetupSnapshotSchema,

@@ -45,7 +45,9 @@ import {
   readProductSetupSnapshot,
   registerProductAppDataSource,
   restartProductSetup,
-  saveDisputePlaybook,
+  writeDisputePlaybook,
+  editDisputePlaybook,
+  readDisputePlaybook,
   updateProduct,
 } from '@server/application/handlers/product-handler'
 import {
@@ -103,7 +105,8 @@ export const COMMAND_HANDLERS = {
   RegisterProductAppDataSource: registerProductAppDataSource,
   DisconnectProductAppDataSource: disconnectProductAppDataSource,
   RestartProductSetup: restartProductSetup,
-  SaveDisputePlaybook: saveDisputePlaybook,
+  WriteDisputePlaybook: writeDisputePlaybook,
+  EditDisputePlaybook: editDisputePlaybook,
   UpdateProduct: updateProduct,
   DeleteProduct: deleteProduct,
 } satisfies CommandRegistry
@@ -154,6 +157,7 @@ export const EVENT_HANDLERS = {
   ],
   ProductUpdated: [{ id: 'productSetup.notifyChanged', handle: notifyProductSetupChanged }],
   DisputePlaybookCreated: [{ id: 'productSetup.notifyChanged', handle: notifyProductSetupChanged }],
+  DisputePlaybookRevised: [{ id: 'productSetup.notifyChanged', handle: notifyProductSetupChanged }],
   ProductSetupCompleted: [{ id: 'productSetup.notifyChanged', handle: notifyProductSetupChanged }],
   McpOAuthRefreshFailed: [
     { id: 'product.handleMcpOAuthRefreshFailed', handle: handleMcpOAuthRefreshFailed },
@@ -167,6 +171,7 @@ export const QUERY_HANDLERS = {
   ListDisputeCases: listDisputeCases,
   ListDisputeCaseActivity: listDisputeCaseActivity,
   GetDisputeCaseActivity: getDisputeCaseActivity,
+  ReadDisputePlaybook: readDisputePlaybook,
   ListProducts: listProducts,
   GetProductSetupState: getProductSetupState,
   ReadProductSetupSnapshot: readProductSetupSnapshot,

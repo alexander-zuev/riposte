@@ -41,7 +41,7 @@ export class DisputePlaybookRepository
           .select()
           .from(disputePlaybooks)
           .where(eq(disputePlaybooks.productId, productId))
-          .orderBy(desc(disputePlaybooks.version))
+          .orderBy(desc(disputePlaybooks.revision))
           .limit(1)
         return row ?? null
       },

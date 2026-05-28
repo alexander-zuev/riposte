@@ -86,6 +86,41 @@ export class DuplicateProductUrlError extends TaggedError('DuplicateProductUrlEr
   }
 }
 
+export class RevisionConflictError extends TaggedError('RevisionConflictError')<{
+  currentRevision: number
+  baseRevision: number
+  message: string
+  retryable: false
+}>() {
+  constructor(args: { currentRevision: number; baseRevision: number }) {
+    super({
+      currentRevision: args.currentRevision,
+      baseRevision: args.baseRevision,
+      message: `Revision conflict: based on ${args.baseRevision} but current is ${args.currentRevision}. Re-read and retry.`,
+      retryable: false,
+    })
+  }
+}
+
+export class PlaybookEditError extends TaggedError('PlaybookEditError')<{
+  kind: 'edit_not_found' | 'edit_ambiguous'
+  matchCount: number
+  message: string
+  retryable: false
+}>() {
+  constructor(args: { kind: 'edit_not_found' | 'edit_ambiguous'; matchCount: number }) {
+    super({
+      kind: args.kind,
+      matchCount: args.matchCount,
+      message:
+        args.kind === 'edit_ambiguous'
+          ? `Edit text matched ${args.matchCount} places; make it more specific or re-read.`
+          : 'Edit text not found; re-read the playbook and retry.',
+      retryable: false,
+    })
+  }
+}
+
 export type DomainError =
   | AuthenticationError
   | AuthorizationError
@@ -93,3 +128,5 @@ export type DomainError =
   | EntityNotFoundError
   | RateLimitError
   | DuplicateProductUrlError
+  | RevisionConflictError
+  | PlaybookEditError

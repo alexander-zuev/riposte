@@ -9,49 +9,35 @@ export const createPlaybookInputSchema = z.object({
   playbookMd: z.string().trim().min(1).max(PLAYBOOK_MD_MAX_LENGTH),
 })
 
-export const verifiedPlaybookSectionSchema = z.object({
-  verifiedAgainst: z.string().trim().min(1),
-  toolCallId: z.string().trim().min(1),
-  summary: z.string().trim().min(1),
+/**
+ * Progressive validation result. `section` is the plain heading text (the canonical
+ * section list lives in the server domain, not here, to avoid coupling core to it).
+ */
+export const playbookValidationIssueSchema = z.object({
+  section: z.string().min(1),
+  issue: z.enum(['missing', 'too_short', 'no_source']),
 })
 
-export const cancellationDetectionVerificationSchema = z.discriminatedUnion('kind', [
-  verifiedPlaybookSectionSchema.extend({ kind: z.literal('verified') }),
-  z.object({
-    kind: z.literal('not_applicable'),
-    reason: z.string().trim().min(1),
-  }),
-  z.object({
-    kind: z.literal('no_subscription_cancellation_flow'),
-    reason: z.string().trim().min(1),
-  }),
-])
-
-export const refundRequestDetectionVerificationSchema = z.discriminatedUnion('kind', [
-  verifiedPlaybookSectionSchema.extend({ kind: z.literal('verified') }),
-  z.object({
-    kind: z.literal('stripe_refunds_only'),
-    reason: z.string().trim().min(1),
-  }),
-  z.object({
-    kind: z.literal('no_external_refund_request_source'),
-    reason: z.string().trim().min(1),
-  }),
-])
-
-export const playbookVerificationSchema = z.object({
-  customerMatching: verifiedPlaybookSectionSchema,
-  activitySources: verifiedPlaybookSectionSchema,
-  cancellationDetection: cancellationDetectionVerificationSchema,
-  refundRequestDetection: refundRequestDetectionVerificationSchema,
+export const playbookValidationSchema = z.object({
+  complete: z.boolean(),
+  remaining: z.array(playbookValidationIssueSchema),
 })
 
-export const saveDisputePlaybookResultSchema = z.object({
-  disputePlaybookId: z.uuidv4(),
-  version: z.number().int().positive(),
-  playbookHash: z.string().min(1),
+/** Result of a write/edit: a new revision was persisted. */
+export const disputePlaybookRevisionResultSchema = z.object({
+  revision: z.number().int().positive(),
+  validation: playbookValidationSchema,
+})
+
+/** Result of a read: the current revision's content. Absent playbooks return an error. */
+export const readDisputePlaybookResultSchema = z.object({
+  revision: z.number().int().positive(),
+  content: z.string(),
+  validation: playbookValidationSchema,
 })
 
 export type CreatePlaybookInput = z.infer<typeof createPlaybookInputSchema>
-export type PlaybookVerification = z.infer<typeof playbookVerificationSchema>
-export type SaveDisputePlaybookResult = z.infer<typeof saveDisputePlaybookResultSchema>
+export type PlaybookValidationIssue = z.infer<typeof playbookValidationIssueSchema>
+export type PlaybookValidation = z.infer<typeof playbookValidationSchema>
+export type DisputePlaybookRevisionResult = z.infer<typeof disputePlaybookRevisionResultSchema>
+export type ReadDisputePlaybookResult = z.infer<typeof readDisputePlaybookResultSchema>

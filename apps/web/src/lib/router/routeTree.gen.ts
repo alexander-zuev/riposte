@@ -9,6 +9,8 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './../../routes/__root'
+import { Route as SitemapDotxmlRouteImport } from './../../routes/sitemap[.]xml'
+import { Route as RobotsDottxtRouteImport } from './../../routes/robots[.]txt'
 import { Route as DevRouteRouteImport } from './../../routes/dev/route'
 import { Route as PublicRouteRouteImport } from './../../routes/_public/route'
 import { Route as AuthedRouteRouteImport } from './../../routes/_authed/route'
@@ -48,6 +50,16 @@ import { Route as AuthedProductsProductIdAgentRouteImport } from './../../routes
 import { Route as AuthedProductsProductIdDisputesIndexRouteImport } from './../../routes/_authed/products/$productId/disputes/index'
 import { Route as AuthedProductsProductIdDisputesDisputeIdRouteImport } from './../../routes/_authed/products/$productId/disputes/$disputeId'
 
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
+  id: '/robots.txt',
+  path: '/robots.txt',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DevRouteRoute = DevRouteRouteImport.update({
   id: '/dev',
   path: '/dev',
@@ -248,6 +260,8 @@ const AuthedProductsProductIdDisputesDisputeIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof PublicIndexRoute
   '/dev': typeof DevRouteRouteWithChildren
+  '/robots.txt': typeof RobotsDottxtRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/account': typeof AuthedAccountRoute
   '/billing': typeof AuthedBillingRoute
   '/notifications': typeof AuthedNotificationsRoute
@@ -285,6 +299,8 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof PublicIndexRoute
+  '/robots.txt': typeof RobotsDottxtRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/account': typeof AuthedAccountRoute
   '/billing': typeof AuthedBillingRoute
   '/notifications': typeof AuthedNotificationsRoute
@@ -323,6 +339,8 @@ export interface FileRoutesById {
   '/_authed': typeof AuthedRouteRouteWithChildren
   '/_public': typeof PublicRouteRouteWithChildren
   '/dev': typeof DevRouteRouteWithChildren
+  '/robots.txt': typeof RobotsDottxtRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authed/account': typeof AuthedAccountRoute
   '/_authed/billing': typeof AuthedBillingRoute
   '/_authed/notifications': typeof AuthedNotificationsRoute
@@ -364,6 +382,8 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/dev'
+    | '/robots.txt'
+    | '/sitemap.xml'
     | '/account'
     | '/billing'
     | '/notifications'
@@ -401,6 +421,8 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/robots.txt'
+    | '/sitemap.xml'
     | '/account'
     | '/billing'
     | '/notifications'
@@ -438,6 +460,8 @@ export interface FileRouteTypes {
     | '/_authed'
     | '/_public'
     | '/dev'
+    | '/robots.txt'
+    | '/sitemap.xml'
     | '/_authed/account'
     | '/_authed/billing'
     | '/_authed/notifications'
@@ -479,6 +503,8 @@ export interface RootRouteChildren {
   AuthedRouteRoute: typeof AuthedRouteRouteWithChildren
   PublicRouteRoute: typeof PublicRouteRouteWithChildren
   DevRouteRoute: typeof DevRouteRouteWithChildren
+  RobotsDottxtRoute: typeof RobotsDottxtRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiAgentsSplatRoute: typeof ApiAgentsSplatRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiCacheImagesRoute: typeof ApiCacheImagesRoute
@@ -493,6 +519,20 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/robots.txt': {
+      id: '/robots.txt'
+      path: '/robots.txt'
+      fullPath: '/robots.txt'
+      preLoaderRoute: typeof RobotsDottxtRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dev': {
       id: '/dev'
       path: '/dev'
@@ -881,6 +921,8 @@ const rootRouteChildren: RootRouteChildren = {
   AuthedRouteRoute: AuthedRouteRouteWithChildren,
   PublicRouteRoute: PublicRouteRouteWithChildren,
   DevRouteRoute: DevRouteRouteWithChildren,
+  RobotsDottxtRoute: RobotsDottxtRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiAgentsSplatRoute: ApiAgentsSplatRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiCacheImagesRoute: ApiCacheImagesRoute,

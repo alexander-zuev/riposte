@@ -311,7 +311,14 @@ function ExternalLinkSafetyModal({
         </div>
         <DialogFooter>
           <DialogClose render={<Button variant="secondary" />}>Cancel</DialogClose>
-          <Button onClick={onConfirm}>Open link</Button>
+          <Button
+            onClick={() => {
+              onConfirm()
+              onClose()
+            }}
+          >
+            Open link
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -1,6 +1,7 @@
 import {
   CaretDownIcon,
   CreditCardIcon,
+  PackageIcon,
   SignOutIcon,
   UserIcon,
   type Icon,
@@ -33,6 +34,11 @@ interface UserDropdownProps {
 }
 
 const defaultLinks = [
+  {
+    label: 'Products',
+    to: '/products',
+    icon: PackageIcon,
+  },
   {
     label: 'Account',
     to: '/account',

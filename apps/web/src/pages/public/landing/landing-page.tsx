@@ -2,12 +2,16 @@ import { CheckIcon, CurrencyDollarIcon, GithubLogoIcon } from '@phosphor-icons/r
 import { unwrapRpc } from '@riposte/core/client'
 import { useForm } from '@tanstack/react-form'
 import { useMutation } from '@tanstack/react-query'
+import { useRouteContext } from '@tanstack/react-router'
+import { AuthUser } from '@web/entities/auth/auth-user'
 import {
   type JoinWaitlistInput,
   joinWaitlist,
   joinWaitlistInput,
 } from '@web/server/entrypoints/functions/waitlist.fn'
 import { PageShell } from '@web/ui/components/layout/page/page-shell'
+import { PublicFooter } from '@web/ui/components/layout/public/public-footer'
+import { PublicHeader } from '@web/ui/components/layout/public/public-header'
 import Section from '@web/ui/components/layout/section'
 import { Button } from '@web/ui/components/ui/button'
 import { Field, FieldError, FieldLabel } from '@web/ui/components/ui/field'
@@ -24,7 +28,6 @@ import { usePostHog } from 'posthog-js/react'
 import { useEffect, useState } from 'react'
 
 const CALENDLY_URL = 'https://calendly.com/az-riposte/setup'
-const GITHUB_URL = 'https://github.com/alexander-zuev/riposte'
 
 const SHORT_MONTHS = [
   'Jan',
@@ -90,39 +93,17 @@ function StripeIcon({ className }: { className?: string }) {
 }
 
 export function LandingPage() {
+  const { user } = useRouteContext({ from: '/_public' })
+  const authUser = user ? new AuthUser(user) : null
+
   return (
-    <PageShell width="none" frame="full" header={<Header />}>
+    <PageShell width="none" header={<PublicHeader user={authUser} />} footer={<PublicFooter />}>
       <HeroSection />
       <ProblemSection />
       <ComparisonSection />
       <HowItWorksSection />
       <CTASection />
     </PageShell>
-  )
-}
-
-function Header() {
-  return (
-    <header className="border-b bg-background">
-      <div className="container-max-w-6xl flex h-16 items-center justify-between">
-        <Logo variant="full" size="sm" href="/" />
-        <Button
-          variant="secondary"
-          size="sm"
-          render={
-            <a
-              href={GITHUB_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="GitHub repository"
-            />
-          }
-        >
-          <GithubLogoIcon data-icon="inline-start" />
-          GitHub
-        </Button>
-      </div>
-    </header>
   )
 }
 

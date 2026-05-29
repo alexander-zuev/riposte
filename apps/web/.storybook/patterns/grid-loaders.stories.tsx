@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/tanstack-react'
+import { GridLoader } from '@web/ui/components/ui/grid-loader'
 
 function GridLoaderShowcase() {
   return (
@@ -29,6 +30,9 @@ function GridLoaderShowcase() {
       </LoaderCell>
       <LoaderCell name="Heartbeat" description="3x3, center pulses then radiates outward">
         <Heartbeat />
+      </LoaderCell>
+      <LoaderCell name="Compute" description="shipped GridLoader, flickers like a working CPU">
+        <GridLoader />
       </LoaderCell>
     </div>
   )

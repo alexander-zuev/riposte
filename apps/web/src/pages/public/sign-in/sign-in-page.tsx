@@ -1,7 +1,8 @@
 import { Turnstile } from '@marsidev/react-turnstile'
+import { ArrowLeftIcon } from '@phosphor-icons/react'
 import { useForm } from '@tanstack/react-form'
 import { useMutation } from '@tanstack/react-query'
-import { useSearch } from '@tanstack/react-router'
+import { Link, useSearch } from '@tanstack/react-router'
 import {
   authService,
   type AuthServiceError,
@@ -9,8 +10,9 @@ import {
   useLastLoginMethod,
 } from '@web/lib/auth'
 import { settings } from '@web/lib/env/env'
+import { cn } from '@web/lib/utils'
 import { Badge } from '@web/ui/components/ui/badge'
-import { Button } from '@web/ui/components/ui/button'
+import { Button, buttonVariants } from '@web/ui/components/ui/button'
 import {
   Card,
   CardContent,
@@ -133,7 +135,14 @@ export function SignInPage() {
   }, [resetTurnstile])
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4">
+    <div className="relative flex min-h-screen items-center justify-center p-4">
+      <Link
+        to="/"
+        className={cn(buttonVariants({ variant: 'ghost', size: 'sm' }), 'absolute top-6 left-6')}
+      >
+        <ArrowLeftIcon data-icon="inline-start" />
+        Back to home
+      </Link>
       <div className="flex w-full max-w-sm flex-col gap-6">
         <div className="flex justify-center">
           <Logo variant="full" size="lg" href="/" />

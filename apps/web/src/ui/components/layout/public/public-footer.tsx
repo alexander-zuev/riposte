@@ -1,27 +1,32 @@
 import { Logo } from '@web/ui/components/ui/logo'
 
+const GITHUB_URL = 'https://github.com/alexander-zuev/riposte'
+
+// Anchors are absolute (`/#...`) so they also work from legal pages, not just the landing page.
 const productLinks = [
-  { label: 'Features', href: '#features' },
-  { label: 'How It Works', href: '#how-it-works' },
-  { label: 'Get Started', href: '/sign-in' },
+  { label: 'Features', href: '/#features' },
+  { label: 'How it works', href: '/#how-it-works' },
+  { label: 'Get started', href: '/sign-in' },
 ]
 
-const resourceLinks = [{ label: 'GitHub', href: 'https://github.com/alexander-zuev/riposte' }]
+const resourceLinks = [{ label: 'GitHub', href: GITHUB_URL }]
 
 const legalLinks = [
   { label: 'Privacy', href: '/privacy' },
   { label: 'Terms', href: '/terms' },
+  { label: 'Sub-processors', href: '/sub-processors' },
 ]
 
-export function Footer() {
+/** Shared footer for public marketing/legal pages. */
+export function PublicFooter() {
   return (
     <footer className="bg-primary text-primary-foreground">
-      <div className="container-max-w-5xl py-16 md:py-20">
+      <div className="container-max-w-6xl py-16 md:py-20">
         <div className="grid grid-cols-2 gap-10 md:grid-cols-4">
           <div className="col-span-2 md:col-span-1">
             <Logo variant="full" size="sm" href="/" />
             <p className="mt-3 text-sm font-normal text-primary-foreground/60">
-              Open-source AI agent that wins Stripe disputes on autopilot.
+              Open-source AI agent that fights Stripe disputes on autopilot.
             </p>
           </div>
 

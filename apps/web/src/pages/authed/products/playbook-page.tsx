@@ -52,7 +52,7 @@ export function PlaybookPage() {
         isNotFound={notFound}
         isError={playbookQuery.isError && !notFound}
         productId={productId}
-        onRetry={() => playbookQuery.refetch()}
+        onRetry={async () => playbookQuery.refetch()}
       />
     </div>
   )

@@ -1,18 +1,19 @@
-import { Logo } from '@web/ui/components/ui/logo'
+import { useRouteContext } from '@tanstack/react-router'
+import { AuthUser } from '@web/entities/auth/auth-user'
+import { PageShell } from '@web/ui/components/layout/page/page-shell'
+import { PublicFooter } from '@web/ui/components/layout/public/public-footer'
+import { PublicHeader } from '@web/ui/components/layout/public/public-header'
 
 const LAST_UPDATED = 'May 8, 2026'
 const CONTACT_EMAIL = 'legal@riposte.sh'
 
 export function SubProcessorsPage() {
-  return (
-    <div className="flex min-h-dvh flex-col bg-background">
-      <header className="border-b border-border px-6 py-4">
-        <div className="mx-auto flex max-w-3xl items-center justify-between">
-          <Logo variant="full" size="sm" href="/" />
-        </div>
-      </header>
+  const { user } = useRouteContext({ from: '/_public' })
+  const authUser = user ? new AuthUser(user) : null
 
-      <main className="mx-auto w-full max-w-3xl px-6 py-12 md:py-16">
+  return (
+    <PageShell width="none" header={<PublicHeader user={authUser} />} footer={<PublicFooter />}>
+      <div className="mx-auto w-full max-w-3xl px-6 py-12 md:py-16">
         <h1>Sub-processors</h1>
         <p className="mt-2 text-sm text-muted-foreground">Last updated: {LAST_UPDATED}</p>
 
@@ -108,7 +109,7 @@ export function SubProcessorsPage() {
             </p>
           </section>
         </div>
-      </main>
-    </div>
+      </div>
+    </PageShell>
   )
 }

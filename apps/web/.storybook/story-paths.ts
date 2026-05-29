@@ -56,6 +56,11 @@ export const STORY_PATHS = {
     DASHBOARD: 'Pages/Dashboard',
   },
 
+  MARKETING: {
+    ROOT: 'Marketing',
+    OG_IMAGES: 'Marketing/OG Images',
+  },
+
   PATTERNS: {
     ROOT: 'Patterns',
     FORMS: 'Patterns/Forms',

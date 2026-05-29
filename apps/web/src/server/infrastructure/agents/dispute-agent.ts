@@ -759,9 +759,9 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
               execute: ({ writer }) => {
                 writer.merge(streamResult.toUIMessageStream({ generateMessageId: () => messageId }))
               },
-              onStepFinish: ({ responseMessage }) =>
+              onStepFinish: async ({ responseMessage }) =>
                 saveMessage(responseMessage, 'dispute_case_messages_updated'),
-              onFinish: ({ responseMessage }) =>
+              onFinish: async ({ responseMessage }) =>
                 saveMessage(responseMessage, 'dispute_case_messages_finished'),
             }),
           })

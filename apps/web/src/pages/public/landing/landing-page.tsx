@@ -150,9 +150,10 @@ function HeroSection() {
 const PAIN_POINTS = [
   {
     image: {
-      fallback: '/images/landing/problem-cards/manual-evidence-collection.png',
+      fallback: '/images/landing/problem-cards/manual-evidence-collection-768.webp',
       webp480: '/images/landing/problem-cards/manual-evidence-collection-480.webp',
       webp768: '/images/landing/problem-cards/manual-evidence-collection-768.webp',
+      alt: 'Scattered app dashboards and logs being gathered into a single dispute evidence packet against a stopwatch',
     },
     stat: '30-60 min',
     label: 'per dispute',
@@ -161,9 +162,10 @@ const PAIN_POINTS = [
   },
   {
     image: {
-      fallback: '/images/landing/problem-cards/weak-evidence-submission.png',
+      fallback: '/images/landing/problem-cards/weak-evidence-submission-768.webp',
       webp480: '/images/landing/problem-cards/weak-evidence-submission-480.webp',
       webp768: '/images/landing/problem-cards/weak-evidence-submission-768.webp',
+      alt: 'A thin dispute submission of just a receipt, with a risk gauge in the red and a falling win-rate trend',
     },
     stat: '~12%',
     label: 'win rate',
@@ -172,9 +174,10 @@ const PAIN_POINTS = [
   },
   {
     image: {
-      fallback: '/images/landing/problem-cards/deadline-pressure.png',
+      fallback: '/images/landing/problem-cards/deadline-pressure-768.webp',
       webp480: '/images/landing/problem-cards/deadline-pressure-480.webp',
       webp768: '/images/landing/problem-cards/deadline-pressure-768.webp',
+      alt: 'A dispute response timeline counting down from on-track to a red overdue deadline',
     },
     stat: '7-21 days',
     label: 'to respond',
@@ -214,11 +217,10 @@ function ProblemSection() {
                 />
                 <img
                   src={point.image.fallback}
-                  alt=""
-                  aria-hidden="true"
+                  alt={point.image.alt}
                   className="aspect-video w-full border-b border-border object-cover"
-                  width={1672}
-                  height={941}
+                  width={768}
+                  height={432}
                   loading="lazy"
                   decoding="async"
                 />

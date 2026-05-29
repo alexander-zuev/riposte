@@ -19,7 +19,7 @@ export default defineConfig(() => {
     typeof process.env.SENTRY_AUTH_TOKEN === 'string' && process.env.SENTRY_AUTH_TOKEN.length > 0
   const isDevServe = process.env.CLOUDFLARE_ENV === 'dev'
   const isAnalyzeBuild = process.env.BUNDLE_ANALYZE_BUILD === '1'
-  const isCI = !!process.env.CI
+  const isPrerenderEnabled = process.env.RIPOSTE_PRERENDER === '1'
 
   return {
     plugins: [
@@ -49,10 +49,12 @@ export default defineConfig(() => {
             inlineCss: true,
           },
         },
-        // Prerender static public pages at build time. Disabled in CI and bundle
-        // analysis builds (no dev server / not worth the time there).
+        // Prerender static public pages only when explicitly requested. The
+        // prerenderer boots a temporary local preview server, so normal local
+        // builds skip it to avoid making compile/type checks depend on that
+        // server lifecycle.
         prerender: {
-          enabled: !isAnalyzeBuild && !isCI,
+          enabled: isPrerenderEnabled && !isAnalyzeBuild,
           filter: ({ path }) => PRERENDER_EXACT.has(path),
         },
       }),

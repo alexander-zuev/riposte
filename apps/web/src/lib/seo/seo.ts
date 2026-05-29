@@ -28,6 +28,13 @@ interface SeoHeadInput {
   ogImage?: string
   noIndex?: boolean
   links?: Array<Record<string, string>>
+  /**
+   * Whether to emit `<link rel="canonical">`. Defaults to true. `defaultHead`
+   * sets this false so the canonical is emitted exactly once, by the leaf route:
+   * TanStack concatenates head links (no dedupe), so a site-wide default canonical
+   * plus a per-route canonical would ship two conflicting tags on every page.
+   */
+  includeCanonical?: boolean
 }
 
 export function createSeoHead(input: SeoHeadInput) {
@@ -58,10 +65,15 @@ export function createSeoHead(input: SeoHeadInput) {
     meta.push({ name: 'robots', content: 'noindex, nofollow' })
   }
 
-  return {
-    meta,
-    links: [{ rel: 'canonical', href: canonicalUrl }, ...(input.links ?? [])],
+  const links: Array<Record<string, string>> = []
+  if (input.includeCanonical !== false) {
+    links.push({ rel: 'canonical', href: canonicalUrl })
   }
+  if (input.links) {
+    links.push(...input.links)
+  }
+
+  return { meta, links }
 }
 
 const FAVICON_LINKS = [
@@ -83,6 +95,7 @@ export function defaultHead() {
     title: DEFAULT_TITLE,
     description: DEFAULT_DESCRIPTION,
     path: '/',
+    includeCanonical: false,
   })
 
   return {

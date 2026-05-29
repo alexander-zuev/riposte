@@ -35,6 +35,20 @@
   margin-block: 0.125rem;
 }
 
+/**
+ * Streamdown sets `list-style-position: inside` on lists and only inlines
+ * `<p>` children (its `li [&>p]:inline`). Any other block child — notably a
+ * blockquote — stays block-level and drops below the marker, orphaning the
+ * bullet on its own line. An outside marker keeps the bullet stable while
+ * block children flow normally beside it. Padding restores the gutter the
+ * inside marker did not need.
+ */
+.markdown-body [data-streamdown='unordered-list'],
+.markdown-body [data-streamdown='ordered-list'] {
+  list-style-position: outside;
+  padding-left: 1.5rem;
+}
+
 .markdown-body [data-streamdown='code-block'],
 .markdown-body [data-streamdown='blockquote'] {
   margin-block: 0.5rem;

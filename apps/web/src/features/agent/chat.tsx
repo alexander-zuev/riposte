@@ -52,7 +52,7 @@ type ChatProps = {
  * tracks the same instance.
  */
 export function Chat({ agent, initialMessages, productId, mcp }: ChatProps) {
-  const assistant = useDisputeAgentChat(agent, initialMessages)
+  const assistant = useDisputeAgentChat(agent, initialMessages, productId)
   const animateEntrance = useRef(
     initialMessages.length === 1 && initialMessages[0]?.role === 'assistant',
   )

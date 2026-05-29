@@ -32,7 +32,7 @@ export function ChatTab({ productId, agent, mcp }: ChatTabProps) {
   }
   return (
     <Chat
-      key={data.map((message) => message.id).join(':')}
+      key={data[0]?.id ?? productId}
       agent={agent}
       initialMessages={data}
       productId={productId}

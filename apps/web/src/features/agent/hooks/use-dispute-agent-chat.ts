@@ -6,6 +6,7 @@ import {
   type DisputeCaseMessagesUpdatedBroadcast,
 } from '@riposte/core/client'
 import { useQueryClient } from '@tanstack/react-query'
+import { chatQueries } from '@web/entities/chat/chat-queries'
 import { useProductSetupInvalidation } from '@web/features/agent/hooks/use-product-setup-invalidation'
 import type { MCPServersState } from 'agents'
 import { useAgent } from 'agents/react'
@@ -179,7 +180,9 @@ export type AssistantStatus = ChatStatus
 export function useDisputeAgentChat(
   agent: DisputeAgentConnection,
   initialMessages: DisputeAgentMessage[],
+  productId: string,
 ) {
+  const queryClient = useQueryClient()
   const snapshotRef = useRef({
     messageCount: initialMessages.length,
     lastMessageId: initialMessages.at(-1)?.id ?? null,
@@ -191,6 +194,26 @@ export function useDisputeAgentChat(
     agent,
     getInitialMessages: null,
     messages: initialMessages,
+    // `useChat` notifies its `useSyncExternalStore` message subscriber
+    // synchronously on every `replaceMessage` (one per stream delta). When the
+    // WS transport drains a burst of deltas in a single tick — a buffered frame
+    // or a resume/replay — 50+ forced re-renders fire synchronously and trip
+    // React's nested-update limit ("Maximum update depth exceeded"). Throttling
+    // wraps that subscriber in throttleit, collapsing the burst and deferring
+    // the trailing render onto a timer, which breaks the synchronous chain.
+    // Status/error use separate unthrottled stores, so streaming stays live.
+    experimental_throttle: 50,
+    // Mirror the settled conversation into the seed cache so any later remount
+    // (e.g. switching tabs) re-seeds the full history instead of the stale
+    // page-load snapshot. `messages` is the SDK's authoritative final array.
+    // The <Chat> key is the conversation's first message id, so appending turns
+    // never changes it and this write can't trigger a remount.
+    onFinish: ({ messages }) => {
+      queryClient.setQueryData(
+        chatQueries.messages(productId).queryKey,
+        messages as DisputeAgentMessage[],
+      )
+    },
     onError: (error) => {
       logger.error('chat_error', { error, snapshot: snapshotRef.current })
     },

@@ -69,7 +69,8 @@ export const readProductSetupSnapshotResultSchema = z.object({
   appDataSources: z.array(
     z.object({
       id: z.uuidv4(),
-      alias: z.string(),
+      serverName: z.string(),
+      serverUrl: z.string(),
       mcpServerId: z.string(),
       createdAt: TimestamptzSchema,
     }),

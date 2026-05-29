@@ -19,7 +19,8 @@ export const registerProductAppDataSourceSchema = baseCommandSchema.extend({
   name: z.literal('RegisterProductAppDataSource'),
   productId: z.uuidv4(),
   mcpServerId: z.string().min(1),
-  alias: z.string().min(1),
+  serverName: z.string().min(1),
+  serverUrl: z.url(),
 })
 
 export const registerProductAppDataSourceResultSchema = z.object({

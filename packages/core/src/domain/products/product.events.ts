@@ -25,7 +25,8 @@ export const productAppDataSourceRegisteredSchema = baseEventSchema.extend({
   productAppDataSourceId: z.uuidv4(),
   productId: z.uuidv4(),
   mcpServerId: z.string().min(1),
-  alias: z.string().min(1),
+  serverName: z.string().min(1),
+  serverUrl: z.url(),
 })
 
 export type ProductAppDataSourceRegistered = z.infer<typeof productAppDataSourceRegisteredSchema>

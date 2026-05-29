@@ -1,17 +1,14 @@
-import { createCommand, createQuery, toServerFnRpc } from '@riposte/core'
+import { createCommand, createQuery, toServerFnRpc, type DisputeAgentMessage } from '@riposte/core'
 import { requireAuth } from '@server/infrastructure/middleware/auth.middleware'
 import { createServerFn } from '@tanstack/react-start'
-import type { UIMessage } from 'ai'
 import { z } from 'zod'
 
-// Register `UIMessage` as a serializable wire type. We specialize metadata to
-// `never` upstream, but `UIMessagePart.input` (dynamic-tool variant) is
-// `unknown` *structurally* in the SDK's type — not a generic we can narrow.
-// The runtime payload IS JSON (the DO stores it that way via the SDK); this
-// declaration teaches the validator that invariant.
+// Register our chat message as a serializable wire type. `UIMessagePart.input`
+// is `unknown` structurally in the SDK, but the runtime payload is JSON because
+// the DO stores it through the SDK.
 declare module '@tanstack/react-router' {
   interface SerializableExtensions {
-    UIMessage: UIMessage<never>
+    UIMessage: DisputeAgentMessage
   }
 }
 

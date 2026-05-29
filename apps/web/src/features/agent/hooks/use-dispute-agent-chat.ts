@@ -1,6 +1,7 @@
 import { useAgentChat } from '@cloudflare/ai-chat/react'
 import {
   createLogger,
+  type DisputeAgentMessage,
   type DisputeCaseMessagesFinishedBroadcast,
   type DisputeCaseMessagesUpdatedBroadcast,
 } from '@riposte/core/client'
@@ -8,7 +9,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useProductSetupInvalidation } from '@web/features/agent/hooks/use-product-setup-invalidation'
 import type { MCPServersState } from 'agents'
 import { useAgent } from 'agents/react'
-import type { ChatStatus, UIMessage } from 'ai'
+import type { ChatStatus } from 'ai'
 import { useEffect, useRef, useState } from 'react'
 
 const logger = createLogger('dispute-agent-chat')
@@ -177,7 +178,7 @@ export type AssistantStatus = ChatStatus
  */
 export function useDisputeAgentChat(
   agent: DisputeAgentConnection,
-  initialMessages: UIMessage<never>[],
+  initialMessages: DisputeAgentMessage[],
 ) {
   const snapshotRef = useRef({
     messageCount: initialMessages.length,
@@ -218,8 +219,9 @@ export function useDisputeAgentChat(
   }, [chat.isStreaming, chat.messages, chat.status])
 
   return {
-    messages: chat.messages,
+    messages: chat.messages as DisputeAgentMessage[],
     sendMessage: chat.sendMessage,
+    setMessages: chat.setMessages as (messages: DisputeAgentMessage[]) => void,
     stop: chat.stop,
     regenerate: chat.regenerate,
     isStreaming: chat.isStreaming,

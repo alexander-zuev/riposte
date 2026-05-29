@@ -146,7 +146,8 @@ export class ProductSetupService implements IProductSetupService {
         const snapshot = source.serialize()
         return {
           id: snapshot.id,
-          alias: snapshot.alias,
+          serverName: snapshot.serverName,
+          serverUrl: snapshot.serverUrl,
           mcpServerId: snapshot.mcpServerId,
           createdAt: snapshot.createdAt.toISOString(),
         }

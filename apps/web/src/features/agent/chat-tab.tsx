@@ -5,7 +5,7 @@ import { Chat } from '@web/features/agent/chat'
 import type { DisputeAgentConnection } from '@web/features/agent/hooks/use-dispute-agent-chat'
 import { Alert, AlertAction, AlertDescription, AlertTitle } from '@web/ui/components/ui/alert'
 import { Button } from '@web/ui/components/ui/button'
-import { Spinner } from '@web/ui/components/ui/spinner'
+import { GridLoader } from '@web/ui/components/ui/grid-loader'
 import type { MCPServersState } from 'agents'
 import { useEffect } from 'react'
 
@@ -44,7 +44,7 @@ export function ChatTab({ productId, agent, mcp }: ChatTabProps) {
 function ChatLoading() {
   return (
     <div className="flex flex-1 items-center justify-center text-muted-foreground">
-      <Spinner />
+      <GridLoader />
     </div>
   )
 }

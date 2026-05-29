@@ -1,16 +1,16 @@
 import {
   type DatabaseError,
+  type DisputeAgentMessage,
   type DOUnreachableError,
   EntityNotFoundError,
   type GetChatMessages,
 } from '@riposte/core'
 import type { QueryHandler } from '@server/application/registry/types'
-import type { UIMessage } from 'ai'
 import { Result } from 'better-result'
 
 export const getChatMessages: QueryHandler<
   GetChatMessages,
-  UIMessage<never>[],
+  DisputeAgentMessage[],
   DatabaseError | EntityNotFoundError | DOUnreachableError
 > = async (query, ctx) => {
   const found = await ctx.deps.repos.products(ctx.deps.db()).findById(query.productId)

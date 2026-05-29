@@ -6,14 +6,16 @@ export type ProductAppDataSourceSnapshot = {
   id: UUIDv4
   productId: UUIDv4
   mcpServerId: string
-  alias: string
+  serverName: string
+  serverUrl: string
   createdAt: Date
 }
 
 export type CreateProductAppDataSourceInput = {
   productId: UUIDv4
   mcpServerId: string
-  alias: string
+  serverName: string
+  serverUrl: string
 }
 
 export class ProductAppDataSource extends Entity<ProductAppDataSourceSnapshot> {
@@ -21,7 +23,8 @@ export class ProductAppDataSource extends Entity<ProductAppDataSourceSnapshot> {
     readonly id: UUIDv4,
     readonly productId: UUIDv4,
     readonly mcpServerId: string,
-    readonly alias: string,
+    readonly serverName: string,
+    readonly serverUrl: string,
     readonly createdAt: Date,
   ) {
     super()
@@ -35,7 +38,8 @@ export class ProductAppDataSource extends Entity<ProductAppDataSourceSnapshot> {
       crypto.randomUUID() as UUIDv4,
       input.productId,
       input.mcpServerId,
-      input.alias,
+      input.serverName,
+      input.serverUrl,
       now,
     )
 
@@ -44,7 +48,8 @@ export class ProductAppDataSource extends Entity<ProductAppDataSourceSnapshot> {
         productAppDataSourceId: source.id,
         productId: source.productId,
         mcpServerId: source.mcpServerId,
-        alias: source.alias,
+        serverName: source.serverName,
+        serverUrl: source.serverUrl,
       }),
     )
 
@@ -56,7 +61,8 @@ export class ProductAppDataSource extends Entity<ProductAppDataSourceSnapshot> {
       row.id,
       row.productId,
       row.mcpServerId,
-      row.alias,
+      row.serverName,
+      row.serverUrl,
       row.createdAt,
     )
   }
@@ -66,7 +72,8 @@ export class ProductAppDataSource extends Entity<ProductAppDataSourceSnapshot> {
       id: this.id,
       productId: this.productId,
       mcpServerId: this.mcpServerId,
-      alias: this.alias,
+      serverName: this.serverName,
+      serverUrl: this.serverUrl,
       createdAt: this.createdAt,
     }
   }

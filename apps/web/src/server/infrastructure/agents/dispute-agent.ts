@@ -4,6 +4,7 @@ import {
   createEvent,
   createLogger,
   createSentryOptions,
+  type DisputeAgentMessage,
   EvidenceCollectionFailedError,
   InternalServerError,
   type ProductSetupState,
@@ -76,6 +77,7 @@ type ReadyMcpServerResult =
       ok: true
       serverId: string
       serverName: string
+      serverUrl: string
     }
   | {
       ok: false
@@ -355,6 +357,11 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
     })
 
     return result.toUIMessageStreamResponse({
+      // Stamp createdAt into the stream (once, at `start`) so the live streamed
+      // message carries a timestamp immediately, not only after a reload.
+      // `sanitizeMessageForPersistence` keeps this value when it persists.
+      messageMetadata: ({ part }) =>
+        part.type === 'start' ? { createdAt: new Date().toISOString() } : undefined,
       onError: (error) => {
         logger.warn('dispute_agent_stream_error', {
           error,
@@ -608,8 +615,8 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
   }
 
   /** RPC seed for the agent page — WS doesn't replay history on connect. */
-  async getMessages(): Promise<UIMessage[]> {
-    return this.messages
+  async getMessages(): Promise<DisputeAgentMessage[]> {
+    return this.messages as DisputeAgentMessage[]
   }
 
   async restartSetup(): Promise<{ ok: true } | { ok: false; error: string }> {
@@ -865,6 +872,7 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
           ok: true,
           serverId,
           serverName: server.name,
+          serverUrl: server.server_url,
         }
       case 'connecting':
       case 'connected':

@@ -193,9 +193,9 @@ function McpServersBody({
   if (mcpSources.sources.length === 0) {
     return (
       <Card>
-        <CardContent className="flex flex-col items-center gap-2 py-10 text-center text-muted-foreground">
-          <McpIcon className="size-5" />
-          <small>No MCP servers connected</small>
+        <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
+          <McpIcon className="size-6 text-muted-foreground" />
+          <p>No MCP servers connected</p>
           <Button
             variant="secondary"
             size="sm"
@@ -240,15 +240,15 @@ function McpSourceCard({
       <CardHeader>
         <CardTitle className="flex items-center gap-1">
           <McpIcon className="size-4 text-muted-foreground" />
-          {source.alias}
+          {source.serverName}
         </CardTitle>
         <CardAction>
           <Badge variant="success">Connected</Badge>
         </CardAction>
       </CardHeader>
       <CardContent className="flex items-center justify-between gap-4">
-        <small className="text-muted-foreground">
-          Connected {new Date(source.createdAt).toLocaleDateString()}
+        <small className="min-w-0 truncate text-system text-muted-foreground">
+          {source.serverUrl}
         </small>
         <Button
           type="button"
@@ -264,7 +264,7 @@ function McpSourceCard({
       <RemoveMcpServerDialog
         open={removeOpen}
         onOpenChange={setRemoveOpen}
-        serverName={source.alias}
+        serverName={source.serverName}
         isRemoving={isRemoving}
         onConfirm={() => {
           onRemove()

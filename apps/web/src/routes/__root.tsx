@@ -8,6 +8,7 @@ import {
 } from '@phosphor-icons/react'
 import * as Sentry from '@sentry/tanstackstart-react'
 import type { QueryClient } from '@tanstack/react-query'
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import {
   createRootRouteWithContext,
   HeadContent,
@@ -95,7 +96,10 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           <AnalyticsIdentifier />
           <ThemeProvider>
             <Toaster />
-            <TooltipProvider>{children}</TooltipProvider>
+            <TooltipProvider>
+              {children}
+              <ReactQueryDevtools initialIsOpen={false} />
+            </TooltipProvider>
           </ThemeProvider>
         </AnalyticsProvider>
         <Scripts />

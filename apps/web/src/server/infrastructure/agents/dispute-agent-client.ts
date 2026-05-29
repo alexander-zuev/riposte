@@ -1,7 +1,12 @@
-import { createLogger, DOUnreachableError, WorkflowError, type UUIDv4 } from '@riposte/core'
+import {
+  createLogger,
+  DOUnreachableError,
+  type DisputeAgentMessage,
+  WorkflowError,
+  type UUIDv4,
+} from '@riposte/core'
 import { isTransientError, RETRY } from '@server/infrastructure/resilience/retry'
 import { getAgentByName } from 'agents'
-import type { UIMessage } from 'ai'
 import { Result } from 'better-result'
 
 const DISPUTE_AGENT_BINDING = 'DisputeAgent'
@@ -100,12 +105,11 @@ export interface IDisputeAgentClient {
   primeProductSetup: (input: PrimeProductSetupInput) => Promise<Result<void, DOUnreachableError>>
   /**
    * Reads persisted chat history from the per-product DisputeAgent DO. The
-   * `UIMessage<never>` specialization is our application-layer claim that no
-   * one writes `metadata` — keeps the wire payload statically serializable
-   * (the SDK's default `UIMessage<unknown>` would fail TanStack Start's
-   * validator). Widen the generic when we start attaching metadata.
+   * messages include app-owned metadata stamped by the DO before persistence.
    */
-  getMessages: (input: GetMessagesInput) => Promise<Result<UIMessage<never>[], DOUnreachableError>>
+  getMessages: (
+    input: GetMessagesInput,
+  ) => Promise<Result<DisputeAgentMessage[], DOUnreachableError>>
   /** Drops a synthetic "Stripe connected" user message and triggers the next agent turn. */
   signalStripeConnected: (
     input: SignalStripeConnectedInput,
@@ -377,7 +381,7 @@ export class DisputeAgentClient implements IDisputeAgentClient {
   async getMessages({
     userId,
     productId,
-  }: GetMessagesInput): Promise<Result<UIMessage<never>[], DOUnreachableError>> {
+  }: GetMessagesInput): Promise<Result<DisputeAgentMessage[], DOUnreachableError>> {
     return Result.tryPromise({
       try: async () => {
         const agent = await getAgentByName(
@@ -385,8 +389,6 @@ export class DisputeAgentClient implements IDisputeAgentClient {
           productId,
           disputeAgentOptions(userId),
         )
-        // Cast: the DO returns the SDK's `UIMessage<unknown>` but nothing in
-        // this codebase writes `metadata`. See the interface docstring above.
         return agent.getMessages()
       },
       catch: (cause) => new DOUnreachableError({ cause, retryable: isTransientError(cause) }),

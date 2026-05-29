@@ -232,7 +232,8 @@ export const registerProductAppDataSource: CommandHandler<
   const source = ProductAppDataSource.create({
     productId: command.productId,
     mcpServerId: command.mcpServerId,
-    alias: command.alias,
+    serverName: command.serverName,
+    serverUrl: command.serverUrl,
   })
 
   const saved = await repo.save(source)

@@ -14,7 +14,8 @@ export const productAppDataSources = pgTable(
       .references(() => products.id, { onDelete: 'cascade' }),
 
     mcpServerId: text('mcp_server_id').notNull(),
-    alias: text('alias').notNull(),
+    serverName: text('server_name').notNull(),
+    serverUrl: text('server_url').notNull(),
 
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
@@ -24,7 +25,6 @@ export const productAppDataSources = pgTable(
       table.productId,
       table.mcpServerId,
     ),
-    uniqueIndex('product_app_data_sources_product_alias_unique').on(table.productId, table.alias),
   ],
 )
 

@@ -30,12 +30,6 @@ type CachedFetchDoc = {
   expiresAt: number
 }
 
-const appDataSourceAliasSchema = z
-  .string()
-  .min(1)
-  .max(50)
-  .regex(/^[a-z][a-z0-9_]*$/)
-
 const productEvidenceFieldsSchema = z.object({
   productDescription: z.string().trim().min(1).max(STRIPE_EVIDENCE_TEXT_MAX_LENGTH),
   serviceStartRule: z.enum(SERVICE_START_RULES),
@@ -234,12 +228,11 @@ export function buildDisputeAgentTools({
     }),
     registerAppDataSource: tool({
       description:
-        'Register a ready MCP server as a merchant app data source for this product. Use only after the MCP server is authorized, ready, represents merchant-owned app/customer/usage data, and you have successfully made one harmless read-only call with its MCP tools. Do not use for Stripe. `serverId` must be the internal MCP server id from listMcpServers or connectMcpServer, not the display name. Choose a stable snake_case alias such as `primary_db`, `usage_db`, or `support_tool`; the alias may be referenced by future playbooks.',
+        'Register a ready MCP server as a merchant app data source for this product. Use only after the MCP server is authorized, ready, represents merchant-owned app/customer/usage data, and you have successfully made one harmless read-only call with its MCP tools. Do not use for Stripe. `serverId` must be the internal MCP server id from listMcpServers or connectMcpServer, not the display name. The server name and URL are recorded automatically from the connection.',
       inputSchema: z.object({
         serverId: z.string().min(1),
-        alias: appDataSourceAliasSchema,
       }),
-      execute: async ({ serverId, alias }) => {
+      execute: async ({ serverId }) => {
         const readyServer = await agent.getReadyMcpServer(serverId)
         if (!readyServer.ok) {
           const result = Result.ok({
@@ -254,14 +247,15 @@ export function buildDisputeAgentTools({
         const command = createCommand('RegisterProductAppDataSource', {
           productId: agent.name,
           mcpServerId: serverId,
-          alias,
+          serverName: readyServer.serverName,
+          serverUrl: readyServer.serverUrl,
         })
         const result = await agent.deps.services.messageBus().handle(command)
         return resultToAgentToolResponse(result, {
           ok: (value) => ({
             productAppDataSourceId: value.productAppDataSourceId,
             serverName: readyServer.serverName,
-            alias,
+            serverUrl: readyServer.serverUrl,
           }),
         })
       },

@@ -7,7 +7,8 @@ import { toast } from 'sonner'
 
 export type McpSource = {
   id: string
-  alias: string
+  serverName: string
+  serverUrl: string
   mcpServerId: string
   createdAt: string
 }
@@ -45,7 +46,7 @@ export function useMcpSources(productId: string) {
     disconnect: (source: McpSource) =>
       disconnectMutation.mutate({
         mcpServerId: source.mcpServerId,
-        serverName: source.alias,
+        serverName: source.serverName,
       }),
     isDisconnecting: (mcpServerId: string) =>
       disconnectMutation.isPending && disconnectMutation.variables?.mcpServerId === mcpServerId,

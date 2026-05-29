@@ -35,11 +35,10 @@ export function PublicFooter() {
           <LinkColumn title="Legal" links={legalLinks} />
         </div>
 
-        <div className="mt-14 flex flex-col items-center justify-between gap-4 border-t border-primary-foreground/10 pt-8 md:flex-row">
+        <div className="mt-14 border-t border-primary-foreground/10 pt-8 text-center">
           <small className="text-primary-foreground/40">
             &copy; {new Date().getFullYear()} Riposte. All rights reserved.
           </small>
-          <small className="text-primary-foreground/40">AGPLv3 Licensed</small>
         </div>
       </div>
     </footer>

@@ -82,6 +82,7 @@ export interface IDisputePlaybookRepository {
   findLatestForProduct: (
     productId: UUIDv4,
   ) => Promise<Result<DisputePlaybook | null, DatabaseError>>
+  deleteForProduct: (productId: UUIDv4) => Promise<Result<void, DatabaseError>>
 }
 
 /* -------------------------------------------------------------------------------------------------

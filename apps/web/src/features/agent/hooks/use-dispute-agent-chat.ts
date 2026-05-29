@@ -209,10 +209,7 @@ export function useDisputeAgentChat(
     // The <Chat> key is the conversation's first message id, so appending turns
     // never changes it and this write can't trigger a remount.
     onFinish: ({ messages }) => {
-      queryClient.setQueryData(
-        chatQueries.messages(productId).queryKey,
-        messages as DisputeAgentMessage[],
-      )
+      queryClient.setQueryData(chatQueries.messages(productId).queryKey, messages)
     },
     onError: (error) => {
       logger.error('chat_error', { error, snapshot: snapshotRef.current })

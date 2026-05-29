@@ -141,6 +141,16 @@ export class Product extends Entity<ProductSnapshot> {
     this.addEvent(createEvent('ProductDeleted', { productId: this.id, userId: this.userId }))
   }
 
+  /** Product-side of a setup restart: drop merchant-approved evidence fields so onboarding re-derives them. */
+  restartSetup(): void {
+    this.productDescription = null
+    this.serviceStartRule = null
+    this.refundPolicyDisclosure = null
+    this.cancellationPolicyDisclosure = null
+    this.updatedAt = new Date()
+    this.addEvent(createEvent('ProductSetupRestarted', { productId: this.id, userId: this.userId }))
+  }
+
   hasApprovedProductEvidenceFields(): boolean {
     return requiredProductEvidenceFieldIssues(this.serialize()).length === 0
   }

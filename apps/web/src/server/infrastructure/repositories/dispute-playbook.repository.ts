@@ -51,4 +51,14 @@ export class DisputePlaybookRepository
 
     return found.map((row) => (row ? DisputePlaybook.deserialize(row) : null))
   }
+
+  async deleteForProduct(productId: UUIDv4): Promise<Result<void, DatabaseError>> {
+    return Result.tryPromise({
+      try: async () => {
+        await this.db.delete(disputePlaybooks).where(eq(disputePlaybooks.productId, productId))
+      },
+      catch: (cause) =>
+        new DatabaseError({ message: 'Failed to delete dispute playbooks for product', cause }),
+    })
+  }
 }

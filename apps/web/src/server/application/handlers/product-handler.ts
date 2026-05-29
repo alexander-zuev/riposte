@@ -245,7 +245,7 @@ export const registerProductAppDataSource: CommandHandler<
 export const restartProductSetup: CommandHandler<
   RestartProductSetup,
   RestartProductSetupResult,
-  DatabaseError | EntityNotFoundError | DOUnreachableError
+  DatabaseError | EntityNotFoundError | DOUnreachableError | DuplicateProductUrlError
 > = async (command, ctx) => {
   const product = await ctx.deps.repos.products(ctx.tx).findById(command.productId)
   if (product.isErr()) return Result.err(product.error)
@@ -267,6 +267,15 @@ export const restartProductSetup: CommandHandler<
   if (failedDelete?.isErr()) {
     return Result.err(failedDelete.error)
   }
+
+  const playbookDeleted = await ctx.deps.repos
+    .disputePlaybooks(ctx.tx)
+    .deleteForProduct(command.productId)
+  if (playbookDeleted.isErr()) return Result.err(playbookDeleted.error)
+
+  product.value.restartSetup()
+  const productSaved = await ctx.deps.repos.products(ctx.tx).save(product.value)
+  if (productSaved.isErr()) return Result.err(productSaved.error)
 
   const restarted = await ctx.deps.services.disputeAgentClient().restartSetup({
     userId: command.userId,

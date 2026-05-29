@@ -27,6 +27,11 @@ const DEV_NAV_ITEMS = [
 ] as const
 
 export const Route = createFileRoute('/dev')({
+  // Defense in depth: `/dev/*` already 404s in production via assertDevRouteAccess,
+  // so there is normally no page to index. This noindex head guards against any
+  // future loosening of that runtime gate. `/dev` is not under `_authed`, so it
+  // does not inherit that layout's noindex.
+  head: () => ({ meta: [{ name: 'robots', content: 'noindex, nofollow' }] }),
   beforeLoad: async () => {
     const result = fromRpc(await assertDevRouteAccess())
     if (result.isErr()) throw notFound()

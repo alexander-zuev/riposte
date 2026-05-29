@@ -1,14 +1,14 @@
 import type { FileRoutesByTo } from '@web/lib/router/routeTree.gen'
 
-type ResolveParams<P extends string> = P extends `${infer Pre}$${infer Rest}`
-  ? Rest extends `${string}/${infer Post}`
-    ? `${Pre}${string}/${ResolveParams<Post>}`
-    : `${Pre}${string}`
-  : P
-
-export type RoutePath = {
-  [K in keyof FileRoutesByTo]: ResolveParams<K & string>
-}[keyof FileRoutesByTo]
+/**
+ * A registered route path, used to keep canonical/SEO URLs from pointing at a
+ * route that doesn't exist (renaming or removing a route breaks the build).
+ *
+ * This is the static-route form. All current SEO heads use static paths; if we
+ * later set indexable heads on dynamic routes (e.g. `/blog/$slug`) with concrete
+ * slugs, reintroduce a `$param` -> `${string}` resolver so those literals match.
+ */
+export type RoutePath = keyof FileRoutesByTo
 
 export const CANONICAL_ORIGIN = 'https://riposte.sh'
 export const SITE_NAME = 'Riposte'
@@ -16,7 +16,8 @@ export const DEFAULT_TITLE = 'Riposte — Fight and Win Stripe Disputes on Autop
 export const DEFAULT_DESCRIPTION =
   'Turns your app data — sessions, logins, usage history — into chargeback evidence 10x stronger than Stripe alone. Webhook in, evidence out. Open-source.'
 export const DEFAULT_OG_IMAGE = `${CANONICAL_ORIGIN}/og-image.png`
-export const DEFAULT_OG_IMAGE_ALT = 'Riposte — AI-powered chargeback defense agent'
+export const DEFAULT_OG_IMAGE_ALT =
+  'Riposte: open-source AI agent that fights your Stripe disputes on autopilot'
 export const THEME_COLOR = '#0C0A09'
 
 interface SeoHeadInput {
@@ -92,4 +93,57 @@ export function defaultHead() {
     ],
     links: [...PRECONNECT_LINKS, ...FAVICON_LINKS, ...seo.links],
   }
+}
+
+/** A `<script type="application/ld+json">` entry in the document head. */
+type JsonLdScript = { type: 'application/ld+json'; children: string }
+
+function jsonLd(schema: Record<string, unknown>): JsonLdScript {
+  return { type: 'application/ld+json', children: JSON.stringify(schema) }
+}
+
+const ORGANIZATION_ID = `${CANONICAL_ORIGIN}/#organization`
+const WEBSITE_ID = `${CANONICAL_ORIGIN}/#website`
+
+/**
+ * Structured data for the landing page: Organization + WebSite + SoftwareApplication.
+ *
+ * The SoftwareApplication is for entity understanding (it tells Google/AI engines what
+ * Riposte is and how it relates to the Organization). It is NOT yet rich-result eligible:
+ * Google requires `offers.price` plus `aggregateRating` or `review` for the app rich result.
+ * Add those once pricing is public and real reviews exist.
+ * @see https://developers.google.com/search/docs/appearance/structured-data/software-app
+ */
+export function createLandingJsonLd(): JsonLdScript[] {
+  const organization = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    '@id': ORGANIZATION_ID,
+    name: SITE_NAME,
+    url: `${CANONICAL_ORIGIN}/`,
+    logo: `${CANONICAL_ORIGIN}/favicon.svg`,
+  }
+
+  const website = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    '@id': WEBSITE_ID,
+    name: SITE_NAME,
+    url: `${CANONICAL_ORIGIN}/`,
+    description: DEFAULT_DESCRIPTION,
+    publisher: { '@id': ORGANIZATION_ID },
+  }
+
+  const softwareApplication = {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareApplication',
+    name: SITE_NAME,
+    url: `${CANONICAL_ORIGIN}/`,
+    description: DEFAULT_DESCRIPTION,
+    applicationCategory: 'BusinessApplication',
+    operatingSystem: 'All',
+    publisher: { '@id': ORGANIZATION_ID },
+  }
+
+  return [jsonLd(organization), jsonLd(website), jsonLd(softwareApplication)]
 }

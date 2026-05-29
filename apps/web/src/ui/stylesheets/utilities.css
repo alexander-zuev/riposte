@@ -136,13 +136,16 @@ JetBrains Mono for IDs, timestamps, logs, events, metadata
   animation: slide-up 100ms ease-out;
 }
 
-@keyframes grid-rain {
-  0%, 100% { opacity: 0.1; }
+@keyframes grid-compute {
+  0%, 100% { opacity: 0.35; }
   20% { opacity: 1; }
-  50% { opacity: 0.1; }
+  40% { opacity: 0.35; }
 }
 
-@utility animate-grid-rain {
-  animation: grid-rain 1.2s ease-in infinite;
+/* Per-dot duration + delay are set inline (they vary per cell); this utility
+   supplies only the fixed parts so the keyframe stays defined in one place. */
+@utility animate-grid-compute {
+  animation-name: grid-compute;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
 }
-

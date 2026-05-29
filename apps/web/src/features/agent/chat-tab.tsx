@@ -1,3 +1,4 @@
+import { createLogger } from '@riposte/core/client'
 import { useQuery } from '@tanstack/react-query'
 import { chatQueries } from '@web/entities/chat/chat-queries'
 import { Chat } from '@web/features/agent/chat'
@@ -6,6 +7,9 @@ import { Alert, AlertAction, AlertDescription, AlertTitle } from '@web/ui/compon
 import { Button } from '@web/ui/components/ui/button'
 import { Spinner } from '@web/ui/components/ui/spinner'
 import type { MCPServersState } from 'agents'
+import { useEffect } from 'react'
+
+const logger = createLogger('chat-tab')
 
 type ChatTabProps = {
   productId: string
@@ -23,7 +27,9 @@ export function ChatTab({ productId, agent, mcp }: ChatTabProps) {
   const { data, isPending, isError, error, refetch } = useQuery(chatQueries.messages(productId))
 
   if (isPending) return <ChatLoading />
-  if (isError) return <ChatError error={error} onRetry={async () => refetch()} />
+  if (isError) {
+    return <ChatError error={error} productId={productId} onRetry={async () => refetch()} />
+  }
   return (
     <Chat
       key={data.map((message) => message.id).join(':')}
@@ -45,15 +51,24 @@ function ChatLoading() {
 
 type ChatErrorProps = {
   error: Error
+  productId: string
   onRetry: () => void
 }
 
-function ChatError({ error, onRetry }: ChatErrorProps) {
+function ChatError({ error, productId, onRetry }: ChatErrorProps) {
+  useEffect(() => {
+    logger.warn('chat_history_load_failed', {
+      productId,
+      causeName: error.name,
+      causeMessage: error.message,
+    })
+  }, [error, productId])
+
   return (
     <div className="flex flex-1 items-center justify-center p-4">
       <Alert variant="destructive" className="max-w-md">
         <AlertTitle>Could not load chat history</AlertTitle>
-        <AlertDescription>{error.message}</AlertDescription>
+        <AlertDescription>Refresh the chat or try again in a moment</AlertDescription>
         <AlertAction>
           <Button size="sm" variant="secondary" onClick={onRetry}>
             Retry

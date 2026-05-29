@@ -144,7 +144,9 @@ export function Chat({ agent, initialMessages, productId, mcp }: ChatProps) {
         <ConversationScrollButton />
       </Conversation>
       <div className="flex min-h-8 items-center gap-2 px-4 py-2 text-muted-foreground">
-        {(assistant.status === 'submitted' || assistant.status === 'streaming') && <GridLoader />}
+        <div className="flex size-4 shrink-0 items-center justify-center">
+          {(assistant.status === 'submitted' || assistant.status === 'streaming') && <GridLoader />}
+        </div>
         {agent.state ? (
           <ContextUsageMeter
             className="ml-auto"

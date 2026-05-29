@@ -1161,7 +1161,7 @@ export const PromptInputSubmit = ({
   // Submit input has two visual states: send (default) or stop (while streaming).
   // Error surfaces via the parent's error banner; no X icon here.
   const Icon = isStreaming ? (
-    <SquareIcon className="size-4" />
+    <SquareIcon className="size-3 text-background" weight="fill" />
   ) : (
     <ArrowElbowDownLeftIcon className="size-4" />
   )

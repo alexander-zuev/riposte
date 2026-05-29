@@ -189,6 +189,7 @@
         {
           "binding": "HYPERDRIVE",
           "id": "d734852c734e497985f9ec9afe2feb4e",
+          "localConnectionString": "postgres://riposte-app:riposte-app@localhost:5432/riposte",
         },
       ],
       "kv_namespaces": [

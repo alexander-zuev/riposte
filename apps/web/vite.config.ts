@@ -17,7 +17,7 @@ const PRERENDER_EXACT = new Set(['/', '/privacy', '/terms', '/sub-processors'])
 export default defineConfig(() => {
   const hasSentrySourcemapAuthToken =
     typeof process.env.SENTRY_AUTH_TOKEN === 'string' && process.env.SENTRY_AUTH_TOKEN.length > 0
-  const isTest = process.env.CLOUDFLARE_ENV === 'test'
+  const isDevServe = process.env.CLOUDFLARE_ENV === 'dev'
   const isAnalyzeBuild = process.env.BUNDLE_ANALYZE_BUILD === '1'
   const isCI = !!process.env.CI
 
@@ -25,7 +25,18 @@ export default defineConfig(() => {
     plugins: [
       cloudflare({
         viteEnvironment: { name: 'ssr' },
-        tunnel: isTest ? false : { name: 'riposte-dev', autoStart: true },
+        // Tunnel is a dev-only feature (exposes localhost for OAuth callbacks) and
+        // only `pnpm dev` sets CLOUDFLARE_ENV=dev. Gating on the env var rather than
+        // Vite's `command` is deliberate: prerender boots an internal `vite preview`
+        // (command === 'serve'), and the named `riposte-dev` tunnel has no route for
+        // its random port, which would fail the build.
+        tunnel: isDevServe ? { name: 'riposte-dev', autoStart: true } : false,
+        // Remote bindings default to on, which makes the build-time prerender preview
+        // open a live remote-proxy session for any `remote: true` binding (AI here) and
+        // crawl pages over it (flaky -> ECONNRESET). Prerender for static marketing
+        // pages should use LOCAL bindings, so enable remote bindings only in dev serve.
+        // https://developers.cloudflare.com/changelog/post/2025-12-19-tanstack-start-prerendering/
+        remoteBindings: isDevServe,
       }),
       ...tanstackStart({
         router: {

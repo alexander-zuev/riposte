@@ -91,10 +91,12 @@ export interface IDisputePlaybookRepository {
 
 export interface IDisputeCaseRepository {
   findById: (id: string) => Promise<Result<DisputeCase | null, DatabaseError>>
+  findByIds: (ids: readonly string[]) => Promise<Result<Map<string, DisputeCase>, DatabaseError>>
   listForUser: (
     input: Omit<ListDisputeCases, 'type' | 'name'>,
   ) => Promise<Result<DisputeCaseListPage, DatabaseError>>
   save: (disputeCase: DisputeCase) => Promise<Result<DisputeCase, DatabaseError>>
+  saveBatch: (disputeCases: readonly DisputeCase[]) => Promise<Result<void, DatabaseError>>
 }
 
 export interface IDisputeCollectedEvidenceRepository {
@@ -135,6 +137,12 @@ export interface IStripeDisputeSyncStateRepository {
     stripeAccountId: string
     livemode: boolean
   }) => Promise<Result<DisputeSyncState, DatabaseError>>
+  markSynced: (input: {
+    userId: string
+    stripeAccountId: string
+    livemode: boolean
+    syncedAt: Date
+  }) => Promise<Result<void, DatabaseError>>
   findDueAccounts: (input: {
     dueBefore: Date
     limit: number

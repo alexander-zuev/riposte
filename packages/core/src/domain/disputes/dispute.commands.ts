@@ -41,6 +41,7 @@ export const syncDisputesSchema = baseCommandSchema.extend({
   stripeAccountId: z.string().min(1),
   livemode: z.boolean(),
   timeline: syncTimelineSchema,
+  syncRequestId: z.uuidv7().optional(),
 })
 
 export type SyncDisputes = z.infer<typeof syncDisputesSchema>

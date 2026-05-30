@@ -52,6 +52,12 @@
         "DisputeAgent"
       ],
     },
+    {
+      "tag": "v4",
+      "new_sqlite_classes": [
+        "AsyncGateDO"
+      ],
+    },
   ],
   "triggers": {
     "crons": [
@@ -134,6 +140,10 @@
             "class_name": "OutboxRelayDO",
           },
           {
+            "name": "ASYNC_GATE",
+            "class_name": "AsyncGateDO",
+          },
+          {
             "name": "DisputeAgent",
             "class_name": "DisputeAgent",
           },
@@ -150,6 +160,8 @@
         "ENV": "development",
         "APP_URL": "https://tunnel.riposte.sh",
         "STRIPE_OAUTH_CALLBACK_URL": "https://tunnel.riposte.sh/api/stripe/oauth/callback",
+        "STRIPE_APP_CLIENT_ID": "ca_UTQuSndRIZIb31NTd1oAtPSOYTMl1MFw",
+        "STRIPE_APP_INSTALL_LINK_ID": "chnlink_61UdsCZhNvQAInh1H41RbvfiqIYDIJHE",
         "SENTRY_DSN": "https://be15dbb0ce04a60ac3d39dc7ddb9fec2@o4508393623257088.ingest.us.sentry.io/4511314272583680",
         "POSTHOG_API_KEY": "phc_tvCSeYXcuPPE6KzfhHjroFvPGFvaga3aocEmz95FdVd3",
         "GOOGLE_CLIENT_ID": "189119872614-1ef29kgrij3mmc38sbbmh7tl358835bg.apps.googleusercontent.com",
@@ -250,6 +262,10 @@
             "class_name": "OutboxRelayDO",
           },
           {
+            "name": "ASYNC_GATE",
+            "class_name": "AsyncGateDO",
+          },
+          {
             "name": "DisputeAgent",
             "class_name": "DisputeAgent",
           },
@@ -266,6 +282,8 @@
         "ENV": "staging",
         "APP_URL": "https://staging.riposte.sh",
         "STRIPE_OAUTH_CALLBACK_URL": "https://staging.riposte.sh/api/stripe/oauth/callback",
+        "STRIPE_APP_CLIENT_ID": "ca_UTQuSndRIZIb31NTd1oAtPSOYTMl1MFw",
+        "STRIPE_APP_INSTALL_LINK_ID": "chnlink_61UdsCZhNvQAInh1H41RbvfiqIYDIJHE",
         "SENTRY_DSN": "https://be15dbb0ce04a60ac3d39dc7ddb9fec2@o4508393623257088.ingest.us.sentry.io/4511314272583680",
         "POSTHOG_API_KEY": "phc_tvCSeYXcuPPE6KzfhHjroFvPGFvaga3aocEmz95FdVd3",
         "GOOGLE_CLIENT_ID": "test-google-client-id",
@@ -314,6 +332,8 @@
         "ENV": "test",
         "APP_URL": "http://localhost:3137",
         "STRIPE_OAUTH_CALLBACK_URL": "https://tunnel.riposte.sh/api/stripe/oauth/callback",
+        "STRIPE_APP_CLIENT_ID": "ca_UTQuSndRIZIb31NTd1oAtPSOYTMl1MFw",
+        "STRIPE_APP_INSTALL_LINK_ID": "chnlink_61UdsCZhNvQAInh1H41RbvfiqIYDIJHE",
         "SENTRY_DSN": "",
         "POSTHOG_API_KEY": "",
         "GOOGLE_CLIENT_ID": "test-google-client-id",
@@ -378,6 +398,10 @@
           {
             "name": "OUTBOX_RELAY",
             "class_name": "OutboxRelayDO",
+          },
+          {
+            "name": "ASYNC_GATE",
+            "class_name": "AsyncGateDO",
           },
           {
             "name": "DisputeAgent",
@@ -465,6 +489,10 @@
             "class_name": "OutboxRelayDO",
           },
           {
+            "name": "ASYNC_GATE",
+            "class_name": "AsyncGateDO",
+          },
+          {
             "name": "DisputeAgent",
             "class_name": "DisputeAgent",
           },
@@ -481,6 +509,8 @@
         "ENV": "production",
         "APP_URL": "https://riposte.sh",
         "STRIPE_OAUTH_CALLBACK_URL": "https://riposte.sh/api/stripe/oauth/callback",
+        "STRIPE_APP_CLIENT_ID": "ca_UTQuSndRIZIb31NTd1oAtPSOYTMl1MFw",
+        "STRIPE_APP_INSTALL_LINK_ID": "chnlink_61UdsCZhNvQAInh1H41RbvfiqIYDIJHE",
         "SENTRY_DSN": "https://be15dbb0ce04a60ac3d39dc7ddb9fec2@o4508393623257088.ingest.us.sentry.io/4511314272583680",
         "POSTHOG_API_KEY": "phc_tvCSeYXcuPPE6KzfhHjroFvPGFvaga3aocEmz95FdVd3",
         "GOOGLE_CLIENT_ID": "189119872614-dmtnkqeoibjubc0frpkms8sptbn9j2h0.apps.googleusercontent.com",

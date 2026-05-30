@@ -89,7 +89,7 @@ export function DisputesPage({ productId }: { productId: string }) {
   const { disputes, isError, isLoading, lastSyncedAt, retry } = useDisputeListData(
     filters.listInput,
   )
-  const syncMutation = useSyncDisputesMutation()
+  const syncMutation = useSyncDisputesMutation(productId)
 
   return (
     <div className="grid gap-6 text-foreground">

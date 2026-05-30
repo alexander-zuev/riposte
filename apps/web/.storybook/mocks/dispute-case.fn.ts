@@ -9,3 +9,12 @@ export async function listDisputeCases(): Promise<RpcResult<ListDisputeCasesResu
     },
   }
 }
+
+export async function syncDisputesForProduct(): Promise<
+  RpcResult<{ status: 'completed' | 'pending' }, never>
+> {
+  return {
+    status: 'ok',
+    value: { status: 'completed' },
+  }
+}

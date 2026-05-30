@@ -64,6 +64,38 @@ export class StripeDisputeSyncStateRepository implements IStripeDisputeSyncState
     })
   }
 
+  async markSynced(input: {
+    userId: string
+    stripeAccountId: string
+    livemode: boolean
+    syncedAt: Date
+  }): Promise<Result<void, DatabaseError>> {
+    const saved = await Result.tryPromise({
+      try: async () => {
+        await this.db
+          .insert(stripeDisputeSyncState)
+          .values({
+            userId: input.userId,
+            stripeAccountId: input.stripeAccountId,
+            livemode: input.livemode,
+            lastSyncedAt: input.syncedAt,
+          })
+          .onConflictDoUpdate({
+            target: [stripeDisputeSyncState.stripeAccountId, stripeDisputeSyncState.livemode],
+            set: {
+              userId: input.userId,
+              lastSyncedAt: input.syncedAt,
+            },
+          })
+      },
+      catch: (cause) =>
+        new DatabaseError({ message: 'Failed to mark Stripe dispute sync state', cause }),
+    })
+
+    if (saved.isErr()) return Result.err(saved.error)
+    return Result.ok(undefined)
+  }
+
   async findDueAccounts(input: {
     dueBefore: Date
     limit: number

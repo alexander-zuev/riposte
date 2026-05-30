@@ -58,6 +58,8 @@ export function getServerConfig() {
     webhookSecret: env.STRIPE_WEBHOOK_SECRET,
     appWebhookSecret: env.STRIPE_APP_WEBHOOK_SECRET,
     appSigningSecret: (env as StripeAppEnv).STRIPE_APP_SIGNING_SECRET,
+    appClientId: env.STRIPE_APP_CLIENT_ID,
+    appInstallLinkId: env.STRIPE_APP_INSTALL_LINK_ID,
   }
 
   if (mode === 'development' || mode === 'test') {

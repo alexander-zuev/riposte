@@ -1,0 +1,23 @@
+{
+  "$schema": "https://raw.githubusercontent.com/stripe/stripe-apps/main/schema/stripe-app.schema.json",
+  "extends": "stripe-app.json",
+  "version": "0.0.10-dev",
+  "ui_extension": {
+    "content_security_policy": {
+      "connect-src": [
+        "https://tunnel.riposte.sh/api/stripe/app/settings",
+        "https://tunnel.riposte.sh/api/stripe/app/sync"
+      ]
+    }
+  },
+  "post_install_action": {
+    "type": "external",
+    "url": "https://tunnel.riposte.sh/settings"
+  },
+  "constants": {
+    "API_BASE": "https://tunnel.riposte.sh"
+  },
+  "allowed_redirect_uris": [
+    "https://tunnel.riposte.sh/api/stripe/oauth/callback"
+  ]
+}

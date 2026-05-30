@@ -35,6 +35,26 @@ export class DisputeCaseRepository extends BaseRepository implements IDisputeCas
     return found.map((row) => (row ? DisputeCase.deserialize(row) : null))
   }
 
+  async findByIds(
+    ids: readonly string[],
+  ): Promise<Result<Map<string, DisputeCase>, DatabaseError>> {
+    if (ids.length === 0) return Result.ok(new Map())
+
+    const found = await Result.tryPromise({
+      try: async () => {
+        return await this.db
+          .select()
+          .from(disputeCases)
+          .where(inArray(disputeCases.id, [...ids]))
+      },
+      catch: (cause) => new DatabaseError({ message: 'Failed to find dispute cases', cause }),
+    })
+
+    if (found.isErr()) return Result.err(found.error)
+
+    return Result.ok(new Map(found.value.map((row) => [row.id, DisputeCase.deserialize(row)])))
+  }
+
   async listForUser(
     input: ListDisputeCasesInput,
   ): Promise<Result<DisputeCaseListPage, DatabaseError>> {
@@ -132,6 +152,65 @@ export class DisputeCaseRepository extends BaseRepository implements IDisputeCas
 
     if (saved.isErr()) return Result.err(saved.error)
     return Result.ok(DisputeCase.deserialize(saved.value))
+  }
+
+  async saveBatch(disputeCaseBatch: readonly DisputeCase[]): Promise<Result<void, DatabaseError>> {
+    if (disputeCaseBatch.length === 0) return Result.ok(undefined)
+
+    const rows = disputeCaseBatch.map(
+      (disputeCase) => disputeCase.serialize() satisfies DbNewDisputeCase,
+    )
+
+    const saved = await Result.tryPromise({
+      try: async () => {
+        await this.db
+          .insert(disputeCases)
+          .values(rows)
+          .onConflictDoUpdate({
+            target: disputeCases.id,
+            set: {
+              userId: sql`excluded.user_id`,
+              productId: sql`excluded.product_id`,
+              stripeAccountId: sql`excluded.stripe_account_id`,
+              sourceStripeEventId: sql`excluded.source_stripe_event_id`,
+              sourceStripeEventType: sql`excluded.source_stripe_event_type`,
+              livemode: sql`excluded.livemode`,
+              stripeStatus: sql`excluded.stripe_status`,
+              reason: sql`excluded.reason`,
+              amountMinor: sql`excluded.amount_minor`,
+              currency: sql`excluded.currency`,
+              charge: sql`excluded.charge`,
+              paymentIntent: sql`excluded.payment_intent`,
+              paymentMethodDetailsType: sql`excluded.payment_method_details_type`,
+              paymentMethodDetailsCardBrand: sql`excluded.payment_method_details_card_brand`,
+              paymentMethodDetailsCardCaseType: sql`excluded.payment_method_details_card_case_type`,
+              paymentMethodDetailsCardNetworkReasonCode: sql`excluded.payment_method_details_card_network_reason_code`,
+              customerPurchaseIp: sql`excluded.customer_purchase_ip`,
+              metadata: sql`excluded.metadata`,
+              balanceTransaction: sql`excluded.balance_transaction`,
+              balanceTransactions: sql`excluded.balance_transactions`,
+              evidence: sql`excluded.evidence`,
+              enhancedEligibilityTypes: sql`excluded.enhanced_eligibility_types`,
+              evidenceDetailsEnhancedEligibility: sql`excluded.evidence_details_enhanced_eligibility`,
+              evidenceDetailsDueBy: sql`excluded.evidence_details_due_by`,
+              evidenceDetailsHasEvidence: sql`excluded.evidence_details_has_evidence`,
+              evidenceDetailsPastDue: sql`excluded.evidence_details_past_due`,
+              evidenceDetailsSubmissionCount: sql`excluded.evidence_details_submission_count`,
+              isChargeRefundable: sql`excluded.is_charge_refundable`,
+              workflowState: sql`excluded.workflow_state`,
+              updatedAt: sql`excluded.updated_at`,
+            },
+          })
+
+        for (const disputeCase of disputeCaseBatch) {
+          this.dispatchEvents(disputeCase)
+        }
+      },
+      catch: (cause) => new DatabaseError({ message: 'Failed to save dispute cases', cause }),
+    })
+
+    if (saved.isErr()) return Result.err(saved.error)
+    return Result.ok(undefined)
   }
 }
 

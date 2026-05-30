@@ -27,8 +27,6 @@ import { Result } from 'better-result'
 import StripeClient from 'stripe'
 
 const logger = createLogger('stripe-oauth-handler')
-const STRIPE_APP_CLIENT_ID = 'ca_UTQuSndRIZIb31NTd1oAtPSOYTMl1MFw'
-const STRIPE_APP_INSTALL_LINK_ID = 'chnlink_61UdsCZhNvQAInh1H41RbvfiqIYDIJHE'
 
 type StripeOAuthHandlerError = DatabaseError | StripeOAuthCallbackError
 
@@ -44,7 +42,7 @@ export async function buildStripeOAuthInstallUrl(
   const redirectUri = config.stripeOAuthCallbackUrl
 
   const params = new URLSearchParams({
-    client_id: STRIPE_APP_CLIENT_ID,
+    client_id: config.stripe.appClientId,
     response_type: 'code',
     scope: 'stripe_apps',
     redirect_uri: redirectUri,
@@ -52,7 +50,7 @@ export async function buildStripeOAuthInstallUrl(
   })
 
   const url =
-    `https://marketplace.stripe.com/oauth/v2/${STRIPE_APP_INSTALL_LINK_ID}/authorize` +
+    `https://marketplace.stripe.com/oauth/v2/${config.stripe.appInstallLinkId}/authorize` +
     `?${params.toString()}`
 
   logger.info('stripe_oauth_initiated', {

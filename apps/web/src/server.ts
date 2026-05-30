@@ -7,7 +7,11 @@ import { createAppDeps } from '@web/server/infrastructure/app-deps'
 import { waitUntil } from 'cloudflare:workers'
 export { InstrumentedDisputeAgent as DisputeAgent } from '@web/server/infrastructure/agents/dispute-agent'
 export { InstrumentedDisputeAgentWorkflow as DisputeAgentWorkflow } from '@web/server/infrastructure/workflows/dispute-agent-workflow'
-export { OutboxRelayDO, RateLimiterDO } from '@web/server/infrastructure/durable-objects'
+export {
+  AsyncGateDO,
+  OutboxRelayDO,
+  RateLimiterDO,
+} from '@web/server/infrastructure/durable-objects'
 
 setLoggerErrorHook((entry: ErrorCaptureEntry) => {
   waitUntil(

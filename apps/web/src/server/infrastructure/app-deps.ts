@@ -36,6 +36,10 @@ import type { ICredentialEncryptionService } from '@server/infrastructure/creden
 import { CredentialEncryptionService } from '@server/infrastructure/credentials/credential-encryption'
 import type { DrizzleDb } from '@server/infrastructure/db'
 import { createDatabase } from '@server/infrastructure/db'
+import {
+  AsyncGateClient,
+  type IAsyncGateClient,
+} from '@server/infrastructure/durable-objects/async-gate-client'
 import type { IEmailService } from '@server/infrastructure/email/interfaces'
 import { ResendEmailService } from '@server/infrastructure/email/resend-email-service'
 import { KVClient } from '@server/infrastructure/kv/kv-client'
@@ -124,6 +128,7 @@ export type AppDeps = {
     connectionManager: () => IConnectionManager
     productSetup: () => IProductSetupService
     queueClient: () => IQueueClient
+    asyncGate: () => IAsyncGateClient
     credentialEncryption: () => ICredentialEncryptionService
     disputeAgentClient: () => IDisputeAgentClient
     email: () => IEmailService
@@ -194,6 +199,7 @@ export function createAppDeps(env: Env, ctx: WaitUntilContext): AppDeps {
           ),
       ),
       queueClient: once<IQueueClient>(() => new QueueClient(env)),
+      asyncGate: once<IAsyncGateClient>(() => new AsyncGateClient(env)),
       credentialEncryption: once<ICredentialEncryptionService>(
         () =>
           new CredentialEncryptionService({

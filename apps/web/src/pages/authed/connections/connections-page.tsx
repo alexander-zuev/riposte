@@ -9,6 +9,7 @@ import {
 import { useQuery } from '@tanstack/react-query'
 import { Link, getRouteApi, useRouter } from '@tanstack/react-router'
 import { connectionsQueries } from '@web/entities/connections'
+import { FaviconIcon } from '@web/entities/products/product-icon'
 import { CardErrorMessage, Section } from '@web/features/connections/connection-status-card'
 import { useStripeConnectedToast } from '@web/features/connections/hooks/use-stripe-connected-toast'
 import { RemoveMcpServerDialog } from '@web/features/connections/mcp-servers/remove-mcp-server-dialog'
@@ -21,6 +22,7 @@ import { PageHeader } from '@web/pages/authed/shared/page-header'
 import { Badge } from '@web/ui/components/ui/badge'
 import { Button } from '@web/ui/components/ui/button'
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from '@web/ui/components/ui/card'
+import { GridLoader } from '@web/ui/components/ui/grid-loader'
 import { type ComponentProps, useCallback, useState } from 'react'
 import { SiModelcontextprotocol as McpIcon, SiStripe as StripeIcon } from 'react-icons/si'
 
@@ -88,78 +90,103 @@ export function ConnectionsPage() {
         title="Stripe"
         description="Account access for disputes, charges, invoices, and customers"
       >
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-1">
-              <StripeIcon className="size-4 text-muted-foreground" />
-              Stripe
-            </CardTitle>
-            <CardAction>
-              <Badge
-                variant={
-                  getStripeStatus({
-                    isLoading: connectionsQuery.isLoading,
-                    isError: connectionsQuery.isError,
-                    isConnected: isStripeConnected,
-                    isRevoked: isStripeRevoked,
-                  }).variant
-                }
+        {isStripeConnected || connectionsQuery.isLoading || connectionsQuery.isError ? (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-1">
+                <StripeIcon className="size-4 text-foreground" />
+                Stripe
+              </CardTitle>
+              <CardAction>
+                <Badge
+                  variant={
+                    getStripeStatus({
+                      isLoading: connectionsQuery.isLoading,
+                      isError: connectionsQuery.isError,
+                      isConnected: isStripeConnected,
+                      isRevoked: isStripeRevoked,
+                    }).variant
+                  }
+                >
+                  {
+                    getStripeStatus({
+                      isLoading: connectionsQuery.isLoading,
+                      isError: connectionsQuery.isError,
+                      isConnected: isStripeConnected,
+                      isRevoked: isStripeRevoked,
+                    }).label
+                  }
+                </Badge>
+              </CardAction>
+            </CardHeader>
+            <CardContent className="flex items-center justify-between gap-4">
+              {isStripeConnected ? (
+                <small className="text-muted-foreground">
+                  {[
+                    stripeConnection.connection.stripeBusinessName,
+                    stripeConnection.connection.stripeAccountId,
+                    stripeConnection.connection.livemode ? 'Live mode' : 'Test mode',
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')}
+                </small>
+              ) : (
+                <span />
+              )}
+              <Button
+                type="button"
+                size="sm"
+                variant={isStripeConnected ? 'secondary' : 'default'}
+                disabled={stripeOAuthMutation.isPending || connectionsQuery.isLoading}
+                onClick={handleStripeAction}
               >
-                {
-                  getStripeStatus({
-                    isLoading: connectionsQuery.isLoading,
-                    isError: connectionsQuery.isError,
-                    isConnected: isStripeConnected,
-                    isRevoked: isStripeRevoked,
-                  }).label
-                }
-              </Badge>
-            </CardAction>
-          </CardHeader>
-          <CardContent className="flex items-center justify-between gap-4">
-            {isStripeConnected ? (
-              <small className="text-muted-foreground">
-                {[
-                  stripeConnection.connection.stripeBusinessName,
-                  stripeConnection.connection.stripeAccountId,
-                  stripeConnection.connection.livemode ? 'Live mode' : 'Test mode',
-                ]
-                  .filter(Boolean)
-                  .join(' · ')}
-              </small>
-            ) : (
-              <span />
-            )}
-            <Button
-              type="button"
-              size="sm"
-              variant={isStripeConnected ? 'secondary' : 'default'}
-              disabled={stripeOAuthMutation.isPending || connectionsQuery.isLoading}
-              onClick={handleStripeAction}
-            >
-              {stripeOAuthMutation.isPending ? (
-                <SpinnerIcon data-icon="inline-start" className="animate-spin" />
-              ) : isStripeConnected ? (
-                <ArrowClockwiseIcon data-icon="inline-start" />
+                {stripeOAuthMutation.isPending ? (
+                  <SpinnerIcon data-icon="inline-start" className="animate-spin" />
+                ) : isStripeConnected ? (
+                  <ArrowClockwiseIcon data-icon="inline-start" />
+                ) : null}
+                {getStripeActionLabel({
+                  isLoading: connectionsQuery.isLoading,
+                  isError: connectionsQuery.isError,
+                  isConnected: isStripeConnected,
+                  isRevoked: isStripeRevoked,
+                })}
+              </Button>
+            </CardContent>
+            {connectionsQuery.isError ? (
+              <CardContent>
+                <CardErrorMessage message="Could not load Stripe connection status" />
+              </CardContent>
+            ) : null}
+          </Card>
+        ) : (
+          <Card>
+            <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
+              <StripeIcon className="size-6 text-foreground" />
+              <p>No Stripe account connected</p>
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                disabled={stripeOAuthMutation.isPending}
+                onClick={handleStripeAction}
+              >
+                {stripeOAuthMutation.isPending ? (
+                  <SpinnerIcon data-icon="inline-start" className="animate-spin" />
+                ) : null}
+                {getStripeActionLabel({
+                  isLoading: connectionsQuery.isLoading,
+                  isError: connectionsQuery.isError,
+                  isConnected: isStripeConnected,
+                  isRevoked: isStripeRevoked,
+                })}
+              </Button>
+              {stripeOAuthMutation.isError ? (
+                <CardErrorMessage message="Could not start Stripe connection. Try again" />
               ) : null}
-              {getStripeActionLabel({
-                isLoading: connectionsQuery.isLoading,
-                isError: connectionsQuery.isError,
-                isConnected: isStripeConnected,
-                isRevoked: isStripeRevoked,
-              })}
-            </Button>
-          </CardContent>
-          {connectionsQuery.isError ? (
-            <CardContent>
-              <CardErrorMessage message="Could not load Stripe connection status" />
             </CardContent>
-          ) : stripeOAuthMutation.isError ? (
-            <CardContent>
-              <CardErrorMessage message="Could not start Stripe connection. Try again" />
-            </CardContent>
-          ) : null}
-        </Card>
+          </Card>
+        )}
       </Section>
 
       <Section
@@ -183,7 +210,7 @@ function McpServersBody({
     return (
       <Card>
         <CardContent className="flex flex-col items-center gap-2 py-10 text-center text-muted-foreground">
-          <SpinnerIcon className="size-5 animate-spin" />
+          <GridLoader />
           <small>Loading data sources</small>
         </CardContent>
       </Card>
@@ -239,7 +266,11 @@ function McpSourceCard({
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-1">
-          <McpIcon className="size-4 text-muted-foreground" />
+          <FaviconIcon
+            url={source.serverUrl}
+            fallback={McpIcon}
+            className="size-4 text-muted-foreground"
+          />
           {source.serverName}
         </CardTitle>
         <CardAction>

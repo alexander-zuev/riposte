@@ -1,8 +1,8 @@
-import { SpinnerIcon } from '@phosphor-icons/react'
 import { Section } from '@web/features/connections/connection-status-card'
 import { McpServerCard } from '@web/features/connections/mcp-servers/mcp-server-card'
 import type { McpServerEntry } from '@web/features/connections/mcp-servers/mcp-server.types'
 import { Card, CardContent } from '@web/ui/components/ui/card'
+import { GridLoader } from '@web/ui/components/ui/grid-loader'
 import type { ComponentType } from 'react'
 import { SiModelcontextprotocol as McpIcon } from 'react-icons/si'
 
@@ -45,11 +45,7 @@ function McpServersBody({
   removingServerId,
 }: Required<McpServersSectionProps>) {
   if (connectionState === 'connecting') {
-    return (
-      <StatusNote icon={SpinnerIcon} spin>
-        Connecting to the agent
-      </StatusNote>
-    )
+    return <StatusNote icon={GridLoader}>Connecting to the agent</StatusNote>
   }
 
   if (servers.length === 0) {
@@ -77,17 +73,15 @@ function McpServersBody({
 
 function StatusNote({
   icon: Icon,
-  spin = false,
   children,
 }: {
   icon: ComponentType<{ className?: string }>
-  spin?: boolean
   children: string
 }) {
   return (
     <Card>
       <CardContent className="flex flex-col items-center gap-2 py-10 text-center text-muted-foreground">
-        <Icon className={spin ? 'size-5 animate-spin' : 'size-5'} />
+        <Icon className="size-5" />
         <small>{children}</small>
       </CardContent>
     </Card>

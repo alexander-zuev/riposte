@@ -6,6 +6,7 @@ export async function listDisputeCases(): Promise<RpcResult<ListDisputeCasesResu
     value: {
       items: [],
       nextCursor: null,
+      sync: { lastSyncedAt: null },
     },
   }
 }

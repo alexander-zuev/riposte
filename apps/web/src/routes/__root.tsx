@@ -16,6 +16,7 @@ import {
   Outlet,
   Scripts,
 } from '@tanstack/react-router'
+import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 import { useIdentifyUser } from '@web/lib/analytics'
 import { ThemeProvider } from '@web/lib/hooks/use-theme'
 import { AnalyticsProvider } from '@web/lib/providers/posthog-provider'
@@ -99,6 +100,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             <TooltipProvider>
               {children}
               <ReactQueryDevtools initialIsOpen={false} />
+              <TanStackRouterDevtools initialIsOpen={false} />
             </TooltipProvider>
           </ThemeProvider>
         </AnalyticsProvider>

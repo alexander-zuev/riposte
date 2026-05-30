@@ -83,7 +83,6 @@
     "drizzle-orm": "catalog:",
     "input-otp": "catalog:",
     "jsonrepair": "^3.14.0",
-    "lucide-react": "catalog:",
     "motion": "^12.40.0",
     "nanoid": "^5.1.11",
     "postgres": "catalog:",
@@ -91,10 +90,8 @@
     "posthog-node": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "react-error-boundary": "catalog:",
     "react-icons": "catalog:",
     "resend": "catalog:",
-    "shadcn": "catalog:",
     "shiki": "catalog:",
     "sonner": "catalog:",
     "streamdown": "catalog:",
@@ -104,8 +101,7 @@
     "tw-animate-css": "catalog:",
     "use-stick-to-bottom": "^1.1.4",
     "workers-ai-provider": "^3.1.14",
-    "zod": "catalog:",
-    "zustand": "catalog:"
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "catalog:",
@@ -125,7 +121,6 @@
     "@vitejs/plugin-react": "catalog:",
     "babel-plugin-react-compiler": "catalog:",
     "better-sqlite3": "catalog:",
-    "dotenv": "catalog:",
     "drizzle-kit": "catalog:",
     "html-to-image": "^1.11.13",
     "jsdom": "catalog:",

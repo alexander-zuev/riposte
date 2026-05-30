@@ -4,6 +4,8 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { ProductIcon } from '@web/entities/products/product-icon'
 import { productQueries } from '@web/entities/products/product-queries'
+import { formatInTimeZone } from '@web/lib/datetime'
+import { useTimezone } from '@web/lib/hooks/use-timezone'
 import { PageHeader } from '@web/pages/authed/shared/page-header'
 import { Badge } from '@web/ui/components/ui/badge'
 import { Button, buttonVariants } from '@web/ui/components/ui/button'
@@ -78,13 +80,9 @@ function ProductsEmpty() {
   )
 }
 
-const dateAddedFormatter = new Intl.DateTimeFormat('en-US', {
-  month: 'short',
-  day: 'numeric',
-  year: 'numeric',
-})
-
 function ProductCard({ product }: { product: ProductListItem }) {
+  const timeZone = useTimezone()
+
   return (
     <div className="relative rounded-lg border border-border bg-background p-5 transition-colors hover:border-border-interactive">
       <div className="mb-3 flex items-start justify-between">
@@ -108,7 +106,12 @@ function ProductCard({ product }: { product: ProductListItem }) {
       </a>
       <div className="mt-3 flex items-center justify-between">
         <p className="text-xs text-muted-foreground">
-          Added {dateAddedFormatter.format(new Date(product.createdAt))}
+          Added{' '}
+          {formatInTimeZone(product.createdAt, timeZone, {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+          })}
         </p>
         <ProductCardMenu productId={product.id} />
       </div>

@@ -1,5 +1,7 @@
 import { UserCircleIcon } from '@phosphor-icons/react'
 import type { AuthUser } from '@web/entities/auth/auth-user'
+import { formatInTimeZone } from '@web/lib/datetime'
+import { useTimezone } from '@web/lib/hooks/use-timezone'
 import { PageHeader } from '@web/pages/authed/shared/page-header'
 import { UserAvatar } from '@web/pages/authed/shared/user-dropdown'
 import { Card, CardContent } from '@web/ui/components/ui/card'
@@ -9,6 +11,8 @@ interface AccountPageProps {
 }
 
 export function AccountPage({ user }: AccountPageProps) {
+  const timeZone = useTimezone()
+
   return (
     <div className="grid gap-6 text-foreground">
       <PageHeader
@@ -25,7 +29,10 @@ export function AccountPage({ user }: AccountPageProps) {
             <dl className="grid min-w-0 flex-1 gap-4 sm:grid-cols-3">
               <AccountField label="Name" value={user.displayName ?? 'Not set'} />
               <AccountField label="Email" value={user.email} />
-              <AccountField label="Date registered" value={formatRegisteredDate(user.createdAt)} />
+              <AccountField
+                label="Date registered"
+                value={formatRegisteredDate(user.createdAt, timeZone)}
+              />
             </dl>
           </div>
         </CardContent>
@@ -45,14 +52,12 @@ function AccountField({ label, value }: { label: string; value: string }) {
   )
 }
 
-function formatRegisteredDate(value: Date | string | number) {
+function formatRegisteredDate(value: Date | string | number, timeZone: string) {
   const date = value instanceof Date ? value : new Date(value)
 
   if (Number.isNaN(date.getTime())) {
     return 'Unknown'
   }
 
-  return new Intl.DateTimeFormat('en-US', {
-    dateStyle: 'medium',
-  }).format(date)
+  return formatInTimeZone(date.toISOString(), timeZone, { dateStyle: 'medium' }) ?? 'Unknown'
 }

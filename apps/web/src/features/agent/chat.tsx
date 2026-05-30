@@ -9,6 +9,8 @@ import {
 import { McpSourcesPopover } from '@web/features/agent/mcp-sources-popover'
 import { MessageParts } from '@web/features/agent/message-part'
 import { RegenerateMessageAction } from '@web/features/agent/regenerate-message-action'
+import { formatInTimeZone } from '@web/lib/datetime'
+import { useTimezone } from '@web/lib/hooks/use-timezone'
 import {
   Conversation,
   ConversationContent,
@@ -126,13 +128,14 @@ export function Chat({ agent, initialMessages, productId, mcp }: ChatProps) {
   }, [assistant, editingMessageId, editingText, isEditDisabled])
   const showActions = !assistant.isStreaming
   const showErrorBanner = assistant.error !== undefined && !errorDismissed
+  const timeZone = useTimezone()
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <Conversation className="min-h-0 flex-1">
         <ConversationContent>
           {assistant.messages.map((message, index) => {
-            const timestamp = formatMessageTime(message.metadata?.createdAt)
+            const timestamp = formatMessageTime(message.metadata?.createdAt, timeZone)
             const isEditing = editingMessageId === message.id && message.role === 'user'
             // The message being generated is always the last one; hide its footer
             // (actions + timestamp) until the stream finishes.
@@ -307,17 +310,14 @@ function getMessageText(message: DisputeAgentMessage): string {
     .join('\n\n')
 }
 
-function formatMessageTime(value: string | undefined): string | null {
-  if (!value) return null
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return null
-  return new Intl.DateTimeFormat(undefined, {
+function formatMessageTime(value: string | undefined, timeZone: string): string | null {
+  return formatInTimeZone(value, timeZone, {
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
     hourCycle: 'h23',
-  }).format(date)
+  })
 }
 
 function MessageFooter({

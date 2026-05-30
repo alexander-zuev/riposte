@@ -14,6 +14,8 @@ import type {
 import { Link } from '@tanstack/react-router'
 import { CompletenessBadge, IncompleteList } from '@web/features/products/completeness'
 import { ProductEvidenceSection } from '@web/features/products/product-evidence-section'
+import { formatInTimeZone } from '@web/lib/datetime'
+import { useTimezone } from '@web/lib/hooks/use-timezone'
 import { PageHeader } from '@web/pages/authed/shared/page-header'
 import { StatusNote } from '@web/ui/components/layout/status-note'
 import { Button } from '@web/ui/components/ui/button'
@@ -96,6 +98,8 @@ function PlaybookSection({
   productId: string
   productName: string
 }) {
+  const timeZone = useTimezone()
+
   return (
     <section className="grid gap-4">
       <div className="flex items-start justify-between gap-3">
@@ -143,7 +147,12 @@ function PlaybookSection({
               <FileTextIcon className="size-4 shrink-0 text-muted-foreground" />
               <small className="font-medium">PLAYBOOK.md</small>
               <small className="truncate text-muted-foreground">
-                v{playbook.revision} · Created {formatDate(playbook.createdAt)}
+                v{playbook.revision} · Created{' '}
+                {formatInTimeZone(playbook.createdAt, timeZone, {
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric',
+                })}
               </small>
             </div>
             <Button
@@ -180,16 +189,6 @@ function formatIssue(issue: PlaybookValidationIssue['issue']): string {
       return exhaustive
     }
   }
-}
-
-/** Format in UTC so the SSR (UTC) and client renders agree; avoids a date hydration mismatch. */
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    timeZone: 'UTC',
-  })
 }
 
 function downloadPlaybook(productName: string, playbook: ReadDisputePlaybookResult) {

@@ -4,7 +4,9 @@ import { Link } from '@tanstack/react-router'
 import { useDisputeCaseActivity } from '@web/entities/disputes/use-dispute-case-activity'
 import type { AgentMode } from '@web/features/agent/agent-mode'
 import { MessageParts } from '@web/features/agent/message-part'
+import { formatInTimeZone } from '@web/lib/datetime'
 import { formatRelativeTime } from '@web/lib/format-time'
+import { useTimezone } from '@web/lib/hooks/use-timezone'
 import {
   Conversation,
   ConversationContent,
@@ -94,6 +96,8 @@ function DisputeCaseSeparator({
   startedAt?: string
   stepCount: number
 }) {
+  const timeZone = useTimezone()
+
   return (
     <div className="flex items-center gap-3 text-xs text-muted-foreground">
       <div className="h-px flex-1 bg-border" />
@@ -113,7 +117,7 @@ function DisputeCaseSeparator({
         {startedAt ? (
           <>
             <span aria-hidden>·</span>
-            <time dateTime={startedAt} title={formatActivityTimestamp(startedAt)}>
+            <time dateTime={startedAt} title={formatActivityTimestamp(startedAt, timeZone)}>
               {formatRelativeTime(startedAt)}
             </time>
           </>
@@ -181,14 +185,15 @@ function emptyStateFor(mode: AgentMode): { title: string; message: string } {
   }
 }
 
-function formatActivityTimestamp(value: string): string {
-  if (!value) return 'unknown'
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  }).format(new Date(value))
+function formatActivityTimestamp(value: string, timeZone: string): string {
+  return (
+    formatInTimeZone(value, timeZone, {
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    }) ?? 'unknown'
+  )
 }
 
 /** `du_1TbnvADTNmjFIavLnaETo1mO` → `du_1TbnvA…To1mO`. Full id is on hover/title. */

@@ -15,7 +15,10 @@ import {
   type DisputeCaseSort,
   type DisputeCaseSortField,
 } from '@riposte/core/client'
-import { Link } from '@tanstack/react-router'
+import { useNavigate } from '@tanstack/react-router'
+import { formatInTimeZone } from '@web/lib/datetime'
+import { useTimezone } from '@web/lib/hooks/use-timezone'
+import { cn } from '@web/lib/utils'
 import { useDisputeListData } from '@web/pages/authed/disputes/hooks/use-dispute-list-data'
 import {
   useDisputeListFilters,
@@ -24,7 +27,7 @@ import {
 import { useSyncDisputesMutation } from '@web/pages/authed/disputes/hooks/use-sync-disputes-mutation'
 import { PageHeader } from '@web/pages/authed/shared/page-header'
 import { Badge } from '@web/ui/components/ui/badge'
-import { Button } from '@web/ui/components/ui/button'
+import { Button, buttonVariants } from '@web/ui/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -34,6 +37,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@web/ui/components/ui/dropdown-menu'
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@web/ui/components/ui/hover-card'
 import { Skeleton } from '@web/ui/components/ui/skeleton'
 import {
   Table,
@@ -43,12 +47,19 @@ import {
   TableHeader,
   TableRow,
 } from '@web/ui/components/ui/table'
-import { useCallback, useMemo, type ComponentProps, type ReactNode } from 'react'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@web/ui/components/ui/tooltip'
+import {
+  useCallback,
+  type ComponentProps,
+  type KeyboardEvent,
+  type MouseEvent,
+  type ReactNode,
+} from 'react'
 
 type BadgeVariant = ComponentProps<typeof Badge>['variant']
 
 const sortableColumns = {
-  evidenceDueBy: 'Evidence due',
+  evidenceDueBy: 'Deadline',
   stripeCreatedAt: 'Created',
   amount: 'Amount',
 } as const satisfies Record<DisputeCaseSortField, string>
@@ -62,23 +73,56 @@ const workflowStatusBadgeVariants = {
   failed: 'destructive',
 } as const satisfies Record<WorkflowStatus, BadgeVariant>
 
+const workflowStatusDescriptions = {
+  received: 'Riposte has synced the dispute and is ready to triage it',
+  evaluated: 'Riposte has decided how this dispute should be handled',
+  collecting_evidence: 'Riposte is collecting product evidence for this dispute',
+  awaiting_human: 'Riposte needs review or approval before continuing',
+  completed: 'Riposte has finished handling this dispute',
+  failed: 'Riposte hit an error while handling this dispute',
+} as const satisfies Record<WorkflowStatus, string>
+
+const stripeStatusBadgeVariants = {
+  lost: 'destructive',
+  needs_response: 'warning',
+  prevented: 'success',
+  under_review: 'info',
+  warning_closed: 'secondary',
+  warning_needs_response: 'warning',
+  warning_under_review: 'info',
+  won: 'success',
+} as const satisfies Record<DisputeCaseListItem['stripeStatus'], BadgeVariant>
+
+const stripeStatusDescriptions = {
+  lost: 'Stripe reports the dispute was lost',
+  needs_response: 'Stripe is waiting for evidence',
+  prevented: 'Stripe reports the dispute was prevented',
+  under_review: 'Evidence was submitted and Stripe is waiting on the issuer',
+  warning_closed: 'Stripe closed this inquiry warning',
+  warning_needs_response: 'Stripe is waiting for evidence on an inquiry warning',
+  warning_under_review: 'Evidence was submitted for an inquiry warning',
+  won: 'Stripe reports the dispute was won',
+} as const satisfies Record<DisputeCaseListItem['stripeStatus'], string>
+
 const moneyFormatter = new Intl.NumberFormat('en-US', {
   style: 'currency',
   currency: 'USD',
 })
 
-const dateFormatter = new Intl.DateTimeFormat('en-US', {
+const exactDeadlineFormatOptions = {
   month: 'short',
   day: 'numeric',
-  timeZone: 'UTC',
+  hour: 'numeric',
+  minute: '2-digit',
   year: 'numeric',
-})
+} as const satisfies Intl.DateTimeFormatOptions
 const syncTimestampFormatter = new Intl.DateTimeFormat('en-US', {
   month: 'short',
   day: 'numeric',
   hour: 'numeric',
   minute: '2-digit',
   timeZone: 'UTC',
+  timeZoneName: 'short',
   year: 'numeric',
 })
 
@@ -121,7 +165,7 @@ export function DisputesPage({ productId }: { productId: string }) {
                 data-icon="inline-start"
                 className={syncMutation.isPending ? 'animate-spin' : undefined}
               />
-              {syncMutation.isPending ? 'Syncing' : 'Sync now'}
+              Sync now
             </Button>
           </div>
         </div>
@@ -130,31 +174,27 @@ export function DisputesPage({ productId }: { productId: string }) {
           <Table className="table-fixed">
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[24%] min-w-44">Dispute</TableHead>
+                <TableHead className="w-[23%] min-w-44">Dispute</TableHead>
                 <TableHead className="w-[18%] min-w-32">Customer</TableHead>
-                <TableHead className="w-[18%] min-w-36">Status</TableHead>
+                <TableHead className="w-[14%] min-w-32">Workflow</TableHead>
+                <TableHead className="w-[14%] min-w-32">Stripe</TableHead>
                 <SortableTableHead
                   field="amount"
                   sort={filters.sort}
-                  className="w-[12%] min-w-24"
+                  className="w-[11%] min-w-24"
                   disabled={isLoading}
                   onSortChange={filters.setSort}
                 />
                 <SortableTableHead
                   field="evidenceDueBy"
                   sort={filters.sort}
-                  className="w-[13%] min-w-32"
+                  className="w-[16%] min-w-36"
                   disabled={isLoading}
                   onSortChange={filters.setSort}
                 />
-                <SortableTableHead
-                  field="stripeCreatedAt"
-                  sort={filters.sort}
-                  className="w-[12%] min-w-28"
-                  disabled={isLoading}
-                  onSortChange={filters.setSort}
-                />
-                <TableHead className="w-[3%] min-w-12 text-center">Link</TableHead>
+                <TableHead className="w-[4%] min-w-12 text-center">
+                  <span className="sr-only">Stripe link</span>
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -332,11 +372,41 @@ function SortableTableHead({
 }
 
 function DisputeRow({ dispute, productId }: { dispute: DisputeCaseListItem; productId: string }) {
+  const navigate = useNavigate()
+  const handleOpenDetail = useCallback(() => {
+    void navigate({
+      to: '/products/$productId/disputes/$disputeId',
+      params: { productId, disputeId: dispute.disputeId },
+    })
+  }, [navigate, productId, dispute.disputeId])
+  const handleRowKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLTableRowElement>) => {
+      if (event.key !== 'Enter') return
+      handleOpenDetail()
+    },
+    [handleOpenDetail],
+  )
+  const handleStripeLinkClick = useCallback((event: MouseEvent<HTMLAnchorElement>) => {
+    event.stopPropagation()
+  }, [])
+  const handleStripeLinkKeyDown = useCallback((event: KeyboardEvent<HTMLAnchorElement>) => {
+    event.stopPropagation()
+  }, [])
+
   return (
-    <TableRow>
-      <TableCell className="w-[24%] min-w-44">
+    <TableRow
+      role="link"
+      tabIndex={0}
+      aria-label={`Open dispute ${dispute.disputeId}`}
+      className="group cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring"
+      onClick={handleOpenDetail}
+      onKeyDown={handleRowKeyDown}
+    >
+      <TableCell className="w-[23%] min-w-44">
         <div className="grid min-w-0 gap-1">
-          <DisputeDetailLink productId={productId} disputeId={dispute.disputeId} />
+          <span className="block truncate text-system font-medium underline-offset-4 group-hover:underline">
+            {dispute.disputeId}
+          </span>
           <span className="truncate text-muted-foreground">
             {formatStatusLabel(dispute.reason)}
           </span>
@@ -350,27 +420,35 @@ function DisputeRow({ dispute, productId }: { dispute: DisputeCaseListItem; prod
           )}
         </div>
       </TableCell>
-      <TableCell className="w-[18%] min-w-36">
-        <Badge variant={workflowStatusBadgeVariants[dispute.workflowStatus]}>
-          {formatStatusLabel(dispute.workflowStatus)}
-        </Badge>
+      <TableCell className="w-[14%] min-w-32">
+        <StatusTooltip content={workflowStatusDescriptions[dispute.workflowStatus]}>
+          <Badge variant={workflowStatusBadgeVariants[dispute.workflowStatus]}>
+            {formatStatusLabel(dispute.workflowStatus)}
+          </Badge>
+        </StatusTooltip>
       </TableCell>
-      <TableCell className="w-[12%] min-w-24 text-system font-medium tabular-nums">
+      <TableCell className="w-[14%] min-w-32">
+        <StatusTooltip content={stripeStatusDescriptions[dispute.stripeStatus]}>
+          <Badge variant={stripeStatusBadgeVariants[dispute.stripeStatus]}>
+            {formatStatusLabel(dispute.stripeStatus)}
+          </Badge>
+        </StatusTooltip>
+      </TableCell>
+      <TableCell className="w-[11%] min-w-24 text-system font-medium tabular-nums">
         {formatMoney(dispute.amount)}
       </TableCell>
-      <TableCell className="w-[13%] min-w-32 text-system">
-        {formatDate(dispute.evidenceDueBy)}
+      <TableCell className="w-[16%] min-w-36 text-system">
+        <DeadlineCell value={dispute.evidenceDueBy} />
       </TableCell>
-      <TableCell className="w-[12%] min-w-28 text-system">
-        {formatDate(dispute.stripeCreatedAt)}
-      </TableCell>
-      <TableCell className="w-[3%] min-w-12 text-center">
+      <TableCell className="w-[4%] min-w-12 text-center">
         <a
           href={getStripeDashboardUrl(dispute.disputeId)}
           target="_blank"
           rel="noreferrer"
           aria-label="Open dispute in Stripe"
-          className="inline-flex size-7 items-center justify-center text-foreground"
+          className={cn(buttonVariants({ variant: 'ghost', size: 'icon-sm' }), 'text-foreground')}
+          onClick={handleStripeLinkClick}
+          onKeyDown={handleStripeLinkKeyDown}
         >
           <ArrowSquareOutIcon />
         </a>
@@ -379,17 +457,40 @@ function DisputeRow({ dispute, productId }: { dispute: DisputeCaseListItem; prod
   )
 }
 
-function DisputeDetailLink({ productId, disputeId }: { productId: string; disputeId: string }) {
-  const params = useMemo(() => ({ productId, disputeId }), [productId, disputeId])
+function StatusTooltip({ content, children }: { content: string; children: ReactNode }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger render={<span className="inline-flex" />}>{children}</TooltipTrigger>
+      <TooltipContent>{content}</TooltipContent>
+    </Tooltip>
+  )
+}
+
+function DeadlineCell({ value }: { value: string | null }) {
+  const timeZone = useTimezone()
+  const deadline = getDeadlineDisplay(value, timeZone)
 
   return (
-    <Link
-      to="/products/$productId/disputes/$disputeId"
-      params={params}
-      className="block truncate text-system font-medium underline-offset-4 hover:underline"
-    >
-      {disputeId}
-    </Link>
+    <HoverCard>
+      <HoverCardTrigger render={<span className="inline-flex" />}>
+        <span className={cn('font-medium tabular-nums', deadline.tone)}>{deadline.label}</span>
+      </HoverCardTrigger>
+      <HoverCardContent align="start" className="grid gap-2">
+        <span className="text-muted-foreground">{deadline.description}</span>
+        {deadline.exact ? (
+          <div className="grid gap-1">
+            <div className="flex items-baseline justify-between gap-4">
+              <span className="text-muted-foreground">Your time</span>
+              <span className="font-medium text-foreground">{deadline.exact}</span>
+            </div>
+            <div className="flex items-baseline justify-between gap-4">
+              <span className="text-muted-foreground">UTC</span>
+              <span className="font-medium text-foreground">{deadline.exactUtc}</span>
+            </div>
+          </div>
+        ) : null}
+      </HoverCardContent>
+    </HoverCard>
   )
 }
 
@@ -508,10 +609,88 @@ function formatMoney(money: DisputeCaseListItem['amount']) {
   }).format(money.amountMinor / 100)
 }
 
-function formatDate(value: string | null) {
-  if (!value) return 'No deadline'
+function getDeadlineDisplay(
+  value: string | null,
+  timeZone: string,
+): {
+  label: string
+  description: string
+  exact: string | null
+  exactUtc: string | null
+  tone: string
+} {
+  if (!value) {
+    return {
+      label: 'No deadline',
+      description: 'Stripe did not provide an evidence deadline for this dispute',
+      exact: null,
+      exactUtc: null,
+      tone: 'text-muted-foreground',
+    }
+  }
 
-  return dateFormatter.format(new Date(value))
+  const deadline = new Date(value)
+  const exact = formatInTimeZone(value, timeZone, exactDeadlineFormatOptions) ?? value
+  const exactUtc = formatInTimeZone(value, 'UTC', exactDeadlineFormatOptions) ?? value
+  const daysUntilDeadline = getTimeZoneCalendarDayDifference(new Date(), deadline, timeZone)
+
+  if (daysUntilDeadline < 0) {
+    return {
+      label: 'Past due',
+      description: 'Stripe no longer accepts evidence for this deadline',
+      exact,
+      exactUtc,
+      tone: 'text-destructive',
+    }
+  }
+
+  if (daysUntilDeadline === 0) {
+    return {
+      label: 'Due today',
+      description: 'Submit evidence before the Stripe deadline expires',
+      exact,
+      exactUtc,
+      tone: 'text-warning',
+    }
+  }
+
+  if (daysUntilDeadline === 1) {
+    return {
+      label: 'Due tomorrow',
+      description: 'Submit evidence before the Stripe deadline expires',
+      exact,
+      exactUtc,
+      tone: 'text-warning',
+    }
+  }
+
+  return {
+    label: `Due in ${daysUntilDeadline} days`,
+    description: 'Deadline for submitting evidence to Stripe',
+    exact,
+    exactUtc,
+    tone: daysUntilDeadline <= 3 ? 'text-warning' : 'text-muted-foreground',
+  }
+}
+
+function getTimeZoneCalendarDayDifference(from: Date, to: Date, timeZone: string) {
+  const fromDay = getTimeZoneCalendarDay(from, timeZone)
+  const toDay = getTimeZoneCalendarDay(to, timeZone)
+
+  return Math.ceil((toDay - fromDay) / 86_400_000)
+}
+
+function getTimeZoneCalendarDay(date: Date, timeZone: string) {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    day: '2-digit',
+    month: '2-digit',
+    timeZone,
+    year: 'numeric',
+  }).formatToParts(date)
+  const value = (type: Intl.DateTimeFormatPartTypes) =>
+    Number(parts.find((part) => part.type === type)?.value)
+
+  return Date.UTC(value('year'), value('month') - 1, value('day'))
 }
 
 function formatLastSyncedAt(value: Date | null) {

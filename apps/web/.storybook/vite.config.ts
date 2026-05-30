@@ -8,6 +8,7 @@ import { defineConfig, type Plugin } from 'vite'
 const storybookRoot = path.resolve(__dirname)
 const disputeCaseFnMock = path.resolve(storybookRoot, 'mocks/dispute-case.fn.ts')
 const disputeCaseMessageFnMock = path.resolve(storybookRoot, 'mocks/dispute-case-message.fn.ts')
+const timezoneFnMock = path.resolve(storybookRoot, 'mocks/timezone.fn.ts')
 
 function mockPlatformModules(): Plugin {
   const mocks: Record<string, string> = {
@@ -60,6 +61,7 @@ export default defineConfig({
       '@storybook-local': storybookRoot,
       '@web/server/entrypoints/functions/dispute-case.fn': disputeCaseFnMock,
       '@web/server/entrypoints/functions/dispute-case-message.fn': disputeCaseMessageFnMock,
+      '@web/server/entrypoints/functions/timezone.fn': timezoneFnMock,
     },
   },
   optimizeDeps: {

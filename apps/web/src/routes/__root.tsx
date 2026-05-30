@@ -19,9 +19,11 @@ import {
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 import { useIdentifyUser } from '@web/lib/analytics'
 import { ThemeProvider } from '@web/lib/hooks/use-theme'
+import { TimezoneProvider } from '@web/lib/hooks/use-timezone'
 import { AnalyticsProvider } from '@web/lib/providers/posthog-provider'
 import { defaultHead } from '@web/lib/seo/seo'
 import { getThemeServerFn } from '@web/server/entrypoints/functions/theme.fn'
+import { getTimezoneServerFn } from '@web/server/entrypoints/functions/timezone.fn'
 import { FullPageStatus } from '@web/ui/components/layout/full-page-status'
 import { Button } from '@web/ui/components/ui/button'
 import { Toaster } from '@web/ui/components/ui/sonner'
@@ -34,8 +36,11 @@ export const Route = createRootRouteWithContext<{
   queryClient: QueryClient
 }>()({
   head: defaultHead,
-  loader: async () => getThemeServerFn(),
-  staleTime: Infinity, // Cache theme forever - only refetch when explicitly invalidated
+  loader: async () => {
+    const [theme, timeZone] = await Promise.all([getThemeServerFn(), getTimezoneServerFn()])
+    return { theme, timeZone }
+  },
+  staleTime: Infinity, // Cache layout prefs forever - only refetch when explicitly invalidated
   errorComponent: ({ error, reset }) => {
     useEffect(() => {
       Sentry.captureException(error)
@@ -74,8 +79,9 @@ export const Route = createRootRouteWithContext<{
 })
 
 function RootComponent() {
+  const { timeZone } = Route.useLoaderData()
   return (
-    <RootDocument>
+    <RootDocument timeZone={timeZone}>
       <Outlet />
     </RootDocument>
   )
@@ -86,7 +92,7 @@ function AnalyticsIdentifier() {
   return null
 }
 
-function RootDocument({ children }: { children: React.ReactNode }) {
+function RootDocument({ children, timeZone }: { children: React.ReactNode; timeZone: string }) {
   return (
     <html lang="en" className="light" suppressHydrationWarning>
       <head>
@@ -96,12 +102,14 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <AnalyticsProvider>
           <AnalyticsIdentifier />
           <ThemeProvider>
-            <Toaster />
-            <TooltipProvider>
-              {children}
-              <ReactQueryDevtools initialIsOpen={false} />
-              <TanStackRouterDevtools initialIsOpen={false} />
-            </TooltipProvider>
+            <TimezoneProvider timeZone={timeZone}>
+              <Toaster />
+              <TooltipProvider>
+                {children}
+                <ReactQueryDevtools initialIsOpen={false} />
+                <TanStackRouterDevtools initialIsOpen={false} />
+              </TooltipProvider>
+            </TimezoneProvider>
           </ThemeProvider>
         </AnalyticsProvider>
         <Scripts />

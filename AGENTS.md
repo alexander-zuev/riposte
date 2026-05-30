@@ -251,6 +251,16 @@ Do not `logger.error(..., { error })` immediately before rethrowing inside Sentr
 
 ## Testing
 
+When you change behavior, add or refactor the minimal set of tests that actually exercises it. Do
+not chase coverage numbers; cover the genuinely critical paths and the edge cases that would silently
+break the feature. Actively try to break what you built: push inputs to their limits — boundaries,
+extremes, empty/huge/malformed values, and the gnarly edges (timezones/DST, sub-hour offsets, date
+and year rollovers, clock skew, concurrency) — and add light stress where it is cheap, without
+overdoing it. The point is to find the failure before prod does. Prefer testing the real
+implementation over mocks: tests are a backup that solidifies and verifies what we built, not a
+ritual that asserts a wall of mocks was called. If a unit test would have to mock so much that it no
+longer tests the real code, write a small integration test against the real boundary instead.
+
 Test independence is enforced by mechanics, not intent:
 
 - Generate unique IDs/prefixes per test and assert only on rows/resources owned by that test.

@@ -91,6 +91,11 @@ export interface IDisputePlaybookRepository {
 
 export interface IDisputeCaseRepository {
   findById: (id: string) => Promise<Result<DisputeCase | null, DatabaseError>>
+  findByUserProductAndId: (input: {
+    userId: string
+    productId: UUIDv4
+    disputeCaseId: string
+  }) => Promise<Result<DisputeCase | null, DatabaseError>>
   findByIds: (ids: readonly string[]) => Promise<Result<Map<string, DisputeCase>, DatabaseError>>
   listForUser: (
     input: Omit<ListDisputeCases, 'type' | 'name'>,

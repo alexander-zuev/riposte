@@ -50,8 +50,10 @@ import {
 } from '../disputes/dispute.events'
 import {
   countActionableDisputeCasesSchema,
+  getDisputeCaseStatusSchema,
   getStripeAppSettingsSchema,
   listDisputeCasesSchema,
+  listStripeDisputesForProductSchema,
 } from '../disputes/dispute.queries'
 import {
   handleSlackAppUninstalledSchema,
@@ -188,6 +190,8 @@ export const domainQuerySchema = z.discriminatedUnion('name', [
   getStripeAppSettingsSchema,
   listDisputeCasesSchema,
   countActionableDisputeCasesSchema,
+  listStripeDisputesForProductSchema,
+  getDisputeCaseStatusSchema,
   listDisputeCaseActivitySchema,
   getDisputeCaseActivitySchema,
   readDisputePlaybookSchema,

@@ -7,7 +7,7 @@ type ConnectionIndicatorProps = {
 }
 
 const STATE_STYLES: Record<AgentTransportState, string> = {
-  connecting: 'bg-warning',
+  connecting: 'bg-warning animate-pulse',
   connected: 'bg-success',
   closing: 'bg-muted-foreground',
   disconnected: 'bg-muted-foreground',
@@ -20,10 +20,7 @@ const STATE_LABELS: Record<AgentTransportState, string> = {
   disconnected: 'Disconnected',
 }
 
-export function ConnectionIndicator({
-  state,
-  className,
-}: ConnectionIndicatorProps) {
+export function ConnectionIndicator({ state, className }: ConnectionIndicatorProps) {
   return (
     <div
       className={cn('inline-flex items-center gap-1.5 text-muted-foreground text-xs', className)}

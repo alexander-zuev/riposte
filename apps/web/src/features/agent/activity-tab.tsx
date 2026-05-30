@@ -176,7 +176,7 @@ function emptyStateFor(mode: AgentMode): { title: string; message: string } {
   if (mode === 'setup') {
     return {
       title: 'No activity yet',
-      message: 'Connect your data sources and run the dry-run to populate the audit feed',
+      message: "The agent's actions will appear here after the first dry run or dispute",
     }
   }
   return {

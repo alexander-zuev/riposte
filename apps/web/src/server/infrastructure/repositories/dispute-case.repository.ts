@@ -35,6 +35,33 @@ export class DisputeCaseRepository extends BaseRepository implements IDisputeCas
     return found.map((row) => (row ? DisputeCase.deserialize(row) : null))
   }
 
+  async findByUserProductAndId(input: {
+    userId: string
+    productId: ListDisputeCasesInput['productId']
+    disputeCaseId: string
+  }): Promise<Result<DisputeCase | null, DatabaseError>> {
+    const found = await Result.tryPromise({
+      try: async () => {
+        const [caseRow] = await this.db
+          .select()
+          .from(disputeCases)
+          .where(
+            and(
+              eq(disputeCases.userId, input.userId),
+              eq(disputeCases.productId, input.productId),
+              eq(disputeCases.id, input.disputeCaseId),
+            ),
+          )
+          .limit(1)
+
+        return caseRow ?? null
+      },
+      catch: (cause) => new DatabaseError({ message: 'Failed to find dispute case', cause }),
+    })
+
+    return found.map((row) => (row ? DisputeCase.deserialize(row) : null))
+  }
+
   async findByIds(
     ids: readonly string[],
   ): Promise<Result<Map<string, DisputeCase>, DatabaseError>> {

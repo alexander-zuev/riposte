@@ -75,38 +75,48 @@ If no MCP server exists for the system the merchant named, mark it as a setup bl
 Do not pre-judge whether the system has the right data. The dry-run proves that against a real dispute later. Just connect what the merchant points us at.
 
 We only need read access. Riposte never writes to merchant data.`,
-  playbook: `With Stripe and the activity source connected, the agent drafts two artifacts together in this step:
+  playbook: `With Stripe and the activity source connected, you now draft two artifacts for merchant review:
 
-1. Product evidence fields (persisted on the Product entity via saveProductEvidenceFields):
-   - product_description: clear concise description of what this product does
+1. Product facts
+   These are saved later with saveProductEvidenceFields, but call them "Product facts" in chat:
+   - product_description: clear concise description of what the product does
    - serviceStartRule: how Riposte derives service_date for future packets
-   - refund_policy_disclosure: HOW and WHERE the refund policy is shown to customers (e.g., "Linked from /legal", "Shown at checkout"), not the policy text itself
-   - cancellation_policy_disclosure: HOW and WHERE cancellation is shown
+   - refund_policy_disclosure: how and where the refund policy is shown to customers, not the policy text itself
+   - cancellation_policy_disclosure: how and where cancellation terms are shown
 
-   Research first, ask last, and say so. Open by naming the few fields you need and telling the merchant you'll research them yourself from their site and connected data — invite pointers, but make clear they can just let you proceed. Don't present a fill-in-the-blanks menu and wait. Then fetchUrl the product url from <product> (and its likely /pricing, /terms, /refund, /cancellation pages; webSearch only for a page you can't guess) and draft a concrete value for every field. Only ask the merchant for a field when research can't find it (e.g. what's shown at checkout) — list those gaps explicitly when you present results.
-   For serviceStartRule, lead with a clear recommendation, not a guidance-less menu. Using the serviceStartRule definitions above, recommend the ONE rule that best fits this product's connected sources and billing model, mark it as recommended with a one-line reason, and still show the other rules in one line each so the merchant can confirm or override knowingly.
-   Present all drafts together for the merchant to edit and approve, then save with saveProductEvidenceFields. Approval can be a quick confirmation, not authoring from scratch.
+2. Dispute-defense playbook
+   This is versioned markdown saved later with writePlaybook. It is loaded as agent context for future disputes and defines how they should be matched, researched, and argued using verified merchant data.
 
-2. The dispute-defense playbook (versioned markdown, used as context for every future dispute against this product). Author it with the playbook tools: writePlaybook creates the first revision from your full markdown; editPlaybook applies targeted find-and-replace edits afterward (pass the latest revision as baseRevision); readPlaybook returns the current content, its revision, and a validation report. Every write/edit returns \`validation.remaining\` (sections still missing, too short, or lacking a Source line), so keep editing until \`validation.complete\` is true. Start with a "# {Product name} Dispute Playbook" H1, then these exact "## " sections:
-   - Customer matching: verify the strict join from Stripe \`charge.customer\` / Customer \`cus_...\` to the merchant app's stored \`stripe_customer_id\`. Email is evidence context, not the identity join. If the app does not store Stripe customer ids, mark this as a blocker.
-   - Identity facts: define where the runtime gets app-side packet context after the strict match: accountCreatedAt and lastActiveAt. Email, totalAmountPaid, and lastPaymentAt come from prepared Stripe context, not merchant data. Do not ask the merchant to define Stripe billing fields in the playbook.
-   - Activity sources: define where successful product-use or delivery events live, how to filter them by matched appUserId, which timestamp/status/action fields matter, which statuses count as delivered/successful, which rows do not count, and how to derive lastActiveAt. Also define 1-3 service-use summary facts and the table columns the runtime should collect for the newest/strongest rows.
-   - Cancellation detection: define where cancellation state or cancellation requests live, including Stripe subscription status/canceled_at when relevant and any merchant app/support source. Specify how to query by matched appUserId, Stripe customer id, subscription id, or customer email; what counts as a cancellation request; how to detect active use after cancellation; and what the runtime may write in cancellationRebuttal when no cancellation request is found.
-   - Refund request detection: define where refund requests live, including Stripe refunds and any merchant app/support source. Specify how to query by matched appUserId, Stripe customer id, charge id, or customer email; what counts as a refund request; what means “not found”; and what the runtime may write in refundRefusalExplanation when no refund request is found.
-   - Visual deliverables: decide whether this product has concrete customer-facing artifacts such as images, PDFs, exports, reports, generated files, or other deliverables. If yes, define where they live, how to filter by matched appUserId, title/url/thumbnail/timestamp fields, safe inclusion rules, and max sample count. If no, write that this product has no visual deliverables.
-   - Evidence emphasis: define which verified facts the runtime should prioritize in uncategorizedText, and which facts are weak/noisy for this product.
-   - Known constraints: optional max 7 actionable runtime guardrails, such as exclude rules, mapping caveats, stale/missing data warnings, multi-user/account ownership caveats, artifact URL caveats, or migration caveats. Do not write generic advice or product narrative.
+Workflow:
+- Research first, ask last. Tell the merchant you will draft both artifacts from their site and connected data, and invite pointers without blocking on them.
+- Read the product URL from <product> plus likely policy pages such as /pricing, /terms, /refund, and /cancellation. Use webSearch only for pages you cannot guess.
+- Query the connected activity source with MCP tools. Walk through one real recent dispute when available; otherwise synthesize from the latest successful charge or strongest available customer activity.
+- Recommend one serviceStartRule with a short reason, then list the other rules briefly so the merchant can override knowingly.
+- Show both complete drafts in one chat message before calling any persistence tool.
+- Ask for approval or edits after showing both drafts. Only after the merchant approves both should you call saveProductEvidenceFields and writePlaybook.
+- If writePlaybook returns validation.remaining, keep editing until validation.complete is true.
+- After both tools succeed and validation is complete, say the playbook step is complete and invite the merchant to run a dry run. Do not say overall setup is complete until the <setup> block says current_step is complete.
 
-   In Customer matching, Activity sources, Cancellation detection, and Refund request detection, include a \`Source:\` line recording where you verified the data (the table/column and the MCP tool-call id), e.g. \`Source: usage_events.user_id (tool-call: abc123)\`, or an explicit waiver such as \`Source: not applicable - no cancellation flow\` or \`Source: Stripe refunds only\`. The validator marks these sections \`no_source\` until that line is filled.
+The playbook markdown must start with "# {Product name} Dispute Playbook" and use these exact "## " sections:
+- Customer matching: verify the strict join from Stripe \`charge.customer\` / Customer \`cus_...\` to the merchant app's stored \`stripe_customer_id\`. Email is evidence context, not the identity join. If the app does not store Stripe customer ids, mark this as a blocker.
+- Identity facts: define where the runtime gets accountCreatedAt and lastActiveAt after the strict match. Email, totalAmountPaid, and lastPaymentAt come from prepared Stripe context, not merchant data.
+- Activity sources: define where successful product-use or delivery events live, how to filter them by matched appUserId, which timestamp/status/action fields matter, which rows count as delivered, which rows do not count, how to derive lastActiveAt, and 1-3 service-use summary facts.
+- Cancellation detection: define where cancellation state or cancellation requests live, how to query by matched appUserId, Stripe customer id, subscription id, or customer email, what counts as a cancellation request, and how to detect active use after cancellation.
+- Refund request detection: define where refund requests live, including Stripe refunds and any merchant app/support source. Specify how to query by matched appUserId, Stripe customer id, charge id, or customer email, what counts as a refund request, and what means "not found".
+- Visual deliverables: decide whether this product has customer-facing artifacts such as images, PDFs, exports, reports, generated files, or other deliverables. If yes, define where they live and safe sample limits. If no, say there are no visual deliverables.
+- Evidence emphasis: define which verified facts the runtime should prioritize in uncategorizedText, and which facts are weak/noisy for this product.
+- Known constraints: optional max 7 actionable runtime guardrails. Do not write generic advice or product narrative.
 
-   Draft the playbook by walking through one real recent dispute end-to-end (synthesize from the latest successful charge if no real dispute qualifies), querying actual activity with the connected MCP tools as you go.
+Customer matching, Activity sources, Cancellation detection, and Refund request detection must include a \`Source:\` line with the table/column and MCP tool-call id used for verification, or an explicit waiver such as \`Source: not applicable - no cancellation flow\` or \`Source: Stripe refunds only\`.`,
+  dry_run: `You now run the playbook against a sample dispute to prove the setup works end to end.
 
-The merchant reviews each artifact in chat. This setup step is complete only once saveProductEvidenceFields has succeeded and the playbook validation is complete.`,
-  dry_run: `The bank reviewer answering a dispute asks one question: "did this customer get what they paid for?" The dry-run produces the PDF that answers it for one real recent dispute (or synthesized if none exists).
-
-This is also where we validate that the connected activity source actually has what the playbook needs. If we cannot pull a real customer's activity from it, surface that here — the connection itself is the issue, not the playbook.
-
-Walk the merchant through the resulting PDF. They are validating that the packet — built only from their data — convincingly proves use. If it does, the playbook is good. If not, iterate.`,
+Workflow:
+- Ask the merchant to confirm they want to start the dry run.
+- Once they confirm, call startDryRun. The tool creates the sample dispute case and starts the evidence-collection loop.
+- Tell the merchant the dry run has started and that progress appears in the Activity tab.
+- If the connected activity source cannot answer the playbook's required questions for the sample customer, surface the specific missing data or mapping problem. This means the setup needs adjustment before review.
+- When the packet is available, walk the merchant through it: customer match, service date, activity proof, refund/cancellation facts, and final argument.
+- Ask whether the packet convincingly proves the customer got what they paid for. If yes, move to review. If not, ask what is missing and iterate on the Product facts or playbook.`,
   review:
     'The dry-run packet is generated. The merchant reviews the final playbook and the PDF. Once they approve, the product transitions to setup_complete and future disputes are defended automatically subject to the submission policy. Ask the merchant to confirm approval, or surface any edits they want before commit.',
 }

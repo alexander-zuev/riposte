@@ -1,6 +1,7 @@
 export * from './dispute-case-message.commands'
 export * from './dispute-case-message.dto'
 export * from './dispute-case-message.queries'
+export * from './dispute.dto'
 export * from './dispute-workflow-policy'
 export * from './dispute.commands'
 export * from './dispute.errors'

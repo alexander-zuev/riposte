@@ -39,6 +39,7 @@ const productEvidenceFieldsSchema = z.object({
 
 export const DISPUTE_AGENT_COMMON_TOOL_NAMES = [
   'readProductSetupSnapshot',
+  'listStripeDisputes',
   'connectMcpServer',
   'listMcpServers',
   'fetchUrl',
@@ -58,6 +59,7 @@ export const DISPUTE_AGENT_EVIDENCE_TOOL_NAMES = [
   'completeDisputeEvidenceCollection',
 ] as const
 export const DISPUTE_AGENT_DRY_RUN_TOOL_NAMES = ['startDryRun'] as const
+export const DISPUTE_AGENT_DISPUTE_STATUS_TOOL_NAMES = ['getDisputeCaseStatus'] as const
 
 export type BuiltDisputeAgentTools = {
   tools: ToolSet
@@ -123,6 +125,45 @@ export function buildDisputeAgentTools({
           productId: agent.name,
           disputeCaseId,
           limit,
+        })
+        const result = await agent.deps.services.messageBus().handle(query)
+        return resultToAgentToolResponse(result)
+      },
+    }),
+    listStripeDisputes: tool({
+      description:
+        'Read latest disputes directly from Stripe for the connected account. Use during setup or dry-run planning to see whether a real dispute exists. This does not sync or persist disputes.',
+      inputSchema: z.object({
+        limit: z.number().int().min(1).max(20).optional(),
+        created: z
+          .object({
+            gte: z.number().int().nonnegative().optional(),
+            lte: z.number().int().nonnegative().optional(),
+          })
+          .optional(),
+      }),
+      execute: async ({ limit = 10, created }) => {
+        const query = createQuery('ListStripeDisputesForProduct', {
+          userId: agent.getCurrentUserId(),
+          productId: agent.name,
+          limit,
+          created,
+        })
+        const result = await agent.deps.services.messageBus().handle(query)
+        return resultToAgentToolResponse(result)
+      },
+    }),
+    getDisputeCaseStatus: tool({
+      description:
+        'Read the compact Riposte workflow status for a persisted dispute case. Use this to answer where a case is in the workflow; use readDisputeCaseMessages for step-by-step activity.',
+      inputSchema: z.object({
+        disputeCaseId: z.string().min(1),
+      }),
+      execute: async ({ disputeCaseId }) => {
+        const query = createQuery('GetDisputeCaseStatus', {
+          userId: agent.getCurrentUserId(),
+          productId: agent.name,
+          disputeCaseId,
         })
         const result = await agent.deps.services.messageBus().handle(query)
         return resultToAgentToolResponse(result)
@@ -508,12 +549,14 @@ export function deriveActiveDisputeAgentTools({
       addToolNames(DISPUTE_AGENT_CONNECT_APP_DATA_TOOL_NAMES)
       addToolNames(DISPUTE_AGENT_PLAYBOOK_TOOL_NAMES)
       addToolNames(DISPUTE_AGENT_DRY_RUN_TOOL_NAMES)
+      addToolNames(DISPUTE_AGENT_DISPUTE_STATUS_TOOL_NAMES)
       break
     case 'review':
     case null:
       addToolNames(DISPUTE_AGENT_CONNECT_APP_DATA_TOOL_NAMES)
       addToolNames(DISPUTE_AGENT_PLAYBOOK_TOOL_NAMES)
       addToolNames(DISPUTE_AGENT_DRY_RUN_TOOL_NAMES)
+      addToolNames(DISPUTE_AGENT_DISPUTE_STATUS_TOOL_NAMES)
       break
     default:
       break

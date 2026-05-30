@@ -6,6 +6,7 @@ import {
   contestDecisionKindSchema,
   disputeCaseWorkflowStatusSchema,
 } from './dispute-workflow-policy'
+import { disputeCaseStatusSchema, stripeDisputeListItemSchema } from './dispute.dto'
 import { stripeDisputeStatusSchema } from './stripe-dispute-taxonomy'
 
 export const disputeCaseSortFieldSchema = z.enum(['evidenceDueBy', 'stripeCreatedAt', 'amount'])
@@ -78,6 +79,33 @@ export const countActionableDisputeCasesResultSchema = z.object({
   count: z.number().int().nonnegative(),
 })
 
+export const listStripeDisputesForProductSchema = baseQuerySchema.extend({
+  name: z.literal('ListStripeDisputesForProduct'),
+  userId: UserIdSchema,
+  productId: z.uuidv4(),
+  limit: z.number().int().min(1).max(20).default(10),
+  created: z
+    .object({
+      gte: z.number().int().nonnegative().optional(),
+      lte: z.number().int().nonnegative().optional(),
+    })
+    .optional(),
+})
+
+export const listStripeDisputesForProductResultSchema = z.object({
+  disputes: z.array(stripeDisputeListItemSchema),
+  hasMore: z.boolean(),
+})
+
+export const getDisputeCaseStatusSchema = baseQuerySchema.extend({
+  name: z.literal('GetDisputeCaseStatus'),
+  userId: UserIdSchema,
+  productId: z.uuidv4(),
+  disputeCaseId: z.string().min(1),
+})
+
+export const getDisputeCaseStatusResultSchema = disputeCaseStatusSchema
+
 export type DisputeCaseSortField = z.infer<typeof disputeCaseSortFieldSchema>
 export type DisputeCaseSortDirection = z.infer<typeof disputeCaseSortDirectionSchema>
 export type DisputeCaseSort = z.infer<typeof disputeCaseSortSchema>
@@ -92,3 +120,9 @@ export type CountActionableDisputeCases = z.infer<typeof countActionableDisputeC
 export type CountActionableDisputeCasesResult = z.infer<
   typeof countActionableDisputeCasesResultSchema
 >
+export type ListStripeDisputesForProduct = z.infer<typeof listStripeDisputesForProductSchema>
+export type ListStripeDisputesForProductResult = z.infer<
+  typeof listStripeDisputesForProductResultSchema
+>
+export type GetDisputeCaseStatus = z.infer<typeof getDisputeCaseStatusSchema>
+export type GetDisputeCaseStatusResult = z.infer<typeof getDisputeCaseStatusResultSchema>

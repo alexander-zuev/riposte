@@ -110,6 +110,19 @@ export const readDisputePlaybook = createServerFn({ method: 'GET' })
     return toServerFnRpc(result)
   })
 
+export const readProductDisputeSetup = createServerFn({ method: 'GET' })
+  .middleware([requireAuth])
+  .inputValidator(readPlaybookFnInputSchema)
+  .handler(async ({ data, context }) => {
+    const query = createQuery('ReadProductDisputeSetup', {
+      userId: context.user.id,
+      productId: data.productId,
+    })
+    const result = await context.deps.services.messageBus().handle(query)
+
+    return toServerFnRpc(result)
+  })
+
 export const deleteProduct = createServerFn({ method: 'POST' })
   .middleware([requireAuth])
   .inputValidator(deleteProductFnInputSchema)

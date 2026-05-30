@@ -1,5 +1,7 @@
 import { z } from 'zod'
 
+import { TimestamptzSchema } from '../primitives'
+
 /** Generous upper bound; expected playbooks are 2-50KB markdown. */
 export const PLAYBOOK_MD_MAX_LENGTH = 1_000_000
 
@@ -33,6 +35,7 @@ export const disputePlaybookRevisionResultSchema = z.object({
 export const readDisputePlaybookResultSchema = z.object({
   revision: z.number().int().positive(),
   content: z.string(),
+  createdAt: TimestamptzSchema,
   validation: playbookValidationSchema,
 })
 

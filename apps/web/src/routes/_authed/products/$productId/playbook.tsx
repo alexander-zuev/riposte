@@ -4,7 +4,7 @@ import { PlaybookPage } from '@web/pages/authed/products/playbook-page'
 
 export const Route = createFileRoute('/_authed/products/$productId/playbook')({
   loader: ({ context, params }) => {
-    void context.queryClient.prefetchQuery(productQueries.playbook(params.productId))
+    void context.queryClient.prefetchQuery(productQueries.disputeSetup(params.productId))
   },
   component: PlaybookPage,
 })

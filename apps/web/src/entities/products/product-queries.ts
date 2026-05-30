@@ -3,7 +3,7 @@ import { queryOptions } from '@tanstack/react-query'
 import {
   getProductSetupState,
   listProducts,
-  readDisputePlaybook,
+  readProductDisputeSetup,
   readProductSetupSnapshot,
 } from '@web/server/entrypoints/functions/product.fn'
 
@@ -23,9 +23,9 @@ export const productQueries = {
       queryKey: ['products', 'setup-snapshot', productId] as const,
       queryFn: async () => unwrapRpc(await readProductSetupSnapshot({ data: { productId } })),
     }),
-  playbook: (productId: string) =>
+  disputeSetup: (productId: string) =>
     queryOptions({
-      queryKey: ['products', 'playbook', productId] as const,
-      queryFn: async () => unwrapRpc(await readDisputePlaybook({ data: { productId } })),
+      queryKey: ['products', 'dispute-setup', productId] as const,
+      queryFn: async () => unwrapRpc(await readProductDisputeSetup({ data: { productId } })),
     }),
 }

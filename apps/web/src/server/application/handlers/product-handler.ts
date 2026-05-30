@@ -28,6 +28,8 @@ import type {
   ProductCreated,
   ProductSetupCompleted,
   ProductUpdated,
+  ReadProductDisputeSetup,
+  ReadProductDisputeSetupResult,
   ReadProductSetupSnapshot,
   ReadProductSetupSnapshotResult,
   RegisterProductAppDataSource,
@@ -335,7 +337,49 @@ export const readDisputePlaybook: QueryHandler<
   return Result.ok({
     revision: latest.value.revision,
     content: latest.value.playbookMd,
+    createdAt: latest.value.createdAt.toISOString(),
     validation: latest.value.validate(),
+  })
+}
+
+/**
+ * Combined read for the playbook page. Orchestrates the playbook and the product's evidence
+ * fields in one query so the frontend reads them with a single request. Unlike
+ * `readDisputePlaybook`, an absent playbook is not an error here: it returns `playbook: null` so
+ * the page still shows evidence during onboarding.
+ */
+export const readProductDisputeSetup: QueryHandler<
+  ReadProductDisputeSetup,
+  ReadProductDisputeSetupResult,
+  DatabaseError | EntityNotFoundError
+> = async (query, ctx) => {
+  const db = ctx.deps.db()
+  const product = await ctx.deps.repos.products(db).findById(query.productId)
+  if (product.isErr()) return Result.err(product.error)
+  if (!product.value || product.value.userId !== query.userId) {
+    return Result.err(new EntityNotFoundError({ entity: 'Product', id: query.productId }))
+  }
+
+  const latest = await ctx.deps.repos.disputePlaybooks(db).findLatestForProduct(query.productId)
+  if (latest.isErr()) return Result.err(latest.error)
+
+  const snapshot = product.value.serialize()
+
+  return Result.ok({
+    playbook: latest.value
+      ? {
+          revision: latest.value.revision,
+          content: latest.value.playbookMd,
+          createdAt: latest.value.createdAt.toISOString(),
+          validation: latest.value.validate(),
+        }
+      : null,
+    evidence: {
+      productDescription: snapshot.productDescription,
+      serviceStartRule: snapshot.serviceStartRule,
+      refundPolicyDisclosure: snapshot.refundPolicyDisclosure,
+      cancellationPolicyDisclosure: snapshot.cancellationPolicyDisclosure,
+    },
   })
 }
 

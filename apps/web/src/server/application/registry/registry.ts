@@ -42,6 +42,7 @@ import {
   handleMcpOAuthRefreshFailed,
   listProducts,
   notifyProductSetupChanged,
+  readProductDisputeSetup,
   readProductSetupSnapshot,
   registerProductAppDataSource,
   restartProductSetup,
@@ -175,6 +176,7 @@ export const QUERY_HANDLERS = {
   ListProducts: listProducts,
   GetProductSetupState: getProductSetupState,
   ReadProductSetupSnapshot: readProductSetupSnapshot,
+  ReadProductDisputeSetup: readProductDisputeSetup,
   GetChatMessages: getChatMessages,
 } satisfies QueryRegistry
 

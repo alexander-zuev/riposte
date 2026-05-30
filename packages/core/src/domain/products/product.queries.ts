@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 import { baseQuerySchema } from '../base/base.messages'
+import { readDisputePlaybookResultSchema } from '../dispute-playbooks/dispute-playbook.schemas'
 import { TimestamptzSchema, UserIdSchema } from '../primitives'
 import { productSetupStateSchema } from './product-setup.dto'
 import { PRODUCT_STATUSES, PRODUCT_TYPES, SERVICE_START_RULES } from './product.types'
@@ -84,3 +85,31 @@ export const readProductSetupSnapshotResultSchema = z.object({
 
 export type ReadProductSetupSnapshot = z.infer<typeof readProductSetupSnapshotSchema>
 export type ReadProductSetupSnapshotResult = z.infer<typeof readProductSetupSnapshotResultSchema>
+
+/** Product-level Stripe evidence the agent submits on every dispute for a product. */
+export const productEvidenceFieldsSchema = z.object({
+  productDescription: z.string().nullable(),
+  serviceStartRule: z.enum(SERVICE_START_RULES).nullable(),
+  refundPolicyDisclosure: z.string().nullable(),
+  cancellationPolicyDisclosure: z.string().nullable(),
+})
+
+export const readProductDisputeSetupSchema = baseQuerySchema.extend({
+  name: z.literal('ReadProductDisputeSetup'),
+  userId: UserIdSchema,
+  productId: z.uuidv4(),
+})
+
+/**
+ * Combined read for the playbook page: the dispute playbook (evidence-collection rules) plus the
+ * product-level evidence values. `playbook` is null when none exists yet, so onboarding can show
+ * evidence without the read failing.
+ */
+export const readProductDisputeSetupResultSchema = z.object({
+  playbook: readDisputePlaybookResultSchema.nullable(),
+  evidence: productEvidenceFieldsSchema,
+})
+
+export type ProductEvidenceFields = z.infer<typeof productEvidenceFieldsSchema>
+export type ReadProductDisputeSetup = z.infer<typeof readProductDisputeSetupSchema>
+export type ReadProductDisputeSetupResult = z.infer<typeof readProductDisputeSetupResultSchema>

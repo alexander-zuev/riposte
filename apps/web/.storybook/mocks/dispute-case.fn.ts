@@ -10,6 +10,13 @@ export async function listDisputeCases(): Promise<RpcResult<ListDisputeCasesResu
   }
 }
 
+export async function countActionableDisputeCases(): Promise<RpcResult<{ count: number }, never>> {
+  return {
+    status: 'ok',
+    value: { count: 0 },
+  }
+}
+
 export async function syncDisputesForProduct(): Promise<
   RpcResult<{ status: 'completed' | 'pending' }, never>
 > {

@@ -116,7 +116,10 @@ export function DisputesPage({ productId }: { productId: string }) {
               disabled={syncMutation.isPending}
               onClick={() => syncMutation.mutate()}
             >
-              <ArrowClockwiseIcon data-icon="inline-start" />
+              <ArrowClockwiseIcon
+                data-icon="inline-start"
+                className={syncMutation.isPending ? 'animate-spin' : undefined}
+              />
               {syncMutation.isPending ? 'Syncing' : 'Sync now'}
             </Button>
           </div>
@@ -185,8 +188,13 @@ function SyncStateLabel({
   isLoading: boolean
 }) {
   return (
-    <span className="text-xs text-muted-foreground">
-      Last sync: <span className="text-system">{formatLastSyncedAt(lastSyncedAt, isLoading)}</span>
+    <span className="flex items-center gap-1 text-xs text-muted-foreground">
+      Last sync:{' '}
+      {isLoading ? (
+        <Skeleton className="inline-block h-3 w-24" />
+      ) : (
+        <span className="text-system">{formatLastSyncedAt(lastSyncedAt)}</span>
+      )}
     </span>
   )
 }
@@ -505,8 +513,8 @@ function formatDate(value: string | null) {
   return dateFormatter.format(new Date(value))
 }
 
-function formatLastSyncedAt(value: Date | null, isLoading: boolean) {
-  if (!value) return isLoading ? '--' : 'never'
+function formatLastSyncedAt(value: Date | null) {
+  if (!value) return 'never'
 
   return syncTimestampFormatter.format(value)
 }

@@ -7,10 +7,10 @@ const logger = createLogger('async-gate-do')
 export type AsyncGateWaitResult = 'resolved' | 'timeout'
 
 class AsyncGateDOBase extends DurableObject<Env> {
-  private pending: {
+  private pending: Array<{
     resolve: (result: AsyncGateWaitResult) => void
     timer: ReturnType<typeof setTimeout>
-  } | null = null
+  }> = []
 
   async waitFor(timeoutMs: number): Promise<AsyncGateWaitResult> {
     const settled = (await this.ctx.storage.get<boolean>('settled')) === true
@@ -20,25 +20,29 @@ class AsyncGateDOBase extends DurableObject<Env> {
     }
 
     return new Promise<AsyncGateWaitResult>((resolve) => {
-      this.pending = {
+      const waiter = {
         resolve,
         timer: setTimeout(() => {
-          if (!this.pending) return
+          const index = this.pending.indexOf(waiter)
+          if (index === -1) return
           logger.debug('wait_timeout')
-          this.pending = null
+          this.pending.splice(index, 1)
           resolve('timeout')
         }, timeoutMs),
       }
+      this.pending.push(waiter)
     })
   }
 
   async resolve(): Promise<void> {
     await this.ctx.storage.put('settled', true)
 
-    if (this.pending) {
-      clearTimeout(this.pending.timer)
-      this.pending.resolve('resolved')
-      this.pending = null
+    if (this.pending.length > 0) {
+      const waiters = this.pending.splice(0)
+      for (const waiter of waiters) {
+        clearTimeout(waiter.timer)
+        waiter.resolve('resolved')
+      }
     }
 
     await this.ctx.storage.deleteAlarm()
@@ -46,10 +50,12 @@ class AsyncGateDOBase extends DurableObject<Env> {
   }
 
   async alarm(): Promise<void> {
-    if (this.pending) {
-      clearTimeout(this.pending.timer)
-      this.pending.resolve('timeout')
-      this.pending = null
+    if (this.pending.length > 0) {
+      const waiters = this.pending.splice(0)
+      for (const waiter of waiters) {
+        clearTimeout(waiter.timer)
+        waiter.resolve('timeout')
+      }
     }
 
     await this.ctx.storage.deleteAll()

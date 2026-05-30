@@ -1,6 +1,7 @@
 import type { ProductEvidenceFields, ServiceStartRule } from '@riposte/core/client'
 import { CompletenessBadge, IncompleteList } from '@web/features/products/completeness'
 import { Card, CardContent } from '@web/ui/components/ui/card'
+import { Markdown } from '@web/ui/components/ui/markdown'
 
 const SERVICE_START_RULE_LABEL: Record<ServiceStartRule, string> = {
   verified_usage: 'Verified usage',
@@ -8,34 +9,48 @@ const SERVICE_START_RULE_LABEL: Record<ServiceStartRule, string> = {
   billing_time: 'Billing time',
 }
 
+const NOT_SET = '_Not set yet_'
+
 /**
- * Read-only view of the product-level facts the agent sends to Stripe on every dispute. Values are
- * authored by the agent in chat; shown here as a plain fact list.
+ * Read-only view of the product-level facts the agent sends to Stripe on every dispute. Written as
+ * markdown and rendered through the same renderer as the playbook so both sections share one visual
+ * language. Values are authored elsewhere (agent chat).
  */
 export function ProductEvidenceSection({ evidence }: { evidence: ProductEvidenceFields }) {
-  const facts = [
-    {
-      label: 'Service date rule',
-      value: evidence.serviceStartRule ? SERVICE_START_RULE_LABEL[evidence.serviceStartRule] : null,
-      field: 'service_date',
-    },
-    {
-      label: 'Product description',
-      value: evidence.productDescription,
-      field: 'product_description',
-    },
-    {
-      label: 'Refund policy disclosure',
-      value: evidence.refundPolicyDisclosure,
-      field: 'refund_policy_disclosure',
-    },
-    {
-      label: 'Cancellation policy disclosure',
-      value: evidence.cancellationPolicyDisclosure,
-      field: 'cancellation_policy_disclosure',
-    },
-  ]
-  const missing = facts.filter((fact) => fact.value === null).map((fact) => fact.label)
+  const serviceRule = evidence.serviceStartRule
+    ? SERVICE_START_RULE_LABEL[evidence.serviceStartRule]
+    : null
+
+  const missing = [
+    serviceRule === null ? 'Service date rule' : null,
+    evidence.productDescription === null ? 'Product description' : null,
+    evidence.refundPolicyDisclosure === null ? 'Refund policy disclosure' : null,
+    evidence.cancellationPolicyDisclosure === null ? 'Cancellation policy disclosure' : null,
+  ].filter((label): label is string => label !== null)
+
+  const markdown = `## Service date rule
+
+> ${serviceRule ?? NOT_SET}
+
+Maps to Stripe evidence field \`service_date\`
+
+## Product description
+
+> ${evidence.productDescription ?? NOT_SET}
+
+Maps to Stripe evidence field \`product_description\`
+
+## Refund policy disclosure
+
+> ${evidence.refundPolicyDisclosure ?? NOT_SET}
+
+Maps to Stripe evidence field \`refund_policy_disclosure\`
+
+## Cancellation policy disclosure
+
+> ${evidence.cancellationPolicyDisclosure ?? NOT_SET}
+
+Maps to Stripe evidence field \`cancellation_policy_disclosure\``
 
   return (
     <section className="grid gap-4">
@@ -52,28 +67,10 @@ export function ProductEvidenceSection({ evidence }: { evidence: ProductEvidence
       {missing.length > 0 ? <IncompleteList title="Missing facts" items={missing} /> : null}
 
       <Card>
-        <CardContent className="grid gap-5">
-          {facts.map((fact) => (
-            <Fact key={fact.field} label={fact.label} value={fact.value} field={fact.field} />
-          ))}
+        <CardContent>
+          <Markdown>{markdown}</Markdown>
         </CardContent>
       </Card>
     </section>
-  )
-}
-
-function Fact({ label, value, field }: { label: string; value: string | null; field: string }) {
-  return (
-    <div className="grid gap-1">
-      <p className="font-medium">{label}</p>
-      {value ? (
-        <p className="whitespace-pre-wrap">{value}</p>
-      ) : (
-        <p className="text-muted-foreground">Not set yet</p>
-      )}
-      <small className="text-muted-foreground">
-        Maps to Stripe evidence field <code>{field}</code>
-      </small>
-    </div>
   )
 }

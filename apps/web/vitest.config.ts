@@ -34,7 +34,7 @@ export default defineConfig({
       optimizer: {
         ssr: {
           enabled: true,
-          include: ['better-auth', '@better-auth/stripe', 'stripe', 'drizzle-orm', 'zod', 'ai'],
+          include: ['better-auth', '@better-auth/stripe', 'stripe', 'drizzle-orm', 'zod'],
         },
       },
     },

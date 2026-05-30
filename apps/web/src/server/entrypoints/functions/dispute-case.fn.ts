@@ -3,6 +3,7 @@ import {
   createCommand,
   createQuery,
   EntityNotFoundError,
+  countActionableDisputeCasesSchema,
   listDisputeCasesSchema,
   toServerFnRpc,
   uuidv7,
@@ -14,6 +15,11 @@ import { Result } from 'better-result'
 import { z } from 'zod'
 
 const listDisputeCasesInputSchema = listDisputeCasesSchema.omit({
+  type: true,
+  name: true,
+  userId: true,
+})
+const countActionableDisputeCasesInputSchema = countActionableDisputeCasesSchema.omit({
   type: true,
   name: true,
   userId: true,
@@ -30,6 +36,20 @@ export const listDisputeCases = createServerFn({ method: 'GET' })
   .handler(async ({ data, context }) => {
     const input = listDisputeCasesInputSchema.parse(data)
     const query = createQuery('ListDisputeCases', {
+      ...input,
+      userId: context.user.id,
+    })
+    const result = await context.deps.services.messageBus().handle(query)
+
+    return toServerFnRpc(result)
+  })
+
+export const countActionableDisputeCases = createServerFn({ method: 'GET' })
+  .middleware([requireAuth])
+  .inputValidator(countActionableDisputeCasesInputSchema)
+  .handler(async ({ data, context }) => {
+    const input = countActionableDisputeCasesInputSchema.parse(data)
+    const query = createQuery('CountActionableDisputeCases', {
       ...input,
       userId: context.user.id,
     })

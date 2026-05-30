@@ -1,5 +1,5 @@
 import type { DisputeCaseListItem, DisputeCaseSortField, ListDisputeCases } from '@riposte/core'
-import { DatabaseError } from '@riposte/core'
+import { ACTIONABLE_DISPUTE_CASE_WORKFLOW_STATUSES, DatabaseError } from '@riposte/core'
 import { DisputeCase } from '@server/domain/disputes'
 import type {
   DisputeCaseListPage,
@@ -63,6 +63,7 @@ export class DisputeCaseRepository extends BaseRepository implements IDisputeCas
         const sortColumn = getSortColumn(input.sort.field)
         const where = [
           eq(disputeCases.userId, input.userId),
+          eq(disputeCases.productId, input.productId),
           ...getStatusFilter(input.filters?.statuses),
           ...getCursorFilter(input.cursor, input.sort.field, input.sort.direction),
         ]
@@ -94,6 +95,33 @@ export class DisputeCaseRepository extends BaseRepository implements IDisputeCas
     })
 
     return listed
+  }
+
+  async countActionableForProduct(input: {
+    userId: ListDisputeCasesInput['userId']
+    productId: ListDisputeCasesInput['productId']
+  }): Promise<Result<number, DatabaseError>> {
+    return await Result.tryPromise({
+      try: async () => {
+        const [row] = await this.db
+          .select({ count: sql<number>`count(*)::int` })
+          .from(disputeCases)
+          .where(
+            and(
+              eq(disputeCases.userId, input.userId),
+              eq(disputeCases.productId, input.productId),
+              inArray(
+                sql<string>`${disputeCases.workflowState}->>'status'`,
+                ACTIONABLE_DISPUTE_CASE_WORKFLOW_STATUSES,
+              ),
+            ),
+          )
+
+        return row?.count ?? 0
+      },
+      catch: (cause) =>
+        new DatabaseError({ message: 'Failed to count actionable dispute cases', cause }),
+    })
   }
 
   async save(disputeCase: DisputeCase): Promise<Result<DisputeCase, DatabaseError>> {

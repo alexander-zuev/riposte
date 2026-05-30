@@ -87,6 +87,7 @@ const statusFilterTrigger = <Button type="button" variant="secondary" size="sm" 
 export function DisputesPage({ productId }: { productId: string }) {
   const filters = useDisputeListFilters()
   const { disputes, isError, isLoading, lastSyncedAt, retry } = useDisputeListData(
+    productId,
     filters.listInput,
   )
   const syncMutation = useSyncDisputesMutation(productId)

@@ -22,7 +22,7 @@ export interface NavItem {
 
 export const productOperationsNavItems: readonly NavItem[] = [
   { label: 'Dashboard', to: '/products/$productId', icon: GaugeIcon, exact: true },
-  { label: 'Disputes', to: '/products/$productId/disputes', icon: ListChecksIcon, badge: '3' },
+  { label: 'Disputes', to: '/products/$productId/disputes', icon: ListChecksIcon },
   { label: 'Agent', to: '/products/$productId/agent', icon: BrainIcon },
 ] as const
 

@@ -1,9 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
-import { disputeQueries, type ListDisputeCasesInput } from '@web/entities/disputes/dispute-queries'
+import {
+  disputeQueries,
+  type ListDisputeCasesOptions,
+} from '@web/entities/disputes/dispute-queries'
 import { useCallback, useMemo } from 'react'
 
-export function useDisputeListData(listInput: ListDisputeCasesInput) {
-  const disputesQuery = useQuery(disputeQueries.list(listInput))
+export function useDisputeListData(productId: string, listInput?: ListDisputeCasesOptions) {
+  const disputesQuery = useQuery(disputeQueries.list(productId, listInput))
   const retry = useCallback(() => {
     disputesQuery.refetch().catch(() => undefined)
   }, [disputesQuery])

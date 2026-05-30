@@ -1,5 +1,5 @@
 import { DISPUTE_CASE_WORKFLOW_STATUSES, type DisputeCaseSort } from '@riposte/core/client'
-import type { ListDisputeCasesInput } from '@web/entities/disputes/dispute-queries'
+import type { ListDisputeCasesOptions } from '@web/entities/disputes/dispute-queries'
 import { useMemo, useState } from 'react'
 
 export type WorkflowStatus = (typeof DISPUTE_CASE_WORKFLOW_STATUSES)[number]
@@ -10,7 +10,7 @@ export function useDisputeListFilters() {
     field: 'evidenceDueBy',
     direction: 'asc',
   })
-  const listInput = useMemo<ListDisputeCasesInput>(
+  const listInput = useMemo<ListDisputeCasesOptions>(
     () => ({
       limit: 20,
       sort,

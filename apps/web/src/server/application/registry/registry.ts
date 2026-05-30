@@ -6,7 +6,10 @@ import {
 } from '@server/application/handlers/auth-handler'
 import { getChatMessages } from '@server/application/handlers/chat-handler'
 import { getConnectionsStatus } from '@server/application/handlers/connection-handler'
-import { listDisputeCases } from '@server/application/handlers/dispute-case-handler'
+import {
+  countActionableDisputeCases,
+  listDisputeCases,
+} from '@server/application/handlers/dispute-case-handler'
 import {
   getDisputeCaseActivity,
   listDisputeCaseActivity,
@@ -170,6 +173,7 @@ export const QUERY_HANDLERS = {
   GetConnectionsStatus: getConnectionsStatus,
   GetStripeAppSettings: getStripeAppSettings,
   ListDisputeCases: listDisputeCases,
+  CountActionableDisputeCases: countActionableDisputeCases,
   ListDisputeCaseActivity: listDisputeCaseActivity,
   GetDisputeCaseActivity: getDisputeCaseActivity,
   ReadDisputePlaybook: readDisputePlaybook,

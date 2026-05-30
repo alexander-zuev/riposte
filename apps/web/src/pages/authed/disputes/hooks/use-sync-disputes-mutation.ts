@@ -19,7 +19,7 @@ export function useSyncDisputesMutation(productId: string) {
         >,
       ),
     onSettled: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['disputes', 'list'] })
+      await queryClient.invalidateQueries({ queryKey: ['disputes'] })
     },
     onSuccess: (result) => {
       if (result.status === 'pending') {

@@ -1,6 +1,10 @@
 import type { ReadProductDisputeSetupResult } from '@riposte/core/client'
 import type { Meta, StoryObj } from '@storybook/tanstack-react'
-import { PlaybookView } from '@web/pages/authed/products/playbook-view'
+import {
+  PlaybookErrorState,
+  PlaybookPending,
+  PlaybookView,
+} from '@web/pages/authed/products/playbook-view'
 
 const PLAYBOOK_MD = `# Spawnbase Dispute Playbook
 
@@ -60,7 +64,6 @@ const meta = {
   args: {
     productId: 'prod_demo',
     productName: 'Spawnbase',
-    onRetry: () => undefined,
   },
   decorators: [
     (Story) => (
@@ -74,18 +77,18 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-export const Loading: Story = {
-  args: { isLoading: true, isError: false, data: undefined },
+export const Pending: Story = {
+  render: () => <PlaybookPending />,
 }
 
 export const ErrorState: Story = {
-  args: { isLoading: false, isError: true, data: undefined },
+  render: () => <PlaybookErrorState onRetry={() => undefined} />,
 }
 
 export const ValidationIncomplete: Story = {
-  args: { isLoading: false, isError: false, data: incompleteSetup },
+  args: { data: incompleteSetup },
 }
 
 export const Complete: Story = {
-  args: { isLoading: false, isError: false, data: completeSetup },
+  args: { data: completeSetup },
 }

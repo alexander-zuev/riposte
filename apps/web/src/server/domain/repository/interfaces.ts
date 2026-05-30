@@ -95,6 +95,10 @@ export interface IDisputeCaseRepository {
   listForUser: (
     input: Omit<ListDisputeCases, 'type' | 'name'>,
   ) => Promise<Result<DisputeCaseListPage, DatabaseError>>
+  countActionableForProduct: (input: {
+    userId: string
+    productId: UUIDv4
+  }) => Promise<Result<number, DatabaseError>>
   save: (disputeCase: DisputeCase) => Promise<Result<DisputeCase, DatabaseError>>
   saveBatch: (disputeCases: readonly DisputeCase[]) => Promise<Result<void, DatabaseError>>
 }

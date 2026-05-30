@@ -1,4 +1,10 @@
-import type { DatabaseError, ListDisputeCases, ListDisputeCasesResult } from '@riposte/core'
+import type {
+  CountActionableDisputeCases,
+  CountActionableDisputeCasesResult,
+  DatabaseError,
+  ListDisputeCases,
+  ListDisputeCasesResult,
+} from '@riposte/core'
 import type { QueryHandler } from '@server/application/registry/types'
 import { Result } from 'better-result'
 
@@ -18,4 +24,18 @@ export const listDisputeCases: QueryHandler<
     nextCursor: page.value.nextCursor,
     sync: sync.value,
   })
+}
+
+export const countActionableDisputeCases: QueryHandler<
+  CountActionableDisputeCases,
+  CountActionableDisputeCasesResult,
+  DatabaseError
+> = async (query, ctx) => {
+  const count = await ctx.deps.repos.disputeCases(ctx.deps.db()).countActionableForProduct({
+    userId: query.userId,
+    productId: query.productId,
+  })
+  if (count.isErr()) return Result.err(count.error)
+
+  return Result.ok({ count: count.value })
 }

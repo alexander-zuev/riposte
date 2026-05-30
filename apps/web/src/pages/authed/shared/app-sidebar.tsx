@@ -1,6 +1,7 @@
 import { CaretUpDownIcon, PackageIcon } from '@phosphor-icons/react'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useRouterState } from '@tanstack/react-router'
+import { disputeQueries } from '@web/entities/disputes/dispute-queries'
 import { ProductIcon } from '@web/entities/products/product-icon'
 import { productQueries } from '@web/entities/products/product-queries'
 import { useSelectedProductId } from '@web/entities/products/use-selected-product-id'
@@ -12,6 +13,7 @@ import {
   workspaceNavItems,
   type NavItem,
 } from '@web/pages/authed/shared/nav-config'
+import { Badge } from '@web/ui/components/ui/badge'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,7 +35,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@web/ui/components/ui/sidebar'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 
 export function AppSidebar() {
   const pathname = useRouterState().location.pathname
@@ -60,18 +62,7 @@ export function AppSidebar() {
           >
             <div className="w-1/2 flex-shrink-0" aria-hidden={hasProduct} />
             <div className="flex w-1/2 flex-shrink-0 flex-col" aria-hidden={!hasProduct}>
-              <NavGroup
-                label="Operations"
-                items={productOperationsNavItems}
-                productId={displayProductId}
-                pathname={pathname}
-              />
-              <NavGroup
-                label="Setup"
-                items={productSetupNavItems}
-                productId={displayProductId}
-                pathname={pathname}
-              />
+              <ProductNavGroups productId={displayProductId} pathname={pathname} />
             </div>
           </div>
         </div>
@@ -80,6 +71,69 @@ export function AppSidebar() {
         <NavGroup label="Workspace" items={workspaceNavItems} pathname={pathname} />
       </SidebarFooter>
     </Sidebar>
+  )
+}
+
+function ProductNavGroups({ productId, pathname }: { productId: string | null; pathname: string }) {
+  if (!productId) {
+    return (
+      <>
+        <NavGroup
+          label="Operations"
+          items={productOperationsNavItems}
+          productId={productId}
+          pathname={pathname}
+        />
+        <NavGroup
+          label="Setup"
+          items={productSetupNavItems}
+          productId={productId}
+          pathname={pathname}
+        />
+      </>
+    )
+  }
+
+  return <ProductNavGroupsWithBadge productId={productId} pathname={pathname} />
+}
+
+function ProductNavGroupsWithBadge({
+  productId,
+  pathname,
+}: {
+  productId: string
+  pathname: string
+}) {
+  const { data: disputeCount } = useQuery(disputeQueries.actionableCount(productId))
+  const { data: setup } = useQuery(productQueries.setup(productId))
+  const badges: NavBadges = {
+    '/products/$productId/disputes': disputeCount
+      ? formatDisputeCountBadge(disputeCount.count)
+      : null,
+    '/products/$productId/agent':
+      setup && setup.currentStep !== null ? (
+        <Badge variant="warning" className="h-5 px-1.5 text-[11px]">
+          Incomplete
+        </Badge>
+      ) : null,
+  }
+
+  return (
+    <>
+      <NavGroup
+        label="Operations"
+        items={productOperationsNavItems}
+        productId={productId}
+        pathname={pathname}
+        badges={badges}
+      />
+      <NavGroup
+        label="Setup"
+        items={productSetupNavItems}
+        productId={productId}
+        pathname={pathname}
+      />
+    </>
   )
 }
 
@@ -148,11 +202,13 @@ function NavGroup({
   items,
   pathname,
   productId,
+  badges,
 }: {
   label: string
   items: readonly NavItem[]
   pathname: string
   productId?: string | null
+  badges?: NavBadges
 }) {
   return (
     <SidebarGroup className="pr-0">
@@ -168,6 +224,7 @@ function NavGroup({
               : item.to
             const active = href !== null && isNavItemActive(item, href, pathname)
             const disabled = needsProductId && !productId
+            const badge = badges?.[item.to] ?? item.badge
             const Icon = item.icon
 
             const linkContent = (
@@ -196,7 +253,7 @@ function NavGroup({
                     )
                   }
                 />
-                {item.badge ? <SidebarMenuBadge>{item.badge}</SidebarMenuBadge> : null}
+                {badge ? <SidebarMenuBadge>{badge}</SidebarMenuBadge> : null}
               </SidebarMenuItem>
             )
           })}
@@ -204,4 +261,21 @@ function NavGroup({
       </SidebarGroupContent>
     </SidebarGroup>
   )
+}
+
+type NavBadges = Partial<Record<NavItem['to'], ReactNode>>
+
+function formatNavCount(count: number) {
+  if (count <= 0) return null
+  if (count > 99) return '99+'
+  return String(count)
+}
+
+function formatDisputeCountBadge(count: number) {
+  const label = formatNavCount(count)
+  return label ? (
+    <Badge variant="secondary" className="h-5 min-w-5 px-1.5 text-[11px] tabular-nums">
+      {label}
+    </Badge>
+  ) : null
 }

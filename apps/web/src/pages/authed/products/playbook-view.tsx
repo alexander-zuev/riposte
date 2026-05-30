@@ -23,54 +23,52 @@ import { Markdown } from '@web/ui/components/ui/markdown'
 import type { ReactNode } from 'react'
 
 /**
- * Pure presentation for the playbook page. Kept free of server/route imports so it can be rendered
- * in isolation (e.g. Storybook). The page wraps it with the data hook + route context.
+ * Pure presentation for the playbook page, rendered with guaranteed data. The route blocks on
+ * `ensureQueryData` and the page reads it with `useSuspenseQuery`, so loading and error never reach
+ * this component: the route's `pendingComponent` (`PlaybookPending`) and `errorComponent`
+ * (`PlaybookErrorState`) own those states. Kept free of server/route imports for Storybook.
  */
 export function PlaybookView({
   data,
-  isLoading,
-  isError,
   productId,
   productName,
-  onRetry,
 }: {
-  data: ReadProductDisputeSetupResult | undefined
-  isLoading: boolean
-  isError: boolean
+  data: ReadProductDisputeSetupResult
   productId: string
   productName: string
-  onRetry: () => void
 }) {
-  if (isLoading) {
-    return (
-      <PlaybookLayout>
-        <StatusNote icon={<GridLoader />}>Loading playbook</StatusNote>
-      </PlaybookLayout>
-    )
-  }
-
-  if (isError || !data) {
-    return (
-      <PlaybookLayout>
-        <StatusNote
-          icon={<WarningCircleIcon className="size-5" />}
-          action={
-            <Button variant="secondary" size="sm" onClick={onRetry}>
-              <ArrowClockwiseIcon data-icon="inline-start" />
-              Try again
-            </Button>
-          }
-        >
-          Could not load the playbook
-        </StatusNote>
-      </PlaybookLayout>
-    )
-  }
-
   return (
     <PlaybookLayout>
       <PlaybookSection playbook={data.playbook} productId={productId} productName={productName} />
       <ProductEvidenceSection evidence={data.evidence} />
+    </PlaybookLayout>
+  )
+}
+
+/** Route `pendingComponent`: shown while the loader resolves on navigation. */
+export function PlaybookPending() {
+  return (
+    <PlaybookLayout>
+      <StatusNote icon={<GridLoader />}>Loading playbook</StatusNote>
+    </PlaybookLayout>
+  )
+}
+
+/** Route `errorComponent`: shown when the loader (or a client refetch) fails. `onRetry` is the route reset. */
+export function PlaybookErrorState({ onRetry }: { onRetry: () => void }) {
+  return (
+    <PlaybookLayout>
+      <StatusNote
+        icon={<WarningCircleIcon className="size-5" />}
+        action={
+          <Button variant="secondary" size="sm" onClick={onRetry}>
+            <ArrowClockwiseIcon data-icon="inline-start" />
+            Try again
+          </Button>
+        }
+      >
+        Could not load the playbook
+      </StatusNote>
     </PlaybookLayout>
   )
 }
@@ -184,11 +182,13 @@ function formatIssue(issue: PlaybookValidationIssue['issue']): string {
   }
 }
 
+/** Format in UTC so the SSR (UTC) and client renders agree; avoids a date hydration mismatch. */
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
+    timeZone: 'UTC',
   })
 }
 

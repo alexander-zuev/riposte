@@ -48,7 +48,11 @@ import {
   disputeCaseReceivedSchema,
   scheduledDisputeSyncDueSchema,
 } from '../disputes/dispute.events'
-import { getStripeAppSettingsSchema, listDisputeCasesSchema } from '../disputes/dispute.queries'
+import {
+  countActionableDisputeCasesSchema,
+  getStripeAppSettingsSchema,
+  listDisputeCasesSchema,
+} from '../disputes/dispute.queries'
 import {
   handleSlackAppUninstalledSchema,
   handleSlackOAuthCallbackSchema,
@@ -183,6 +187,7 @@ export const domainQuerySchema = z.discriminatedUnion('name', [
   getConnectionsStatusSchema,
   getStripeAppSettingsSchema,
   listDisputeCasesSchema,
+  countActionableDisputeCasesSchema,
   listDisputeCaseActivitySchema,
   getDisputeCaseActivitySchema,
   readDisputePlaybookSchema,

@@ -18,6 +18,14 @@ export const DISPUTE_CASE_WORKFLOW_STATUSES = [
 export type DisputeCaseWorkflowStatus = (typeof DISPUTE_CASE_WORKFLOW_STATUSES)[number]
 export const disputeCaseWorkflowStatusSchema = z.enum(DISPUTE_CASE_WORKFLOW_STATUSES)
 
+export const ACTIONABLE_DISPUTE_CASE_WORKFLOW_STATUSES = [
+  'received',
+  'evaluated',
+  'collecting_evidence',
+  'awaiting_human',
+  'failed',
+] as const satisfies readonly DisputeCaseWorkflowStatus[]
+
 export const CONTEST_DECISIONS = ['undecided', 'contest', 'accept', 'no_response'] as const
 
 export type ContestDecisionKind = (typeof CONTEST_DECISIONS)[number]

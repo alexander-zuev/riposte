@@ -52,6 +52,7 @@ export const getStripeAppSettingsSchema = baseQuerySchema.extend({
 export const listDisputeCasesSchema = baseQuerySchema.extend({
   name: z.literal('ListDisputeCases'),
   userId: UserIdSchema,
+  productId: z.uuidv4(),
   limit: z.number().int().min(1).max(50).default(20),
   cursor: disputeCaseListCursorSchema.optional(),
   filters: disputeCaseListFiltersSchema.optional(),
@@ -67,6 +68,16 @@ export const listDisputeCasesResultSchema = z.object({
   sync: disputeSyncStateSchema,
 })
 
+export const countActionableDisputeCasesSchema = baseQuerySchema.extend({
+  name: z.literal('CountActionableDisputeCases'),
+  userId: UserIdSchema,
+  productId: z.uuidv4(),
+})
+
+export const countActionableDisputeCasesResultSchema = z.object({
+  count: z.number().int().nonnegative(),
+})
+
 export type DisputeCaseSortField = z.infer<typeof disputeCaseSortFieldSchema>
 export type DisputeCaseSortDirection = z.infer<typeof disputeCaseSortDirectionSchema>
 export type DisputeCaseSort = z.infer<typeof disputeCaseSortSchema>
@@ -77,3 +88,7 @@ export type DisputeSyncState = z.infer<typeof disputeSyncStateSchema>
 export type GetStripeAppSettings = z.infer<typeof getStripeAppSettingsSchema>
 export type ListDisputeCases = z.infer<typeof listDisputeCasesSchema>
 export type ListDisputeCasesResult = z.infer<typeof listDisputeCasesResultSchema>
+export type CountActionableDisputeCases = z.infer<typeof countActionableDisputeCasesSchema>
+export type CountActionableDisputeCasesResult = z.infer<
+  typeof countActionableDisputeCasesResultSchema
+>

@@ -128,10 +128,12 @@ export class ProductSetupService implements IProductSetupService {
         url: product.url,
         productType: product.productType,
         status: product.status,
-        productDescription: product.productDescription,
-        serviceStartRule: product.serviceStartRule,
-        refundPolicyDisclosure: product.refundPolicyDisclosure,
-        cancellationPolicyDisclosure: product.cancellationPolicyDisclosure,
+        productFacts: {
+          productDescription: product.productDescription,
+          serviceStartRule: product.serviceStartRule,
+          refundPolicyDisclosure: product.refundPolicyDisclosure,
+          cancellationPolicyDisclosure: product.cancellationPolicyDisclosure,
+        },
         updatedAt: product.updatedAt.toISOString(),
       },
       setup,
@@ -223,7 +225,7 @@ export class ProductSetupService implements IProductSetupService {
     return (
       playbook !== null &&
       playbook.validate().complete &&
-      Product.deserialize(product).hasApprovedProductEvidenceFields()
+      Product.deserialize(product).hasApprovedProductFacts()
     )
   }
 

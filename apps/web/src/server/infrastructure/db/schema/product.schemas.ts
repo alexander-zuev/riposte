@@ -29,7 +29,7 @@ export const products = pgTable(
       .notNull()
       .default('digital_product_or_service'),
 
-    // Stripe-submittable structured fields. Nullable at create; agent fills during onboarding.
+    // Merchant-approved product facts. Nullable at create; agent fills during onboarding.
     productDescription: text('product_description'),
     serviceStartRule: text('service_start_rule').$type<ServiceStartRule>(),
     refundPolicyDisclosure: text('refund_policy_disclosure'),

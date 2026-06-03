@@ -30,7 +30,7 @@ export type ProductSnapshot = {
   updatedAt: Date
 }
 
-export type ProductEvidenceSetupSnapshot = Pick<
+export type ProductFactsSnapshot = Pick<
   ProductSnapshot,
   | 'productDescription'
   | 'serviceStartRule'
@@ -141,7 +141,7 @@ export class Product extends Entity<ProductSnapshot> {
     this.addEvent(createEvent('ProductDeleted', { productId: this.id, userId: this.userId }))
   }
 
-  /** Product-side of a setup restart: drop merchant-approved evidence fields so onboarding re-derives them. */
+  /** Product-side of a setup restart: drop merchant-approved facts so onboarding re-derives them. */
   restartSetup(): void {
     this.productDescription = null
     this.serviceStartRule = null
@@ -151,8 +151,8 @@ export class Product extends Entity<ProductSnapshot> {
     this.addEvent(createEvent('ProductSetupRestarted', { productId: this.id, userId: this.userId }))
   }
 
-  hasApprovedProductEvidenceFields(): boolean {
-    return requiredProductEvidenceFieldIssues(this.serialize()).length === 0
+  hasApprovedProductFacts(): boolean {
+    return requiredProductFactIssues(this.serialize()).length === 0
   }
 
   completeSetup(): Result<void, ValidationError> {
@@ -169,11 +169,11 @@ export class Product extends Entity<ProductSnapshot> {
         }),
       )
     }
-    const evidenceIssues = requiredProductEvidenceFieldIssues(this.serialize())
-    if (evidenceIssues.length > 0) {
+    const productFactIssues = requiredProductFactIssues(this.serialize())
+    if (productFactIssues.length > 0) {
       return Result.err(
         new ValidationError({
-          issues: evidenceIssues,
+          issues: productFactIssues,
         }),
       )
     }
@@ -251,31 +251,31 @@ export class Product extends Entity<ProductSnapshot> {
   }
 }
 
-function requiredProductEvidenceFieldIssues(product: ProductEvidenceSetupSnapshot) {
+function requiredProductFactIssues(productFacts: ProductFactsSnapshot) {
   const issues: Array<{ code: string; path: string[]; message: string }> = []
 
-  if (product.productDescription === null) {
+  if (productFacts.productDescription === null) {
     issues.push({
       code: 'invalid_product',
       path: ['productDescription'],
       message: 'productDescription is required to complete setup',
     })
   }
-  if (product.serviceStartRule === null) {
+  if (productFacts.serviceStartRule === null) {
     issues.push({
       code: 'invalid_product',
       path: ['serviceStartRule'],
       message: 'serviceStartRule is required to complete setup',
     })
   }
-  if (product.refundPolicyDisclosure === null) {
+  if (productFacts.refundPolicyDisclosure === null) {
     issues.push({
       code: 'invalid_product',
       path: ['refundPolicyDisclosure'],
       message: 'refundPolicyDisclosure is required to complete setup',
     })
   }
-  if (product.cancellationPolicyDisclosure === null) {
+  if (productFacts.cancellationPolicyDisclosure === null) {
     issues.push({
       code: 'invalid_product',
       path: ['cancellationPolicyDisclosure'],

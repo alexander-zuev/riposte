@@ -30,7 +30,7 @@ type CachedFetchDoc = {
   expiresAt: number
 }
 
-const productEvidenceFieldsSchema = z.object({
+const productFactsInputSchema = z.object({
   productDescription: z.string().trim().min(1).max(STRIPE_EVIDENCE_TEXT_MAX_LENGTH),
   serviceStartRule: z.enum(SERVICE_START_RULES),
   refundPolicyDisclosure: z.string().trim().min(1).max(STRIPE_EVIDENCE_TEXT_MAX_LENGTH),
@@ -49,7 +49,7 @@ export const DISPUTE_AGENT_COMMON_TOOL_NAMES = [
 
 export const DISPUTE_AGENT_CONNECT_APP_DATA_TOOL_NAMES = ['registerAppDataSource'] as const
 export const DISPUTE_AGENT_PLAYBOOK_TOOL_NAMES = [
-  'saveProductEvidenceFields',
+  'saveProductFacts',
   'readPlaybook',
   'writePlaybook',
   'editPlaybook',
@@ -301,10 +301,10 @@ export function buildDisputeAgentTools({
         })
       },
     }),
-    saveProductEvidenceFields: tool({
+    saveProductFacts: tool({
       description:
-        'Save merchant-approved product evidence fields used by deterministic Stripe evidence packet generation: product description, service date derivation rule, refund policy disclosure, and cancellation policy disclosure. Use only after presenting the drafted fields to the merchant and receiving approval.',
-      inputSchema: productEvidenceFieldsSchema,
+        'Save merchant-approved product facts used by deterministic Stripe evidence packet generation: product description, service date derivation rule, refund policy disclosure, and cancellation policy disclosure. Use only after presenting the drafted facts to the merchant and receiving approval.',
+      inputSchema: productFactsInputSchema,
       execute: async (fields) => {
         const command = createCommand('UpdateProduct', {
           userId: agent.getCurrentUserId(),

@@ -1,4 +1,4 @@
-import type { ProductEvidenceFields, ServiceStartRule } from '@riposte/core/client'
+import type { ProductFacts, ServiceStartRule } from '@riposte/core/client'
 import { CompletenessBadge, IncompleteList } from '@web/features/products/completeness'
 import { Card, CardContent } from '@web/ui/components/ui/card'
 import { Markdown } from '@web/ui/components/ui/markdown'
@@ -16,16 +16,16 @@ const NOT_SET = '_Not set yet_'
  * markdown and rendered through the same renderer as the playbook so both sections share one visual
  * language. Values are authored elsewhere (agent chat).
  */
-export function ProductEvidenceSection({ evidence }: { evidence: ProductEvidenceFields }) {
-  const serviceRule = evidence.serviceStartRule
-    ? SERVICE_START_RULE_LABEL[evidence.serviceStartRule]
+export function ProductFactsSection({ productFacts }: { productFacts: ProductFacts }) {
+  const serviceRule = productFacts.serviceStartRule
+    ? SERVICE_START_RULE_LABEL[productFacts.serviceStartRule]
     : null
 
   const missing = [
     serviceRule === null ? 'Service date rule' : null,
-    evidence.productDescription === null ? 'Product description' : null,
-    evidence.refundPolicyDisclosure === null ? 'Refund policy disclosure' : null,
-    evidence.cancellationPolicyDisclosure === null ? 'Cancellation policy disclosure' : null,
+    productFacts.productDescription === null ? 'Product description' : null,
+    productFacts.refundPolicyDisclosure === null ? 'Refund policy disclosure' : null,
+    productFacts.cancellationPolicyDisclosure === null ? 'Cancellation policy disclosure' : null,
   ].filter((label): label is string => label !== null)
 
   const markdown = `## Service date rule
@@ -36,19 +36,19 @@ Maps to Stripe evidence field \`service_date\`
 
 ## Product description
 
-> ${evidence.productDescription ?? NOT_SET}
+> ${productFacts.productDescription ?? NOT_SET}
 
 Maps to Stripe evidence field \`product_description\`
 
 ## Refund policy disclosure
 
-> ${evidence.refundPolicyDisclosure ?? NOT_SET}
+> ${productFacts.refundPolicyDisclosure ?? NOT_SET}
 
 Maps to Stripe evidence field \`refund_policy_disclosure\`
 
 ## Cancellation policy disclosure
 
-> ${evidence.cancellationPolicyDisclosure ?? NOT_SET}
+> ${productFacts.cancellationPolicyDisclosure ?? NOT_SET}
 
 Maps to Stripe evidence field \`cancellation_policy_disclosure\``
 

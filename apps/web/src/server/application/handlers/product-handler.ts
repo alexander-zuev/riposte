@@ -343,10 +343,10 @@ export const readDisputePlaybook: QueryHandler<
 }
 
 /**
- * Combined read for the playbook page. Orchestrates the playbook and the product's evidence
- * fields in one query so the frontend reads them with a single request. Unlike
+ * Combined read for the playbook page. Orchestrates the playbook and the product facts in one query
+ * so the frontend reads them with a single request. Unlike
  * `readDisputePlaybook`, an absent playbook is not an error here: it returns `playbook: null` so
- * the page still shows evidence during onboarding.
+ * the page still shows product facts during onboarding.
  */
 export const readProductDisputeSetup: QueryHandler<
   ReadProductDisputeSetup,
@@ -374,7 +374,7 @@ export const readProductDisputeSetup: QueryHandler<
           validation: latest.value.validate(),
         }
       : null,
-    evidence: {
+    productFacts: {
       productDescription: snapshot.productDescription,
       serviceStartRule: snapshot.serviceStartRule,
       refundPolicyDisclosure: snapshot.refundPolicyDisclosure,

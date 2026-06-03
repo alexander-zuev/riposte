@@ -35,6 +35,15 @@ export const createProductInputSchema = z.object({
 
 export type CreateProductInput = z.infer<typeof createProductInputSchema>
 
+export const productFactsSchema = z.object({
+  productDescription: stripeTextSchema.nullable(),
+  serviceStartRule: z.enum(SERVICE_START_RULES).nullable(),
+  refundPolicyDisclosure: stripeTextSchema.nullable(),
+  cancellationPolicyDisclosure: stripeTextSchema.nullable(),
+})
+
+export type ProductFacts = z.infer<typeof productFactsSchema>
+
 export const updateProductFieldsSchema = z.object({
   productName: productNameSchema.optional(),
   url: productUrlSchema.optional(),

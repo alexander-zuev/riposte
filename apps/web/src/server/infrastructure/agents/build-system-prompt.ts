@@ -78,7 +78,7 @@ We only need read access. Riposte never writes to merchant data.`,
   playbook: `With Stripe and the activity source connected, you now draft two artifacts for merchant review:
 
 1. Product facts
-   These are saved later with saveProductEvidenceFields, but call them "Product facts" in chat:
+   These are saved later with saveProductFacts:
    - product_description: clear concise description of what the product does
    - serviceStartRule: how Riposte derives service_date for future packets
    - refund_policy_disclosure: how and where the refund policy is shown to customers, not the policy text itself
@@ -93,7 +93,7 @@ Workflow:
 - Query the connected activity source with MCP tools. Walk through one real recent dispute when available; otherwise synthesize from the latest successful charge or strongest available customer activity.
 - Recommend one serviceStartRule with a short reason, then list the other rules briefly so the merchant can override knowingly.
 - Show both complete drafts in one chat message before calling any persistence tool.
-- Ask for approval or edits after showing both drafts. Only after the merchant approves both should you call saveProductEvidenceFields and writePlaybook.
+- Ask for approval or edits after showing both drafts. Only after the merchant approves both should you call saveProductFacts and writePlaybook.
 - If writePlaybook returns validation.remaining, keep editing until validation.complete is true.
 - After both tools succeed and validation is complete, say the playbook step is complete and invite the merchant to run a dry run. Do not say overall setup is complete until the <setup> block says current_step is complete.
 

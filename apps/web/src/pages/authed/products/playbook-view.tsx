@@ -13,7 +13,7 @@ import type {
 } from '@riposte/core/client'
 import { Link } from '@tanstack/react-router'
 import { CompletenessBadge, IncompleteList } from '@web/features/products/completeness'
-import { ProductEvidenceSection } from '@web/features/products/product-evidence-section'
+import { ProductFactsSection } from '@web/features/products/product-facts-section'
 import { formatInTimeZone } from '@web/lib/datetime'
 import { useTimezone } from '@web/lib/hooks/use-timezone'
 import { PageHeader } from '@web/pages/authed/shared/page-header'
@@ -42,7 +42,7 @@ export function PlaybookView({
   return (
     <PlaybookLayout>
       <PlaybookSection playbook={data.playbook} productId={productId} productName={productName} />
-      <ProductEvidenceSection evidence={data.evidence} />
+      <ProductFactsSection productFacts={data.productFacts} />
     </PlaybookLayout>
   )
 }

@@ -34,7 +34,20 @@ export default defineConfig({
       optimizer: {
         ssr: {
           enabled: true,
-          include: ['better-auth', '@better-auth/stripe', 'stripe', 'drizzle-orm', 'zod'],
+          include: [
+            'better-auth',
+            '@better-auth/stripe',
+            'stripe',
+            'drizzle-orm',
+            'zod',
+            'ai',
+            '@ai-sdk/openai',
+            '@ai-sdk/provider-utils',
+          ],
+          // better-auth 1.6.12+ imports node:crypto in @better-auth/utils password.node.mjs.
+          // The rolldown dep optimizer (vite 8) cannot load node: builtins while pre-bundling,
+          // so exclude it and let node:crypto resolve at runtime via nodejs_compat.
+          exclude: ['@better-auth/utils'],
         },
       },
     },

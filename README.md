@@ -61,15 +61,15 @@ GO LIVE     you're live
        won / lost  →  Slack + email
 ```
 
-### 🧱 Tech stack
+### 🛠️ Tech stack
 
-| Layer         | What                                                         |
-| ------------- | ------------------------------------------------------------ |
-| Agent runtime | Cloudflare Workers + Agents SDK + Workflows                  |
-| LLM           | Cloudflare Workers AI — Gemma 4                              |
-| DB            | PlanetScale Postgres                                         |
-| Stripe        | Official Stripe App + API integration                        |
-| Notifications | Slack, Email                                                 |
+| Layer        | What                                                   |
+| ------------ | ------------------------------------------------------ |
+| Frontend     | TanStack Start + React                                 |
+| Backend      | Cloudflare Workers, Workflows                          |
+| Agent        | Agents SDK, Workers AI Gemma 4                         |
+| Database     | PlanetScale Postgres                                   |
+| Integrations | Stripe App + OAuth/webhooks/Disputes API, Slack, Email |
 
 ### 🏠 Self-hosting
 

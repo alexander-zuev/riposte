@@ -31,21 +31,24 @@ Check `package.json` (root) and `apps/web/package.json` for available scripts be
 
 ## Generated Files
 
-Do not manually edit generated files. In particular, never hand-edit
-`apps/web/worker-configuration.d.ts`; update Cloudflare bindings/types only by changing the
-source config and running the appropriate generation command, such as
-`pnpm --filter @riposte/web run cf-typegen`.
+Do:
 
-When adding or changing a Cloudflare Worker env var or binding in `wrangler.jsonc`, update the
-source config first and then regenerate Worker types with `pnpm --filter @riposte/web run
-cf-typegen` before touching application code. Do not paper over missing `Env` properties with type
-assertions, local widened env types, or `as string` casts.
+- Change the source config/schema first.
+- Regenerate Worker types after `wrangler.jsonc` env var or binding changes:
+  `pnpm --filter @riposte/web run cf-typegen`.
+- Generate Drizzle migrations from schema changes:
+  `pnpm --filter @riposte/web run db:generate`.
+- Apply local development migrations only after generation:
+  `pnpm --filter @riposte/web run db:migrate:dev`.
+- Stop and ask if Drizzle prompts for an interactive choice or the intended migration is ambiguous.
 
-Do not manually create or edit Drizzle migration files or migration journal/snapshot metadata under
-`apps/web/src/server/infrastructure/db/migrations/`. Change the Drizzle schema first, then generate
-migrations with `pnpm --filter @riposte/web run db:generate`. If Drizzle prompts for an interactive
-choice or the intended migration is ambiguous, stop and ask the user before proceeding. Apply local
-development migrations with `pnpm --filter @riposte/web run db:migrate:dev` only after generation.
+Do not:
+
+- Hand-edit `apps/web/worker-configuration.d.ts`.
+- Hand-edit Drizzle migration files, journal, or snapshot metadata under
+  `apps/web/src/server/infrastructure/db/migrations/`.
+- Paper over missing `Env` properties with type assertions, local widened env types, or
+  `as string` casts.
 
 ## Code Comments
 
@@ -61,12 +64,24 @@ Monorepo with pnpm workspaces + Turborepo:
 
 ### Frontend (`apps/web/src/`)
 
-TanStack Start with TanStack Router. No RSC — traditional SSR + hydration.
+TanStack Start with TanStack Router. No RSC — traditional SSR + hydration. The frontend is
+FSD-inspired, not a strict FSD template: use the existing layers and do not invent new top-level
+layers without a clear reason.
 
-- `routes/` — File-based routing (TanStack Router)
-- `pages/` — Thin page orchestrators (compose features)
-- `ui/components/` — Pure presentation components (Shadcn + Radix + Tailwind v4)
-- `lib/` — Client utilities (auth, hooks, env, router)
+- `routes/` — Thin TanStack Router adapters: route definitions, route loaders/search validation,
+  layouts, API routes, and generated route boundaries. Route files should usually delegate UI to
+  `pages/`.
+- `pages/` — Screens/page compositions grouped by public/authed surfaces. Pages compose features,
+  entities, and UI for one route or closely related routes.
+- `features/` — Reusable user interactions and product capabilities, such as agent chat,
+  connection management, and product forms. Add here when behavior is reused or large enough to be
+  discovered independently from one page.
+- `entities/` — Client-side business concepts and data adapters: domain-facing models, query and
+  mutation hooks, selected IDs, and small entity UI.
+- `ui/` — Presentation primitives, components, and stylesheets.
+- `lib/` — Client utilities and providers (auth, analytics, env, router, query client).
+- `types/` — App-wide client/shared TypeScript types.
+- `client.tsx`, `server.ts`, `start.ts` — TanStack Start entry files.
 
 ### Storybook (`apps/web/.storybook/`)
 
@@ -80,29 +95,205 @@ Storybook is configured under `apps/web/.storybook`, not at the repo root.
 
 DDD-inspired structure running on Cloudflare Workers:
 
-- `entrypoints/` — Thin entry points (queue consumer, scheduled handler)
-- `application/handlers/` — Message handler registry and types
-- `infrastructure/` — DB (Drizzle + Postgres via Hyperdrive), auth (better-auth), queues, Durable Objects
-- `functions/` — TanStack Start server functions (RPC from frontend)
-- `middleware/` — Hono-style middleware (auth, error, logging)
+- `entrypoints/` — Runtime entrypoints: TanStack Start server functions, queue consumers, and
+  scheduled handlers
+- `application/` — Message bus, handler registry, and command/event/query handlers
+- `domain/` — Aggregates, entities, value objects, domain services, and repository interfaces
+- `infrastructure/` — DB, repositories, auth, middleware, queues, Durable Objects, Agents,
+  workflows, and external adapters
 
-Repository contracts are domain-facing. Repository interfaces should accept and return domain
-types, not Drizzle inferred row/insert types. Drizzle `Db*` types are useful inside
-`infrastructure` implementations for schema-aligned DB mapping, but they should not leak into
-repository interfaces, application handlers, routes, or domain models.
+#### Repositories (the write path)
 
-When a Drizzle schema column represents a domain union or branded type, type it at the schema
-boundary with the domain type, for example `text('status').$type<StripeConnectionStatus>()`.
-Do not widen domain values to plain `string` and then repair them throughout repositories.
+- Contracts are domain-facing: repository interfaces accept and return domain types, never Drizzle
+  inferred row/insert types. Drizzle `Db*` types stay inside `infrastructure` implementations and
+  do not leak into interfaces, handlers, routes, or domain models.
+- Repositories move whole aggregates in and out through a closed method list: `byId`,
+  `findByX` (command-use only), `insert(aggregate)`, `save(aggregate)`, `delete(aggregate)`.
+- Banned: `update(id, fields)` field patches (they bypass invariants) and query-shaped methods
+  such as `listForDashboard` (those belong in query handlers).
+- `insert` and `save` are separate methods, never one upserting `save`: different SQL under
+  version guarding, and their failures (`AlreadyExists` vs `ConcurrencyError`) need different
+  retry policies.
+- Raw Drizzle writes live only inside repositories.
+  `rg "(db|tx)\.(insert|update|delete)\(" apps/web/src/server --glob '!**/repositories/**'`
+  must return nothing; keep it that way.
+- When a Drizzle schema column represents a domain union or branded type, type it at the schema
+  boundary, e.g. `text('status').$type<StripeConnectionStatus>()`. Do not widen domain values to
+  plain `string` and repair them throughout repositories.
+
+#### Database capability boundaries
+
+- Domain repositories accept only a transaction-scoped handle from the UoW. Target architecture:
+  make this a branded `Tx` type so repositories cannot accidentally receive the root DB handle.
+- Query handlers and read-only app/infra services should receive only a read capability:
+  select/query, no insert/update/delete/transaction.
+- Memoized `once()` services must not hold tx-scoped repositories. If a service needs repositories,
+  create it from the active `Tx` as a per-call factory.
+- Explicit machinery stores are the exception to domain repository rules: outbox relay, message
+  receipts, poison-message bookkeeping, migrations, and test setup may use writable DB handles
+  because they are infrastructure bookkeeping, not domain aggregate mutation.
+
+#### Query handlers (the read path)
+
+- The read path skips repositories and entities entirely:
+  server fn or route → bus query → query handler → Drizzle SQL → DTO.
+- Query handlers contain SQL directly and return DTOs; the Drizzle `select({...})` projection IS
+  the DTO. No domain-class imports in query handlers.
+- Never rehydrate entities to serve reads: it couples the API contract to the persistence shape
+  and loads full clusters for a few fields.
+- Litmus for repo finders: if the returned object is not mutated and saved in the same flow, it is
+  a query in disguise — move the SQL to a query handler.
+- New screens use this shape immediately; migrate existing `listForX` repo methods when touched.
+
+#### Dependency direction
 
 If a production-code change forces edits to an unrelated unit-test mock, stop and re-evaluate the
 production-code dependency direction before touching the mock. Do not patch unrelated mocks to
 satisfy import-time side effects. Prefer reducing import-time work or localizing dependency access,
 especially in infrastructure modules that import Drizzle table schemas.
 
-### Message Bus Pattern
+### Message Bus and Transactions
 
-Commands, events, and queries defined in `packages/core/src/domain/messaging/`. Transactional outbox pattern: handlers persist events to `message_outbox` table in the same transaction, then relay to Cloudflare Queues.
+Commands, events, and queries defined in `packages/core/src/domain/messaging/`. One entry point:
+`messageBus.handle(message)`. Transactional outbox: handlers persist events to `message_outbox`
+in the same transaction as the state change, then relay to Cloudflare Queues.
+
+#### Dispatch (asymmetric by message kind, on purpose)
+
+- **Commands** — one handler inside the UoW: transaction + idempotency claim + outbox.
+- **Events** — in-process fan-out; each subscriber runs in its own UoW with its own
+  `${event.id}:${handlerId}` receipt, so redelivered events no-op per handler.
+- **Queries** — no transaction, no claim, no outbox; straight SQL to a DTO.
+
+#### Event authority vs subscriber execution
+
+| Axis | Kind | Meaning |
+| --- | --- | --- |
+| Event authority | **Domain event** | Authoritative business fact minted by the PG domain model inside a UoW/outbox transaction |
+| Event authority | **Integration event** | Cross-boundary observation or dirty ping from a system/runtime whose state is not the PG aggregate |
+| Subscriber execution | **State subscriber** | Writes Postgres, so it runs through UoW: transaction + claim + outbox |
+| Subscriber execution | **Effect subscriber** | Writes no Postgres, so it runs with no UoW, no transaction, and no claim |
+
+Do not confuse the axes. Domain and integration events can both have state subscribers. The
+difference is the event's authority, not the subscriber machinery.
+
+Policies should react to domain events. Integration events feed reconciliation state subscribers:
+query the owning system for current truth, update Postgres idempotently, and let the domain aggregate
+raise real domain events if PG state changed.
+
+#### Transaction rules
+
+- No cross-boundary calls inside a Postgres transaction: no DO RPC, Stripe, LLM, R2, email, or
+  queue send inside a handler's tx. The tell is `deps.services.*` (anything but `messageBus`)
+  inside a handler that received `tx`. Audit:
+  `rg "deps\.services\." apps/web/src/server/application/handlers/`.
+- Why this is absolute: long-held transactions exhaust the Hyperdrive pool, block vacuum, and turn
+  external slowness into database-wide failure.
+- One `executeUoW` per message, never nested. One aggregate modified per transaction; a second
+  aggregate update belongs in an event handler.
+- Retry at the caller boundary (queue consumer, workflow step) by retrying the whole UoW, never
+  individual SQL statements inside a repository.
+
+#### Two gates: bus vs direct service calls
+
+The bus carries domain meaning: commands, events, and shared queries. It does not carry every
+function call.
+
+| Situation | Use |
+| --- | --- |
+| Domain mutation / PG state change | Bus → handler → UoW → Postgres |
+| External I/O or caller waits for an answer and no state changes | Direct application service or adapter |
+| External I/O produces data that must become domain state | Service/adapter first, then command with the result as payload |
+| No state changed yet, but work must not be lost | Mint durable intent state first, then it can ride the bus |
+
+The violations are the crossings: a workflow step writing Postgres directly, or a handler calling
+external services inside its transaction.
+
+#### Effect subscribers
+
+An event subscriber that performs external work and writes no Postgres — notifications, DO pokes,
+workflow signals, starting workflows — is an effect subscriber, regardless of whether it reacts to a
+domain event or an integration event:
+
+- Species test for every new subscriber: does it write our Postgres? Yes → state subscriber
+  (tx + claim). No → effect subscriber (no tx, no claim). Both → split it.
+- No transaction and no claim around an effect: claim-then-effect loses the effect on crash;
+  effect-then-claim leaves an orphan window. Dedupe is delegated to the target system via an
+  idempotency key derived from the envelope id: deterministic workflow instance ids, provider
+  idempotency keys, idempotent RPCs.
+- No idempotency key available (e.g. Slack)? Accept rare duplicates; never reintroduce a claim
+  around the effect. State each handler's dedupe policy in its doc comment.
+- Effects read via bus queries, act via adapters, and report back via outcome commands, which
+  carry their own transaction and claim.
+
+#### Cross-store writes (Postgres ↔ DO ↔ Stripe ↔ queue)
+
+- Atomicity across two stores does not exist. The owner of the fact commits first, alone, in its
+  own transaction; followers converge through a separate, idempotent, machine-retried step.
+- Every cross-store sequence names its machine-driven repair: queue retry, alarm drain, workflow
+  timeout, or sweeper. `logger.error` before dropping a failed follower write is a confession,
+  not a repair.
+- `waitUntil` is a latency optimization only, never correctness. Deleting any `waitUntil` must
+  leave the system correct, just slower.
+- Ids minted on redelivery-prone paths (queue consumers, DO callbacks, workflow steps) must be
+  deterministic per logical occurrence — never `Date.now()` or random suffixes, or redelivery
+  synthesizes duplicates.
+- An external write is bracketed by a pending state on the owning aggregate with three exits:
+  confirmed, failed, expired. The pending state is the mutex against double submission and the
+  sweeper's handle for reconciling against the external system.
+- For unreliable cross-store observations, prefer dirty pings over edge payloads. Example:
+  `integration.mcp_state_changed { productId }` should not carry authoritative
+  connected/disconnected state. Its state subscriber queries the Agent/DO for current MCP truth
+  before opening a PG transaction, reconciles product app-data-source rows idempotently, and the
+  aggregate raises domain events such as `product.app_data_source_connected` only if PG state
+  actually changed.
+
+#### Agent schedules and DO intent outboxes
+
+Inside Cloudflare Agents, use the Agents SDK scheduler for durable Agent-local intent when one
+scheduled drain is enough. `schedule()` persists tasks in Agent SQLite and uses Durable Object alarms
+underneath.
+
+- For delayed/date schedules, pass `{ idempotent: true }` when repeated scheduling should collapse
+  to one pending callback. Cron schedules are idempotent by default.
+- The scheduled callback is the drain. It sends the queue message or performs the follower action.
+  On transient failure, throw so the scheduler retry policy applies.
+- Scheduled callbacks have bounded retries by default. Use explicit retry options,
+  self-rescheduling, or periodic reconcile when losing the callback would matter.
+- Do not call `ctx.storage.setAlarm()` directly inside an Agent; the Agents SDK owns and multiplexes
+  the alarm.
+- For raw Durable Objects, use the hand-rolled pattern: storage intent row + alarm drain.
+
+#### Disposable stores
+
+For R2/blob-like disposable stores, write the object before recording the DB pointer.
+
+| Order | Result |
+| --- | --- |
+| ✅ Blob first | Possible orphan blob, sweepable |
+| ❌ DB row first | Possible missing blob pointer, user-visible corruption |
+
+Use deterministic object keys where retries can repeat the write, then record the outcome in
+Postgres with a follow-up command.
+
+#### Workflows (orchestration)
+
+- Each step does exactly one unit of work: either one command through the bus (internal step) or
+  one external call through an adapter (raw step). Never both in one step, never two of either.
+- Zero domain logic in workflow bodies — the body only sequences steps and branches on
+  command-returned discriminants. Decisions live in handlers.
+- Command steps use `internalStepConfig`; `externalStepConfig` belongs only on raw external steps.
+  External I/O results flow back into the domain as the follow-up command's payload: the domain
+  never performs I/O — it ingests evidence as command payloads and emits decisions as events.
+- Workflow steps that touch external systems should not call commands that perform that external I/O
+  inside the handler. Do the external I/O in a raw step, then pass the result into a command if the
+  result must update domain state.
+- Bus queries are legal inside raw steps (reads need no transaction or claim).
+- Step names and idempotency keys derive from the workflow instance id, so retries and engine
+  replays memoize instead of re-executing.
+- Orchestration vs choreography: a sequence or branching of external calls → workflow; a
+  single-shot reaction to one event → effect subscriber. Never both driving one flow — that is two
+  hands on one wheel.
 
 ## Database
 
@@ -221,9 +412,7 @@ control flow.
 
 ### UoW and retry
 
-Drizzle rolls back only by throwing, so `executeUoW` may contain a small throw bridge: store the `Result.err`, call `tx.rollback()`, catch `TransactionRollbackError`, and return the stored `Result.err`. This is an adapter detail; outside UoW the contract remains `Promise<Result<T, E>>`.
-
-Retry at the caller boundary, not inside repositories. Queue consumer / workflow step retry should retry the whole transaction/UoW, not individual SQL statements.
+Drizzle rolls back only by throwing, so `executeUoW` may contain a small throw bridge: store the `Result.err`, call `tx.rollback()`, catch `TransactionRollbackError`, and return the stored `Result.err`. This is an adapter detail; outside UoW the contract remains `Promise<Result<T, E>>`. Retry policy (whole-UoW, at the caller boundary) is defined in Message Bus and Transactions.
 
 For workflows, map handler `Result.err()` by retryability:
 
@@ -334,13 +523,13 @@ Durable Object alarms:
 - Do not call `instance.alarm()` directly in integration tests unless deliberately bypassing Cloudflare alarm semantics.
 - Do not assert exact alarm run counts unless that count is the behavior under test.
 
-R2, when added:
+R2:
 
-- Configure an `r2_buckets` binding in the test Wrangler env and use `env.BUCKET.put/get/delete` directly.
+- Use the real test-env R2 binding directly (`env.<BUCKET>.put/get/delete`).
 - Use per-test object key prefixes and delete exact objects.
 - For R2 event logic, keep schema/dispatch tests as pure unit tests unless the test actually needs bucket semantics.
 
-Workflows, when added:
+Workflows:
 
 - Use `introspectWorkflowInstance(env.MY_WORKFLOW, instanceId)` or `introspectWorkflow(env.MY_WORKFLOW)` from `cloudflare:test`.
 - Always dispose introspectors with `await using` or explicit `dispose()`; otherwise Workflow state can persist into later tests.
@@ -349,7 +538,7 @@ Workflows, when added:
 - Use modifiers such as `disableSleeps`, `disableRetryDelays`, `mockStepResult`, `mockStepError`, and `mockEvent` only when the behavior under test specifically needs time/retry/event control.
 - For expected failures, wait for `errored` and assert `getError()`.
 
-Agents, when added:
+Agents:
 
 - Agents run on Workers and Durable Objects.
 - Test route behavior with `exports.default.fetch(...)` or direct `worker.fetch(request, env, ctx)` plus `waitOnExecutionContext(ctx)`.
@@ -406,12 +595,6 @@ Workers AI (`AI`):
 - Do not call real AI from normal unit/integration tests.
 - Wrap AI behind an adapter and mock it for routine tests.
 - Reserve remote AI checks for explicit opt-in smoke tests with separate credentials, costs, and nondeterministic assertions.
-
-D1, when added:
-
-- Read migrations in Vitest config with `readD1Migrations(...)`.
-- Expose migrations as a test binding and call `applyD1Migrations(env.DB, migrations)` from setup.
-- Keep D1 data owned by the test just like KV/R2.
 
 Service bindings/assets/browser/vectorize/images:
 

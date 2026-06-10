@@ -13,7 +13,7 @@ export const getSelectedProductIdServerFn = createServerFn().handler(async () =>
 })
 
 export const setSelectedProductIdServerFn = createServerFn()
-  .inputValidator(z.object({ productId: z.uuid().nullable() }))
+  .validator(z.object({ productId: z.uuid().nullable() }))
   .handler(async ({ data }) => {
     const current = getCookie(SELECTED_PRODUCT_COOKIE_NAME) ?? null
     if (current === data.productId) {

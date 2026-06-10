@@ -10,7 +10,7 @@ export const getSidebarStateServerFn = createServerFn().handler(async (): Promis
 })
 
 export const setSidebarStateServerFn = createServerFn()
-  .inputValidator((data: { open: boolean }) => data)
+  .validator((data: { open: boolean }) => data)
   .handler(async ({ data }): Promise<void> => {
     setCookie(SIDEBAR_COOKIE_NAME, String(data.open), {
       path: '/',

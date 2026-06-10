@@ -13,7 +13,7 @@ const getStripeOAuthUrlInput = z.object({
 
 export const getStripeOAuthUrl = createServerFn({ method: 'GET' })
   .middleware([requireAuth])
-  .inputValidator((input: unknown) => getStripeOAuthUrlInput.parse(input))
+  .validator((input: unknown) => getStripeOAuthUrlInput.parse(input))
   .handler(async ({ context, data }) => {
     const command = createCommand('BuildStripeOAuthInstallUrl', {
       userId: context.user.id,

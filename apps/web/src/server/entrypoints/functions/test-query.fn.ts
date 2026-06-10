@@ -34,7 +34,7 @@ const testQueryInputSchema = z.object({
 })
 
 export const runTestQuery = createServerFn({ method: 'GET' })
-  .inputValidator(testQueryInputSchema)
+  .validator(testQueryInputSchema)
   .handler(async ({ data }) => {
     switch (data.kind) {
       case 'success':

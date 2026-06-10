@@ -11,7 +11,7 @@ export const joinWaitlistInput = z.object({
 export type JoinWaitlistInput = z.infer<typeof joinWaitlistInput>
 
 export const joinWaitlist = createServerFn()
-  .inputValidator(joinWaitlistInput)
+  .validator(joinWaitlistInput)
   .handler(async ({ data, context }) => {
     const deps = context.deps
     const command = createCommand('JoinWaitlist', {

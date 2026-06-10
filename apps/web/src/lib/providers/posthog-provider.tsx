@@ -5,7 +5,7 @@ import type { PropsWithChildren } from 'react'
 const posthogOptions = {
   api_host: settings.posthog.apiHost,
   ui_host: settings.posthog.uiHost,
-  __add_tracing_headers: ['riposte.sh', 'staging.riposte.sh', 'tunnel.riposte.sh'],
+  tracing_headers: ['riposte.sh', 'staging.riposte.sh', 'tunnel.riposte.sh'],
   external_scripts_inject_target: 'head' as const,
   disable_surveys: true,
   loaded: (ph: { register: (props: Record<string, string>) => void }) => {

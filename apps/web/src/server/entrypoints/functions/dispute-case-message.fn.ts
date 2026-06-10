@@ -19,7 +19,7 @@ const listDisputeCaseActivityInputSchema = listDisputeCaseActivitySchema.omit({
 
 export const getDisputeCaseActivity = createServerFn({ method: 'GET' })
   .middleware([requireAuth])
-  .inputValidator(getDisputeCaseActivityInputSchema)
+  .validator(getDisputeCaseActivityInputSchema)
   .handler(async ({ data, context }) => {
     const query = createQuery('GetDisputeCaseActivity', data)
     const result = await context.deps.services.messageBus().handle(query)
@@ -29,7 +29,7 @@ export const getDisputeCaseActivity = createServerFn({ method: 'GET' })
 
 export const listDisputeCaseActivity = createServerFn({ method: 'GET' })
   .middleware([requireAuth])
-  .inputValidator(listDisputeCaseActivityInputSchema)
+  .validator(listDisputeCaseActivityInputSchema)
   .handler(async ({ data, context }) => {
     const query = createQuery('ListDisputeCaseActivity', data)
     const result = await context.deps.services.messageBus().handle(query)

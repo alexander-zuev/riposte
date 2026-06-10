@@ -12,7 +12,7 @@ import { Result } from 'better-result'
 
 const logger = createLogger('error-middleware')
 
-// TanStack's inputValidator mangles ZodError into Error(JSON.stringify(issues)).
+// TanStack's validator mangles ZodError into Error(JSON.stringify(issues)).
 // Returns ValidationError if parseable, null otherwise.
 function tryParseZodError(error: unknown): ValidationError | null {
   if (!(error instanceof Error)) return null

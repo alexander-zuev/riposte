@@ -43,7 +43,7 @@ export const listProducts = createServerFn({ method: 'GET' })
 
 export const getProductSetupState = createServerFn({ method: 'GET' })
   .middleware([requireAuth])
-  .inputValidator(getProductSetupStateFnInputSchema)
+  .validator(getProductSetupStateFnInputSchema)
   .handler(async ({ data, context }) => {
     const query = createQuery('GetProductSetupState', {
       userId: context.user.id,
@@ -56,7 +56,7 @@ export const getProductSetupState = createServerFn({ method: 'GET' })
 
 export const createProduct = createServerFn({ method: 'POST' })
   .middleware([requireAuth])
-  .inputValidator(createProductFnInputSchema)
+  .validator(createProductFnInputSchema)
   .handler(async ({ data, context }) => {
     const command = createCommand('CreateProduct', {
       userId: context.user.id,
@@ -71,7 +71,7 @@ export const createProduct = createServerFn({ method: 'POST' })
 
 export const updateProduct = createServerFn({ method: 'POST' })
   .middleware([requireAuth])
-  .inputValidator(updateProductFnInputSchema)
+  .validator(updateProductFnInputSchema)
   .handler(async ({ data, context }) => {
     const { productId, ...fields } = data
     const command = createCommand('UpdateProduct', {
@@ -86,7 +86,7 @@ export const updateProduct = createServerFn({ method: 'POST' })
 
 export const readProductSetupSnapshot = createServerFn({ method: 'GET' })
   .middleware([requireAuth])
-  .inputValidator(getProductSetupStateFnInputSchema)
+  .validator(getProductSetupStateFnInputSchema)
   .handler(async ({ data, context }) => {
     const query = createQuery('ReadProductSetupSnapshot', {
       userId: context.user.id,
@@ -99,7 +99,7 @@ export const readProductSetupSnapshot = createServerFn({ method: 'GET' })
 
 export const readDisputePlaybook = createServerFn({ method: 'GET' })
   .middleware([requireAuth])
-  .inputValidator(readPlaybookFnInputSchema)
+  .validator(readPlaybookFnInputSchema)
   .handler(async ({ data, context }) => {
     const query = createQuery('ReadDisputePlaybook', {
       userId: context.user.id,
@@ -112,7 +112,7 @@ export const readDisputePlaybook = createServerFn({ method: 'GET' })
 
 export const readProductDisputeSetup = createServerFn({ method: 'GET' })
   .middleware([requireAuth])
-  .inputValidator(readPlaybookFnInputSchema)
+  .validator(readPlaybookFnInputSchema)
   .handler(async ({ data, context }) => {
     const query = createQuery('ReadProductDisputeSetup', {
       userId: context.user.id,
@@ -125,7 +125,7 @@ export const readProductDisputeSetup = createServerFn({ method: 'GET' })
 
 export const deleteProduct = createServerFn({ method: 'POST' })
   .middleware([requireAuth])
-  .inputValidator(deleteProductFnInputSchema)
+  .validator(deleteProductFnInputSchema)
   .handler(async ({ data, context }) => {
     const command = createCommand('DeleteProduct', {
       userId: context.user.id,
@@ -145,7 +145,7 @@ export const deleteProduct = createServerFn({ method: 'POST' })
  */
 export const disconnectProductAppDataSource = createServerFn({ method: 'POST' })
   .middleware([requireAuth])
-  .inputValidator(disconnectProductAppDataSourceFnInputSchema)
+  .validator(disconnectProductAppDataSourceFnInputSchema)
   .handler(async ({ data, context }) => {
     const result = await context.deps.services.disputeAgentClient().disconnectMcp({
       userId: context.user.id,

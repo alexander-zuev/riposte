@@ -26,7 +26,7 @@ export const getTimezoneServerFn = createServerFn().handler(async () => {
 
 /** Persist the client-detected timezone so the next SSR renders local with no flip. */
 export const setTimezoneServerFn = createServerFn()
-  .inputValidator(
+  .validator(
     z.object({
       timeZone: z.string().refine(isValidTimeZone, { error: 'Invalid IANA time zone' }),
     }),

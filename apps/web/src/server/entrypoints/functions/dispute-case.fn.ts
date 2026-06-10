@@ -32,7 +32,7 @@ const SYNC_WAIT_MS = 15_000
 
 export const listDisputeCases = createServerFn({ method: 'GET' })
   .middleware([requireAuth])
-  .inputValidator(listDisputeCasesInputSchema)
+  .validator(listDisputeCasesInputSchema)
   .handler(async ({ data, context }) => {
     const input = listDisputeCasesInputSchema.parse(data)
     const query = createQuery('ListDisputeCases', {
@@ -46,7 +46,7 @@ export const listDisputeCases = createServerFn({ method: 'GET' })
 
 export const countActionableDisputeCases = createServerFn({ method: 'GET' })
   .middleware([requireAuth])
-  .inputValidator(countActionableDisputeCasesInputSchema)
+  .validator(countActionableDisputeCasesInputSchema)
   .handler(async ({ data, context }) => {
     const input = countActionableDisputeCasesInputSchema.parse(data)
     const query = createQuery('CountActionableDisputeCases', {
@@ -60,7 +60,7 @@ export const countActionableDisputeCases = createServerFn({ method: 'GET' })
 
 export const syncDisputesForProduct = createServerFn({ method: 'POST' })
   .middleware([requireAuth])
-  .inputValidator(syncDisputesForProductInputSchema)
+  .validator(syncDisputesForProductInputSchema)
   .handler(async ({ data, context }) => {
     const connection = await context.deps.repos
       .stripeConnections(context.deps.db())

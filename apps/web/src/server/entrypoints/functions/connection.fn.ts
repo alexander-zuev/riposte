@@ -18,7 +18,7 @@ export const getConnectionsStatus = createServerFn({ method: 'GET' })
 
 export const setNotificationChannelPreference = createServerFn({ method: 'POST' })
   .middleware([requireAuth])
-  .inputValidator(setNotificationChannelPreferenceInputSchema)
+  .validator(setNotificationChannelPreferenceInputSchema)
   .handler(async ({ context, data }) => {
     const command = createCommand('SetNotificationChannelPreference', {
       userId: context.user.id,

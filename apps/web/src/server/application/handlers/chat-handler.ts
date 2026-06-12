@@ -6,6 +6,7 @@ import {
   type GetChatMessages,
 } from '@riposte/core'
 import type { QueryHandler } from '@server/application/registry/types'
+import { transitionalRepoRead } from '@server/infrastructure/db'
 import { Result } from 'better-result'
 
 export const getChatMessages: QueryHandler<
@@ -13,7 +14,9 @@ export const getChatMessages: QueryHandler<
   DisputeAgentMessage[],
   DatabaseError | EntityNotFoundError | DOUnreachableError
 > = async (query, ctx) => {
-  const found = await ctx.deps.repos.products(ctx.deps.db()).findById(query.productId)
+  const found = await ctx.deps.repos
+    .products(transitionalRepoRead(ctx.deps.readDb()))
+    .findById(query.productId)
   if (found.isErr()) return Result.err(found.error)
   // Mismatch returns NotFound — never leak existence of products the caller
   // doesn't own. Matches `productSetup.getState`.

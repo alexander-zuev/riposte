@@ -51,6 +51,7 @@ import type { CommandHandler, EventHandler, QueryHandler } from '@server/applica
 import { ProductAppDataSource } from '@server/domain/app-data-sources'
 import { applyPlaybookEdit, DisputePlaybook } from '@server/domain/dispute-playbooks'
 import { Product } from '@server/domain/products'
+import { transitionalRepoRead } from '@server/infrastructure/db'
 import { Result } from 'better-result'
 
 const logger = createLogger('product-handler')
@@ -69,7 +70,9 @@ export const listProducts: QueryHandler<ListProducts, ListProductsResult, Databa
   query,
   ctx,
 ) => {
-  const found = await ctx.deps.repos.products(ctx.deps.db()).findByUserId(query.userId)
+  const found = await ctx.deps.repos
+    .products(transitionalRepoRead(ctx.deps.readDb()))
+    .findByUserId(query.userId)
   if (found.isErr()) return Result.err(found.error)
 
   return Result.ok({
@@ -319,7 +322,7 @@ export const readDisputePlaybook: QueryHandler<
   ReadDisputePlaybookResult,
   DatabaseError | EntityNotFoundError
 > = async (query, ctx) => {
-  const db = ctx.deps.db()
+  const db = transitionalRepoRead(ctx.deps.readDb())
   const product = await ctx.deps.repos.products(db).findById(query.productId)
   if (product.isErr()) return Result.err(product.error)
   if (!product.value || product.value.userId !== query.userId) {
@@ -353,7 +356,7 @@ export const readProductDisputeSetup: QueryHandler<
   ReadProductDisputeSetupResult,
   DatabaseError | EntityNotFoundError
 > = async (query, ctx) => {
-  const db = ctx.deps.db()
+  const db = transitionalRepoRead(ctx.deps.readDb())
   const product = await ctx.deps.repos.products(db).findById(query.productId)
   if (product.isErr()) return Result.err(product.error)
   if (!product.value || product.value.userId !== query.userId) {

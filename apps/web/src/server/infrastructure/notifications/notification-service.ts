@@ -9,7 +9,7 @@ import { createLogger } from '@riposte/core'
 import type { DisputeCaseSnapshot } from '@server/domain/disputes'
 import type { AppDeps } from '@server/infrastructure/app-deps'
 import { getServerConfig } from '@server/infrastructure/config'
-import type { DrizzleDb } from '@server/infrastructure/db'
+import type { Tx } from '@server/infrastructure/db'
 import { disputeNotificationEmailTemplate } from '@server/infrastructure/email/templates/dispute-notification.template'
 import { slackDisputeNotificationTemplate } from '@server/infrastructure/notifications/slack-dispute-notification.template'
 import { Result } from 'better-result'
@@ -27,7 +27,7 @@ export interface INotificationService {
 export class NotificationService implements INotificationService {
   constructor(
     private readonly deps: AppDeps,
-    private readonly tx: DrizzleDb,
+    private readonly tx: Tx,
   ) {}
 
   async notifyDisputeReceived(

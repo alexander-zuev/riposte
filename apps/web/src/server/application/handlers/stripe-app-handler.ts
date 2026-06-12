@@ -19,6 +19,7 @@ import {
 import type { CommandHandler, EventHandler, QueryHandler } from '@server/application/registry/types'
 import { DisputeCase } from '@server/domain/disputes'
 import type { AppDeps } from '@server/infrastructure/app-deps'
+import { transitionalRepoRead } from '@server/infrastructure/db'
 import { disputeSyncGateKey } from '@server/infrastructure/durable-objects/async-gate-client'
 import { stripeRequest } from '@server/infrastructure/stripe/stripe-request'
 import { Result } from 'better-result'
@@ -45,7 +46,7 @@ export const getStripeAppSettings: QueryHandler<
   DatabaseError
 > = async (query, { deps }) => {
   const syncState = await deps.repos
-    .stripeDisputeSyncState(deps.db())
+    .stripeDisputeSyncState(transitionalRepoRead(deps.readDb()))
     .findForAccount({ stripeAccountId: query.stripeAccountId, livemode: query.livemode })
 
   if (syncState.isErr()) return Result.err(syncState.error)

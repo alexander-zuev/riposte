@@ -1,7 +1,8 @@
 import type { DatabaseError, QueueError } from '@riposte/core'
 import { createLogger } from '@riposte/core'
 import type { IOutboxRepository } from '@server/domain/repository/interfaces'
-import type { DrizzleDb } from '@server/infrastructure/db'
+import type { DrizzleDb, Tx } from '@server/infrastructure/db'
+import { brandTx } from '@server/infrastructure/db'
 import { Result } from 'better-result'
 import { is, TransactionRollbackError } from 'drizzle-orm'
 
@@ -27,10 +28,12 @@ export interface IOutboxRelay {
  * Called by OutboxRelayDO (for coalesced processing) and cron (safety net).
  */
 export class OutboxRelay implements IOutboxRelay {
+  // Machinery exemption: holds the writable root handle by design — the relay opens its
+  // own transaction outside any UoW (idempotent bookkeeping, no claim, no domain events).
   constructor(
     private readonly db: DrizzleDb,
     private readonly queueClient: IQueueClient,
-    private readonly outboxRepo: (tx: DrizzleDb) => IOutboxRepository,
+    private readonly outboxRepo: (tx: Tx) => IOutboxRepository,
   ) {}
 
   /**
@@ -49,7 +52,8 @@ export class OutboxRelay implements IOutboxRelay {
     let rollbackErr: OutboxRelayError | undefined
 
     try {
-      const published = await this.db.transaction(async (tx) => {
+      const published = await this.db.transaction(async (rawTx) => {
+        const tx = brandTx(rawTx)
         const repo = this.outboxRepo(tx)
         // 1. SELECT: Lock oldest pending events for this transaction
         // SKIP LOCKED ensures concurrent flushes don't block each other

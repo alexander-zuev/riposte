@@ -8,6 +8,7 @@ import {
   toServerFnRpc,
   uuidv7,
 } from '@riposte/core'
+import { transitionalRepoRead } from '@server/infrastructure/db'
 import { disputeSyncGateKey } from '@server/infrastructure/durable-objects/async-gate-client'
 import { requireAuth } from '@server/infrastructure/middleware/auth.middleware'
 import { createServerFn } from '@tanstack/react-start'
@@ -63,7 +64,7 @@ export const syncDisputesForProduct = createServerFn({ method: 'POST' })
   .validator(syncDisputesForProductInputSchema)
   .handler(async ({ data, context }) => {
     const connection = await context.deps.repos
-      .stripeConnections(context.deps.db())
+      .stripeConnections(transitionalRepoRead(context.deps.readDb()))
       .findByProductId(data.productId)
     if (connection.isErr()) return toServerFnRpc(Result.err(connection.error))
     if (!connection.value) {

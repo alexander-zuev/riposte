@@ -55,6 +55,7 @@ import {
 } from '@server/infrastructure/ai/model-factory'
 import type { IAnalyticsService } from '@server/infrastructure/analytics/analytics-service'
 import { createAppDeps, type AppDeps } from '@server/infrastructure/app-deps'
+import { transitionalRepoRead } from '@server/infrastructure/db'
 import { isTransientError, RETRY } from '@server/infrastructure/resilience/retry'
 import type { AgentMcpOAuthProvider } from 'agents'
 import { estimateMessageTokens, estimateStringTokens } from 'agents/experimental/memory/utils'
@@ -596,7 +597,9 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
     const debugMode = (this.deps.env.ENV as string) === 'development'
     const basePrompt = buildBasePrompt({ debugMode })
     if (!this.userId) return basePrompt
-    const product = await this.deps.repos.products(this.deps.db()).findById(this.name)
+    const product = await this.deps.repos
+      .products(transitionalRepoRead(this.deps.readDb()))
+      .findById(this.name)
     if (product.isErr()) {
       logger.error('load_instructions_product_repo_failed', {
         productId: this.name,

@@ -17,7 +17,7 @@ import type {
   QueryHandler,
 } from '@server/application/registry/types'
 import type { AppDeps } from '@server/infrastructure/app-deps'
-import type { DrizzleDb } from '@server/infrastructure/db'
+import type { Tx } from '@server/infrastructure/db'
 import { Result, panic } from 'better-result'
 
 const logger = createLogger('message-bus')
@@ -78,7 +78,7 @@ export class MessageBus implements IMessageBus {
     const result = await Result.gen(async function* () {
       const value = yield* Result.await(
         this.deps.uow.execute(
-          async (tx: DrizzleDb) => handler(command, { deps: this.deps, tx }),
+          async (tx: Tx) => handler(command, { deps: this.deps, tx }),
           command.id,
         ),
       )

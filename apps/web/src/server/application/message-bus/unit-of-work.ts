@@ -5,7 +5,8 @@ import {
   getCollectedEvents,
   runWithEventContext,
 } from '@server/infrastructure/context/event-context'
-import type { DrizzleDb } from '@server/infrastructure/db'
+import type { DrizzleDb, Tx } from '@server/infrastructure/db'
+import { brandTx } from '@server/infrastructure/db'
 import { Result } from 'better-result'
 import { is, TransactionRollbackError } from 'drizzle-orm'
 
@@ -23,16 +24,17 @@ const logger = createLogger('unit-of-work')
  */
 export async function executeUoW<T, E>(
   deps: AppDeps,
-  work: (tx: DrizzleDb) => Promise<Result<T, E>>,
+  db: DrizzleDb,
+  work: (tx: Tx) => Promise<Result<T, E>>,
   msgId: string,
 ): Promise<Result<T, E | DatabaseError | DuplicateMessageError>> {
-  const db = deps.db()
   let rollbackErr: E | DatabaseError | DuplicateMessageError | undefined
   let eventsPersisted = false
 
   try {
     const value = await runWithEventContext(async () =>
-      db.transaction(async (tx) => {
+      db.transaction(async (rawTx) => {
+        const tx = brandTx(rawTx)
         const outboxRepo = deps.repos.outbox(tx)
 
         const receipt = await outboxRepo.assertMessageNotProcessed(msgId)

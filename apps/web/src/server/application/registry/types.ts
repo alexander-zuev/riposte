@@ -7,12 +7,12 @@ import type {
   QueryMap,
 } from '@riposte/core'
 import type { AppDeps } from '@server/infrastructure/app-deps'
-import type { DrizzleDb } from '@server/infrastructure/db'
+import type { Tx } from '@server/infrastructure/db'
 import type { Result } from 'better-result'
 
 export type HandlerContext = {
   deps: AppDeps
-  tx: DrizzleDb
+  tx: Tx
 }
 
 export type QueryContext = {

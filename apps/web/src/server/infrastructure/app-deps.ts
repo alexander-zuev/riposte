@@ -34,8 +34,8 @@ import {
 } from '@server/infrastructure/analytics/analytics-service'
 import type { ICredentialEncryptionService } from '@server/infrastructure/credentials/credential-encryption'
 import { CredentialEncryptionService } from '@server/infrastructure/credentials/credential-encryption'
-import type { DrizzleDb } from '@server/infrastructure/db'
-import { createDatabase } from '@server/infrastructure/db'
+import type { ReadDb, Tx } from '@server/infrastructure/db'
+import { createDatabase, transitionalRepoRead } from '@server/infrastructure/db'
 import {
   AsyncGateClient,
   type IAsyncGateClient,
@@ -91,7 +91,7 @@ export type AppDeps = {
   env: Env
   ctx: WaitUntilContext
 
-  db: () => DrizzleDb
+  readDb: () => ReadDb
 
   kv: {
     auth: KVClient
@@ -99,26 +99,26 @@ export type AppDeps = {
   }
 
   repos: {
-    disputeCases: (tx: DrizzleDb) => IDisputeCaseRepository
-    disputeCaseMessages: (tx: DrizzleDb) => IDisputeCaseMessageRepository
-    disputeCollectedEvidence: (tx: DrizzleDb) => IDisputeCollectedEvidenceRepository
+    disputeCases: (tx: Tx) => IDisputeCaseRepository
+    disputeCaseMessages: (tx: Tx) => IDisputeCaseMessageRepository
+    disputeCollectedEvidence: (tx: Tx) => IDisputeCollectedEvidenceRepository
     disputeEvidenceArtifactBlobs: () => IDisputeEvidenceArtifactBlobRepository
-    disputeEvidencePackets: (tx: DrizzleDb) => IDisputeEvidencePacketRepository
-    disputePlaybooks: (tx: DrizzleDb) => IDisputePlaybookRepository
-    notificationPreferences: (tx: DrizzleDb) => INotificationPreferenceRepository
-    outbox: (tx: DrizzleDb) => IOutboxRepository
-    productAppDataSources: (tx: DrizzleDb) => IProductAppDataSourceRepository
-    products: (tx: DrizzleDb) => IProductRepository
-    slackConnections: (tx: DrizzleDb) => ISlackConnectionRepository
-    stripeConnections: (tx: DrizzleDb) => IStripeConnectionRepository
-    stripeDisputeContexts: (tx: DrizzleDb) => IStripeDisputeContextRepository
-    stripeDisputeSyncState: (tx: DrizzleDb) => IStripeDisputeSyncStateRepository
-    waitlist: (tx: DrizzleDb) => IWaitlistRepository
+    disputeEvidencePackets: (tx: Tx) => IDisputeEvidencePacketRepository
+    disputePlaybooks: (tx: Tx) => IDisputePlaybookRepository
+    notificationPreferences: (tx: Tx) => INotificationPreferenceRepository
+    outbox: (tx: Tx) => IOutboxRepository
+    productAppDataSources: (tx: Tx) => IProductAppDataSourceRepository
+    products: (tx: Tx) => IProductRepository
+    slackConnections: (tx: Tx) => ISlackConnectionRepository
+    stripeConnections: (tx: Tx) => IStripeConnectionRepository
+    stripeDisputeContexts: (tx: Tx) => IStripeDisputeContextRepository
+    stripeDisputeSyncState: (tx: Tx) => IStripeDisputeSyncStateRepository
+    waitlist: (tx: Tx) => IWaitlistRepository
   }
 
   uow: {
     execute: <T, E>(
-      work: (tx: DrizzleDb) => Promise<Result<T, E>>,
+      work: (tx: Tx) => Promise<Result<T, E>>,
       msgId: string,
     ) => Promise<Result<T, E | DatabaseError | DuplicateMessageError>>
   }
@@ -132,7 +132,9 @@ export type AppDeps = {
     credentialEncryption: () => ICredentialEncryptionService
     disputeAgentClient: () => IDisputeAgentClient
     email: () => IEmailService
-    notifications: (tx: DrizzleDb) => INotificationService
+    // Per-call factory on purpose: runs inside the calling handler's transaction so its
+    // writes commit atomically with it. Never memoize with once().
+    notifications: (tx: Tx) => INotificationService
     slackOAuth: () => ISlackOAuthService
     slackWebhook: () => ISlackWebhookNotifier
     stripeClientProvider: () => IStripeClientProvider
@@ -148,10 +150,15 @@ export type AppDeps = {
 }
 
 export function createAppDeps(env: Env, ctx: WaitUntilContext): AppDeps {
+  // The writable handle is a private local of the composition root. It surfaces in exactly
+  // two places: executeUoW (which brands transactions as Tx) and outbox-relay machinery.
+  // Everything else sees the select-only ReadDb view via deps.readDb().
+  const rootDb = once(() => createDatabase(env))
+
   const deps: AppDeps = {
     env,
     ctx,
-    db: once(() => createDatabase(env)),
+    readDb: () => rootDb(),
     kv: {
       auth: new KVClient(env.AUTH_KV),
       cache: new KVClient(env.CACHE_KV),
@@ -177,25 +184,28 @@ export function createAppDeps(env: Env, ctx: WaitUntilContext): AppDeps {
       waitlist: (tx) => new WaitlistRepository(tx),
     },
     uow: {
-      execute: async (work, msgId) => executeUoW(deps, work, msgId),
+      execute: async (work, msgId) => executeUoW(deps, rootDb(), work, msgId),
     },
     services: {
       messageBus: once<IMessageBus>(() => new MessageBus(deps)),
+      // Read-only service (verified 2026-06-11): three finders, no writes.
+      // Destination: SQL query handler; repo finders here are transitional.
       connectionManager: once<IConnectionManager>(
         () =>
           new ConnectionManager(
-            deps.repos.stripeConnections(deps.db()),
-            deps.repos.slackConnections(deps.db()),
-            deps.repos.notificationPreferences(deps.db()),
+            deps.repos.stripeConnections(transitionalRepoRead(deps.readDb())),
+            deps.repos.slackConnections(transitionalRepoRead(deps.readDb())),
+            deps.repos.notificationPreferences(transitionalRepoRead(deps.readDb())),
           ),
       ),
+      // Read-only projection service. Same destination as above.
       productSetup: once<IProductSetupService>(
         () =>
           new ProductSetupService(
-            deps.repos.products(deps.db()),
-            deps.repos.stripeConnections(deps.db()),
-            deps.repos.productAppDataSources(deps.db()),
-            deps.repos.disputePlaybooks(deps.db()),
+            deps.repos.products(transitionalRepoRead(deps.readDb())),
+            deps.repos.stripeConnections(transitionalRepoRead(deps.readDb())),
+            deps.repos.productAppDataSources(transitionalRepoRead(deps.readDb())),
+            deps.repos.disputePlaybooks(transitionalRepoRead(deps.readDb())),
           ),
       ),
       queueClient: once<IQueueClient>(() => new QueueClient(env)),
@@ -214,11 +224,19 @@ export function createAppDeps(env: Env, ctx: WaitUntilContext): AppDeps {
       notifications: (tx) => new NotificationService(deps, tx),
       slackOAuth: once<ISlackOAuthService>(() => new SlackOAuthService()),
       slackWebhook: once<ISlackWebhookNotifier>(() => new SlackWebhookNotifier()),
+      // NOT read-only: refresh() writes rotated tokens through this repo outside any UoW,
+      // and the once()-memoized provider is multi-writer (refresh-token rotation race).
+      // Known violation — handoff doc §8 item 19.
       stripeClientProvider: once<IStripeClientProvider>(
-        () => new StripeClientProvider(deps.repos.stripeConnections(deps.db())),
+        () =>
+          new StripeClientProvider(
+            deps.repos.stripeConnections(transitionalRepoRead(deps.readDb())),
+          ),
       ),
+      // Machinery exemption: the relay opens its own transaction on the writable root
+      // handle (SELECT FOR UPDATE SKIP LOCKED → queue send → mark dispatched).
       outboxRelay: once<IOutboxRelay>(
-        () => new OutboxRelay(deps.db(), deps.services.queueClient(), deps.repos.outbox),
+        () => new OutboxRelay(rootDb(), deps.services.queueClient(), deps.repos.outbox),
       ),
       analytics: once<IAnalyticsService>(() => new AnalyticsService(env, ctx)),
       jinaClient: once<IJinaClient>(() => new JinaClient({ apiKey: env.JINA_API_KEY })),

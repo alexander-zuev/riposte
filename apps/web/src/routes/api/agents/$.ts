@@ -1,4 +1,5 @@
 import { AuthorizationError, EntityNotFoundError } from '@riposte/core'
+import { transitionalRepoRead } from '@server/infrastructure/db'
 import { apiErrorResponse } from '@server/infrastructure/http/api-result'
 import { apiRouteWithDepsMiddleware, requireAuth } from '@server/infrastructure/middleware'
 import { createFileRoute } from '@tanstack/react-router'
@@ -22,7 +23,9 @@ export const Route = createFileRoute('/api/agents/$')({
         const productId = extractProductId(request)
         if (!productId) return apiErrorResponse(new EntityNotFoundError({ entity: 'product' }))
 
-        const found = await context.deps.repos.products(context.deps.db()).findById(productId)
+        const found = await context.deps.repos
+          .products(transitionalRepoRead(context.deps.readDb()))
+          .findById(productId)
         if (found.isErr()) return apiErrorResponse(found.error)
         if (!found.value || found.value.userId !== context.user.id) {
           return apiErrorResponse(new AuthorizationError())
@@ -38,7 +41,9 @@ export const Route = createFileRoute('/api/agents/$')({
         const productId = extractProductId(request)
         if (!productId) return apiErrorResponse(new EntityNotFoundError({ entity: 'product' }))
 
-        const found = await context.deps.repos.products(context.deps.db()).findById(productId)
+        const found = await context.deps.repos
+          .products(transitionalRepoRead(context.deps.readDb()))
+          .findById(productId)
         if (found.isErr()) return apiErrorResponse(found.error)
         if (!found.value || found.value.userId !== context.user.id) {
           return apiErrorResponse(new AuthorizationError())

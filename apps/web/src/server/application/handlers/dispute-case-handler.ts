@@ -19,6 +19,7 @@ import {
   StripeConnectionUnavailableError as CoreStripeConnectionUnavailableError,
 } from '@riposte/core'
 import type { QueryHandler } from '@server/application/registry/types'
+import { transitionalRepoRead } from '@server/infrastructure/db'
 import { stripeRequest } from '@server/infrastructure/stripe/stripe-request'
 import { Result } from 'better-result'
 import type Stripe from 'stripe'
@@ -37,10 +38,14 @@ export const listDisputeCases: QueryHandler<
   ListDisputeCasesResult,
   DatabaseError
 > = async (query, ctx) => {
-  const page = await ctx.deps.repos.disputeCases(ctx.deps.db()).listForUser(query)
+  const page = await ctx.deps.repos
+    .disputeCases(transitionalRepoRead(ctx.deps.readDb()))
+    .listForUser(query)
   if (page.isErr()) return Result.err(page.error)
 
-  const sync = await ctx.deps.repos.stripeDisputeSyncState(ctx.deps.db()).findForUser(query.userId)
+  const sync = await ctx.deps.repos
+    .stripeDisputeSyncState(transitionalRepoRead(ctx.deps.readDb()))
+    .findForUser(query.userId)
   if (sync.isErr()) return Result.err(sync.error)
 
   return Result.ok({
@@ -55,10 +60,12 @@ export const countActionableDisputeCases: QueryHandler<
   CountActionableDisputeCasesResult,
   DatabaseError
 > = async (query, ctx) => {
-  const count = await ctx.deps.repos.disputeCases(ctx.deps.db()).countActionableForProduct({
-    userId: query.userId,
-    productId: query.productId,
-  })
+  const count = await ctx.deps.repos
+    .disputeCases(transitionalRepoRead(ctx.deps.readDb()))
+    .countActionableForProduct({
+      userId: query.userId,
+      productId: query.productId,
+    })
   if (count.isErr()) return Result.err(count.error)
 
   return Result.ok({ count: count.value })
@@ -70,7 +77,7 @@ export const listStripeDisputesForProduct: QueryHandler<
   ListStripeDisputesForProductError
 > = async (query, ctx) => {
   const connection = await ctx.deps.repos
-    .stripeConnections(ctx.deps.db())
+    .stripeConnections(transitionalRepoRead(ctx.deps.readDb()))
     .findByProductId(query.productId)
   if (connection.isErr()) return Result.err(connection.error)
   if (!connection.value) {
@@ -104,11 +111,13 @@ export const getDisputeCaseStatus: QueryHandler<
   GetDisputeCaseStatusResult,
   GetDisputeCaseStatusError
 > = async (query, ctx) => {
-  const disputeCase = await ctx.deps.repos.disputeCases(ctx.deps.db()).findByUserProductAndId({
-    userId: query.userId,
-    productId: query.productId,
-    disputeCaseId: query.disputeCaseId,
-  })
+  const disputeCase = await ctx.deps.repos
+    .disputeCases(transitionalRepoRead(ctx.deps.readDb()))
+    .findByUserProductAndId({
+      userId: query.userId,
+      productId: query.productId,
+      disputeCaseId: query.disputeCaseId,
+    })
   if (disputeCase.isErr()) return Result.err(disputeCase.error)
   if (!disputeCase.value) {
     return Result.err(new EntityNotFoundError({ entity: 'DisputeCase', id: query.disputeCaseId }))

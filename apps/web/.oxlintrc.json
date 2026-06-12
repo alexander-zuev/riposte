@@ -79,8 +79,35 @@
     {
       "files": ["src/server/**/*", "src/server.ts", "src/start.ts", "src/routes/api/**/*"],
       "rules": {
-        "no-restricted-imports": "off",
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "name": "@server/infrastructure/db",
+                "importNames": ["createDatabase"],
+                "message": "createDatabase yields a writable pool; only app-deps (composition root) may import it. Read via deps.readDb(); write via executeUoW."
+              },
+              {
+                "name": "@server/infrastructure/db",
+                "importNames": ["brandTx"],
+                "message": "brandTx mints a UoW transaction; only executeUoW and OutboxRelay may import it."
+              }
+            ]
+          }
+        ],
         "import/no-default-export": "off"
+      }
+    },
+    {
+      "files": [
+        "src/server/infrastructure/app-deps.ts",
+        "src/server/infrastructure/auth/auth.ts",
+        "src/server/application/message-bus/unit-of-work.ts",
+        "src/server/infrastructure/queues/outbox-relay.ts"
+      ],
+      "rules": {
+        "no-restricted-imports": "off"
       }
     },
     {

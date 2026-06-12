@@ -1,10 +1,10 @@
+import { createDatabase } from '@server/infrastructure/db'
 import type { BetterAuthOptions } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { betterAuth } from 'better-auth/minimal'
 import { env } from 'cloudflare:workers'
 
 import { getServerConfig } from '../config'
-import { createDatabase } from '../db/connection'
 import { KVClient } from '../kv/kv-client'
 import { QueueClient } from '../queues/queue-client'
 import { createBetterAuthOptions } from './options'

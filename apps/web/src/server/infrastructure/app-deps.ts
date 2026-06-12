@@ -15,7 +15,7 @@ import type {
   IDisputeEvidencePacketRepository,
   IDisputePlaybookRepository,
   INotificationPreferenceRepository,
-  IOutboxRepository,
+  IOutboxWriter,
   IProductAppDataSourceRepository,
   IProductRepository,
   ISlackConnectionRepository,
@@ -106,7 +106,7 @@ export type AppDeps = {
     disputeEvidencePackets: (tx: Tx) => IDisputeEvidencePacketRepository
     disputePlaybooks: (tx: Tx) => IDisputePlaybookRepository
     notificationPreferences: (tx: Tx) => INotificationPreferenceRepository
-    outbox: (tx: Tx) => IOutboxRepository
+    outbox: (tx: Tx) => IOutboxWriter
     productAppDataSources: (tx: Tx) => IProductAppDataSourceRepository
     products: (tx: Tx) => IProductRepository
     slackConnections: (tx: Tx) => ISlackConnectionRepository
@@ -236,7 +236,8 @@ export function createAppDeps(env: Env, ctx: WaitUntilContext): AppDeps {
       // Machinery exemption: the relay opens its own transaction on the writable root
       // handle (SELECT FOR UPDATE SKIP LOCKED → queue send → mark dispatched).
       outboxRelay: once<IOutboxRelay>(
-        () => new OutboxRelay(rootDb(), deps.services.queueClient(), deps.repos.outbox),
+        () =>
+          new OutboxRelay(rootDb(), deps.services.queueClient(), (tx) => new OutboxRepository(tx)),
       ),
       analytics: once<IAnalyticsService>(() => new AnalyticsService(env, ctx)),
       jinaClient: once<IJinaClient>(() => new JinaClient({ apiKey: env.JINA_API_KEY })),

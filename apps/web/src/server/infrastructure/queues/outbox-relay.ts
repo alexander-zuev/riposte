@@ -1,6 +1,6 @@
 import type { DatabaseError, QueueError } from '@riposte/core'
 import { createLogger } from '@riposte/core'
-import type { IOutboxRepository } from '@server/domain/repository/interfaces'
+import type { IOutboxRelayStore } from '@server/domain/repository/interfaces'
 import type { DrizzleDb, Tx } from '@server/infrastructure/db'
 import { brandTx } from '@server/infrastructure/db'
 import { Result } from 'better-result'
@@ -33,7 +33,7 @@ export class OutboxRelay implements IOutboxRelay {
   constructor(
     private readonly db: DrizzleDb,
     private readonly queueClient: IQueueClient,
-    private readonly outboxRepo: (tx: Tx) => IOutboxRepository,
+    private readonly outboxRepo: (tx: Tx) => IOutboxRelayStore,
   ) {}
 
   /**

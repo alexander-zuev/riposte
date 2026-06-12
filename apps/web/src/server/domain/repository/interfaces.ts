@@ -295,11 +295,25 @@ export interface IWaitlistRepository {
  * Outbox Repository
  * ------------------------------------------------------------------------------------------------- */
 
-export interface IOutboxRepository {
+/**
+ * UoW-facing outbox writes — run inside a handler's transaction (`Tx`):
+ * persist the events the handler produced + record the idempotency claim.
+ */
+export interface IOutboxWriter {
   persistEvents: (events: DomainEvent[]) => Promise<Result<void, DatabaseError>>
   assertMessageNotProcessed: (
     msgId: string,
   ) => Promise<Result<{ id: string }[], DatabaseError | DuplicateMessageError>>
+}
+
+/**
+ * Relay-facing drain — machinery that runs on its own transaction outside any UoW:
+ * read undispatched rows (FOR UPDATE SKIP LOCKED) + mark them dispatched.
+ */
+export interface IOutboxRelayStore {
   retrievePending: (batchSize: number) => Promise<Result<DbOutbox[], DatabaseError>>
   publishPending: (pending: DbOutbox[]) => Promise<Result<UUIDv4[], DatabaseError>>
 }
+
+/** The single implementation class and test mocks satisfy both roles. */
+export type IOutboxRepository = IOutboxWriter & IOutboxRelayStore

@@ -152,6 +152,10 @@ const REFRESH_MCP_OAUTH_TOKENS_CALLBACK = 'refreshMcpOauthTokens'
 const SEND_MCP_SYNC_PING_CALLBACK = 'sendMcpSyncPing'
 /** Debounce window: a burst of MCP transitions collapses to one sync ping. */
 const MCP_SYNC_PING_DEBOUNCE_SECONDS = 3
+const DRAIN_MCP_DISCONNECT_CALLBACK = 'drainMcpDisconnect'
+
+/** Durable intent for the PG-cleanup half of a user MCP disconnect. */
+type McpDisconnectIntent = { mcpServerId: string; userId: UserId }
 
 type PrepareMessagesError = InternalServerError
 
@@ -992,17 +996,20 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
   /**
    * Composite disconnect entry point called by the application layer (the
    * `disconnectProductAppDataSource` server fn) and by {@link clearMcpServers}
-   * during restart. Symmetric with the register flow:
+   * during restart. DO-first, by design (§9 MCP mapping / MCP-1):
    *
-   * 1. clear DO MCP state (SDK broadcasts `CF_AGENT_MCP_SERVERS` to the FE)
+   * 1. clear DO MCP state (SDK broadcasts `CF_AGENT_MCP_SERVERS` to the FE) — the
+   *    capability dies first, so any later follower failure leaves only a stale
+   *    PG row, never a live MCP an unauthorized agent could still call
    * 2. synthesize a "disconnected" user turn so the agent stops trying tools
    *    from the now-removed server on its next stream
-   * 3. dispatch `DisconnectProductAppDataSource` to wipe the persisted
-   *    `product_app_data_sources` row
+   * 3. durably hand off PG cleanup: schedule the {@link drainMcpDisconnect}
+   *    drain (the Agents SDK scheduler IS the intent outbox — SQLite-persisted,
+   *    alarm-driven, retried), replacing the old logged-and-lost dispatch
    *
    * No-op (`false`) if the server is already gone. Missing `userId` logs and
-   * still completes DO cleanup — same fail-soft pattern as `onChatMessage`,
-   * and the PG handler is idempotent on missing rows for a future retry.
+   * still completes DO cleanup; PG cleanup is skipped (no owner to attribute it
+   * to) — only reachable on the restart path, where the row is torn down anyway.
    */
   async disconnectMcp(mcpServerId: string): Promise<boolean> {
     const server = this.getMcpServers().servers[mcpServerId]
@@ -1017,21 +1024,32 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
       return true
     }
 
-    const command = createCommand('DisconnectProductAppDataSource', {
-      userId: this.userId,
-      productId: this.name,
+    await this.schedule<McpDisconnectIntent>(0, DRAIN_MCP_DISCONNECT_CALLBACK, {
       mcpServerId,
+      userId: this.userId,
     })
-    const result = await this.deps.services.messageBus().handle(command)
-    if (result.isErr()) {
-      logger.error('disconnect_mcp_pg_cleanup_failed', {
-        productId: this.name,
-        mcpServerId,
-        error: result.error,
-      })
-    }
 
     return true
+  }
+
+  /**
+   * Scheduled drain for the PG-cleanup half of a user MCP disconnect. The live
+   * session is already gone (see {@link disconnectMcp}); this dispatches the
+   * `DisconnectProductAppDataSource` command onto the queue with a deterministic
+   * id, so the command's own claim dedupes retries/redelivery and the delete is
+   * idempotent on a missing row. Throws on send failure so the scheduler retries.
+   */
+  async drainMcpDisconnect({ mcpServerId, userId }: McpDisconnectIntent): Promise<void> {
+    const sent = await this.deps.services
+      .queueClient()
+      .send(
+        createCommand(
+          'DisconnectProductAppDataSource',
+          { userId, productId: this.name, mcpServerId },
+          `disconnect-mcp:${this.name}:${mcpServerId}`,
+        ),
+      )
+    if (sent.isErr()) throw sent.error
   }
 
   async scheduleNextMcpOAuthRefresh(): Promise<void> {

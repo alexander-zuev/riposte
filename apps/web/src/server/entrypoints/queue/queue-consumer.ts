@@ -1,5 +1,10 @@
-import type { DomainMessage } from '@riposte/core'
-import { createLogger, queueMessageSchema, ValidationError } from '@riposte/core'
+import type { QueueMessage } from '@riposte/core'
+import {
+  createLogger,
+  DuplicateMessageError,
+  queueMessageSchema,
+  ValidationError,
+} from '@riposte/core'
 import * as Sentry from '@sentry/cloudflare'
 import type { IMessageBus } from '@server/application/message-bus/message-bus'
 import type { AppDeps } from '@server/infrastructure/app-deps'
@@ -24,7 +29,7 @@ export class QueueConsumer {
   }
 
   private async processMessage(message: Message): Promise<void> {
-    let parsedMsg: DomainMessage | undefined
+    let parsedMsg: QueueMessage | undefined
 
     await Sentry.withIsolationScope(async (scope) => {
       try {
@@ -38,6 +43,17 @@ export class QueueConsumer {
         }, this)
 
         if (result.isErr()) {
+          // Already-processed redelivery: the claim rejected it. Ack as a skip, like the
+          // event path that maps this error to Result.ok in the bus.
+          if (DuplicateMessageError.is(result.error)) {
+            logger.warn('duplicate_skipped', {
+              name: parsedMsg?.name,
+              messageId: parsedMsg?.id,
+              attempt: message.attempts,
+            })
+            message.ack()
+            return
+          }
           await this.handleFailure(message, parsedMsg, result.error, {
             retryUnknown: isPanic(result.error),
           })
@@ -52,7 +68,7 @@ export class QueueConsumer {
     })
   }
 
-  private async parseMessage(body: unknown): Promise<Result<DomainMessage, ValidationError>> {
+  private async parseMessage(body: unknown): Promise<Result<QueueMessage, ValidationError>> {
     const parsed = await queueMessageSchema.safeParseAsync(body)
     if (!parsed.success) {
       return Result.err(
@@ -77,7 +93,7 @@ export class QueueConsumer {
    */
   private async handleFailure(
     message: Message,
-    msg: DomainMessage | undefined,
+    msg: QueueMessage | undefined,
     error: unknown,
     options?: { retryUnknown?: boolean },
   ): Promise<void> {

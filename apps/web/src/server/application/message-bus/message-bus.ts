@@ -101,18 +101,16 @@ export class MessageBus implements IMessageBus {
   private async handleEvent<TName extends EventName>(
     event: EventMap[TName],
   ): Promise<MessageResult<EventMap[TName]>> {
-    const subscribers = (this.registry.events[event.name] ?? []) as EventSubscriber<
-      EventMap[TName]
-    >[]
+    const subscribers = this.registry.events[event.name] ?? []
     if (subscribers.length === 0) {
       return Result.ok(undefined) as MessageResult<EventMap[TName]>
     }
 
     const outcomes = await Promise.all(
-      subscribers.map((subscriber) => this.runEventSubscriber(event, subscriber)),
+      subscribers.map(async (subscriber) => this.runEventSubscriber(event, subscriber)),
     )
 
-    return this.collapseEventOutcomes(event, outcomes) as MessageResult<EventMap[TName]>
+    return this.collapseEventOutcomes(event, outcomes)
   }
 
   /**

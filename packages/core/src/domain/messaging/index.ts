@@ -12,6 +12,7 @@ export type {
   EventName,
   QueryMap,
   QueryName,
+  QueueMessage,
 } from './message-registry'
 export {
   domainCommandSchema,

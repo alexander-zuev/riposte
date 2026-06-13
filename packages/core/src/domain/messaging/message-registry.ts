@@ -236,3 +236,10 @@ export const queueMessageSchema = z.union([
   domainEventSchema,
   r2EventTransform,
 ])
+
+/**
+ * What the queue actually carries: commands, events, and transformed R2 notifications —
+ * never queries (reads are synchronous, never enqueued or claimed). Every arm has `id`
+ * and `name`. Use this, not the broader `DomainMessage`, to type queue-consumer values.
+ */
+export type QueueMessage = z.infer<typeof queueMessageSchema>

@@ -55,6 +55,9 @@ Do not:
 Use concise JSDoc or comments where they capture intent, policy, or a non-obvious boundary nuance.
 Avoid comments that restate the code or describe implementation details likely to change.
 
+Keep inline comments minimal: one line by default, two only when a nuance genuinely needs it.
+Multi-line JSDoc on a function/type is fine; rambling inline blocks inside a function body are not.
+
 ## Architecture
 
 Monorepo with pnpm workspaces + Turborepo:

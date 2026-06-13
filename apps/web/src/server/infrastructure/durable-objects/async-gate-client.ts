@@ -18,15 +18,15 @@ export interface IAsyncGateClient {
 export class AsyncGateClient implements IAsyncGateClient {
   constructor(private readonly env: Env) {}
 
-  waitFor(
+  async waitFor(
     key: string,
     timeoutMs: number,
   ): Promise<Result<AsyncGateWaitResult, DOUnreachableError>> {
-    return callDo(() => this.stub(key).waitFor(timeoutMs))
+    return callDo(async () => this.stub(key).waitFor(timeoutMs))
   }
 
-  resolve(key: string): Promise<Result<void, DOUnreachableError>> {
-    return callDo(() => this.stub(key).resolve())
+  async resolve(key: string): Promise<Result<void, DOUnreachableError>> {
+    return callDo(async () => this.stub(key).resolve())
   }
 
   async tryResolve(key: string): Promise<void> {

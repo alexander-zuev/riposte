@@ -2,6 +2,7 @@ import {
   createLogger,
   DOUnreachableError,
   type DisputeAgentMessage,
+  type McpConnectionState,
   WorkflowError,
   type UUIDv4,
 } from '@riposte/core'
@@ -85,6 +86,15 @@ export type SignalProductSetupChangedInput = {
   setupChangeId: string
 }
 
+export type ListMcpServersInput = {
+  productId: UUIDv4
+}
+
+export type McpServerSnapshot = {
+  mcpServerId: string
+  serverState: McpConnectionState
+}
+
 export interface IDisputeAgentClient {
   startWorkflow: (input: DisputeAgentWorkflowInput) => Promise<Result<void, WorkflowError>>
   pauseWorkflow: (input: DisputeAgentWorkflowInput) => Promise<Result<void, WorkflowError>>
@@ -127,6 +137,15 @@ export interface IDisputeAgentClient {
   signalProductSetupChanged: (
     input: SignalProductSetupChangedInput,
   ) => Promise<Result<void, DOUnreachableError>>
+  /**
+   * Snapshot of the product's MCP servers (id + SDK-reported state) for PG
+   * reconciliation. No `userId` — the effect handler reacting to `McpStateChanged`
+   * has only `productId`, and the DO is already running (it emitted the ping), so no
+   * `onStart` props are needed.
+   */
+  listMcpServers: (
+    input: ListMcpServersInput,
+  ) => Promise<Result<McpServerSnapshot[], DOUnreachableError>>
 }
 
 export class DisputeAgentClient implements IDisputeAgentClient {
@@ -480,6 +499,18 @@ export class DisputeAgentClient implements IDisputeAgentClient {
           disputeAgentOptions(userId),
         )
         await agent.signalProductSetupChanged(setupChangeId)
+      },
+      catch: (cause) => new DOUnreachableError({ cause, retryable: isTransientError(cause) }),
+    })
+  }
+
+  async listMcpServers({
+    productId,
+  }: ListMcpServersInput): Promise<Result<McpServerSnapshot[], DOUnreachableError>> {
+    return Result.tryPromise({
+      try: async () => {
+        const agent = await getAgentByName(this.env.DisputeAgent, productId)
+        return agent.listMcpServers()
       },
       catch: (cause) => new DOUnreachableError({ cause, retryable: isTransientError(cause) }),
     })

@@ -25,16 +25,34 @@ export type CommandHandler<TCommand extends BaseCommand, TResult = void, TError 
   ctx: HandlerContext,
 ) => Promise<Result<TResult, TError>>
 
-// Events use UoW for consistency (can modify state, produce new events)
+// State event handler: mutates Postgres, runs inside a UoW (tx + per-subscriber claim).
 export type EventHandler<TEvent extends BaseEvent, TError = never> = (
   event: TEvent,
   ctx: HandlerContext,
 ) => Promise<Result<void, TError>>
 
-export type EventHandlerRegistration<TEvent extends BaseEvent, TError = never> = {
-  id: string
-  handle: EventHandler<TEvent, TError>
+// Effect event handler: external I/O only (DO RPC, queue sends), runs with NO tx and NO
+// claim — it must not be held inside a transaction. Dedupe is delegated to the outcome
+// commands it dispatches. EffectDeps omits repos/uow/readDb, so the absence of `tx` and of
+// write capabilities is what prevents an effect from writing Postgres directly.
+export type EffectDeps = Pick<AppDeps, 'env' | 'ctx' | 'services' | 'kv'>
+
+export type EffectContext = {
+  deps: EffectDeps
 }
+
+export type EffectHandler<TEvent extends BaseEvent, TError = never> = (
+  event: TEvent,
+  ctx: EffectContext,
+) => Promise<Result<void, TError>>
+
+// A subscriber to an event, tagged with the mode the bus dispatches it under. `mode` is a
+// wiring fact, written at registration; the handler stays a plain function. The discriminant
+// ties mode to handler shape: a 'state' handler cannot be placed in the 'effect' arm (its
+// ctx requires `tx`, which the effect ctx lacks).
+export type EventSubscriber<TEvent extends BaseEvent> =
+  | { id: string; mode: 'state'; handle: EventHandler<TEvent, unknown> }
+  | { id: string; mode: 'effect'; handle: EffectHandler<TEvent, unknown> }
 
 // Queries are read-only, no tx needed
 // ctx is optional — only needed for background work (e.g. waitUntil)
@@ -49,7 +67,7 @@ export type CommandRegistry = {
 }
 
 export type EventRegistry = {
-  [K in keyof EventMap]?: EventHandlerRegistration<EventMap[K], unknown>[]
+  [K in keyof EventMap]?: EventSubscriber<EventMap[K]>[]
 }
 
 export type QueryRegistry = {

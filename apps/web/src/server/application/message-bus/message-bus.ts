@@ -12,7 +12,7 @@ import type { MessageResult } from '@server/application/registry/message-result'
 import { defaultRegistry } from '@server/application/registry/registry'
 import type {
   CommandHandler,
-  EventHandlerRegistration,
+  EventSubscriber,
   MessageRegistry,
   QueryHandler,
 } from '@server/application/registry/types'
@@ -24,6 +24,9 @@ const logger = createLogger('message-bus')
 
 type AnyCommandHandler = CommandHandler<any, unknown, unknown>
 type AnyQueryHandler = QueryHandler<any, unknown, unknown>
+
+/** One subscriber's result tagged with its handler id, so failures can be attributed. */
+type HandlerOutcome = { id: string; result: Result<void, unknown> }
 
 /**
  * Interface for message bus - enables testing with mocks
@@ -89,65 +92,99 @@ export class MessageBus implements IMessageBus {
   }
 
   /**
-   * Handle an event - each subscriber runs in its own UoW in parallel; per-subscriber
-   * idempotency via `${event.id}:${handlerId}`. First failure is returned (upstream
-   * logs it); sibling failures are logged here so they don't vanish. Partial commits
-   * possible — independent UoWs mean some subscribers can commit while others fail.
+   * Handle an event. Each subscriber declares its `mode`; the bus runs `state` subscribers
+   * inside a UoW (tx + claim) and `effect` subscribers outside any UoW (no tx, no claim, for
+   * external I/O). Every subscriber is normalized to a HandlerOutcome that always resolves,
+   * so a thrown panic cannot reject the batch; outcomes are collapsed into one result.
+   * Partial commits possible — the UoWs are independent.
    */
   private async handleEvent<TName extends EventName>(
     event: EventMap[TName],
   ): Promise<MessageResult<EventMap[TName]>> {
-    const handlers = this.getEventHandlers(event.name)
-    if (handlers.length === 0) return Result.ok(undefined) as MessageResult<EventMap[TName]>
+    const subscribers = (this.registry.events[event.name] ?? []) as EventSubscriber<
+      EventMap[TName]
+    >[]
+    if (subscribers.length === 0) {
+      return Result.ok(undefined) as MessageResult<EventMap[TName]>
+    }
 
-    const results = await Promise.all(
-      handlers.map(async ({ id, handle }) => {
-        const receiptId = `${event.id}:${id}`
-        logger.debug('Handling event subscriber', {
+    const outcomes = await Promise.all(
+      subscribers.map((subscriber) => this.runEventSubscriber(event, subscriber)),
+    )
+
+    return this.collapseEventOutcomes(event, outcomes) as MessageResult<EventMap[TName]>
+  }
+
+  /**
+   * Runs one subscriber and always resolves to a HandlerOutcome — a thrown panic becomes
+   * `Result.err` so `Promise.all` over siblings can never reject. `state` subscribers run in
+   * their own UoW with a per-subscriber receipt `${event.id}:${id}`; a duplicate delivery is
+   * treated as success so the queue acks. `effect` subscribers run with no UoW and no claim.
+   */
+  private async runEventSubscriber<TName extends EventName>(
+    event: EventMap[TName],
+    subscriber: EventSubscriber<EventMap[TName]>,
+  ): Promise<HandlerOutcome> {
+    const { id } = subscriber
+    try {
+      if (subscriber.mode === 'effect') {
+        logger.debug('Handling effect subscriber', {
           event: event.name,
           eventId: event.id,
           handlerId: id,
         })
-        const result = await this.deps.uow.execute(
-          async (tx) => handle(event, { deps: this.deps, tx }),
-          receiptId,
-        )
+        return { id, result: await subscriber.handle(event, { deps: this.deps }) }
+      }
 
-        if (result.isErr() && DuplicateMessageError.is(result.error)) {
-          logger.warn('Duplicate event handler skipped', {
-            event: event.name,
-            eventId: event.id,
-            handlerId: id,
-          })
-          return Result.ok(undefined)
-        }
+      logger.debug('Handling event subscriber', {
+        event: event.name,
+        eventId: event.id,
+        handlerId: id,
+      })
+      const result = await this.deps.uow.execute(
+        async (tx) => subscriber.handle(event, { deps: this.deps, tx }),
+        `${event.id}:${id}`,
+      )
+      if (result.isErr() && DuplicateMessageError.is(result.error)) {
+        logger.warn('Duplicate event handler skipped', {
+          event: event.name,
+          eventId: event.id,
+          handlerId: id,
+        })
+        return { id, result: Result.ok(undefined) }
+      }
+      return { id, result }
+    } catch (cause) {
+      return { id, result: Result.err(cause) }
+    }
+  }
 
-        return result
-      }),
-    )
-
-    // First failure is returned (upstream queue consumer logs it). Sibling failures
-    // would otherwise vanish — log them here with their handlerId for visibility.
+  /**
+   * The first failure is returned so the queue consumer logs/retries the delivery;
+   * sibling failures would otherwise vanish, so they are logged here with their id.
+   */
+  private collapseEventOutcomes<TName extends EventName>(
+    event: EventMap[TName],
+    outcomes: HandlerOutcome[],
+  ): MessageResult<EventMap[TName]> {
     let returnedErr: unknown
-    for (let i = 0; i < results.length; i++) {
-      const r = results[i]
-      if (!r || !r.isErr()) continue
+    for (const { id, result } of outcomes) {
+      if (!result.isErr()) continue
       if (returnedErr === undefined) {
-        returnedErr = r.error
+        returnedErr = result.error
         continue
       }
       logger.warn('Event handler sibling failed', {
         event: event.name,
         eventId: event.id,
-        handlerId: handlers[i]?.id,
-        error: r.error,
+        handlerId: id,
+        error: result.error,
       })
     }
 
     if (returnedErr !== undefined) {
       return Result.err(returnedErr) as MessageResult<EventMap[TName]>
     }
-
     return Result.ok(undefined) as MessageResult<EventMap[TName]>
   }
 
@@ -184,11 +221,5 @@ export class MessageBus implements IMessageBus {
     }
 
     return handler
-  }
-
-  private getEventHandlers<TName extends EventName>(
-    name: TName,
-  ): EventHandlerRegistration<EventMap[TName]>[] {
-    return (this.registry.events[name] ?? []) as EventHandlerRegistration<EventMap[TName]>[]
   }
 }

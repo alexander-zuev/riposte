@@ -5,6 +5,7 @@ import {
   createLogger,
   createSentryOptions,
   type DisputeAgentMessage,
+  type McpConnectionState,
   EvidenceCollectionFailedError,
   InternalServerError,
   type ProductSetupState,
@@ -148,6 +149,9 @@ export type DisputeAgentProps = {
 const USER_ID_STORAGE_KEY = 'userId'
 const PRIME_PRODUCT_SETUP_STORAGE_KEY = 'primeProductSetup'
 const REFRESH_MCP_OAUTH_TOKENS_CALLBACK = 'refreshMcpOauthTokens'
+const SEND_MCP_SYNC_PING_CALLBACK = 'sendMcpSyncPing'
+/** Debounce window: a burst of MCP transitions collapses to one sync ping. */
+const MCP_SYNC_PING_DEBOUNCE_SECONDS = 3
 
 type PrepareMessagesError = InternalServerError
 
@@ -193,6 +197,9 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
     // its own dispose().
     this.mcp.onServerStateChanged(() => {
       this.ctx.waitUntil(this.refreshContextEstimate())
+      // Also reconcile PG: schedule a debounced, idempotent ping so the worker
+      // side re-reads live MCP truth and updates product_app_data_sources.
+      this.ctx.waitUntil(this.scheduleMcpStateSync())
     })
   }
 
@@ -913,6 +920,40 @@ class DisputeAgent extends AIChatAgent<Env, DisputeAgentState, DisputeAgentProps
           message: `MCP server is not ready. Current state: ${String(server.state)}.`,
         }
     }
+  }
+
+  /**
+   * Debounced PG-reconciliation trigger. Each MCP transition schedules one
+   * idempotent `sendMcpSyncPing` callback; a burst collapses to a single pending
+   * callback (the Agents SDK scheduler IS the intent outbox — durable in SQLite).
+   */
+  private async scheduleMcpStateSync(): Promise<void> {
+    await this.schedule(MCP_SYNC_PING_DEBOUNCE_SECONDS, SEND_MCP_SYNC_PING_CALLBACK, undefined, {
+      idempotent: true,
+    })
+  }
+
+  /**
+   * Scheduled drain: emits the payload-poor `McpStateChanged` integration event so
+   * a worker handler re-reads live MCP truth and reconciles
+   * `product_app_data_sources`. Throws on send failure so the scheduler retries.
+   */
+  async sendMcpSyncPing(): Promise<void> {
+    const sent = await this.deps.services
+      .queueClient()
+      .send(createEvent('McpStateChanged', { productId: this.name }))
+    if (sent.isErr()) throw sent.error
+  }
+
+  /**
+   * RPC snapshot of the agent's MCP servers for PG reconciliation: each server's
+   * id and its SDK-reported connection state. The handler interprets the state.
+   */
+  async listMcpServers(): Promise<Array<{ mcpServerId: string; serverState: McpConnectionState }>> {
+    return Object.entries(this.getMcpServers().servers).map(([mcpServerId, server]) => ({
+      mcpServerId,
+      serverState: server.state,
+    }))
   }
 
   /**

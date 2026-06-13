@@ -19,14 +19,36 @@ export class ProductAppDataSourceRepository
     super()
   }
 
+  async insert(source: ProductAppDataSource): Promise<Result<ProductAppDataSource, DatabaseError>> {
+    const row = source.serialize() satisfies DbNewProductAppDataSource
+
+    const inserted = await Result.tryPromise({
+      try: async () => {
+        const [insertedRow] = await this.db.insert(productAppDataSources).values(row).returning()
+
+        if (!insertedRow) throw new Error('ProductAppDataSource insert returned no row')
+        this.dispatchEvents(source)
+        return insertedRow
+      },
+      catch: (cause) =>
+        new DatabaseError({ message: 'Failed to insert product app data source', cause }),
+    })
+
+    return inserted.map((row) => ProductAppDataSource.deserialize(row))
+  }
+
   async save(source: ProductAppDataSource): Promise<Result<ProductAppDataSource, DatabaseError>> {
     const row = source.serialize() satisfies DbNewProductAppDataSource
 
     const saved = await Result.tryPromise({
       try: async () => {
-        const [savedRow] = await this.db.insert(productAppDataSources).values(row).returning()
+        const [savedRow] = await this.db
+          .update(productAppDataSources)
+          .set(row)
+          .where(eq(productAppDataSources.id, source.id))
+          .returning()
 
-        if (!savedRow) throw new Error('ProductAppDataSource save returned no row')
+        if (!savedRow) throw new Error('ProductAppDataSource save updated no row')
         this.dispatchEvents(source)
         return savedRow
       },

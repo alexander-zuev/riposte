@@ -241,7 +241,7 @@ export const registerProductAppDataSource: CommandHandler<
     serverUrl: command.serverUrl,
   })
 
-  const saved = await repo.save(source)
+  const saved = await repo.insert(source)
   if (saved.isErr()) return Result.err(saved.error)
 
   return Result.ok({ productAppDataSourceId: saved.value.id })

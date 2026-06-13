@@ -64,6 +64,7 @@ export interface IProductRepository {
 }
 
 export interface IProductAppDataSourceRepository {
+  insert: (source: ProductAppDataSource) => Promise<Result<ProductAppDataSource, DatabaseError>>
   save: (source: ProductAppDataSource) => Promise<Result<ProductAppDataSource, DatabaseError>>
   findByProductId: (productId: UUIDv4) => Promise<Result<ProductAppDataSource[], DatabaseError>>
   findByProductIdAndMcpServerId: (input: {

@@ -1,6 +1,12 @@
 import { z } from 'zod'
 
 import {
+  mcpStateChangedSchema,
+  productAppDataSourceConnectionLostSchema,
+  productAppDataSourceReconnectedSchema,
+  syncProductAppDataSourceSchema,
+} from '../app-data-sources'
+import {
   getSessionStatusSchema,
   sendMagicLinkSchema,
   sendWelcomeEmailSchema,
@@ -129,6 +135,7 @@ export const domainCommandSchema = z.discriminatedUnion('name', [
   createProductSchema,
   registerProductAppDataSourceSchema,
   disconnectProductAppDataSourceSchema,
+  syncProductAppDataSourceSchema,
   restartProductSetupSchema,
   writeDisputePlaybookSchema,
   editDisputePlaybookSchema,
@@ -159,6 +166,9 @@ export const domainEventSchema = z.discriminatedUnion('name', [
   productCreatedSchema,
   productAppDataSourceRegisteredSchema,
   productAppDataSourceDisconnectedSchema,
+  productAppDataSourceConnectionLostSchema,
+  productAppDataSourceReconnectedSchema,
+  mcpStateChangedSchema,
   productUpdatedSchema,
   productDeletedSchema,
   productDisabledSchema,

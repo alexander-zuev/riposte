@@ -1,4 +1,8 @@
 import {
+  reconcileMcpState,
+  syncProductAppDataSource,
+} from '@server/application/handlers/app-data-source-handler'
+import {
   getSessionStatus,
   handleUserSignedUp,
   sendMagicLink,
@@ -110,6 +114,7 @@ export const COMMAND_HANDLERS = {
   CreateProduct: createProduct,
   RegisterProductAppDataSource: registerProductAppDataSource,
   DisconnectProductAppDataSource: disconnectProductAppDataSource,
+  SyncProductAppDataSource: syncProductAppDataSource,
   RestartProductSetup: restartProductSetup,
   WriteDisputePlaybook: writeDisputePlaybook,
   EditDisputePlaybook: editDisputePlaybook,
@@ -119,54 +124,92 @@ export const COMMAND_HANDLERS = {
 
 export const EVENT_HANDLERS = {
   DisputeCaseReceived: [
-    { id: 'dispute.startDisputeAgentWorkflow', handle: startDisputeAgentWorkflow },
-    { id: 'notifications.notifyOnDisputeCaseReceived', handle: notifyOnDisputeCaseReceived },
+    { id: 'dispute.startDisputeAgentWorkflow', mode: 'state', handle: startDisputeAgentWorkflow },
+    {
+      id: 'notifications.notifyOnDisputeCaseReceived',
+      mode: 'state',
+      handle: notifyOnDisputeCaseReceived,
+    },
   ],
   DisputeCaseCompleted: [
-    { id: 'notifications.notifyOnDisputeCaseCompleted', handle: notifyOnDisputeCaseCompleted },
+    {
+      id: 'notifications.notifyOnDisputeCaseCompleted',
+      mode: 'state',
+      handle: notifyOnDisputeCaseCompleted,
+    },
   ],
   DisputeCaseFailed: [
-    { id: 'notifications.notifyOnDisputeCaseFailed', handle: notifyOnDisputeCaseFailed },
+    {
+      id: 'notifications.notifyOnDisputeCaseFailed',
+      mode: 'state',
+      handle: notifyOnDisputeCaseFailed,
+    },
   ],
   DisputeEvidenceCollectionCompleted: [
     {
       id: 'dispute.sendEvidenceCollectionWorkflowEvent',
+      mode: 'state',
       handle: sendEvidenceCollectionWorkflowEvent,
     },
   ],
   DisputeEvidenceCollectionNeedsInput: [
     {
       id: 'dispute.sendEvidenceCollectionWorkflowEvent',
+      mode: 'state',
       handle: sendEvidenceCollectionWorkflowEvent,
     },
   ],
   DisputeEvidenceCollectionFailed: [
     {
       id: 'dispute.sendEvidenceCollectionWorkflowEvent',
+      mode: 'state',
       handle: sendEvidenceCollectionWorkflowEvent,
     },
   ],
   ScheduledDisputeSyncDue: [
-    { id: 'stripeApp.fanOutScheduledDisputeSync', handle: fanOutScheduledDisputeSync },
+    {
+      id: 'stripeApp.fanOutScheduledDisputeSync',
+      mode: 'state',
+      handle: fanOutScheduledDisputeSync,
+    },
   ],
-  UserSignedUp: [{ id: 'auth.handleUserSignedUp', handle: handleUserSignedUp }],
-  ProductCreated: [{ id: 'productSetup.notifyChanged', handle: notifyProductSetupChanged }],
+  UserSignedUp: [{ id: 'auth.handleUserSignedUp', mode: 'state', handle: handleUserSignedUp }],
+  ProductCreated: [
+    { id: 'productSetup.notifyChanged', mode: 'state', handle: notifyProductSetupChanged },
+  ],
   StripeConnectionCreated: [
-    { id: 'agent.signalStripeConnected', handle: handleStripeConnectionCreated },
-    { id: 'productSetup.notifyChanged', handle: notifyProductSetupChanged },
+    { id: 'agent.signalStripeConnected', mode: 'state', handle: handleStripeConnectionCreated },
+    { id: 'productSetup.notifyChanged', mode: 'state', handle: notifyProductSetupChanged },
   ],
   ProductAppDataSourceRegistered: [
-    { id: 'productSetup.notifyChanged', handle: notifyProductSetupChanged },
+    { id: 'productSetup.notifyChanged', mode: 'state', handle: notifyProductSetupChanged },
   ],
   ProductAppDataSourceDisconnected: [
-    { id: 'productSetup.notifyChanged', handle: notifyProductSetupChanged },
+    { id: 'productSetup.notifyChanged', mode: 'state', handle: notifyProductSetupChanged },
   ],
-  ProductUpdated: [{ id: 'productSetup.notifyChanged', handle: notifyProductSetupChanged }],
-  DisputePlaybookCreated: [{ id: 'productSetup.notifyChanged', handle: notifyProductSetupChanged }],
-  DisputePlaybookRevised: [{ id: 'productSetup.notifyChanged', handle: notifyProductSetupChanged }],
-  ProductSetupCompleted: [{ id: 'productSetup.notifyChanged', handle: notifyProductSetupChanged }],
+  ProductUpdated: [
+    { id: 'productSetup.notifyChanged', mode: 'state', handle: notifyProductSetupChanged },
+  ],
+  DisputePlaybookCreated: [
+    { id: 'productSetup.notifyChanged', mode: 'state', handle: notifyProductSetupChanged },
+  ],
+  DisputePlaybookRevised: [
+    { id: 'productSetup.notifyChanged', mode: 'state', handle: notifyProductSetupChanged },
+  ],
+  ProductSetupCompleted: [
+    { id: 'productSetup.notifyChanged', mode: 'state', handle: notifyProductSetupChanged },
+  ],
   McpOAuthRefreshFailed: [
-    { id: 'product.handleMcpOAuthRefreshFailed', handle: handleMcpOAuthRefreshFailed },
+    {
+      id: 'product.handleMcpOAuthRefreshFailed',
+      mode: 'state',
+      handle: handleMcpOAuthRefreshFailed,
+    },
+  ],
+  // Effect subscriber: runs OUTSIDE the UoW (no tx, no claim). `reconcileMcpState` RPCs the
+  // agent DO and fans out reconcile commands — it must not be wrapped in a transaction.
+  McpStateChanged: [
+    { id: 'appDataSources.reconcileMcpState', mode: 'effect', handle: reconcileMcpState },
   ],
 } satisfies EventRegistry
 

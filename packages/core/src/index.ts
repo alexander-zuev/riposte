@@ -11,6 +11,7 @@
 
 export * from './domain/messaging'
 export * from './domain/primitives'
+export * from './domain/app-data-sources'
 export * from './domain/auth'
 export * from './domain/chat'
 export * from './domain/connections'

@@ -1,0 +1,1 @@
+ALTER TABLE "product_app_data_sources" ADD COLUMN "status" text DEFAULT 'connected' NOT NULL;

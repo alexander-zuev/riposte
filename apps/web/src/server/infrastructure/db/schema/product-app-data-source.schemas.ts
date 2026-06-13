@@ -1,4 +1,4 @@
-import type { UUIDv4 } from '@riposte/core'
+import type { ProductAppDataSourceStatus, UUIDv4 } from '@riposte/core'
 import { index, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core'
 
 import { products } from './product.schemas'
@@ -16,6 +16,8 @@ export const productAppDataSources = pgTable(
     mcpServerId: text('mcp_server_id').notNull(),
     serverName: text('server_name').notNull(),
     serverUrl: text('server_url').notNull(),
+
+    status: text('status').$type<ProductAppDataSourceStatus>().notNull().default('connected'),
 
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },

@@ -7,12 +7,12 @@ export const Route = createFileRoute('/api/auth/$')({
   server: {
     middleware: [routeErrorMiddleware],
     handlers: {
-      GET: async ({ request }) => {
-        const auth = getAuthInstance([tanstackStartCookies()])
+      GET: async ({ context, request }) => {
+        const auth = getAuthInstance(context.deps, [tanstackStartCookies()])
         return auth.handler(request)
       },
-      POST: async ({ request }) => {
-        const auth = getAuthInstance([tanstackStartCookies()])
+      POST: async ({ context, request }) => {
+        const auth = getAuthInstance(context.deps, [tanstackStartCookies()])
         return auth.handler(request)
       },
     },

@@ -15,9 +15,9 @@ import { Result } from 'better-result'
 type AuthSession = { session: Session; user: User } | null
 const LAST_LOGIN_METHOD_COOKIE = 'better-auth.last_used_login_method'
 
-export const getSession = createServerFn({ method: 'GET' }).handler(async () => {
+export const getSession = createServerFn({ method: 'GET' }).handler(async ({ context }) => {
   const headers = getRequestHeaders()
-  const auth = getAuthInstance()
+  const auth = getAuthInstance(context.deps)
 
   const result = await Result.tryPromise<AuthSession, InternalServerError>({
     try: async () => auth.api.getSession({ headers }),
@@ -30,9 +30,9 @@ export const getSession = createServerFn({ method: 'GET' }).handler(async () => 
   return toServerFnRpc(result)
 })
 
-export const ensureSession = createServerFn({ method: 'GET' }).handler(async () => {
+export const ensureSession = createServerFn({ method: 'GET' }).handler(async ({ context }) => {
   const headers = getRequestHeaders()
-  const auth = getAuthInstance()
+  const auth = getAuthInstance(context.deps)
 
   const sessionResult = await Result.tryPromise<AuthSession, InternalServerError>({
     try: async () => auth.api.getSession({ headers }),

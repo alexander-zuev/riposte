@@ -34,7 +34,7 @@ import {
 } from '@server/infrastructure/analytics/analytics-service'
 import type { ICredentialEncryptionService } from '@server/infrastructure/credentials/credential-encryption'
 import { CredentialEncryptionService } from '@server/infrastructure/credentials/credential-encryption'
-import type { ReadDb, Tx } from '@server/infrastructure/db'
+import type { DrizzleDb, ReadDb, Tx } from '@server/infrastructure/db'
 import { createDatabase, transitionalRepoRead } from '@server/infrastructure/db'
 import {
   AsyncGateClient,
@@ -91,6 +91,7 @@ export type AppDeps = {
   env: Env
   ctx: WaitUntilContext
 
+  db: () => DrizzleDb
   readDb: () => ReadDb
 
   kv: {
@@ -150,15 +151,15 @@ export type AppDeps = {
 }
 
 export function createAppDeps(env: Env, ctx: WaitUntilContext): AppDeps {
-  // The writable handle is a private local of the composition root. It surfaces in exactly
-  // two places: executeUoW (which brands transactions as Tx) and outbox-relay machinery.
-  // Everything else sees the select-only ReadDb view via deps.readDb().
-  const rootDb = once(() => createDatabase(env))
+  // Writable Drizzle handle for infrastructure adapters that own their tables.
+  // Domain writes still go through deps.uow; read paths get deps.readDb().
+  const db = once(() => createDatabase(env))
 
   const deps: AppDeps = {
     env,
     ctx,
-    readDb: () => rootDb(),
+    db,
+    readDb: () => db(),
     kv: {
       auth: new KVClient(env.AUTH_KV),
       cache: new KVClient(env.CACHE_KV),
@@ -184,7 +185,7 @@ export function createAppDeps(env: Env, ctx: WaitUntilContext): AppDeps {
       waitlist: (tx) => new WaitlistRepository(tx),
     },
     uow: {
-      execute: async (work, msgId) => executeUoW(deps, rootDb(), work, msgId),
+      execute: async (work, msgId) => executeUoW(deps, db(), work, msgId),
     },
     services: {
       messageBus: once<IMessageBus>(() => new MessageBus(deps)),
@@ -236,8 +237,7 @@ export function createAppDeps(env: Env, ctx: WaitUntilContext): AppDeps {
       // Machinery exemption: the relay opens its own transaction on the writable root
       // handle (SELECT FOR UPDATE SKIP LOCKED → queue send → mark dispatched).
       outboxRelay: once<IOutboxRelay>(
-        () =>
-          new OutboxRelay(rootDb(), deps.services.queueClient(), (tx) => new OutboxRepository(tx)),
+        () => new OutboxRelay(db(), deps.services.queueClient(), (tx) => new OutboxRepository(tx)),
       ),
       analytics: once<IAnalyticsService>(() => new AnalyticsService(env, ctx)),
       jinaClient: once<IJinaClient>(() => new JinaClient({ apiKey: env.JINA_API_KEY })),

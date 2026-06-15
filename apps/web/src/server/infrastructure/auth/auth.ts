@@ -1,35 +1,31 @@
-import { createDatabase } from '@server/infrastructure/db'
+import type { AppDeps } from '@server/infrastructure/app-deps'
 import type { BetterAuthOptions } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { betterAuth } from 'better-auth/minimal'
-import { env } from 'cloudflare:workers'
 
-import { getServerConfig } from '../config'
-import { KVClient } from '../kv/kv-client'
-import { QueueClient } from '../queues/queue-client'
 import { createBetterAuthOptions } from './options'
 import type { AuthConfig } from './types'
 
-export function getAuthInstance(plugins?: BetterAuthOptions['plugins']) {
-  const cfg = getServerConfig()
+export function getAuthInstance(deps: AppDeps, plugins?: BetterAuthOptions['plugins']) {
+  const env = deps.env
 
-  const database = drizzleAdapter(createDatabase(env), { provider: 'pg' })
+  const database = drizzleAdapter(deps.db(), { provider: 'pg' })
 
   const config: AuthConfig = {
-    mode: cfg.mode,
-    baseURL: cfg.appUrl,
-    secret: cfg.authSecret,
-    googleClientId: cfg.google.clientId,
-    googleClientSecret: cfg.google.clientSecret,
-    githubClientId: cfg.github.clientId,
-    githubClientSecret: cfg.github.clientSecret,
-    turnstileSecretKey: cfg.turnstileSecretKey,
-    stripeSecretKey: cfg.stripe.secretKey,
-    stripeWebhookSecret: cfg.stripe.webhookSecret,
-    kvStorage: new KVClient(cfg.kvStorage).asSecondaryStorage(),
-    rateLimiter: cfg.rateLimiter,
-    queueClient: new QueueClient(env),
-    waitUntil: cfg.waitUntil,
+    mode: env.ENV,
+    baseURL: env.APP_URL,
+    secret: env.BETTER_AUTH_SECRET,
+    googleClientId: env.GOOGLE_CLIENT_ID,
+    googleClientSecret: env.GOOGLE_CLIENT_SECRET,
+    githubClientId: env.GITHUB_CLIENT_ID,
+    githubClientSecret: env.GITHUB_CLIENT_SECRET,
+    turnstileSecretKey: env.TURNSTILE_SECRET_KEY,
+    stripeSecretKey: env.STRIPE_SECRET_KEY,
+    stripeWebhookSecret: env.STRIPE_WEBHOOK_SECRET,
+    kvStorage: deps.kv.auth.asSecondaryStorage(),
+    rateLimiter: env.AUTH_RATE_LIMITER,
+    queueClient: deps.services.queueClient(),
+    waitUntil: (promise) => deps.ctx.waitUntil(promise),
   }
 
   return betterAuth(createBetterAuthOptions(database, config, plugins))

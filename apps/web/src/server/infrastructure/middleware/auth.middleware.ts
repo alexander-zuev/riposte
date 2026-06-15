@@ -1,12 +1,12 @@
 import { AuthenticationError, InternalServerError } from '@riposte/core'
 import { createLogger } from '@riposte/core'
 import * as Sentry from '@sentry/cloudflare'
+import type { AppDeps } from '@server/infrastructure/app-deps'
+import { getAuthInstance } from '@server/infrastructure/auth'
+import type { Session, User } from '@server/infrastructure/auth/types'
 import { createMiddleware } from '@tanstack/react-start'
 import { getRequestHeaders } from '@tanstack/react-start/server'
 import { Result } from 'better-result'
-
-import { getAuthInstance } from '../auth'
-import type { Session, User } from '../auth/types'
 
 const logger = createLogger('auth-middleware')
 
@@ -20,9 +20,9 @@ export interface RequiredAuthContext {
   session: Session
 }
 
-async function resolveAuth(): Promise<{ user: User; session: Session } | null> {
+async function resolveAuth(deps: AppDeps): Promise<{ user: User; session: Session } | null> {
   const headers = getRequestHeaders()
-  const auth = getAuthInstance()
+  const auth = getAuthInstance(deps)
 
   const session = await Result.tryPromise<
     { user: User; session: Session } | null,
@@ -41,16 +41,16 @@ async function resolveAuth(): Promise<{ user: User; session: Session } | null> {
   return resolved
 }
 
-export const extractAuth = createMiddleware().server(async ({ next }) => {
-  const resolved = await resolveAuth()
+export const extractAuth = createMiddleware().server(async ({ context, next }) => {
+  const resolved = await resolveAuth(context.deps)
   return next({
     context: { user: resolved?.user, session: resolved?.session },
   })
 })
 
 export const extractAuthFunction = createMiddleware({ type: 'function' }).server(
-  async ({ next }) => {
-    const resolved = await resolveAuth()
+  async ({ context, next }) => {
+    const resolved = await resolveAuth(context.deps)
     return next({
       context: { user: resolved?.user, session: resolved?.session },
     })

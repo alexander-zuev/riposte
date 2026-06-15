@@ -3,11 +3,10 @@ import {
   POSTHOG_SESSION_ID_HEADER,
 } from '@server/infrastructure/analytics/analytics-context'
 import { extractAuth, extractAuthFunction } from '@server/infrastructure/middleware/auth.middleware'
-import { withDeps, withDepsRequest } from '@server/infrastructure/middleware/deps.middleware'
 import { createMiddleware } from '@tanstack/react-start'
 
 export const withAnalyticsFunctionContext = createMiddleware({ type: 'function' })
-  .middleware([extractAuthFunction, withDeps])
+  .middleware([extractAuthFunction])
   .client(async ({ next }) => {
     const { posthog } = await import('posthog-js')
     const posthogSessionId = posthog.get_session_id()
@@ -24,7 +23,7 @@ export const withAnalyticsFunctionContext = createMiddleware({ type: 'function' 
       posthogSessionId: context?.analytics?.posthogSessionId,
     })
     if (analytics.distinctId || analytics.posthogSessionId) {
-      context?.deps?.services.analytics().setContext(analytics)
+      context.deps.services.analytics().setContext(analytics)
     }
 
     return next({
@@ -35,7 +34,7 @@ export const withAnalyticsFunctionContext = createMiddleware({ type: 'function' 
   })
 
 export const withAnalyticsRequestDepsContext = createMiddleware({ type: 'request' })
-  .middleware([extractAuth, withDepsRequest])
+  .middleware([extractAuth])
   .server(async ({ context, next, request }) => {
     const analytics = createAnalyticsContext({
       distinctId: context.user?.id,

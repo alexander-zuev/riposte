@@ -7,7 +7,6 @@ export {
   withAnalyticsRequestDepsContext,
 } from './analytics.middleware'
 export { errorMiddleware, routeErrorMiddleware } from './error.middleware'
-export { withDeps, withDepsRequest } from './deps.middleware'
 export {
   devOnlyFunctionMiddleware,
   devOnlyNotFoundResponse,

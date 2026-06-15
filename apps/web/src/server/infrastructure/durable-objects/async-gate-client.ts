@@ -1,8 +1,8 @@
 import { createLogger, type DOUnreachableError } from '@riposte/core'
-import { callDo } from '@server/infrastructure/durable-objects/call-do'
 import type { Result } from 'better-result'
 
 import type { AsyncGateDO, AsyncGateWaitResult } from './async-gate.do'
+import { DurableObjectRpc, type IDurableObjectRpc } from './durable-object-rpc'
 
 const logger = createLogger('async-gate-client')
 
@@ -16,17 +16,20 @@ export interface IAsyncGateClient {
 }
 
 export class AsyncGateClient implements IAsyncGateClient {
-  constructor(private readonly env: Env) {}
+  constructor(
+    private readonly env: Env,
+    private readonly rpc: IDurableObjectRpc = new DurableObjectRpc(),
+  ) {}
 
   async waitFor(
     key: string,
     timeoutMs: number,
   ): Promise<Result<AsyncGateWaitResult, DOUnreachableError>> {
-    return callDo(async () => this.stub(key).waitFor(timeoutMs))
+    return this.rpc.call(async () => this.stub(key).waitFor(timeoutMs))
   }
 
   async resolve(key: string): Promise<Result<void, DOUnreachableError>> {
-    return callDo(async () => this.stub(key).resolve())
+    return this.rpc.call(async () => this.stub(key).resolve())
   }
 
   async tryResolve(key: string): Promise<void> {

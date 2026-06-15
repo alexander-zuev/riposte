@@ -1,4 +1,7 @@
-import { callDo } from '@server/infrastructure/durable-objects/call-do'
+import {
+  DurableObjectRpc,
+  type IDurableObjectRpc,
+} from '@server/infrastructure/durable-objects/durable-object-rpc'
 
 import type { RateLimit, RateLimiterStub } from './types'
 
@@ -38,6 +41,7 @@ export function createKVStorage(kv: KVNamespace): SecondaryStorage {
 export function createRateLimitStorage(
   doNamespace: DurableObjectNamespace,
   debug = false,
+  rpc: IDurableObjectRpc = new DurableObjectRpc(),
 ): RateLimitStorage {
   return {
     async get(key: string): Promise<RateLimit | undefined> {
@@ -46,7 +50,7 @@ export function createRateLimitStorage(
       try {
         const doId = doNamespace.idFromName(key)
         const stub = doNamespace.get(doId) as unknown as RateLimiterStub
-        const result = await callDo(async () => stub.getRateLimit())
+        const result = await rpc.call(async () => stub.getRateLimit())
 
         if (result.isErr()) {
           if (debug) console.error(`[RateLimit] GET ${key} ERROR:`, result.error)
@@ -72,7 +76,7 @@ export function createRateLimitStorage(
       try {
         const doId = doNamespace.idFromName(key)
         const stub = doNamespace.get(doId) as unknown as RateLimiterStub
-        const result = await callDo(async () => stub.setRateLimit(value))
+        const result = await rpc.call(async () => stub.setRateLimit(value))
         if (result.isErr()) throw result.error
 
         if (debug) {

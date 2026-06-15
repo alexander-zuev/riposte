@@ -65,16 +65,11 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v6
+      - name: Setup pnpm and Node
+        uses: pnpm/setup@v1
         with:
-          run_install: false
-
-      - name: Setup Node
-        uses: actions/setup-node@v6
-        with:
-          node-version-file: package.json
-          cache: pnpm
+          install: false
+          cache: true
 
       - name: Setup Socket Firewall
         uses: socketdev/action@v1

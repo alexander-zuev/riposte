@@ -9,7 +9,7 @@
     "build": "wrangler types --env staging && CLOUDFLARE_ENV=staging vite build --mode staging && oxlint src --quiet && tsc -p tsconfig.build.json",
     "build:prerender": "wrangler types --env staging && CLOUDFLARE_ENV=staging RIPOSTE_PRERENDER=1 vite build --mode staging && oxlint src --quiet && tsc -p tsconfig.build.json",
     "build:prod": "wrangler types --env prod && CLOUDFLARE_ENV=prod vite build --mode production && oxlint src --quiet && tsc -p tsconfig.build.json",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p test/tsconfig.json",
     "preview": "dotenvx run -- vite preview",
     "test": "vitest run --reporter=dot --silent",
     "test:unit": "vitest run --project unit --reporter=dot --silent",
@@ -104,6 +104,7 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@ai-sdk/provider": "3.0.10",
     "@cloudflare/vitest-pool-workers": "catalog:",
     "@copilotkit/aimock": "catalog:",
     "@dotenvx/dotenvx": "catalog:",

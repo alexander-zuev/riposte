@@ -115,7 +115,7 @@ export class DisputePlaybook extends Entity<DbNewDisputePlaybook> {
     )
   }
 
-  serialize(): DbNewDisputePlaybook {
+  serialize(): DbDisputePlaybook {
     return {
       id: this.id,
       productId: this.productId,

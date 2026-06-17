@@ -15,7 +15,7 @@ export interface RateLimit {
   lastRequest: number
 }
 
-export interface RateLimiterStub {
+export interface RateLimiterStub extends Rpc.DurableObjectBranded {
   getRateLimit: () => Promise<RateLimit | undefined>
   setRateLimit: (value: RateLimit) => Promise<void>
 }
@@ -40,7 +40,7 @@ export interface AuthConfig {
   stripeWebhookSecret: string
 
   kvStorage: SecondaryStorage
-  rateLimiter: DurableObjectNamespace
+  rateLimiter: DurableObjectNamespace<RateLimiterStub>
   queueClient: IQueueClient
 
   waitUntil: (promise: Promise<unknown>) => void

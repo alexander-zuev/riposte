@@ -39,7 +39,7 @@ export function createKVStorage(kv: KVNamespace): SecondaryStorage {
 }
 
 export function createRateLimitStorage(
-  doNamespace: DurableObjectNamespace,
+  doNamespace: DurableObjectNamespace<RateLimiterStub>,
   debug = false,
   rpc: IDurableObjectRpc = new DurableObjectRpc(),
 ): RateLimitStorage {
@@ -49,7 +49,7 @@ export function createRateLimitStorage(
 
       try {
         const doId = doNamespace.idFromName(key)
-        const stub = doNamespace.get(doId) as unknown as RateLimiterStub
+        const stub = doNamespace.get(doId)
         const result = await rpc.call(async () => stub.getRateLimit())
 
         if (result.isErr()) {

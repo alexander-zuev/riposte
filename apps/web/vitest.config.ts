@@ -44,10 +44,12 @@ export default defineConfig({
             '@ai-sdk/openai',
             '@ai-sdk/provider-utils',
           ],
-          // better-auth 1.6.12+ imports node:crypto in @better-auth/utils password.node.mjs.
-          // The rolldown dep optimizer (vite 8) cannot load node: builtins while pre-bundling,
-          // so exclude it and let node:crypto resolve at runtime via nodejs_compat.
-          exclude: ['@better-auth/utils'],
+          // better-auth 1.6.12+ imports node:crypto in @better-auth/utils. The rolldown dep
+          // optimizer (vite 8) cannot load node: builtins while pre-bundling, so externalize
+          // the builtin (resolved at runtime via nodejs_compat) but keep @better-auth/utils
+          // bundled — externalizing the package leaves subpaths like @better-auth/utils/random
+          // (pulled in by the full auth.handler) unresolvable at runtime.
+          exclude: ['node:async_hooks', 'node:crypto'],
         },
       },
     },

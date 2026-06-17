@@ -2,7 +2,12 @@ import { KVError } from '@riposte/core'
 import { isTransientError, RETRY } from '@server/infrastructure/resilience/retry'
 import { Result } from 'better-result'
 
-import type { SecondaryStorage } from '../auth/storage'
+/** Better Auth secondary storage contract (string KV with optional TTL). */
+export interface SecondaryStorage {
+  get: (key: string) => Promise<string | null>
+  set: (key: string, value: string, ttl?: number) => Promise<void>
+  delete: (key: string) => Promise<void>
+}
 
 export class KVClient {
   constructor(private readonly kv: KVNamespace) {}

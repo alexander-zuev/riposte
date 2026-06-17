@@ -1,24 +1,14 @@
+import type { IRateLimiterClient } from '@server/infrastructure/durable-objects/rate-limiter-client'
+import type { SecondaryStorage } from '@server/infrastructure/kv/kv-client'
 import type { IQueueClient } from '@server/infrastructure/queues/queue-client'
 
 import type { Mode } from '../config'
 import type { auth } from './auth-gen'
-import type { SecondaryStorage } from './storage'
 
 /** Inferred from auth-gen instance which includes additionalFields + plugins */
 export type AuthSession = (typeof auth)['$Infer']['Session']
 export type Session = AuthSession['session']
 export type User = AuthSession['user']
-
-export interface RateLimit {
-  key: string
-  count: number
-  lastRequest: number
-}
-
-export interface RateLimiterStub extends Rpc.DurableObjectBranded {
-  getRateLimit: () => Promise<RateLimit | undefined>
-  setRateLimit: (value: RateLimit) => Promise<void>
-}
 
 /**
  * Auth configuration — everything auth needs from the runtime environment.
@@ -40,7 +30,7 @@ export interface AuthConfig {
   stripeWebhookSecret: string
 
   kvStorage: SecondaryStorage
-  rateLimiter: DurableObjectNamespace<RateLimiterStub>
+  rateLimitStorage: IRateLimiterClient
   queueClient: IQueueClient
 
   waitUntil: (promise: Promise<unknown>) => void

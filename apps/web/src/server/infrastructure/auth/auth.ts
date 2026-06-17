@@ -23,7 +23,7 @@ export function getAuthInstance(deps: AppDeps, plugins?: BetterAuthOptions['plug
     stripeSecretKey: env.STRIPE_SECRET_KEY,
     stripeWebhookSecret: env.STRIPE_WEBHOOK_SECRET,
     kvStorage: deps.kv.auth.asSecondaryStorage(),
-    rateLimiter: env.AUTH_RATE_LIMITER,
+    rateLimitStorage: deps.services.rateLimiter(),
     queueClient: deps.services.queueClient(),
     waitUntil: (promise) => deps.ctx.waitUntil(promise),
   }

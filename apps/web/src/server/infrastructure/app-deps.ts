@@ -40,6 +40,10 @@ import {
   AsyncGateClient,
   type IAsyncGateClient,
 } from '@server/infrastructure/durable-objects/async-gate-client'
+import {
+  type IRateLimiterClient,
+  RateLimiterClient,
+} from '@server/infrastructure/durable-objects/rate-limiter-client'
 import type { IEmailService } from '@server/infrastructure/email/interfaces'
 import { ResendEmailService } from '@server/infrastructure/email/resend-email-service'
 import { KVClient } from '@server/infrastructure/kv/kv-client'
@@ -130,6 +134,7 @@ export type AppDeps = {
     productSetup: () => IProductSetupService
     queueClient: () => IQueueClient
     asyncGate: () => IAsyncGateClient
+    rateLimiter: () => IRateLimiterClient
     credentialEncryption: () => ICredentialEncryptionService
     disputeAgentClient: () => IDisputeAgentClient
     email: () => IEmailService
@@ -211,6 +216,7 @@ export function createAppDeps(env: Env, ctx: WaitUntilContext): AppDeps {
       ),
       queueClient: once<IQueueClient>(() => new QueueClient(env)),
       asyncGate: once<IAsyncGateClient>(() => new AsyncGateClient(env)),
+      rateLimiter: once<IRateLimiterClient>(() => new RateLimiterClient(env)),
       credentialEncryption: once<ICredentialEncryptionService>(
         () =>
           new CredentialEncryptionService({

@@ -5,7 +5,6 @@ import { captcha, lastLoginMethod, magicLink, openAPI } from 'better-auth/plugin
 import Stripe from 'stripe'
 
 import { createDatabaseHooks, createMagicLinkHooks, createStripeCustomerHooks } from './hooks'
-import { createRateLimitStorage } from './storage'
 import type { AuthConfig } from './types'
 
 const logger = createLogger('auth')
@@ -28,7 +27,7 @@ export function createBetterAuthOptions(
   const magicLinkHooks = isCliMode ? undefined : createMagicLinkHooks(config.queueClient)
   const stripeCustomerHooks = isCliMode ? undefined : createStripeCustomerHooks(config.queueClient)
   const kvStorage = isCliMode ? undefined : config.kvStorage
-  const rateLimitStorage = isCliMode ? undefined : createRateLimitStorage(config.rateLimiter)
+  const rateLimitStorage = isCliMode ? undefined : config.rateLimitStorage
 
   return {
     appName: 'riposte',

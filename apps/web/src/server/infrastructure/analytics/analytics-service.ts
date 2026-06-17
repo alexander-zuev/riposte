@@ -1,6 +1,6 @@
 import { PostHog } from 'posthog-node'
 
-import type { AnalyticsContext } from './analytics-context'
+import { getAnalyticsContext, type AnalyticsContext } from './analytics-context'
 
 /** PostHog US Cloud ingest host — same across all envs. Browser uses the relay (lib/env/env.ts). */
 const POSTHOG_HOST = 'https://us.i.posthog.com'
@@ -15,6 +15,12 @@ export interface IAnalyticsService {
   readonly posthog: PostHog
   setContext: (context: AnalyticsContext) => void
   track: (event: AnalyticsEvent, overrides?: AnalyticsContext) => void
+  /**
+   * Capture without a person profile (`$process_person_profile: false`). For events whose
+   * distinctId is a system/cron/job/dispute id rather than a real user — avoids minting junk
+   * person profiles (and cross-entity merges when an id is reused as a distinctId).
+   */
+  trackAnonymous: (event: AnalyticsEvent, overrides?: AnalyticsContext) => void
 }
 
 /**
@@ -54,21 +60,43 @@ export class AnalyticsService implements IAnalyticsService {
   }
 
   track(event: AnalyticsEvent, overrides: AnalyticsContext = {}): void {
+    this.capture(event, overrides, true)
+  }
+
+  trackAnonymous(event: AnalyticsEvent, overrides: AnalyticsContext = {}): void {
+    this.capture(event, overrides, false)
+  }
+
+  private capture(
+    event: AnalyticsEvent,
+    overrides: AnalyticsContext,
+    processPersonProfile: boolean,
+  ): void {
     const distinctId = overrides.distinctId ?? this.context.distinctId
     const posthogSessionId = overrides.posthogSessionId ?? this.context.posthogSessionId
+    // Stamp PostHog's dedup keys from the ambient message context when present, so a redelivered
+    // queue message that re-runs an event's subscribers does not double-count. Absent (request
+    // context, fires once) → the SDK generates a uuid.
+    const idempotencyKey = getAnalyticsContext()?.idempotencyKey
     this.ctx.waitUntil(
       this.client.captureImmediate({
         ...(distinctId ? { distinctId } : {}),
         event: event.name,
         properties: {
           ...event.properties,
-          // TODO: When adding cron/workflow/system events, make person processing explicit.
-          // Do not use catch-all distinct IDs like "system" or "cron" without
-          // `$process_person_profile: false`; they create one huge fake person profile.
           source: 'worker',
           _env: this.env,
           ...(posthogSessionId ? { $session_id: posthogSessionId } : {}),
+          ...(processPersonProfile ? {} : { $process_person_profile: false }),
         },
+        ...(idempotencyKey
+          ? {
+              uuid: idempotencyKey.uuid,
+              ...(idempotencyKey.timestamp
+                ? { timestamp: new Date(idempotencyKey.timestamp) }
+                : {}),
+            }
+          : {}),
       }),
     )
   }

@@ -7,6 +7,7 @@ import {
 } from '@riposte/core'
 import * as Sentry from '@sentry/cloudflare'
 import type { IMessageBus } from '@server/application/message-bus/message-bus'
+import { runWithAnalyticsContext } from '@server/infrastructure/analytics/analytics-context'
 import type { AppDeps } from '@server/infrastructure/app-deps'
 import type { IQueueClient } from '@server/infrastructure/queues/queue-client'
 import { isPanic, isTaggedError, Result } from 'better-result'
@@ -38,7 +39,19 @@ export class QueueConsumer {
           parsedMsg = msg
           if ('userId' in msg && msg.userId) scope.setUser({ id: msg.userId })
 
-          yield* Result.await(this.messageBus.handle(msg))
+          // Ambient dedup identity for any analytics fired by this message's subscribers; the
+          // envelope id (+ event timestamp when present) is replayed unchanged on redelivery.
+          yield* Result.await(
+            runWithAnalyticsContext(
+              {
+                idempotencyKey: {
+                  uuid: msg.id,
+                  ...('timestamp' in msg && msg.timestamp ? { timestamp: msg.timestamp } : {}),
+                },
+              },
+               async () => this.messageBus.handle(msg),
+            ),
+          )
           return Result.ok(msg)
         }, this)
 

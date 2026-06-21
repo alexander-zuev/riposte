@@ -1,6 +1,9 @@
+import { GithubLogoIcon, type Icon } from '@phosphor-icons/react'
 import { Logo } from '@web/ui/components/ui/logo'
 
 const GITHUB_URL = 'https://github.com/alexander-zuev/riposte'
+
+type FooterLink = { label: string; href: string; icon?: Icon }
 
 // Anchors are absolute (`/#...`) so they also work from legal pages, not just the landing page.
 const productLinks = [
@@ -9,7 +12,7 @@ const productLinks = [
   { label: 'Get started', href: '/sign-in' },
 ]
 
-const resourceLinks = [{ label: 'GitHub', href: GITHUB_URL }]
+const resourceLinks: FooterLink[] = [{ label: 'GitHub', href: GITHUB_URL, icon: GithubLogoIcon }]
 
 const legalLinks = [
   { label: 'Privacy', href: '/privacy' },
@@ -45,7 +48,7 @@ export function PublicFooter() {
   )
 }
 
-function LinkColumn({ title, links }: { title: string; links: { label: string; href: string }[] }) {
+function LinkColumn({ title, links }: { title: string; links: FooterLink[] }) {
   return (
     <div>
       <h6 className="text-sm font-medium tracking-wider text-primary-foreground/40 uppercase">
@@ -56,8 +59,9 @@ function LinkColumn({ title, links }: { title: string; links: { label: string; h
           <li key={l.href}>
             <a
               href={l.href}
-              className="text-sm font-normal text-primary-foreground/60 no-underline transition-colors hover:text-primary-foreground hover:no-underline"
+              className="inline-flex items-center gap-1.5 text-sm font-normal text-primary-foreground/60 no-underline transition-colors hover:text-primary-foreground hover:no-underline"
             >
+              {l.icon ? <l.icon className="size-4" aria-hidden="true" /> : null}
               {l.label}
             </a>
           </li>

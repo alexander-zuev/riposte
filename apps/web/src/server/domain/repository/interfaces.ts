@@ -314,6 +314,10 @@ export interface IOutboxWriter {
 export interface IOutboxRelayStore {
   retrievePending: (batchSize: number) => Promise<Result<DbOutbox[], DatabaseError>>
   publishPending: (pending: DbOutbox[]) => Promise<Result<UUIDv4[], DatabaseError>>
+  /** Terminal sink: mark rows failed (excluded from future scans), keep full payload. */
+  deadLetter: (pending: DbOutbox[], reason: string) => Promise<Result<void, DatabaseError>>
+  /** Bounded retry: bump `attempts` and push `availableAt` out by `delayMs`. */
+  deferRetry: (pending: DbOutbox[], delayMs: number) => Promise<Result<void, DatabaseError>>
 }
 
 /** The single implementation class and test mocks satisfy both roles. */

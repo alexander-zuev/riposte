@@ -1,5 +1,6 @@
 import {
   createCommand,
+  createLogger,
   type DatabaseError,
   type DOUnreachableError,
   type McpStateChanged,
@@ -9,6 +10,8 @@ import {
 } from '@riposte/core'
 import type { CommandHandler, EffectHandler } from '@server/application/registry/types'
 import { Result } from 'better-result'
+
+const logger = createLogger('app-data-source-handler')
 
 /**
  * Reconciles one app data source against the observed MCP server state. Loads the
@@ -70,6 +73,13 @@ export const reconcileMcpState: EffectHandler<
 
   const sent = await ctx.deps.services.queueClient().sendBatch(commands)
   if (sent.isErr()) return Result.err(sent.error)
+
+  if (sent.value.length > 0) {
+    logger.error('reconcile_mcp_state_oversized_dropped', {
+      count: sent.value.length,
+      names: sent.value.map((message) => message.name),
+    })
+  }
 
   return Result.ok(undefined)
 }

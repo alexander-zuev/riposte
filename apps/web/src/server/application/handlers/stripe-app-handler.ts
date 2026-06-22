@@ -237,8 +237,15 @@ export const fanOutScheduledDisputeSync: EventHandler<
   const sent = await deps.services.queueClient().sendBatch(commands)
   if (sent.isErr()) return Result.err(sent.error)
 
+  if (sent.value.length > 0) {
+    logger.error('scheduled_dispute_sync_oversized_dropped', {
+      count: sent.value.length,
+      names: sent.value.map((message) => message.name),
+    })
+  }
+
   logger.info('scheduled_dispute_sync_commands_enqueued', {
-    count: commands.length,
+    count: commands.length - sent.value.length,
   })
 
   if (accounts.value.length === DISPUTE_SYNC_FANOUT_LIMIT) {

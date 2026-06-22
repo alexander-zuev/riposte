@@ -1,5 +1,5 @@
 import { createEvent, createLogger } from '@riposte/core'
-import type { DOUnreachableError, QueueError } from '@riposte/core'
+import type { DOUnreachableError, OversizedMessageError, QueueError } from '@riposte/core'
 import type { AppDeps } from '@server/infrastructure/app-deps'
 import type { Result } from 'better-result'
 
@@ -50,7 +50,7 @@ export async function scheduled(controller: ScheduledController, deps: AppDeps):
 }
 
 function throwCronFailure(
-  result: Result<void, DOUnreachableError | QueueError>,
+  result: Result<void, DOUnreachableError | QueueError | OversizedMessageError>,
   eventName: string,
 ): void {
   if (result.isOk()) return

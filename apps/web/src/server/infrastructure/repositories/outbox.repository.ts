@@ -5,7 +5,7 @@ import type { DbOutbox, DrizzleDb } from '@server/infrastructure/db'
 import { messageOutbox, messageReceipts } from '@server/infrastructure/db'
 import { BaseRepository } from '@server/infrastructure/repositories/base.repository'
 import { Result } from 'better-result'
-import { asc, inArray, isNull } from 'drizzle-orm'
+import { and, asc, inArray, isNull, lte, sql } from 'drizzle-orm'
 
 export class OutboxRepository extends BaseRepository implements IOutboxRepository {
   constructor(private readonly db: DrizzleDb) {
@@ -57,17 +57,61 @@ export class OutboxRepository extends BaseRepository implements IOutboxRepositor
   }
 
   async retrievePending(batchSize: number): Promise<Result<DbOutbox[], DatabaseError>> {
+    const now = new Date()
     return Result.tryPromise({
       try: () =>
         this.db
           .select()
           .from(messageOutbox)
-          .where(isNull(messageOutbox.publishedAt))
-          .orderBy(asc(messageOutbox.createdAt))
+          .where(claimablePendingWhere(now))
+          .orderBy(asc(messageOutbox.availableAt), asc(messageOutbox.createdAt))
           .limit(batchSize)
           .for('update', { skipLocked: true }),
       catch: (e) =>
         new DatabaseError({ message: 'Failed to retrieve pending outbox messages', cause: e }),
     })
   }
+
+  async deadLetter(pending: DbOutbox[], reason: string): Promise<Result<void, DatabaseError>> {
+    const ids = pending.map((p) => p.id)
+    if (ids.length === 0) return Result.ok()
+
+    return Result.tryPromise({
+      try: async () => {
+        // Terminal state: failedAt excludes the row from future scans; the full
+        // payload + reason stay on the row for inspection / manual replay.
+        await this.db
+          .update(messageOutbox)
+          .set({ failedAt: new Date(), lastError: reason })
+          .where(and(inArray(messageOutbox.id, ids), isNull(messageOutbox.publishedAt)))
+      },
+      catch: (e) =>
+        new DatabaseError({ message: 'Failed to dead-letter outbox messages', cause: e }),
+    })
+  }
+
+  async deferRetry(pending: DbOutbox[], delayMs: number): Promise<Result<void, DatabaseError>> {
+    const ids = pending.map((p) => p.id)
+    if (ids.length === 0) return Result.ok()
+
+    const availableAt = new Date(Date.now() + delayMs)
+    return Result.tryPromise({
+      try: async () => {
+        await this.db
+          .update(messageOutbox)
+          .set({ attempts: sql`${messageOutbox.attempts} + 1`, availableAt })
+          .where(and(inArray(messageOutbox.id, ids), isNull(messageOutbox.publishedAt)))
+      },
+      catch: (e) => new DatabaseError({ message: 'Failed to defer outbox retry', cause: e }),
+    })
+  }
+}
+
+/** Pending = not yet published, not dead-lettered, and past its retry backoff. */
+function claimablePendingWhere(now: Date) {
+  return and(
+    isNull(messageOutbox.publishedAt),
+    isNull(messageOutbox.failedAt),
+    lte(messageOutbox.availableAt, now),
+  )
 }

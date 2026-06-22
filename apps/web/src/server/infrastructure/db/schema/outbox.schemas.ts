@@ -1,6 +1,6 @@
 import type { DomainMessage } from '@riposte/core'
-import { isNull } from 'drizzle-orm'
-import { index, jsonb, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core'
+import { sql } from 'drizzle-orm'
+import { index, integer, jsonb, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core'
 
 /* -------------------------------------------------------------------------------------------------
  * Message tracking tables for transactional outbox pattern
@@ -24,8 +24,22 @@ export const messageOutbox = pgTable(
     // timestamps
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     publishedAt: timestamp('published_at', { withTimezone: true }),
+
+    // relay retry/dead-letter state. `attempts`/`availableAt` bound transient retries
+    // with exponential backoff; `failedAt`/`lastError` are the terminal dead-letter
+    // sink (poison stays on the row for inspection / manual replay).
+    attempts: integer('attempts').notNull().default(0),
+    availableAt: timestamp('available_at', { withTimezone: true }).notNull().defaultNow(),
+    failedAt: timestamp('failed_at', { withTimezone: true }),
+    lastError: text('last_error'),
   },
-  (table) => [index('outbox_pending_idx').on(table.createdAt).where(isNull(table.publishedAt))],
+  (table) => [
+    // Covers the relay claim scan: pending = not published, not dead-lettered, ordered
+    // by retry availability then age.
+    index('outbox_pending_idx')
+      .on(table.availableAt, table.createdAt)
+      .where(sql`${table.publishedAt} is null and ${table.failedAt} is null`),
+  ],
 )
 
 export const messageReceipts = pgTable('message_receipts', {

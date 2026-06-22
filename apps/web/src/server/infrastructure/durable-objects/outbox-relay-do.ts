@@ -35,8 +35,14 @@ export class OutboxRelayAlarmController {
     const outboxRelay = this.deps.services.outboxRelay()
     const result = await outboxRelay.flush(BATCH_SIZE)
     if (result.isErr()) {
-      // DO alarms retry only when the alarm handler throws.
-      throw result.error
+      const error = result.error
+      // flush absorbs queue/poison failures (deferred or dead-lettered), so an Err here
+      // is an infra failure (e.g. a DB blip). Retryable → throw so CF retries the alarm;
+      // there is no message-level poison left to loop on. Non-retryable → swallow, or the
+      // alarm would storm forever. Re-drive comes from the next commit's wakeUntil/cron.
+      if (error.retryable) throw error
+      logger.error('outbox_relay_unrecoverable', { error })
+      return
     }
 
     const published = result.unwrap()

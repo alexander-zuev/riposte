@@ -27,6 +27,30 @@ export class QueueError extends TaggedError('QueueError')<{
   }
 }
 
+/**
+ * A serialized message exceeds Cloudflare Queues' per-message size limit. Detected
+ * pre-flight (we never parse the platform error), so it never reaches a queue — no
+ * queue can hold it, the DLQ included. Always permanent: the relay dead-letters it,
+ * keeping the full payload on the outbox row for inspection / manual replay.
+ */
+export class OversizedMessageError extends TaggedError('OversizedMessageError')<{
+  message: string
+  messageName: string
+  bytes: number
+  limit: number
+  retryable: false
+}>() {
+  constructor(args: { messageName: string; bytes: number; limit: number }) {
+    super({
+      message: `Message "${args.messageName}" is ${args.bytes} bytes, over the ${args.limit} byte queue limit`,
+      messageName: args.messageName,
+      bytes: args.bytes,
+      limit: args.limit,
+      retryable: false,
+    })
+  }
+}
+
 export class DOUnreachableError extends TaggedError('DOUnreachableError')<{
   message: string
   cause: unknown

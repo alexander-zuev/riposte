@@ -288,6 +288,13 @@
       "when": 1781257081500,
       "tag": "0040_early_talon",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1782124195104,
+      "tag": "0041_friendly_pride",
+      "breakpoints": true
     }
   ]
 }
